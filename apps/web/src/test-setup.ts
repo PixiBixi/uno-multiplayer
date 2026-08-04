@@ -10,3 +10,37 @@ import { afterEach } from 'vitest'
 afterEach(() => {
   cleanup()
 })
+
+/**
+ * This jsdom environment ships no Storage at all: `window.localStorage` is
+ * undefined even though the document has a real origin. The app already degrades
+ * gracefully when storage throws, but the happy path still needs testing, so a
+ * minimal in-memory Storage stands in.
+ */
+function createMemoryStorage(): Storage {
+  const entries = new Map<string, string>()
+  return {
+    get length() {
+      return entries.size
+    },
+    key: (index: number) => [...entries.keys()][index] ?? null,
+    getItem: (key: string) => entries.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      entries.set(key, String(value))
+    },
+    removeItem: (key: string) => {
+      entries.delete(key)
+    },
+    clear: () => {
+      entries.clear()
+    },
+  }
+}
+
+if (typeof window !== 'undefined' && window.localStorage === undefined) {
+  Object.defineProperty(window, 'localStorage', {
+    configurable: true,
+    writable: true,
+    value: createMemoryStorage(),
+  })
+}
