@@ -1,0 +1,17 @@
+services:
+  uno:
+    build: .
+    image: uno-multiplayer:local
+    ports:
+      - '5050:5050'
+    environment:
+      # Same origin serves the client, so no CORS allowlist is needed.
+      CORS_ORIGIN: ''
+      GRACE_PERIOD_MS: '60000'
+      MAX_ROOMS: '500'
+      LOG_LEVEL: 'info'
+    restart: unless-stopped
+    # State lives in memory: never scale this past one replica. Two replicas
+    # would each hold half the rooms and neither would know about the other.
+    deploy:
+      replicas: 1

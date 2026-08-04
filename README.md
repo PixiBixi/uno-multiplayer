@@ -2,10 +2,7 @@
 
 Online UNO for 2 to 4 players. Server-authoritative, written in TypeScript.
 
-> **Status: work in progress.** The rules engine, the wire contract and the game
-> server are done and tested — a full 2–4 player game runs over real sockets. The
-> web client and the Docker image are not written yet, so there is no browser UI
-> to play in. See [Roadmap](#roadmap).
+Play it with `docker compose up --build`, then open <http://localhost:5050>.
 
 ## Why this exists
 
@@ -31,7 +28,7 @@ that player is allowed to see.
 packages/engine     Pure rules engine — no I/O, no networking, no dependencies
 packages/protocol   Wire contract: views, events, payload schemas
 apps/server         Fastify + Socket.IO orchestration
-apps/web            Vite + React client                          (not yet written)
+apps/web            Vite + React client
 ```
 
 Inside `apps/server`, `Room` is deliberately **synchronous and timer-free**: it
@@ -186,9 +183,9 @@ emit-only solution and excludes tests.
 - [x] `packages/engine` — rules, seeded RNG, property tests
 - [x] `packages/protocol` — views, events, payload schemas
 - [x] `apps/server` — rooms, seat sessions, reconnection, rate limiting
-- [ ] `apps/web` — SVG cards, four-seat table, lobby, chat
-- [ ] Playwright end-to-end tests across multiple browser contexts
-- [ ] Dockerfile and deployment
+- [x] `apps/web` — SVG cards, four-seat table, lobby, chat
+- [x] Playwright end-to-end tests across multiple browser contexts
+- [x] Dockerfile and deployment
 
 Design documents live in `docs/superpowers/`: the
 [design spec](docs/superpowers/specs/2026-08-04-uno-multiplayer-design.md) records
@@ -196,11 +193,34 @@ the decisions and the reasoning, and the
 [implementation plan](docs/superpowers/plans/2026-08-04-engine-foundations.md)
 covers the work done so far.
 
-### Planned operational constraints
+## Deploying it
 
-State will live in memory, so the service will run as a **single replica** — no
-sticky sessions, no Redis adapter, and a restart drops games in progress. That
-is a deliberate trade at this traffic level.
+```bash
+docker compose up --build
+```
+
+Then open <http://localhost:5050>. Create a game, share the code, and the URL
+carries it: `http://localhost:5050/?room=K7QM2X` prefills the field.
+
+| Variable                         | Default                 | Purpose                                                            |
+| -------------------------------- | ----------------------- | ------------------------------------------------------------------ |
+| `PORT`                           | `5050`                  | Listen port. Not 5000: macOS Control Center binds that for AirPlay |
+| `HOST`                           | `0.0.0.0`               | Listen address                                                     |
+| `CORS_ORIGIN`                    | empty                   | Comma-separated allowlist. Empty means same-origin only            |
+| `GRACE_PERIOD_MS`                | `60000`                 | How long a disconnected player keeps their seat                    |
+| `MAX_ROOMS`                      | `500`                   | Cap on concurrent rooms, bounding memory                           |
+| `STATIC_ROOT`                    | `/app/web` in the image | Built client to serve. Empty serves the API alone                  |
+| `MOVE_BURST` / `MOVE_PER_SECOND` | `20` / `2`              | Move rate limit, sized for a human                                 |
+| `CHAT_BURST` / `CHAT_PER_SECOND` | `5` / `0.5`             | Chat rate limit, tighter                                           |
+| `LOG_LEVEL`                      | `info`                  | pino level                                                         |
+
+### One replica, on purpose
+
+Game state lives in memory. There is no Redis adapter and no sticky-session
+setup, so **do not scale past a single replica** — two processes would each hold
+half the rooms and neither would know about the other. A restart drops games in
+progress. At a few concurrent tables that is a deliberate trade for having no
+datastore to run, back up, or pay for.
 
 ## Licence
 
