@@ -2,18 +2,18 @@
   // Reference configuration: covers the WHOLE repo, tests and config files
   // included. This is what the editor, ESLint (via the project service) and
   // `npm run typecheck` read. It emits nothing.
+  // The client is excluded: it has its own project at apps/web/tsconfig.json,
+  // because a bundled browser app resolves modules differently from Node.
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true,
-    // Resolve workspace packages to their SOURCE, not their build output.
-    // Without this, typecheck reads stale dist/*.d.ts and can pass against code
-    // that no longer exists.
     // No baseUrl: it is deprecated in TS 6, and paths have been resolvable
-    // relative to this file since TS 4.4.
+    // relative to this file since TS 4.4. Workspace packages point at SOURCE so
+    // typecheck never reads a stale dist/*.d.ts.
     "paths": {
       "@uno/engine": ["./packages/engine/src/index.ts"],
       "@uno/protocol": ["./packages/protocol/src/index.ts"]
     }
   },
-  "include": ["packages/*/src/**/*", "apps/*/src/**/*", "*.config.ts"]
+  "include": ["packages/*/src/**/*", "apps/server/src/**/*", "*.config.ts"]
 }
