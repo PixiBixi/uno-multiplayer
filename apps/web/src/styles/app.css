@@ -19,9 +19,16 @@ h1,
 h2,
 h3 {
   font-family: var(--display);
+  font-weight: 600;
   margin: 0;
   line-height: 1.15;
   text-wrap: balance;
+}
+
+/* Content never sits flush against the viewport edge. */
+#root {
+  min-height: 100dvh;
+  padding: clamp(0.75rem, 3vw, 1.5rem);
 }
 
 :focus-visible {
