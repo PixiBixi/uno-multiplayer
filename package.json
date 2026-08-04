@@ -12,6 +12,7 @@
   "scripts": {
     "build": "tsc --build tsconfig.build.json && npm run build -w @uno/web",
     "typecheck": "tsc -p tsconfig.json && tsc -p apps/web/tsconfig.json",
+    "watch": "tsc --build tsconfig.build.json --watch --preserveWatchOutput",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

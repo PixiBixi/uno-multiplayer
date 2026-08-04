@@ -114,6 +114,34 @@ npm install
 npm run verify      # lint + typecheck + test, the same gate CI runs
 ```
 
+### Running it locally
+
+The client is served by Vite on its own port and proxies the socket handshake to
+the API, so both have to be up. Build once, then two terminals:
+
+```bash
+npm run build                 # once, so the server has dist/ to run
+
+# terminal 1 — API and WebSockets on http://localhost:5050
+npm start -w @uno/server
+
+# terminal 2 — client with hot reload on http://localhost:5173
+npm run dev -w @uno/web
+```
+
+Open <http://localhost:5173>. Vite forwards `/socket.io` and `/healthz` to 5050.
+
+**Port 5050, not 5000.** On macOS, Control Center binds port 5000 for the AirPlay
+receiver, so a 5000 default fails on any Mac with AirPlay enabled.
+
+If you are editing **server** code, add a third terminal so the compiled output
+keeps up — `npm run dev -w @uno/server` watches `dist/`, and nothing writes to
+`dist/` on its own:
+
+```bash
+npm run watch                 # tsc --build --watch
+```
+
 | Script                     | Purpose                                            |
 | -------------------------- | -------------------------------------------------- |
 | `npm run verify`           | Lint, typecheck and test — run this before pushing |

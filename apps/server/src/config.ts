@@ -3,7 +3,9 @@ import { z } from 'zod'
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   HOST: z.string().min(1).default('0.0.0.0'),
-  PORT: z.coerce.number().int().min(1).max(65535).default(5000),
+  /* 5050, not 5000: macOS Control Center binds 5000 for the AirPlay receiver,
+     so a 5000 default fails on any Mac with AirPlay on. */
+  PORT: z.coerce.number().int().min(1).max(65535).default(5050),
   /** Comma-separated allowlist. Empty means same-origin only. */
   CORS_ORIGIN: z.string().default(''),
   GRACE_PERIOD_MS: z.coerce.number().int().min(0).default(60_000),

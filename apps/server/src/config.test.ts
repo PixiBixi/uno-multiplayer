@@ -4,7 +4,7 @@ import { loadConfig } from './config.js'
 describe('loadConfig', () => {
   it('applies defaults on an empty environment', () => {
     const config = loadConfig({})
-    expect(config.port).toBe(5000)
+    expect(config.port).toBe(5050)
     expect(config.host).toBe('0.0.0.0')
     expect(config.gracePeriodMs).toBe(60_000)
     expect(config.maxRooms).toBe(500)

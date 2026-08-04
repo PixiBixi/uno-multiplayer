@@ -9,8 +9,8 @@ export default defineConfig({
     // In development the client runs on its own port, so the socket handshake is
     // proxied to the API rather than hard-coding an endpoint into the bundle.
     proxy: {
-      '/socket.io': { target: 'http://127.0.0.1:5000', ws: true },
-      '/healthz': { target: 'http://127.0.0.1:5000' },
+      '/socket.io': { target: 'http://127.0.0.1:5050', ws: true },
+      '/healthz': { target: 'http://127.0.0.1:5050' },
     },
   },
 })
