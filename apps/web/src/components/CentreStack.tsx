@@ -1,0 +1,91 @@
+import type { Color } from '@uno/engine'
+import type { PlayerView } from '@uno/protocol'
+import { Card } from './Card.js'
+import { CardBack } from './CardBack.js'
+
+const COLOR_NAME: Record<Color, string> = { R: 'Red', G: 'Green', B: 'Blue', Y: 'Yellow' }
+const COLOR_VALUE: Record<Color, string> = {
+  R: 'var(--red)',
+  G: 'var(--green)',
+  B: 'var(--blue)',
+  Y: 'var(--yellow)',
+}
+
+/** The same shape tokens the cards use, so the colour in play is readable
+ *  without relying on hue. */
+function ColourGlyph({ color }: { color: Color }) {
+  const fill = 'var(--bone)'
+  return (
+    <svg width={20} height={20} viewBox="0 0 24 24" aria-hidden="true">
+      {color === 'R' && <circle cx={12} cy={12} r={8} fill={fill} />}
+      {color === 'G' && <path d="M12 3l9 16H3Z" fill={fill} />}
+      {color === 'B' && <rect x={4} y={4} width={16} height={16} rx={2} fill={fill} />}
+      {color === 'Y' && <path d="M12 2l10 10-10 10L2 12Z" fill={fill} />}
+    </svg>
+  )
+}
+
+function DirectionBadge({ direction }: { direction: 1 | -1 }) {
+  return (
+    <p className="dir-badge">
+      <svg
+        width={16}
+        height={16}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+        style={direction === -1 ? { transform: 'scaleX(-1)' } : undefined}
+      >
+        <path d="M20.5 12a8.5 8.5 0 1 1-2.5-6" />
+        <path d="M20.5 4.5V10h-5.5" />
+      </svg>
+      {/* Named, not just drawn: an arrow alone is ambiguous at a glance, and the
+          server has always carried `direction` — the interface used to ignore it. */}
+      <span>{direction === 1 ? 'Clockwise' : 'Anticlockwise'}</span>
+    </p>
+  )
+}
+
+export function CentreStack({ view }: { view: PlayerView }) {
+  return (
+    <div className="centre-stack">
+      <div className="pile-group">
+        <div className="pile">
+          <CardBack />
+        </div>
+        <p className="pile-label">{view.drawPileCount} left</p>
+      </div>
+
+      <div className="pile">
+        <Card card={view.discardTop} />
+      </div>
+
+      <div className="pile-group">
+        <span
+          className="colour-orb"
+          style={{
+            background: COLOR_VALUE[view.currentColor],
+            color: COLOR_VALUE[view.currentColor],
+          }}
+        >
+          <ColourGlyph color={view.currentColor} />
+        </span>
+        {/* Named because a wild makes the colour in play diverge from the card
+            everyone can see on the pile. */}
+        <p className="pile-label">{COLOR_NAME[view.currentColor]} in play</p>
+      </div>
+
+      <DirectionBadge direction={view.direction} />
+
+      {view.pendingDraw !== null && (
+        <p className="debt-badge">
+          <span className="debt-amount">+{view.pendingDraw.amount}</span> stacked
+        </p>
+      )}
+    </div>
+  )
+}
