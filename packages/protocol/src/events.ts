@@ -26,7 +26,14 @@ export type GameEvent =
   | { type: 'seatLeft'; seat: number }
   | { type: 'gameOver'; winner: number | null }
 
-export type Ack<T> = (result: ({ ok: true } & T) | { ok: false; error: ErrorCode }) => void
+/**
+ * An acknowledgement carrying no extra fields on success. Not
+ * `Record<string, never>`: intersecting that with `{ ok: true }` would demand
+ * `ok` be of type `never`, making the result unsatisfiable.
+ */
+export type Empty = Record<never, never>
+
+export type Ack<T = Empty> = (result: ({ ok: true } & T) | { ok: false; error: ErrorCode }) => void
 
 export type ClientToServer = {
   'room:create': (
@@ -41,9 +48,9 @@ export type ClientToServer = {
     payload: { roomCode: string; sessionToken: string },
     ack: Ack<{ seat: number }>,
   ) => void
-  'game:start': (payload: Record<string, never>, ack: Ack<Record<string, never>>) => void
-  'game:move': (payload: { move: Move }, ack: Ack<Record<string, never>>) => void
-  'chat:send': (payload: { text: string }, ack: Ack<Record<string, never>>) => void
+  'game:start': (payload: Empty, ack: Ack) => void
+  'game:move': (payload: { move: Move }, ack: Ack) => void
+  'chat:send': (payload: { text: string }, ack: Ack) => void
 }
 
 export type ServerToClient = {

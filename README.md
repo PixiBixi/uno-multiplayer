@@ -2,9 +2,10 @@
 
 Online UNO for 2 to 4 players. Server-authoritative, written in TypeScript.
 
-> **Status: work in progress.** The rules engine and the wire contract are done
-> and tested. The server, the web client and the Docker image are not written
-> yet — see [Roadmap](#roadmap). There is nothing to play yet.
+> **Status: work in progress.** The rules engine, the wire contract and the game
+> server are done and tested — a full 2–4 player game runs over real sockets. The
+> web client and the Docker image are not written yet, so there is no browser UI
+> to play in. See [Roadmap](#roadmap).
 
 ## Why this exists
 
@@ -29,9 +30,18 @@ that player is allowed to see.
 ```
 packages/engine     Pure rules engine — no I/O, no networking, no dependencies
 packages/protocol   Wire contract: views, events, payload schemas
-apps/server         Fastify + Socket.IO orchestration            (not yet written)
+apps/server         Fastify + Socket.IO orchestration
 apps/web            Vite + React client                          (not yet written)
 ```
+
+Inside `apps/server`, `Room` is deliberately **synchronous and timer-free**: it
+knows nothing of Socket.IO or `setTimeout`, so the whole lifecycle — joining,
+starting, moves, disconnection, grace expiry — is testable without a clock or a
+network. Timers live only in `RoomManager`, behind an injectable interface.
+
+The `game:event` feed (for animations and the in-game log) is **derived** by
+diffing the state before and after a move, never hand-emitted. An event therefore
+cannot contradict the state it describes.
 
 ### The client knows no rules
 
@@ -104,16 +114,17 @@ npm install
 npm run verify      # lint + typecheck + test, the same gate CI runs
 ```
 
-| Script                  | Purpose                                            |
-| ----------------------- | -------------------------------------------------- |
-| `npm run verify`        | Lint, typecheck and test — run this before pushing |
-| `npm test`              | Vitest once                                        |
-| `npm run test:watch`    | Vitest in watch mode                               |
-| `npm run test:coverage` | Coverage report into `coverage/`                   |
-| `npm run lint`          | ESLint with type-aware rules                       |
-| `npm run typecheck`     | Types across the whole repo, tests included        |
-| `npm run build`         | Emit `dist/` for the publishable packages          |
-| `npm run format`        | Prettier write                                     |
+| Script                     | Purpose                                            |
+| -------------------------- | -------------------------------------------------- |
+| `npm run verify`           | Lint, typecheck and test — run this before pushing |
+| `npm test`                 | Vitest once                                        |
+| `npm run test:watch`       | Vitest in watch mode                               |
+| `npm run test:coverage`    | Coverage report into `coverage/`                   |
+| `npm run lint`             | ESLint with type-aware rules                       |
+| `npm run typecheck`        | Types across the whole repo, tests included        |
+| `npm run build`            | Emit `dist/` for the publishable packages          |
+| `npm run format`           | Prettier write                                     |
+| `npm start -w @uno/server` | Run the built server (build first)                 |
 
 ### Testing approach
 
@@ -146,7 +157,7 @@ emit-only solution and excludes tests.
 - [x] Monorepo, toolchain, CI
 - [x] `packages/engine` — rules, seeded RNG, property tests
 - [x] `packages/protocol` — views, events, payload schemas
-- [ ] `apps/server` — rooms, seat sessions, reconnection, rate limiting
+- [x] `apps/server` — rooms, seat sessions, reconnection, rate limiting
 - [ ] `apps/web` — SVG cards, four-seat table, lobby, chat
 - [ ] Playwright end-to-end tests across multiple browser contexts
 - [ ] Dockerfile and deployment
