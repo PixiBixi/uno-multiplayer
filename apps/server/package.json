@@ -1,0 +1,29 @@
+{
+  "name": "@uno/server",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Authoritative UNO game server",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/index.js",
+  "scripts": {
+    "build": "tsc --build",
+    "start": "node dist/index.js",
+    "dev": "node --watch --enable-source-maps dist/index.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "^11.3.0",
+    "@fastify/helmet": "^13.1.0",
+    "@uno/engine": "*",
+    "@uno/protocol": "*",
+    "fastify": "^5.11.2",
+    "pino": "^10.3.1",
+    "socket.io": "^4.8.3",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "socket.io-client": "^4.8.3"
+  }
+}
