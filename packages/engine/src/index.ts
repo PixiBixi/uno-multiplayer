@@ -2,8 +2,9 @@ export const ENGINE_VERSION = '0.1.0'
 
 export { buildDeck, takeFromTop } from './deck.js'
 export { MAX_PLAYERS, MIN_PLAYERS, initGame, type InitError } from './init.js'
-export { UNO_PENALTY, applyMove } from './reducer.js'
+export { UNO_PENALTY, applyMove, skipDisconnectedTurn } from './reducer.js'
 export { activeCount, advance, isPlayable, legalMoves } from './rules.js'
+export { markSeatLeft, setSeatStatus } from './seats.js'
 export { nextInt, nextRandom, shuffle } from './rng.js'
 export {
   COLORS,

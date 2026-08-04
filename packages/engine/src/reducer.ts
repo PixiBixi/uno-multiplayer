@@ -171,3 +171,31 @@ export function applyMove(
       return applyPlay(state, seatIndex, move)
   }
 }
+
+/**
+ * Hands the turn past seats that are not active. The absent player takes the
+ * neutral action — swallow any debt, otherwise draw one — so the table never
+ * stalls on someone who is gone. Bounded: it stops as soon as the turn stops
+ * moving.
+ */
+export function skipDisconnectedTurn(state: GameState): GameState {
+  if (state.phase !== 'playing') return state
+
+  let next = state
+  for (let guard = 0; guard <= state.seats.length; guard++) {
+    const seat = next.seats[next.currentSeat]
+    if (seat === undefined || seat.status === 'active') break
+
+    const from = next.currentSeat
+    const debt = next.pendingDraw
+    next =
+      debt !== null
+        ? drawInto({ ...next, pendingDraw: null }, from, debt.amount)
+        : drawInto(next, from, 1)
+
+    const gaining = advance(next, from, 1)
+    if (gaining === from) break
+    next = beginTurn(next, gaining)
+  }
+  return next
+}

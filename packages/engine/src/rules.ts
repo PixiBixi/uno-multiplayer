@@ -35,7 +35,9 @@ export function activeCount(state: GameState): number {
  */
 export function advance(state: GameState, from: number, steps: number): number {
   const size = state.seats.length
-  if (activeCount(state) <= 1) return from
+  // Only bail when nobody at all is active. With a single active seat, landing
+  // on it is legitimate and terminates — the inner loop is bounded by `size`.
+  if (activeCount(state) === 0) return from
   let index = from
   for (let step = 0; step < steps; step++) {
     for (let guard = 0; guard < size; guard++) {
