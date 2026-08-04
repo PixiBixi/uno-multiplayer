@@ -1,0 +1,10 @@
+{
+  // Configuration de référence : couvre TOUT le dépôt, tests et fichiers de
+  // configuration inclus. C'est elle que lisent l'éditeur, ESLint (via le
+  // project service) et `npm run typecheck`. Elle n'émet rien.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": ["packages/*/src/**/*", "apps/*/src/**/*", "*.config.ts"]
+}

@@ -1,0 +1,5 @@
+{
+  // Solution de build : n'émet que le code de production, tests exclus.
+  "files": [],
+  "references": [{ "path": "packages/engine/tsconfig.build.json" }]
+}
