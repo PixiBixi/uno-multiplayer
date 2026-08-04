@@ -118,6 +118,26 @@ export class Room {
     return ok([])
   }
 
+  /**
+   * A fresh deal for the seats still present. The seed arrives as a parameter
+   * rather than being drawn here: a Room that draws its own randomness stops
+   * being reproducible, and every test would need a clock.
+   */
+  restart(bySeat: number, nextSeed: number): Result<GameEvent[], ErrorCode> {
+    if (this.game === null) return err('game_not_started')
+    if (this.game.phase !== 'finished') return err('game_already_started')
+    if (bySeat !== this.host) return err('not_host')
+
+    const active = this.members.filter((m) => m.status === 'active')
+    if (active.length < MIN_SEATS) return err('too_few_players')
+
+    const init = initGame({ names: active.map((m) => m.name), seed: nextSeed })
+    if (!init.okay) return err('too_few_players')
+
+    this.game = init.value
+    return ok([{ type: 'gameRestarted' }])
+  }
+
   viewFor(seat: number): PlayerView | null {
     if (this.game === null) return null
     return redactFor(this.game, seat)

@@ -59,6 +59,11 @@ export class RoomManager {
     return ok(room)
   }
 
+  /** The seed source, so a restart can draw one without owning randomness. */
+  nextSeed(): number {
+    return this.seedSource()
+  }
+
   get(code: string): Room | null {
     return this.rooms.get(code.toUpperCase()) ?? null
   }

@@ -25,6 +25,7 @@ export type GameEvent =
   | { type: 'seatReconnected'; seat: number }
   | { type: 'seatLeft'; seat: number }
   | { type: 'gameOver'; winner: number | null }
+  | { type: 'gameRestarted' }
 
 /**
  * An acknowledgement carrying no extra fields on success. Not
@@ -49,6 +50,7 @@ export type ClientToServer = {
     ack: Ack<{ seat: number }>,
   ) => void
   'game:start': (payload: Empty, ack: Ack) => void
+  'game:restart': (payload: Empty, ack: Ack) => void
   'game:move': (payload: { move: Move }, ack: Ack) => void
   'chat:send': (payload: { text: string }, ack: Ack) => void
 }
