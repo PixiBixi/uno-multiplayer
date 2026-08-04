@@ -122,7 +122,7 @@ type GameState = {
   drawPile: Card[]
   discardPile: Card[]     // le dessus est le dernier élément
   currentColor: Color     // distinct de la couleur de la carte du dessus (cas des jokers)
-  pendingDraw: { amount: number; kind: 'draw2' | 'draw4' } | null
+  pendingDraw: { amount: number; kind: 'draw2' | 'wild4' } | null
   rngState: number
   phase: 'playing' | 'finished'
   winner: number | null
@@ -212,7 +212,7 @@ type PlayerView = {
   opponents:  { seat: number; name: string; handCount: number; status: SeatStatus }[]
   discardTop: Card
   currentColor: Color
-  pendingDraw: { amount: number; kind: 'draw2' | 'draw4' } | null
+  pendingDraw: { amount: number; kind: 'draw2' | 'wild4' } | null
   currentSeat: number
   direction:  1 | -1
   drawPileCount: number
@@ -241,6 +241,10 @@ Chaque point ci-dessous était source d'ambiguïté ou de bug dans le prototype.
 **Carte de départ.** On prend la **première carte numérique en partant du dessus** du paquet mélangé ; les cartes action rencontrées avant elle restent en place dans la pioche. Déterministe, sans boucle, sans tirage aléatoire supplémentaire. Le prototype tirait un index aléatoire dans une boucle `while(true)` non bornée, avec un `94` codé en dur : gel de l'onglet possible, et index hors bornes si le paquet changeait.
 
 **Reverse à 2 joueurs actifs.** Il agit comme un **skip** (règle officielle) : le tour revient au joueur qui l'a posé. À 3 ou 4, il inverse `direction`. Le prototype traitait le reverse comme une carte numérique, donc sans aucun effet.
+
+**`pendingDraw.kind` reprend le `kind` de la carte** — `'draw2' | 'wild4'`, et non `'draw2' | 'draw4'`. La règle « strictement même type » devient ainsi une égalité directe `card.kind === pendingDraw.kind`, sans table de correspondance à maintenir.
+
+**Piocher volontairement termine le tour.** La carte piochée rejoint la main et la main passe au joueur suivant. Pas de sous-état « tu peux maintenant jouer la carte que tu viens de piocher » : ce confort aurait ajouté une phase intermédiaire à l'état, donc une branche supplémentaire dans toutes les fonctions de règle, pour un gain marginal.
 
 **Empilement — strictement même type.** Quand `pendingDraw !== null`, les seuls coups légaux pour le joueur dont c'est le tour sont :
 - jouer une carte du **même type** que `pendingDraw.kind` (+2 sur +2, +4 sur +4 — aucun croisement), ce qui incrémente `amount` de 2 ou 4 et passe la main ;
