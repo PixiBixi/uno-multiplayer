@@ -63,3 +63,42 @@ jobs:
           name: coverage
           path: coverage/
           retention-days: 7
+
+  e2e:
+    name: End to end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t uno-multiplayer:ci .
+      # Building proves nothing on its own: boot it and probe what it serves.
+      - name: Boot the image and probe it
+        run: |
+          docker run --rm -d --name uno-ci -p 5099:5050 uno-multiplayer:ci
+          for _ in $(seq 1 40); do
+            curl -sf http://127.0.0.1:5099/healthz >/dev/null && break
+            sleep 0.5
+          done
+          curl -sf http://127.0.0.1:5099/healthz
+          curl -sf http://127.0.0.1:5099/ | grep -q 'id="root"'
+          curl -sf 'http://127.0.0.1:5099/socket.io/?EIO=4&transport=polling' >/dev/null
+          test "$(docker exec uno-ci id -u)" != "0"
+          docker stop uno-ci

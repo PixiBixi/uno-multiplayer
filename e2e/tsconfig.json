@@ -1,0 +1,13 @@
+{
+  // End-to-end specs pass callbacks that run inside the browser, so they need
+  // DOM types — which the server-and-packages project deliberately does not
+  // have. Same reasoning as apps/web: different runtime, different project.
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler"
+  },
+  "include": ["**/*.ts"]
+}

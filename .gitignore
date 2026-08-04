@@ -7,3 +7,6 @@ coverage/
 .env.*
 !.env.example
 dist-types/
+playwright-report/
+test-results/
+.playwright/
