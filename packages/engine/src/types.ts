@@ -3,7 +3,7 @@ export const COLORS: readonly Color[] = ['R', 'G', 'B', 'Y'] as const
 
 export type NumberValue = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
 
-/** Identifiant unique d'une instance de carte, ex. `'7R#42'`. */
+/** Unique identifier for one card instance, e.g. `'7R#42'`. */
 export type CardId = string & { readonly __brand: 'CardId' }
 
 export type Card =
@@ -18,13 +18,13 @@ export type Seat = {
   name: string
   status: SeatStatus
   hand: Card[]
-  /** Remis à false au début de chaque tour de ce siège. */
+  /** Reset to false at the start of each of this seat's turns. */
   unoCalled: boolean
 }
 
 /**
- * Dette de pioche en cours. `kind` reprend littéralement le `kind` de la carte,
- * ce qui fait de la règle « strictement même type » une simple égalité.
+ * Outstanding draw debt. `kind` mirrors the card's own `kind`, which turns the
+ * "strictly same type" rule into a plain equality check.
  */
 export type PendingDraw = { amount: number; kind: 'draw2' | 'wild4' }
 
@@ -34,11 +34,11 @@ export type GameState = {
   seats: Seat[]
   currentSeat: number
   direction: 1 | -1
-  /** Le dessus de la pioche est le DERNIER élément. */
+  /** The top of the draw pile is the LAST element. */
   drawPile: Card[]
-  /** Le dessus de la défausse est le DERNIER élément. */
+  /** The top of the discard pile is the LAST element. */
   discardPile: Card[]
-  /** Distinct de la couleur de la carte du dessus : après un joker, elle diverge. */
+  /** Distinct from the top card's colour: after a wild the two diverge. */
   currentColor: Color
   pendingDraw: PendingDraw | null
   rngState: number

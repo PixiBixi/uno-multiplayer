@@ -14,8 +14,8 @@ const threeSeats = (hand0: Card[]) =>
 
 describe('number card', () => {
   it('sets the current colour and passes the turn', () => {
-    // Trois cartes en main : jouer n'en laisse pas une seule, donc la pénalité
-    // UNO n'interfère pas avec ce que ce test observe.
+    // Three cards in hand: playing one does not leave exactly one, so the UNO
+    // penalty does not interfere with what this test observes.
     const state = threeSeats([num('a', 'R', 3), num('x', 'R', 0), num('y', 'R', 7)])
     const next = apply(state, 0, { type: 'play', cardId: cid('a') })
     expect(next.currentColor).toBe('R')

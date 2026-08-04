@@ -1,9 +1,9 @@
 import { COLORS, type Card, type CardId, type NumberValue } from './types.js'
 
 /**
- * Composition officielle : par couleur un 0, deux de chaque 1-9, deux skip,
- * deux reverse, deux +2 (25 cartes), soit 100, plus 4 jokers et 4 +4 = 108.
- * Le dessus de la pioche est la FIN du tableau.
+ * Official composition: per colour one 0, two of each 1-9, two skips, two
+ * reverses, two draw-2s (25 cards), so 100, plus 4 wilds and 4 wild-4s = 108.
+ * The top of the pile is the END of the array.
  */
 export function buildDeck(): Card[] {
   const cards: Card[] = []
@@ -29,9 +29,9 @@ export function buildDeck(): Card[] {
 }
 
 /**
- * Prélève `count` cartes sur le dessus (fin du tableau), la première du
- * résultat étant la plus haute. Plafonne au disponible : jamais de trou
- * `undefined` dans le tableau retourné.
+ * Takes `count` cards off the top (end of the array), the first result being
+ * the topmost. Caps at what is available: never an `undefined` hole in the
+ * returned array.
  */
 export function takeFromTop(pile: readonly Card[], count: number): { taken: Card[]; rest: Card[] } {
   const n = Math.min(count, pile.length)

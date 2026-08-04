@@ -1,8 +1,8 @@
 import { COLORS, type Card, type GameState, type Move } from './types.js'
 
 export function isPlayable(card: Card, state: GameState): boolean {
-  // Une dette en cours ferme tout : seul le même type peut renchérir, quelle
-  // que soit la couleur en cours.
+  // An outstanding debt closes everything down: only the same type can raise,
+  // whatever the current colour is.
   if (state.pendingDraw !== null) return card.kind === state.pendingDraw.kind
 
   const top = state.discardPile[state.discardPile.length - 1]
@@ -28,10 +28,10 @@ export function activeCount(state: GameState): number {
 }
 
 /**
- * Siège actif situé `steps` crans plus loin dans le sens courant. Les sièges
- * non actifs sont sautés sans réindexation — c'est ce qui permet à un joueur
- * déconnecté de garder sa place. Si aucun autre siège n'est actif, retourne
- * `from`.
+ * The active seat `steps` places further along in the current direction.
+ * Inactive seats are skipped without reindexing — that is what lets a
+ * disconnected player keep their place. Returns `from` when no other seat is
+ * active.
  */
 export function advance(state: GameState, from: number, steps: number): number {
   const size = state.seats.length
@@ -56,8 +56,8 @@ export function legalMoves(state: GameState, seatIndex: number): Move[] {
   for (const card of seat.hand) {
     if (!isPlayable(card, state)) continue
     if (card.kind === 'wild' || card.kind === 'wild4') {
-      // Un coup par couleur : choisir une couleur devient choisir un coup, il
-      // n'y a donc aucune saisie libre à valider côté serveur.
+      // One move per colour: picking a colour becomes picking a move, so there
+      // is no free-form input for the server to validate.
       for (const chosenColor of COLORS) moves.push({ type: 'play', cardId: card.id, chosenColor })
     } else {
       moves.push({ type: 'play', cardId: card.id })
