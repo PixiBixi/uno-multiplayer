@@ -2178,4 +2178,1299 @@ git commit -m "feat(web): add hand with legal-move gating and colour picker"
 
 ---
 
-*Tasks 7 à 10 — chat et journal, fin de partie et assemblage de la table, Playwright, Docker et notes de déploiement — sont rédigées à la suite de ce document.*
+### Task 7: Chat et journal, un seul flux
+
+**Files:**
+- Create: `apps/web/src/components/ChatPanel.tsx`
+- Create: `apps/web/src/lib/describe-event.ts`
+- Test: `apps/web/src/components/ChatPanel.test.tsx`, `apps/web/src/lib/describe-event.test.ts`
+
+**Interfaces:**
+- Consumes: `FeedEntry` (Task 2), `GameEvent` (`@uno/protocol`)
+- Produces:
+  - `describeEvent(event: GameEvent, nameOf: (seat: number) => string): string | null`
+  - `<ChatPanel feed={FeedEntry[]} mySeat={number} nameOf={(seat) => string} onSend={(text: string) => void} />`
+
+Décision retenue aux maquettes : **un seul panneau, deux natures de message**. Lire deux flux concurrents pendant son tour est pire qu'en lire un. Deux points qui comptent : le compteur de non-lus ne compte **que le chat**, et ouvrir le panneau ne prend **pas** le focus.
+
+- [ ] **Step 1: Écrire les tests qui échouent**
+
+`apps/web/src/lib/describe-event.test.ts` :
+
+```ts
+import type { Card, CardId } from '@uno/engine'
+import { describe, expect, it } from 'vitest'
+import { describeEvent } from './describe-event.js'
+
+const nameOf = (seat: number) => ['Ana', 'Ben', 'Cleo'][seat] ?? `Seat ${seat}`
+const card: Card = { id: 'c' as CardId, kind: 'draw2', color: 'B' }
+
+describe('describeEvent', () => {
+  it('names the player who played a card', () => {
+    expect(describeEvent({ type: 'cardPlayed', seat: 1, card }, nameOf)).toBe(
+      'Ben played a Blue draw two',
+    )
+  })
+
+  it('uses singular and plural correctly for drawn cards', () => {
+    expect(describeEvent({ type: 'cardsDrawn', seat: 0, count: 1 }, nameOf)).toBe('Ana drew a card')
+    expect(describeEvent({ type: 'cardsDrawn', seat: 0, count: 4 }, nameOf)).toBe('Ana drew 4 cards')
+  })
+
+  it('describes the uno call and its penalty', () => {
+    expect(describeEvent({ type: 'unoCalled', seat: 2 }, nameOf)).toBe('Cleo called UNO')
+    expect(describeEvent({ type: 'unoPenalty', seat: 2, count: 2 }, nameOf)).toBe(
+      'Cleo forgot to call UNO and drew 2',
+    )
+  })
+
+  it('describes presence changes', () => {
+    expect(describeEvent({ type: 'seatDisconnected', seat: 1 }, nameOf)).toBe('Ben lost connection')
+    expect(describeEvent({ type: 'seatReconnected', seat: 1 }, nameOf)).toBe('Ben is back')
+    expect(describeEvent({ type: 'seatLeft', seat: 1 }, nameOf)).toBe('Ben left the game')
+  })
+
+  it('distinguishes a win from an abandoned game', () => {
+    expect(describeEvent({ type: 'gameOver', winner: 0 }, nameOf)).toBe('Ana wins')
+    expect(describeEvent({ type: 'gameOver', winner: null }, nameOf)).toBe(
+      'Game abandoned — not enough players',
+    )
+  })
+
+  it('describes a restart', () => {
+    expect(describeEvent({ type: 'gameRestarted' }, nameOf)).toBe('A new game was dealt')
+  })
+
+  it('falls back to a seat number for an unknown seat', () => {
+    expect(describeEvent({ type: 'unoCalled', seat: 9 }, nameOf)).toBe('Seat 9 called UNO')
+  })
+})
+```
+
+`apps/web/src/components/ChatPanel.test.tsx` :
+
+```tsx
+import type { FeedEntry } from '../hooks/game-reducer.js'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+import { ChatPanel } from './ChatPanel.js'
+
+const nameOf = (seat: number) => ['Ana', 'Ben'][seat] ?? `Seat ${seat}`
+
+const feed: FeedEntry[] = [
+  { id: 1, kind: 'event', event: { type: 'unoCalled', seat: 1 } },
+  { id: 2, kind: 'chat', seat: 1, name: 'Ben', text: 'close one' },
+  { id: 3, kind: 'chat', seat: 0, name: 'Ana', text: 'not really' },
+]
+
+const setup = (overrides: Partial<Parameters<typeof ChatPanel>[0]> = {}) => {
+  const props = { feed, mySeat: 0, nameOf, onSend: vi.fn(), ...overrides }
+  render(<ChatPanel {...props} />)
+  return props
+}
+
+describe('ChatPanel', () => {
+  it('interleaves chat and system lines in one stream', () => {
+    setup()
+    expect(screen.getByText(/called UNO/i)).toBeTruthy()
+    expect(screen.getByText('close one')).toBeTruthy()
+  })
+
+  it('marks system lines so they never read as speech', () => {
+    const { container } = setup()
+    expect(container.querySelectorAll('[data-system]')).toHaveLength(1)
+  })
+
+  it('attributes another player’s message', () => {
+    setup()
+    expect(screen.getByText('Ben')).toBeTruthy()
+  })
+
+  it('does not label your own messages with your name', () => {
+    setup()
+    expect(screen.queryByText('Ana')).toBeNull()
+  })
+
+  it('sends a trimmed message', async () => {
+    const { onSend } = setup()
+    await userEvent.type(screen.getByLabelText(/message the table/i), '  hello  ')
+    await userEvent.click(screen.getByRole('button', { name: /send/i }))
+    expect(onSend).toHaveBeenCalledWith('hello')
+  })
+
+  it('refuses to send an empty message', async () => {
+    const { onSend } = setup()
+    await userEvent.click(screen.getByRole('button', { name: /send/i }))
+    expect(onSend).not.toHaveBeenCalled()
+  })
+
+  it('clears the field after sending', async () => {
+    setup()
+    const field = screen.getByLabelText(/message the table/i)
+    await userEvent.type(field, 'hi{Enter}')
+    expect((field as HTMLInputElement).value).toBe('')
+  })
+
+  it('collapses and reopens', async () => {
+    setup()
+    await userEvent.click(screen.getByRole('button', { name: /collapse/i }))
+    expect(screen.queryByLabelText(/message the table/i)).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: /table/i }))
+    expect(screen.getByLabelText(/message the table/i)).toBeTruthy()
+  })
+
+  it('counts only chat as unread while collapsed', async () => {
+    const { rerender } = render(
+      <ChatPanel feed={[]} mySeat={0} nameOf={nameOf} onSend={vi.fn()} />,
+    )
+    await userEvent.click(screen.getByRole('button', { name: /collapse/i }))
+    rerender(<ChatPanel feed={feed} mySeat={0} nameOf={nameOf} onSend={vi.fn()} />)
+    // One chat line from Ben; the UNO event and Ana's own line do not count.
+    expect(screen.getByText('1')).toBeTruthy()
+  })
+
+  it('does not steal focus when opened', async () => {
+    setup()
+    await userEvent.click(screen.getByRole('button', { name: /collapse/i }))
+    await userEvent.click(screen.getByRole('button', { name: /table/i }))
+    expect(document.activeElement).not.toBe(screen.getByLabelText(/message the table/i))
+  })
+})
+```
+
+- [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
+
+Run: `npx vitest run apps/web/src/components/ChatPanel.test.tsx apps/web/src/lib/describe-event.test.ts`
+Expected: FAIL — les deux modules sont introuvables.
+
+- [ ] **Step 3: Implémenter la description des événements**
+
+`apps/web/src/lib/describe-event.ts` :
+
+```ts
+import type { Color } from '@uno/engine'
+import type { GameEvent } from '@uno/protocol'
+
+const COLOR_NAME: Record<Color, string> = { R: 'Red', G: 'Green', B: 'Blue', Y: 'Yellow' }
+
+function cardName(card: GameEvent extends { card: infer C } ? C : never): string {
+  switch (card.kind) {
+    case 'number':
+      return `${COLOR_NAME[card.color]} ${card.value}`
+    case 'skip':
+      return `${COLOR_NAME[card.color]} skip`
+    case 'reverse':
+      return `${COLOR_NAME[card.color]} reverse`
+    case 'draw2':
+      return `${COLOR_NAME[card.color]} draw two`
+    case 'wild':
+      return 'Wild'
+    case 'wild4':
+      return 'Wild draw four'
+  }
+}
+
+/**
+ * Turns a server event into a line a player understands. Written from the
+ * player's side of the screen: names, not seat indices, wherever one is known.
+ */
+export function describeEvent(event: GameEvent, nameOf: (seat: number) => string): string | null {
+  switch (event.type) {
+    case 'cardPlayed':
+      return `${nameOf(event.seat)} played a ${cardName(event.card)}`
+    case 'cardsDrawn':
+      return event.count === 1
+        ? `${nameOf(event.seat)} drew a card`
+        : `${nameOf(event.seat)} drew ${event.count} cards`
+    case 'unoCalled':
+      return `${nameOf(event.seat)} called UNO`
+    case 'unoPenalty':
+      return `${nameOf(event.seat)} forgot to call UNO and drew ${event.count}`
+    case 'seatDisconnected':
+      return `${nameOf(event.seat)} lost connection`
+    case 'seatReconnected':
+      return `${nameOf(event.seat)} is back`
+    case 'seatLeft':
+      return `${nameOf(event.seat)} left the game`
+    case 'gameOver':
+      return event.winner === null
+        ? 'Game abandoned — not enough players'
+        : `${nameOf(event.winner)} wins`
+    case 'gameRestarted':
+      return 'A new game was dealt'
+  }
+}
+```
+
+- [ ] **Step 4: Implémenter le panneau**
+
+`apps/web/src/components/ChatPanel.tsx` :
+
+```tsx
+import { MAX_CHAT_LENGTH } from '@uno/protocol'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
+import type { FeedEntry } from '../hooks/game-reducer.js'
+import { describeEvent } from '../lib/describe-event.js'
+
+const SEAT_PIGMENT = ['var(--red)', 'var(--blue)', 'var(--yellow)', 'var(--green)']
+
+type ChatPanelProps = {
+  feed: FeedEntry[]
+  mySeat: number
+  nameOf: (seat: number) => string
+  onSend: (text: string) => void
+}
+
+export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
+  const [open, setOpen] = useState(true)
+  const [draft, setDraft] = useState('')
+  const bodyRef = useRef<HTMLDivElement | null>(null)
+  const seenRef = useRef(0)
+  const [unread, setUnread] = useState(0)
+
+  /* Unread counts chat from other people only. A badge that ticks up every time
+     somebody draws a card trains people to ignore it. */
+  const chatCount = feed.filter((entry) => entry.kind === 'chat' && entry.seat !== mySeat).length
+
+  useEffect(() => {
+    if (open) {
+      seenRef.current = chatCount
+      setUnread(0)
+      return
+    }
+    setUnread(Math.max(0, chatCount - seenRef.current))
+  }, [chatCount, open])
+
+  useEffect(() => {
+    if (!open) return
+    const body = bodyRef.current
+    if (body !== null) body.scrollTop = body.scrollHeight
+  }, [feed, open])
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault()
+    const text = draft.trim()
+    if (text.length === 0) return
+    onSend(text)
+    setDraft('')
+  }
+
+  if (!open) {
+    return (
+      <button type="button" className="chat-tab" onClick={() => setOpen(true)}>
+        Table
+        {unread > 0 && <span className="unread">{unread}</span>}
+      </button>
+    )
+  }
+
+  return (
+    <section className="chat-panel" aria-label="Table chat and log">
+      <header className="chat-head">
+        <span>Table</span>
+        <button
+          type="button"
+          className="icon-btn"
+          onClick={() => setOpen(false)}
+          aria-label="Collapse the table panel"
+        >
+          <svg
+            width={16}
+            height={16}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2.4}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </button>
+      </header>
+
+      <div className="chat-body" ref={bodyRef}>
+        {feed.map((entry) => {
+          if (entry.kind === 'event') {
+            const text = describeEvent(entry.event, nameOf)
+            if (text === null) return null
+            return (
+              <p className="sys-line" data-system="" key={entry.id}>
+                {text}
+              </p>
+            )
+          }
+          const mine = entry.seat === mySeat
+          return (
+            <div className={mine ? 'msg msg-mine' : 'msg'} key={entry.id}>
+              <div className="msg-bubble">
+                {!mine && (
+                  <span className="msg-who" style={{ color: SEAT_PIGMENT[entry.seat % 4] }}>
+                    {entry.name}
+                  </span>
+                )}
+                <span>{entry.text}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* No autoFocus: stealing the keyboard mid-turn would break playing cards
+          by keyboard. */}
+      <form className="chat-foot" onSubmit={submit}>
+        <label className="visually-hidden" htmlFor="chat-input">
+          Message the table
+        </label>
+        <input
+          id="chat-input"
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          maxLength={MAX_CHAT_LENGTH}
+          autoComplete="off"
+          placeholder="Say something…"
+        />
+        <button type="submit" className="btn btn-primary">
+          Send
+        </button>
+      </form>
+    </section>
+  )
+}
+```
+
+- [ ] **Step 5: Ajouter les styles**
+
+Ajouter à `apps/web/src/styles/app.css` :
+
+```css
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.chat-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  max-height: 420px;
+  border-radius: var(--r-md);
+  background: var(--felt);
+  border: 1px solid var(--felt-edge);
+  color: var(--bone);
+}
+
+.chat-head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--felt-edge);
+  font-family: var(--display);
+  font-size: var(--step--1);
+}
+
+.chat-head > button {
+  margin-left: auto;
+}
+
+.icon-btn {
+  appearance: none;
+  background: none;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-sm);
+}
+
+.icon-btn:hover {
+  background: rgb(245 241 232 / 0.12);
+}
+
+.chat-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.9rem;
+  overflow-y: auto;
+  font-size: var(--step--1);
+}
+
+.msg {
+  display: flex;
+}
+
+.msg-mine {
+  flex-direction: row-reverse;
+}
+
+.msg-bubble {
+  max-width: 82%;
+  padding: 0.4rem 0.65rem;
+  border-radius: 12px 12px 12px 3px;
+  background: rgb(245 241 232 / 0.1);
+}
+
+.msg-mine .msg-bubble {
+  border-radius: 12px 12px 3px 12px;
+  background: color-mix(in srgb, var(--green) 45%, transparent);
+}
+
+.msg-who {
+  display: block;
+  font-weight: 700;
+  font-size: 0.72rem;
+  margin-bottom: 0.1rem;
+}
+
+.sys-line {
+  margin: 0;
+  font-size: 0.74rem;
+  opacity: 0.66;
+}
+
+.chat-foot {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem;
+  border-top: 1px solid var(--felt-edge);
+}
+
+.chat-foot input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: var(--step--1);
+  min-height: 44px;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgb(245 241 232 / 0.22);
+  background: rgb(0 0 0 / 0.3);
+  color: var(--bone);
+}
+
+.chat-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  background: var(--felt);
+  border: 1px solid var(--felt-edge);
+  color: var(--bone);
+  font-family: var(--display);
+  font-size: var(--step--1);
+  cursor: pointer;
+}
+
+.unread {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--red);
+  color: var(--bone);
+  display: grid;
+  place-items: center;
+  font-family: var(--data);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+```
+
+- [ ] **Step 6: Lancer les tests et la vérification complète**
+
+Run: `npx vitest run apps/web/src/components/ChatPanel.test.tsx apps/web/src/lib/describe-event.test.ts && npm run verify`
+Expected: 18 tests PASS pour ces deux fichiers, `verify` en code 0.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add apps/web/src apps/web/src/styles/app.css
+git commit -m "feat(web): add merged chat and game log panel"
+```
+
+---
+
+### Task 8: Table, fin de partie, assemblage de l'application
+
+**Files:**
+- Create: `apps/web/src/components/GameOver.tsx`, `apps/web/src/components/Toaster.tsx`
+- Create: `apps/web/src/screens/Table.tsx`
+- Modify: `apps/web/src/App.tsx`
+- Test: `apps/web/src/components/GameOver.test.tsx`, `apps/web/src/screens/Table.test.tsx`
+
+**Interfaces:**
+- Consumes: tout ce qui précède
+- Produces:
+  - `<GameOver view={PlayerView} nameOf={(seat) => string} isHost={boolean} onRestart={() => void} onLeave={() => void} />`
+  - `<Toaster toasts={Toast[]} onDismiss={(id: number) => void} />`
+  - `<Table view={PlayerView} mySeat={number} … />`
+  - `App` assemble `useGameSocket` et les trois écrans
+
+Les sièges sont disposés **relativement au spectateur** : ta main est toujours en bas. Le moteur garde des indices stables, donc c'est le client qui fait tourner l'arrangement, pas la donnée.
+
+- [ ] **Step 1: Écrire les tests qui échouent**
+
+`apps/web/src/components/GameOver.test.tsx` :
+
+```tsx
+import type { Card, CardId } from '@uno/engine'
+import type { PlayerView } from '@uno/protocol'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+import { GameOver } from './GameOver.js'
+
+const top: Card = { id: 't' as CardId, kind: 'number', color: 'R', value: 3 }
+const nameOf = (seat: number) => ['You', 'Ben', 'Cleo'][seat] ?? `Seat ${seat}`
+
+const finished = (winner: number | null): PlayerView =>
+  ({
+    you: { seat: 0, hand: [top, top], legalMoves: [] },
+    opponents: [
+      { seat: 1, name: 'Ben', handCount: 5, status: 'active' },
+      { seat: 2, name: 'Cleo', handCount: 0, status: 'active' },
+    ],
+    discardTop: top,
+    currentColor: 'R',
+    pendingDraw: null,
+    currentSeat: 0,
+    direction: 1,
+    drawPileCount: 10,
+    phase: 'finished',
+    winner,
+  }) as PlayerView
+
+describe('GameOver', () => {
+  it('names the winner', () => {
+    render(
+      <GameOver view={finished(2)} nameOf={nameOf} isHost onRestart={vi.fn()} onLeave={vi.fn()} />,
+    )
+    expect(screen.getByRole('heading', { name: /cleo wins/i })).toBeTruthy()
+  })
+
+  it('lists final counts, lowest first', () => {
+    render(
+      <GameOver view={finished(2)} nameOf={nameOf} isHost onRestart={vi.fn()} onLeave={vi.fn()} />,
+    )
+    const rows = screen.getAllByRole('listitem').map((row) => row.textContent ?? '')
+    expect(rows[0]).toMatch(/cleo/i)
+    expect(rows[rows.length - 1]).toMatch(/ben/i)
+  })
+
+  it('says the game was abandoned when there is no winner', () => {
+    render(
+      <GameOver
+        view={finished(null)}
+        nameOf={nameOf}
+        isHost={false}
+        onRestart={vi.fn()}
+        onLeave={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole('heading', { name: /abandoned/i })).toBeTruthy()
+    expect(screen.queryByRole('list')).toBeNull()
+  })
+
+  it('offers a restart to the host', async () => {
+    const onRestart = vi.fn()
+    render(
+      <GameOver view={finished(2)} nameOf={nameOf} isHost onRestart={onRestart} onLeave={vi.fn()} />,
+    )
+    await userEvent.click(screen.getByRole('button', { name: /play again/i }))
+    expect(onRestart).toHaveBeenCalledTimes(1)
+  })
+
+  it('tells a guest who can restart instead of showing a dead button', () => {
+    render(
+      <GameOver
+        view={finished(2)}
+        nameOf={nameOf}
+        isHost={false}
+        onRestart={vi.fn()}
+        onLeave={vi.fn()}
+      />,
+    )
+    expect(screen.queryByRole('button', { name: /play again/i })).toBeNull()
+    expect(screen.getByText(/host/i)).toBeTruthy()
+  })
+
+  it('can always leave', async () => {
+    const onLeave = vi.fn()
+    render(
+      <GameOver view={finished(null)} nameOf={nameOf} isHost onRestart={vi.fn()} onLeave={onLeave} />,
+    )
+    await userEvent.click(screen.getByRole('button', { name: /leave|lobby/i }))
+    expect(onLeave).toHaveBeenCalledTimes(1)
+  })
+})
+```
+
+`apps/web/src/screens/Table.test.tsx` :
+
+```tsx
+import type { Card, CardId } from '@uno/engine'
+import type { PlayerView } from '@uno/protocol'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { describe, expect, it, vi } from 'vitest'
+import { Table } from './Table.js'
+
+const top: Card = { id: 'top' as CardId, kind: 'number', color: 'R', value: 3 }
+const mine: Card = { id: 'mine' as CardId, kind: 'number', color: 'R', value: 5 }
+
+const viewWith = (overrides: Partial<PlayerView> = {}): PlayerView =>
+  ({
+    you: { seat: 0, hand: [mine], legalMoves: [{ type: 'play', cardId: mine.id }, { type: 'draw' }] },
+    opponents: [
+      { seat: 1, name: 'Ben', handCount: 4, status: 'active' },
+      { seat: 2, name: 'Cleo', handCount: 2, status: 'active' },
+      { seat: 3, name: 'Dan', handCount: 7, status: 'active' },
+    ],
+    discardTop: top,
+    currentColor: 'R',
+    pendingDraw: null,
+    currentSeat: 0,
+    direction: 1,
+    drawPileCount: 20,
+    phase: 'playing',
+    winner: null,
+    ...overrides,
+  }) as PlayerView
+
+const setup = (view: PlayerView) => {
+  const props = {
+    view,
+    lobby: null,
+    feed: [],
+    toasts: [],
+    onPlay: vi.fn(),
+    onRestart: vi.fn(),
+    onLeave: vi.fn(),
+    onSend: vi.fn(),
+    onDismissToast: vi.fn(),
+  }
+  render(<Table {...props} />)
+  return props
+}
+
+describe('Table', () => {
+  it('shows every opponent', () => {
+    setup(viewWith())
+    for (const name of ['Ben', 'Cleo', 'Dan']) expect(screen.getByText(name)).toBeTruthy()
+  })
+
+  it('plays a card from your hand', async () => {
+    const { onPlay } = setup(viewWith())
+    await userEvent.click(screen.getByRole('button', { name: /red 5/i }))
+    expect(onPlay).toHaveBeenCalledWith({ type: 'play', cardId: mine.id })
+  })
+
+  it('enables draw only when it is a legal move', async () => {
+    const { onPlay } = setup(viewWith())
+    await userEvent.click(screen.getByRole('button', { name: /draw/i }))
+    expect(onPlay).toHaveBeenCalledWith({ type: 'draw' })
+  })
+
+  it('disables draw when it is not your turn', () => {
+    setup(viewWith({ currentSeat: 1, you: { seat: 0, hand: [mine], legalMoves: [] } } as Partial<PlayerView>))
+    expect(screen.getByRole('button', { name: /draw/i })).toHaveProperty('disabled', true)
+  })
+
+  it('offers UNO only when calling it is legal', () => {
+    setup(viewWith())
+    expect(screen.queryByRole('button', { name: /uno/i })).toBeNull()
+  })
+
+  it('shows the UNO control when the move is offered', async () => {
+    const { onPlay } = setup(
+      viewWith({
+        you: { seat: 0, hand: [mine, mine], legalMoves: [{ type: 'callUno' }] },
+      } as Partial<PlayerView>),
+    )
+    await userEvent.click(screen.getByRole('button', { name: /uno/i }))
+    expect(onPlay).toHaveBeenCalledWith({ type: 'callUno' })
+  })
+
+  it('labels the accept-draw control with the debt it costs', () => {
+    setup(
+      viewWith({
+        pendingDraw: { amount: 4, kind: 'draw2' },
+        you: { seat: 0, hand: [mine], legalMoves: [{ type: 'acceptDraw' }] },
+      } as Partial<PlayerView>),
+    )
+    expect(screen.getByRole('button', { name: /take 4/i })).toBeTruthy()
+  })
+
+  it('covers the table with the end screen once finished', () => {
+    setup(viewWith({ phase: 'finished', winner: 1 }))
+    expect(screen.getByRole('heading', { name: /wins/i })).toBeTruthy()
+  })
+})
+```
+
+- [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
+
+Run: `npx vitest run apps/web/src/components/GameOver.test.tsx apps/web/src/screens/Table.test.tsx`
+Expected: FAIL — les modules sont introuvables.
+
+- [ ] **Step 3: Implémenter la fin de partie**
+
+`apps/web/src/components/GameOver.tsx` :
+
+```tsx
+import type { PlayerView } from '@uno/protocol'
+
+type GameOverProps = {
+  view: PlayerView
+  nameOf: (seat: number) => string
+  isHost: boolean
+  onRestart: () => void
+  onLeave: () => void
+}
+
+export function GameOver({ view, nameOf, isHost, onRestart, onLeave }: GameOverProps) {
+  const abandoned = view.winner === null
+
+  /* Final counts come from fields that already exist. Nobody's actual cards are
+     revealed, even after the game ends, so this needs no protocol change. */
+  const standings = [
+    { seat: view.you.seat, count: view.you.hand.length },
+    ...view.opponents.map((opponent) => ({ seat: opponent.seat, count: opponent.handCount })),
+  ].sort((a, b) => a.count - b.count)
+
+  return (
+    <div className="over-veil">
+      <div className="over-card" role="dialog" aria-modal="true">
+        {abandoned ? (
+          <>
+            <h2>Game abandoned</h2>
+            <p className="hint">
+              A game needs two players, so this one ends with no winner.
+            </p>
+          </>
+        ) : (
+          <>
+            <h2>{nameOf(view.winner ?? -1)} wins</h2>
+            <ul className="standings">
+              {standings.map((row) => (
+                <li key={row.seat} className={row.count === 0 ? 'standing standing-won' : 'standing'}>
+                  <span>{nameOf(row.seat)}</span>
+                  <span className="standing-count">{row.count}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+
+        <div className="over-actions">
+          {isHost ? (
+            <button type="button" className="btn btn-primary" onClick={onRestart}>
+              Play again
+            </button>
+          ) : (
+            <p className="hint">Waiting for the host to deal again.</p>
+          )}
+          <button type="button" className="btn" onClick={onLeave}>
+            Leave table
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 4: Implémenter les toasts**
+
+`apps/web/src/components/Toaster.tsx` :
+
+```tsx
+import type { Toast } from '../hooks/game-reducer.js'
+
+type ToasterProps = {
+  toasts: Toast[]
+  onDismiss: (id: number) => void
+}
+
+/** Live region, not a modal: a message must never block the game thread the way
+ *  the prototype's `alert()` did. */
+export function Toaster({ toasts, onDismiss }: ToasterProps) {
+  return (
+    <div className="toaster" role="status" aria-live="polite">
+      {toasts.map((toast) => (
+        <div className={`toast toast-${toast.tone}`} key={toast.id}>
+          <div>
+            <b>{toast.title}</b>
+            <span>{toast.detail}</span>
+          </div>
+          <button
+            type="button"
+            className="icon-btn"
+            onClick={() => onDismiss(toast.id)}
+            aria-label={`Dismiss: ${toast.title}`}
+          >
+            <svg
+              width={14}
+              height={14}
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={2.6}
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M18 6 6 18M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      ))}
+    </div>
+  )
+}
+```
+
+- [ ] **Step 5: Implémenter la table**
+
+`apps/web/src/screens/Table.tsx` :
+
+```tsx
+import type { Move } from '@uno/engine'
+import type { LobbyView, PlayerView } from '@uno/protocol'
+import { CentreStack } from '../components/CentreStack.js'
+import { ChatPanel } from '../components/ChatPanel.js'
+import { GameOver } from '../components/GameOver.js'
+import { Hand } from '../components/Hand.js'
+import { Seat } from '../components/Seat.js'
+import { Toaster } from '../components/Toaster.js'
+import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
+
+type TableProps = {
+  view: PlayerView
+  lobby: LobbyView | null
+  feed: FeedEntry[]
+  toasts: Toast[]
+  onPlay: (move: Move) => void
+  onRestart: () => void
+  onLeave: () => void
+  onSend: (text: string) => void
+  onDismissToast: (id: number) => void
+}
+
+/** Seats are laid out relative to the viewer: your hand is always at the bottom
+ *  edge. The engine keeps seat numbers stable, so the client rotates the
+ *  arrangement rather than the data. */
+const AREAS = ['west', 'north', 'east'] as const
+
+export function Table({
+  view,
+  lobby,
+  feed,
+  toasts,
+  onPlay,
+  onRestart,
+  onLeave,
+  onSend,
+  onDismissToast,
+}: TableProps) {
+  const myTurn = view.currentSeat === view.you.seat
+  const canDraw = view.you.legalMoves.some((move) => move.type === 'draw')
+  const acceptDraw = view.you.legalMoves.find((move) => move.type === 'acceptDraw')
+  const canCallUno = view.you.legalMoves.some((move) => move.type === 'callUno')
+
+  const nameOf = (seat: number): string => {
+    if (seat === view.you.seat) return 'You'
+    const opponent = view.opponents.find((candidate) => candidate.seat === seat)
+    if (opponent !== undefined) return opponent.name
+    return lobby?.seats.find((candidate) => candidate.seat === seat)?.name ?? `Seat ${seat}`
+  }
+
+  const isHost = lobby !== null && lobby.hostSeat === view.you.seat
+
+  return (
+    <main className="table-screen">
+      <div className="table-surface">
+        <div className="table-grid">
+          {view.opponents.slice(0, 3).map((opponent, index) => (
+            <div className={`area-${AREAS[index] ?? 'north'}`} key={opponent.seat}>
+              <Seat
+                name={opponent.name}
+                handCount={opponent.handCount}
+                status={opponent.status}
+                isTurn={view.currentSeat === opponent.seat}
+                orientation={index === 1 ? 'horizontal' : 'vertical'}
+              />
+            </div>
+          ))}
+
+          <div className="area-centre">
+            <CentreStack view={view} />
+          </div>
+
+          <div className="area-south">
+            <div className="controls">
+              {acceptDraw !== undefined ? (
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => onPlay(acceptDraw)}
+                >
+                  Take {view.pendingDraw?.amount ?? 0}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn"
+                  disabled={!canDraw}
+                  onClick={() => onPlay({ type: 'draw' })}
+                >
+                  Draw card
+                </button>
+              )}
+              {/* The UNO control only exists when calling it is a legal move. */}
+              {canCallUno && (
+                <button
+                  type="button"
+                  className="btn btn-uno"
+                  onClick={() => onPlay({ type: 'callUno' })}
+                >
+                  UNO!
+                </button>
+              )}
+            </div>
+
+            <Hand cards={view.you.hand} legalMoves={view.you.legalMoves} onPlay={onPlay} />
+
+            <p className={myTurn ? 'plate plate-turn' : 'plate'}>
+              <span className="presence presence-active" aria-hidden="true" />
+              <span className="plate-name">You</span>
+              <span className="plate-count">{view.you.hand.length}</span>
+              {myTurn && <span className="plate-note">your turn</span>}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <ChatPanel feed={feed} mySeat={view.you.seat} nameOf={nameOf} onSend={onSend} />
+      <Toaster toasts={toasts} onDismiss={onDismissToast} />
+
+      {view.phase === 'finished' && (
+        <GameOver
+          view={view}
+          nameOf={nameOf}
+          isHost={isHost}
+          onRestart={onRestart}
+          onLeave={onLeave}
+        />
+      )}
+    </main>
+  )
+}
+```
+
+- [ ] **Step 6: Assembler l'application**
+
+`apps/web/src/App.tsx` :
+
+```tsx
+import { readRoomCodeFromUrl } from './lib/room-url.js'
+import { Home } from './screens/Home.js'
+import { Lobby } from './screens/Lobby.js'
+import { Table } from './screens/Table.js'
+import { Toaster } from './components/Toaster.js'
+import { useGameSocket } from './hooks/useGameSocket.js'
+
+/** The screen is a function of what the server pushed. There is no client-side
+ *  navigation state to fall out of step with the game. */
+export function App() {
+  const { state, actions } = useGameSocket()
+
+  if (state.connection === 'lost') {
+    return (
+      <main className="home">
+        <h1>UNO</h1>
+        <p className="banner banner-bad" role="alert">
+          Connection lost. Trying to reconnect…
+        </p>
+      </main>
+    )
+  }
+
+  if (state.screen === 'table' && state.view !== null) {
+    return (
+      <Table
+        view={state.view}
+        lobby={state.lobby}
+        feed={state.feed}
+        toasts={state.toasts}
+        onPlay={actions.playMove}
+        onRestart={actions.restartGame}
+        onLeave={actions.leave}
+        onSend={actions.sendChat}
+        onDismissToast={actions.dismissToast}
+      />
+    )
+  }
+
+  if (state.screen === 'lobby' && state.lobby !== null && state.seat !== null) {
+    return (
+      <>
+        <Lobby
+          lobby={state.lobby}
+          mySeat={state.seat}
+          onStart={actions.startGame}
+          onLeave={actions.leave}
+        />
+        <Toaster toasts={state.toasts} onDismiss={actions.dismissToast} />
+      </>
+    )
+  }
+
+  return (
+    <Home
+      onCreate={actions.createRoom}
+      onJoin={actions.joinRoom}
+      error={state.error}
+      prefilledCode={readRoomCodeFromUrl()}
+    />
+  )
+}
+```
+
+Remplacer le test `apps/web/src/App.test.tsx` du plan C1, devenu obsolète — `App` monte désormais une socket. Le remplacer par :
+
+```tsx
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
+
+vi.mock('socket.io-client', () => ({
+  io: () => ({ on: vi.fn(), off: vi.fn(), emit: vi.fn(), disconnect: vi.fn() }),
+}))
+
+const { App } = await import('./App.js')
+
+describe('App', () => {
+  it('starts on the home screen', () => {
+    render(<App />)
+    expect(screen.getByRole('heading', { name: /uno/i })).toBeTruthy()
+  })
+})
+```
+
+- [ ] **Step 7: Ajouter les styles de table et de fin**
+
+Ajouter à `apps/web/src/styles/app.css` :
+
+```css
+.table-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: clamp(0.75rem, 3vw, 1.5rem);
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.table-surface {
+  position: relative;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--felt-edge);
+  background: radial-gradient(ellipse 80% 60% at 50% 45%, var(--felt-edge), var(--felt) 70%);
+  color: var(--bone);
+  padding: clamp(1rem, 3vw, 1.75rem);
+}
+
+.table-grid {
+  display: grid;
+  grid-template-areas:
+    '.    north .'
+    'west centre east'
+    '.    south .';
+  grid-template-columns: minmax(56px, 0.7fr) 1.6fr minmax(56px, 0.7fr);
+  gap: clamp(0.5rem, 2vw, 1.25rem);
+  align-items: center;
+  justify-items: center;
+  min-height: 430px;
+}
+
+.area-north {
+  grid-area: north;
+}
+.area-west {
+  grid-area: west;
+}
+.area-east {
+  grid-area: east;
+}
+.area-centre {
+  grid-area: centre;
+}
+.area-south {
+  grid-area: south;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.controls {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.btn-uno {
+  background: var(--red);
+  border-color: transparent;
+  color: var(--bone);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.over-veil {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  border-radius: var(--r-lg);
+  background: rgb(8 18 15 / 0.82);
+}
+
+.over-card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: clamp(1.25rem, 4vw, 2rem);
+  text-align: center;
+  border-radius: var(--r-md);
+  background: var(--felt);
+  border: 1px solid var(--felt-edge);
+  color: var(--bone);
+  box-shadow: 0 24px 48px -12px rgb(0 0 0 / 0.7);
+}
+
+.standings {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  text-align: left;
+}
+
+.standing {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--r-sm);
+  background: rgb(245 241 232 / 0.06);
+  font-size: var(--step--1);
+}
+
+.standing-won {
+  background: color-mix(in srgb, var(--green) 30%, transparent);
+  font-weight: 600;
+}
+
+.standing-count {
+  margin-left: auto;
+  font-family: var(--data);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.over-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.toaster {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: min(360px, calc(100vw - 2rem));
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  padding: 0.7rem 0.5rem 0.7rem 1rem;
+  border-radius: var(--r-md);
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-left: 4px solid var(--accent);
+  font-size: var(--step--1);
+}
+
+.toast b {
+  display: block;
+  font-family: var(--display);
+}
+
+.toast-warn {
+  border-left-color: var(--yellow);
+}
+.toast-bad {
+  border-left-color: var(--red);
+}
+
+@media (max-width: 620px) {
+  .table-grid {
+    grid-template-areas:
+      'north'
+      'centre'
+      'south';
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  /* Below this width three fanned side seats do not fit; they collapse into the
+     north row rather than squeezing the centre out of the viewport. */
+  .area-west,
+  .area-east {
+    grid-area: north;
+  }
+}
+```
+
+- [ ] **Step 8: Lancer les tests et la vérification complète**
+
+Run: `npx vitest run apps/web && npm run verify && npm run build`
+Expected: tous les tests du client PASS, `verify` et `build` en code 0.
+
+- [ ] **Step 9: Commit**
+
+```bash
+git add apps/web/src
+git commit -m "feat(web): assemble table, end-of-game screen and app shell"
+```
+
+---
+
+*Tasks 9 et 10 — Playwright multi-contextes, Dockerfile et notes de déploiement — sont rédigées à la suite de ce document.*
