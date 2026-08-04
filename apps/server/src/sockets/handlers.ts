@@ -66,8 +66,14 @@ export function registerSocketHandlers(
   })
 
   const presences = new Map<string, Presence>()
-  const moveLimiter = createRateLimiter({ capacity: 20, refillPerSecond: 2 })
-  const chatLimiter = createRateLimiter({ capacity: 5, refillPerSecond: 0.5 })
+  const moveLimiter = createRateLimiter({
+    capacity: config.moveBurst,
+    refillPerSecond: config.movePerSecond,
+  })
+  const chatLimiter = createRateLimiter({
+    capacity: config.chatBurst,
+    refillPerSecond: config.chatPerSecond,
+  })
 
   /** Pushes every connected seat its own redacted view. */
   const broadcastViews = (room: Room): void => {
@@ -193,6 +199,29 @@ export function registerSocketHandlers(
           return
         }
         ack({ ok: true })
+        broadcastLobby(presence.room)
+        broadcastViews(presence.room)
+      })
+    })
+
+    socket.on('game:restart', (payload, ack) => {
+      attempt(ack, () => {
+        if (parsePayload(emptyPayloadSchema, payload) === null) {
+          ack({ ok: false, error: 'invalid_payload' })
+          return
+        }
+        const presence = presences.get(socket.id)
+        if (presence === undefined) {
+          ack({ ok: false, error: 'room_not_found' })
+          return
+        }
+        const restarted = presence.room.restart(presence.seat, rooms.nextSeed())
+        if (!restarted.okay) {
+          ack({ ok: false, error: restarted.error })
+          return
+        }
+        ack({ ok: true })
+        broadcastEvents(presence.room, restarted.value)
         broadcastLobby(presence.room)
         broadcastViews(presence.room)
       })

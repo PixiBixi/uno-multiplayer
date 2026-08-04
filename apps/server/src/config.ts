@@ -8,6 +8,14 @@ const envSchema = z.object({
   CORS_ORIGIN: z.string().default(''),
   GRACE_PERIOD_MS: z.coerce.number().int().min(0).default(60_000),
   MAX_ROOMS: z.coerce.number().int().min(1).default(500),
+  /** Path to the built client. Empty means serve nothing (API only). */
+  STATIC_ROOT: z.string().default(''),
+  /** Token bucket for game moves. Generous for a human, hostile to a script. */
+  MOVE_BURST: z.coerce.number().int().min(1).default(20),
+  MOVE_PER_SECOND: z.coerce.number().min(0.1).default(2),
+  /** Chat is tighter: flooding it costs everyone else attention. */
+  CHAT_BURST: z.coerce.number().int().min(1).default(5),
+  CHAT_PER_SECOND: z.coerce.number().min(0.1).default(0.5),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 })
 
@@ -20,6 +28,11 @@ export type Config = {
   corsOrigins: string[]
   gracePeriodMs: number
   maxRooms: number
+  staticRoot: string | null
+  moveBurst: number
+  movePerSecond: number
+  chatBurst: number
+  chatPerSecond: number
   logLevel: LogLevel
 }
 
@@ -38,6 +51,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
       .filter((origin) => origin.length > 0),
     gracePeriodMs: parsed.GRACE_PERIOD_MS,
     maxRooms: parsed.MAX_ROOMS,
+    staticRoot: parsed.STATIC_ROOT.trim().length > 0 ? parsed.STATIC_ROOT.trim() : null,
+    moveBurst: parsed.MOVE_BURST,
+    movePerSecond: parsed.MOVE_PER_SECOND,
+    chatBurst: parsed.CHAT_BURST,
+    chatPerSecond: parsed.CHAT_PER_SECOND,
     logLevel: parsed.LOG_LEVEL,
   }
 }
