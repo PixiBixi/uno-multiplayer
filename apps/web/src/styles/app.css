@@ -313,8 +313,39 @@ h3 {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 1100px;
+  max-width: 1500px;
   margin: 0 auto;
+}
+
+/* Stacked, the chat panel ended up taller than the felt itself. Past this width
+   it becomes a side rail so the table gets the room it needs to be played on. */
+@media (min-width: 1000px) {
+  .table-screen {
+    flex-direction: row;
+    align-items: stretch;
+    /* Fill the window rather than leaving a third of a desktop screen empty
+       below the felt. The padding on #root is the only thing subtracted. */
+    min-height: calc(100dvh - 2 * clamp(0.75rem, 3vw, 1.5rem));
+  }
+
+  .table-screen > .table-surface > .table-grid {
+    height: 100%;
+  }
+
+  .table-screen > .table-surface {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .table-screen > .chat-panel {
+    flex: 0 0 clamp(280px, 24vw, 360px);
+    max-height: none;
+  }
+
+  .table-screen > .chat-tab {
+    flex: 0 0 auto;
+    align-self: flex-start;
+  }
 }
 
 .table-surface {
@@ -329,14 +360,16 @@ h3 {
 .table-grid {
   display: grid;
   grid-template-areas:
-    '.    north .'
-    'west centre east'
-    '.    south .';
+    '.     north  .'
+    'west  centre east'
+    'south south  south';
   grid-template-columns: minmax(56px, 0.7fr) 1.6fr minmax(56px, 0.7fr);
   gap: clamp(0.5rem, 2vw, 1.25rem);
   align-items: center;
   justify-items: center;
-  min-height: 430px;
+  /* Scales with the viewport instead of sitting at a fixed 430px, which left
+     most of a desktop screen empty. */
+  min-height: clamp(380px, 58vh, 680px);
 }
 
 .area-north {
@@ -523,19 +556,30 @@ h3 {
 /* ---------- Hand and colour picker ---------- */
 
 .hand {
+  /* One knob for card size, so the overlap can stay proportional. At 68px with a
+     flat -18px the right fifth of every card was hidden. */
+  --card-w: clamp(76px, 7.5vw, 108px);
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
+  row-gap: 0.5rem;
   padding-top: 0.5rem;
 }
 
 .hand-card {
-  width: 68px;
+  width: var(--card-w);
   flex: none;
 }
 
 .hand-card + .hand-card {
-  margin-left: -18px;
+  margin-left: calc(var(--card-w) * -0.17);
+}
+
+/* Lifting a card on hover must not leave it behind its neighbour. */
+.hand-card:hover,
+.hand-card:focus-within {
+  position: relative;
+  z-index: 1;
 }
 
 .picker-veil {
@@ -590,6 +634,49 @@ h3 {
   transform: translateY(-3px);
 }
 
+/* ---------- Hand sort ---------- */
+
+.sort-control {
+  display: inline-flex;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.28);
+  border: 1px solid rgb(245 241 232 / 0.18);
+}
+
+.sort-btn {
+  appearance: none;
+  font: inherit;
+  font-family: var(--display);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  /* 44px tall even though it is a secondary control: a tap target is a tap
+     target. The width stays tight so the row does not dominate the felt. */
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border: 0;
+  border-radius: 999px;
+  background: none;
+  color: rgb(245 241 232 / 0.72);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.sort-btn:hover {
+  color: var(--bone);
+  background: rgb(245 241 232 / 0.1);
+}
+
+.sort-btn[aria-pressed='true'] {
+  background: rgb(245 241 232 / 0.9);
+  color: var(--felt);
+  font-weight: 600;
+}
+
 /* ---------- Chat and log ---------- */
 
 .chat-panel {
@@ -618,8 +705,12 @@ h3 {
 }
 
 .chat-body {
+  /* Grows to fill the panel. Without this an empty log left the input stranded
+     under the header with a tall void beneath it. */
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   gap: 0.55rem;
   padding: 0.9rem;
   overflow-y: auto;

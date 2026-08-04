@@ -1,7 +1,7 @@
 import type { Card as CardData, CardId, Move } from '@uno/engine'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Hand, movesForCard } from './Hand.js'
 
 const id = (value: string) => value as CardId
@@ -32,8 +32,9 @@ describe('movesForCard', () => {
 
 describe('Hand', () => {
   it('renders every held card', () => {
-    render(<Hand cards={[red7, blue3]} legalMoves={[]} onPlay={vi.fn()} />)
-    expect(screen.getAllByRole('button')).toHaveLength(2)
+    const { container } = render(<Hand cards={[red7, blue3]} legalMoves={[]} onPlay={vi.fn()} />)
+    // Scoped to the hand: the sort control contributes buttons of its own.
+    expect(container.querySelectorAll('.hand-card')).toHaveLength(2)
   })
 
   it('disables a card that no legal move references', () => {
@@ -80,5 +81,70 @@ describe('Hand', () => {
     await userEvent.click(screen.getByRole('button', { name: /cancel/i }))
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(onPlay).not.toHaveBeenCalled()
+  })
+})
+
+describe('Hand sorting', () => {
+  const mixed: CardData[] = [
+    { id: id('y9'), kind: 'number', color: 'Y', value: 9 },
+    { id: id('w4'), kind: 'wild4' },
+    { id: id('r0'), kind: 'number', color: 'R', value: 0 },
+    { id: id('gs'), kind: 'skip', color: 'G' },
+  ]
+
+  const labels = () =>
+    screen
+      .getAllByRole('button', { name: /red|green|blue|yellow|wild/i })
+      .map((node) => node.getAttribute('aria-label'))
+
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+
+  it('leaves the dealt order alone by default', () => {
+    render(<Hand cards={mixed} legalMoves={[]} onPlay={vi.fn()} />)
+    expect(screen.getByRole('button', { name: /as dealt/i })).toHaveProperty('ariaPressed', 'true')
+    expect(labels()[0]).toMatch(/yellow 9/i)
+  })
+
+  it('groups by colour on request, wilds last', async () => {
+    render(<Hand cards={mixed} legalMoves={[]} onPlay={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: /by colour/i }))
+    const order = labels()
+    expect(order[0]).toMatch(/red 0/i)
+    expect(order[order.length - 1]).toMatch(/wild/i)
+  })
+
+  it('orders by points on request, lightest first', async () => {
+    render(<Hand cards={mixed} legalMoves={[]} onPlay={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: /by value/i }))
+    const order = labels()
+    expect(order[0]).toMatch(/red 0/i)
+    expect(order[1]).toMatch(/yellow 9/i)
+    expect(order[2]).toMatch(/green skip/i)
+    expect(order[3]).toMatch(/wild/i)
+  })
+
+  it('remembers the choice for the next hand', async () => {
+    const { unmount } = render(<Hand cards={mixed} legalMoves={[]} onPlay={vi.fn()} />)
+    await userEvent.click(screen.getByRole('button', { name: /by colour/i }))
+    unmount()
+
+    render(<Hand cards={mixed} legalMoves={[]} onPlay={vi.fn()} />)
+    expect(screen.getByRole('button', { name: /by colour/i })).toHaveProperty('ariaPressed', 'true')
+  })
+
+  it('keeps playability attached to the card, not to its position', async () => {
+    render(
+      <Hand cards={mixed} legalMoves={[{ type: 'play', cardId: id('gs') }]} onPlay={vi.fn()} />,
+    )
+    await userEvent.click(screen.getByRole('button', { name: /by colour/i }))
+    expect(screen.getByRole('button', { name: /green skip/i })).toHaveProperty('disabled', false)
+    expect(screen.getByRole('button', { name: /red 0/i })).toHaveProperty('disabled', true)
+  })
+
+  it('offers no sort control for a single card', () => {
+    render(<Hand cards={[red7]} legalMoves={[]} onPlay={vi.fn()} />)
+    expect(screen.queryByRole('group', { name: /sort/i })).toBeNull()
   })
 })

@@ -1,5 +1,7 @@
 import type { Card as CardData, CardId, Move } from '@uno/engine'
 import { useState } from 'react'
+import { readHandSort, writeHandSort } from '../lib/preferences.js'
+import { HAND_SORTS, SORT_LABEL, sortHand, type HandSort } from '../lib/sort-hand.js'
 import { Card } from './Card.js'
 import { ColourPicker } from './ColourPicker.js'
 
@@ -23,6 +25,7 @@ type HandProps = {
 
 export function Hand({ cards, legalMoves, onPlay }: HandProps) {
   const [pending, setPending] = useState<PlayMove[] | null>(null)
+  const [sort, setSort] = useState<HandSort>(() => readHandSort())
 
   const choose = (options: PlayMove[]) => {
     const only = options[0]
@@ -32,10 +35,37 @@ export function Hand({ cards, legalMoves, onPlay }: HandProps) {
     else setPending(options)
   }
 
+  const pick = (mode: HandSort) => {
+    setSort(mode)
+    writeHandSort(mode)
+  }
+
+  /* Presentation only: the server is sent a cardId, so the order a hand is drawn
+     in has no bearing on the protocol. */
+  const ordered = sortHand(cards, sort)
+
   return (
     <>
+      {cards.length > 1 && (
+        <div className="sort-control" role="group" aria-label="Sort your hand">
+          {HAND_SORTS.map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              className="sort-btn"
+              aria-pressed={sort === mode}
+              onClick={() => {
+                pick(mode)
+              }}
+            >
+              {SORT_LABEL[mode]}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="hand">
-        {cards.map((card) => {
+        {ordered.map((card) => {
           const options = movesForCard(legalMoves, card.id)
           return (
             <div className="hand-card" key={card.id}>
@@ -50,6 +80,7 @@ export function Hand({ cards, legalMoves, onPlay }: HandProps) {
           )
         })}
       </div>
+
       {pending !== null && (
         <ColourPicker
           options={pending}

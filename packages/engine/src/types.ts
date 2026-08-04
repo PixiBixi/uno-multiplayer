@@ -11,6 +11,19 @@ export type Card =
   | { id: CardId; kind: 'skip' | 'reverse' | 'draw2'; color: Color }
   | { id: CardId; kind: 'wild' | 'wild4' }
 
+export type WildCard = Extract<Card, { kind: 'wild' | 'wild4' }>
+export type ColouredCard = Exclude<Card, WildCard>
+
+/**
+ * A type predicate rather than a boolean expression at each call site. Writing
+ * `card.kind === 'wild' || card.kind === 'wild4'` inline does NOT narrow the
+ * union in the branches that follow, so reading `card.color` afterwards fails to
+ * compile — a trap this codebase walked into three separate times.
+ */
+export function isWild(card: Card): card is WildCard {
+  return card.kind === 'wild' || card.kind === 'wild4'
+}
+
 export type SeatStatus = 'active' | 'disconnected' | 'left'
 
 export type Seat = {

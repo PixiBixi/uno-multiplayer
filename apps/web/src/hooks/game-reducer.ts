@@ -1,4 +1,5 @@
 import type { GameEvent, LobbyView, PlayerView } from '@uno/protocol'
+import { cardCount } from '../lib/phrase.js'
 
 /** A long game produces hundreds of events. The feed is a view, not a log. */
 export const FEED_LIMIT = 120
@@ -64,7 +65,7 @@ function toastFor(event: GameEvent): Omit<Toast, 'id'> | null {
       return {
         tone: 'warn',
         title: 'UNO was not called',
-        detail: `${event.count} cards added.`,
+        detail: `${cardCount(event.count)} added.`,
       }
     case 'seatDisconnected':
       return {

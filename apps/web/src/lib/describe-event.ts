@@ -1,5 +1,6 @@
 import type { Card, Color } from '@uno/engine'
 import type { GameEvent } from '@uno/protocol'
+import { cardCount, winsPhrase } from './phrase.js'
 
 const COLOR_NAME: Record<Color, string> = { R: 'Red', G: 'Green', B: 'Blue', Y: 'Yellow' }
 
@@ -23,19 +24,26 @@ function cardName(card: Card): string {
 /**
  * Turns a server event into a line a player understands. Written from the
  * player's side of the screen: names, not seat indices, wherever one is known.
+ *
+ * `mySeat` is passed rather than inferred from the name, so the second person
+ * gets the right verb without string-matching "You".
  */
-export function describeEvent(event: GameEvent, nameOf: (seat: number) => string): string {
+export function describeEvent(
+  event: GameEvent,
+  nameOf: (seat: number) => string,
+  mySeat: number,
+): string {
   switch (event.type) {
     case 'cardPlayed':
       return `${nameOf(event.seat)} played a ${cardName(event.card)}`
     case 'cardsDrawn':
       return event.count === 1
         ? `${nameOf(event.seat)} drew a card`
-        : `${nameOf(event.seat)} drew ${event.count} cards`
+        : `${nameOf(event.seat)} drew ${cardCount(event.count)}`
     case 'unoCalled':
       return `${nameOf(event.seat)} called UNO`
     case 'unoPenalty':
-      return `${nameOf(event.seat)} forgot to call UNO and drew ${event.count}`
+      return `${nameOf(event.seat)} forgot to call UNO and drew ${cardCount(event.count)}`
     case 'seatDisconnected':
       return `${nameOf(event.seat)} lost connection`
     case 'seatReconnected':
@@ -45,7 +53,7 @@ export function describeEvent(event: GameEvent, nameOf: (seat: number) => string
     case 'gameOver':
       return event.winner === null
         ? 'Game abandoned — not enough players'
-        : `${nameOf(event.winner)} wins`
+        : winsPhrase(nameOf(event.winner), event.winner === mySeat)
     case 'gameRestarted':
       return 'A new game was dealt'
   }

@@ -177,3 +177,59 @@ test('a fifth player is turned away', async ({ browser }) => {
   await joinGame(fifth, code, 'Eve')
   await expect(fifth.getByRole('alert')).toContainText(/four players/i)
 })
+
+test('the hand can be sorted, and the choice survives a reload', async ({ browser }) => {
+  const host = await openPlayer(browser)
+  const guest = await openPlayer(browser)
+
+  const code = await createGame(host, 'Ana')
+  await joinGame(guest, code, 'Ben')
+  await host.getByRole('button', { name: 'Start game' }).click()
+
+  /* Sorted on the guest on purpose. Seat 0 opens, and reloading while on turn
+     legitimately costs a drawn card — see the test below — which would confound
+     a count assertion here. */
+  await expect(guest.locator('.hand-card')).toHaveCount(7)
+
+  const labels = () =>
+    guest
+      .locator('.hand-card [role="img"]')
+      .evaluateAll((nodes) => nodes.map((node) => node.getAttribute('aria-label') ?? ''))
+
+  const dealt = await labels()
+
+  await guest.getByRole('button', { name: 'By colour' }).click()
+  const byColour = await labels()
+
+  // Same cards, reordered: colour order follows the deck, R G B Y.
+  expect([...byColour].sort()).toEqual([...dealt].sort())
+  const colourRank = (label: string) =>
+    ['Red', 'Green', 'Blue', 'Yellow'].findIndex((name) => label.startsWith(name))
+  const ranks = byColour.map(colourRank).filter((rank) => rank >= 0)
+  expect(ranks).toEqual([...ranks].sort((a, b) => a - b))
+
+  // The preference is remembered, so a reload does not reshuffle the hand.
+  await guest.reload()
+  await expect(guest.locator('.hand-card')).toHaveCount(7)
+  await expect(guest.getByRole('button', { name: 'By colour' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  )
+})
+
+test('reloading while on turn costs a drawn card', async ({ browser }) => {
+  const host = await openPlayer(browser)
+  const guest = await openPlayer(browser)
+
+  const code = await createGame(host, 'Ana')
+  await joinGame(guest, code, 'Ben')
+  await host.getByRole('button', { name: 'Start game' }).click()
+  await expect(host.locator('.hand-card')).toHaveCount(7)
+  await expect(host.getByText(/your turn/)).toBeVisible()
+
+  /* Locking in a real consequence of the grace period rather than leaving it to
+     be rediscovered: a disconnect on your own turn makes the server take the
+     neutral action for you, so the table never stalls. */
+  await host.reload()
+  await expect(host.locator('.hand-card')).toHaveCount(8)
+})

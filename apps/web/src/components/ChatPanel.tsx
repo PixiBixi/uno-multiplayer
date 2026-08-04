@@ -94,7 +94,7 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
           if (entry.kind === 'event') {
             return (
               <p className="sys-line" data-system="" key={entry.id}>
-                {describeEvent(entry.event, nameOf)}
+                {describeEvent(entry.event, nameOf, mySeat)}
               </p>
             )
           }

@@ -1,4 +1,5 @@
 import type { PlayerView } from '@uno/protocol'
+import { winsPhrase } from '../lib/phrase.js'
 
 type GameOverProps = {
   view: PlayerView
@@ -28,7 +29,7 @@ export function GameOver({ view, nameOf, isHost, onRestart, onLeave }: GameOverP
           </>
         ) : (
           <>
-            <h2>{nameOf(view.winner ?? -1)} wins</h2>
+            <h2>{winsPhrase(nameOf(view.winner ?? -1), view.winner === view.you.seat)}</h2>
             <ul className="standings">
               {standings.map((row) => (
                 <li

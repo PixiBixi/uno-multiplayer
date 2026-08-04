@@ -1,4 +1,4 @@
-import type { Card as CardData, Color } from '@uno/engine'
+import { isWild, type Card as CardData, type Color } from '@uno/engine'
 
 const PIGMENT: Record<Color, string> = {
   R: 'var(--red)',
@@ -20,17 +20,6 @@ const SHAPE: Record<Color, 'circle' | 'triangle' | 'square' | 'diamond'> = {
   G: 'triangle',
   B: 'square',
   Y: 'diamond',
-}
-
-type WildCard = Extract<CardData, { kind: 'wild' | 'wild4' }>
-
-/**
- * A type predicate, not a boolean alias: `const isWild = card.kind === 'wild' ||
- * card.kind === 'wild4'` does not narrow `card` in the branches that follow, so
- * reading `card.color` afterwards fails to compile.
- */
-function isWildCard(card: CardData): card is WildCard {
-  return card.kind === 'wild' || card.kind === 'wild4'
 }
 
 export function cardLabel(card: CardData): string {
@@ -190,7 +179,7 @@ type CardProps = {
 }
 
 export function Card({ card, onPlay, disabled = false }: CardProps) {
-  const wild = isWildCard(card)
+  const wild = isWild(card)
   const pigment = wild ? INK : PIGMENT[card.color]
   const faceFill = wild ? BONE : pigment
   const tokenColor: Color = wild ? 'R' : card.color

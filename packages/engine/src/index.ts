@@ -9,10 +9,12 @@ export { nextInt, nextRandom, shuffle } from './rng.js'
 export {
   COLORS,
   err,
+  isWild,
   ok,
   type Card,
   type CardId,
   type Color,
+  type ColouredCard,
   type GamePhase,
   type GameState,
   type Move,
@@ -22,4 +24,5 @@ export {
   type RuleViolation,
   type Seat,
   type SeatStatus,
+  type WildCard,
 } from './types.js'
