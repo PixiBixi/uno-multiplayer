@@ -3473,4 +3473,492 @@ git commit -m "feat(web): assemble table, end-of-game screen and app shell"
 
 ---
 
-*Tasks 9 et 10 — Playwright multi-contextes, Dockerfile et notes de déploiement — sont rédigées à la suite de ce document.*
+### Task 9: Tests de bout en bout Playwright
+
+**Files:**
+- Create: `playwright.config.ts`
+- Create: `e2e/game.spec.ts`
+- Modify: `package.json`
+- Modify: `.gitignore`
+
+**Interfaces:**
+- Consumes: le build client et le serveur construits
+- Produces: `npm run e2e` — lance le serveur, ouvre plusieurs contextes navigateur, joue une partie
+
+Playwright teste ce qu'aucun test unitaire ne peut : **trois navigateurs réels autour d'une même table**. Chaque joueur est un `browser.newContext()` distinct, donc un `localStorage` et une socket distincts — indispensable pour vérifier la reconnexion.
+
+- [ ] **Step 1: Écrire le test qui échoue**
+
+`e2e/game.spec.ts` :
+
+```ts
+import { expect, test, type Browser, type Page } from '@playwright/test'
+
+/** One player is one browser context: its own localStorage, its own socket. */
+async function openPlayer(browser: Browser): Promise<Page> {
+  const context = await browser.newContext()
+  return context.newPage()
+}
+
+async function createGame(page: Page, name: string): Promise<string> {
+  await page.goto('/')
+  await page.getByLabel('Your name').fill(name)
+  await page.getByRole('button', { name: 'Create a game' }).click()
+  const code = await page.locator('.code-display').textContent()
+  if (code === null) throw new Error('no room code was shown')
+  return code.trim()
+}
+
+async function joinGame(page: Page, code: string, name: string): Promise<void> {
+  await page.goto('/')
+  await page.getByLabel('Your name').fill(name)
+  await page.getByLabel('Game code').fill(code)
+  await page.getByRole('button', { name: 'Join game' }).click()
+}
+
+test('three players play a hand together', async ({ browser }) => {
+  const host = await openPlayer(browser)
+  const guestOne = await openPlayer(browser)
+  const guestTwo = await openPlayer(browser)
+
+  const code = await createGame(host, 'Ana')
+  await joinGame(guestOne, code, 'Ben')
+  await joinGame(guestTwo, code, 'Cleo')
+
+  // Everyone sees the full roster before the game starts.
+  await expect(host.getByText('Cleo')).toBeVisible()
+  await expect(guestTwo.getByText('Ana')).toBeVisible()
+
+  await host.getByRole('button', { name: 'Start game' }).click()
+
+  // Each player holds seven cards and sees only their own.
+  for (const page of [host, guestOne, guestTwo]) {
+    await expect(page.locator('.hand-card')).toHaveCount(7)
+  }
+
+  // Exactly one seat has the turn, and it is announced in text.
+  await expect(host.getByText(/your turn|their turn/).first()).toBeVisible()
+
+  // The direction of play is named, not merely drawn.
+  await expect(host.getByText(/clockwise/i)).toBeVisible()
+})
+
+test('a player who reloads keeps their seat and their hand', async ({ browser }) => {
+  const host = await openPlayer(browser)
+  const guest = await openPlayer(browser)
+
+  const code = await createGame(host, 'Ana')
+  await joinGame(guest, code, 'Ben')
+  await host.getByRole('button', { name: 'Start game' }).click()
+  await expect(guest.locator('.hand-card')).toHaveCount(7)
+
+  const before = await guest.locator('.hand-card [role="img"]').first().getAttribute('aria-label')
+
+  await guest.reload()
+
+  // The session token in localStorage reclaims the seat, hand intact.
+  await expect(guest.locator('.hand-card')).toHaveCount(7)
+  const after = await guest.locator('.hand-card [role="img"]').first().getAttribute('aria-label')
+  expect(after).toBe(before)
+})
+
+test('a stranger cannot see anybody else’s cards', async ({ browser }) => {
+  const host = await openPlayer(browser)
+  const guest = await openPlayer(browser)
+
+  const code = await createGame(host, 'Ana')
+  await joinGame(guest, code, 'Ben')
+  await host.getByRole('button', { name: 'Start game' }).click()
+  await expect(host.locator('.hand-card')).toHaveCount(7)
+
+  const guestLabels = await guest.locator('.hand-card [role="img"]').evaluateAll((nodes) =>
+    nodes.map((node) => node.getAttribute('aria-label')),
+  )
+  const hostMarkup = await host.content()
+
+  // No card the guest holds may appear anywhere in the host's document.
+  for (const label of guestLabels) {
+    if (label === null) continue
+    expect(hostMarkup).not.toContain(label)
+  }
+})
+
+test('the game code is shareable through the URL', async ({ browser }) => {
+  const host = await openPlayer(browser)
+  const guest = await openPlayer(browser)
+
+  const code = await createGame(host, 'Ana')
+  expect(host.url()).toContain(`room=${code}`)
+
+  // Landing on the shared URL prefills the code.
+  await guest.goto(`/?room=${code}`)
+  await expect(guest.getByLabel('Game code')).toHaveValue(code)
+})
+
+test('an unknown code is refused with a readable message', async ({ browser }) => {
+  const page = await openPlayer(browser)
+  await joinGame(page, 'ZZZZZZ', 'Nobody')
+  await expect(page.getByRole('alert')).toContainText(/no game with that code/i)
+})
+```
+
+- [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
+
+Run: `npm run e2e`
+Expected: FAIL — le script `e2e` n'existe pas.
+
+- [ ] **Step 3: Installer Playwright**
+
+```bash
+npm install -D @playwright/test@^1.62.1
+npx playwright install --with-deps chromium
+```
+
+- [ ] **Step 4: Configurer Playwright**
+
+`playwright.config.ts` :
+
+```ts
+import { defineConfig, devices } from '@playwright/test'
+
+const PORT = 5099
+
+export default defineConfig({
+  testDir: './e2e',
+  fullyParallel: false,
+  forbidOnly: Boolean(process.env['CI']),
+  retries: process.env['CI'] === undefined ? 0 : 1,
+  workers: 1,
+  reporter: process.env['CI'] === undefined ? 'list' : [['list'], ['html', { open: 'never' }]],
+  use: {
+    baseURL: `http://127.0.0.1:${PORT}`,
+    trace: 'on-first-retry',
+  },
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  /* The real server, serving the real client build. A dev server would test a
+     different artefact from the one that ships. */
+  webServer: {
+    command: 'npm run build && node apps/server/dist/index.js',
+    url: `http://127.0.0.1:${PORT}/healthz`,
+    reuseExistingServer: process.env['CI'] === undefined,
+    timeout: 180_000,
+    env: {
+      PORT: String(PORT),
+      HOST: '127.0.0.1',
+      NODE_ENV: 'production',
+      LOG_LEVEL: 'warn',
+      STATIC_ROOT: 'apps/web/dist',
+      GRACE_PERIOD_MS: '60000',
+    },
+  },
+})
+```
+
+`npm run build` construit les workspaces TypeScript ; il faut aussi que le client soit bâti. Ajouter au `package.json` racine, dans `scripts` :
+
+```json
+    "build": "tsc --build tsconfig.build.json && npm run build -w @uno/web",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
+```
+
+- [ ] **Step 5: Ignorer les artefacts**
+
+Ajouter à `.gitignore` :
+
+```
+playwright-report/
+test-results/
+.playwright/
+```
+
+Et à `.prettierignore` :
+
+```
+playwright-report/
+test-results/
+```
+
+- [ ] **Step 6: Lancer les tests**
+
+Run: `npm run e2e`
+Expected: 5 tests PASS.
+
+Le test « a stranger cannot see anybody else's cards » est le plus important du dépôt : il vérifie sur le document réel, pas sur un objet en mémoire, qu'aucune carte adverse n'atteint le navigateur.
+
+- [ ] **Step 7: Ajouter le job à la CI**
+
+Dans `.github/workflows/ci.yml`, ajouter un job après `coverage` :
+
+```yaml
+  e2e:
+    name: End to end
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+```
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add playwright.config.ts e2e .github/workflows/ci.yml .gitignore .prettierignore package.json package-lock.json
+git commit -m "test(e2e): add Playwright multi-context game, reconnection and leak tests"
+```
+
+---
+
+### Task 10: Image Docker et déploiement
+
+**Files:**
+- Create: `Dockerfile`, `.dockerignore`, `compose.yaml`
+- Modify: `.github/workflows/ci.yml`
+- Modify: `README.md`
+
+**Interfaces:**
+- Consumes: `npm run build`, `STATIC_ROOT` (plan C1 Task 3)
+- Produces: une image unique servant l'API, les WebSockets et le client
+
+Image multi-stage, utilisateur non-root, dépendances de production uniquement. Un `HEALTHCHECK` sur `/healthz`, la sonde que la Task 3 a explicitement protégée du fallback SPA.
+
+- [ ] **Step 1: Écrire le `.dockerignore`**
+
+`.dockerignore` :
+
+```
+node_modules
+**/node_modules
+**/dist
+**/dist-types
+coverage
+playwright-report
+test-results
+.git
+.github
+docs
+e2e
+*.tsbuildinfo
+.env
+.env.*
+```
+
+- [ ] **Step 2: Écrire le Dockerfile**
+
+`Dockerfile` :
+
+```dockerfile
+# syntax=docker/dockerfile:1
+
+# ---- build ----
+FROM node:22-alpine AS build
+WORKDIR /app
+
+# Manifests first: the dependency layer is then cached across source changes.
+COPY package.json package-lock.json ./
+COPY packages/engine/package.json packages/engine/
+COPY packages/protocol/package.json packages/protocol/
+COPY apps/server/package.json apps/server/
+COPY apps/web/package.json apps/web/
+RUN npm ci
+
+COPY tsconfig.base.json tsconfig.json tsconfig.build.json ./
+COPY packages packages
+COPY apps apps
+RUN npm run build
+
+# Drop dev dependencies so only what runs gets copied forward.
+RUN npm prune --omit=dev
+
+# ---- runtime ----
+FROM node:22-alpine AS runtime
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    HOST=0.0.0.0 \
+    PORT=5000 \
+    STATIC_ROOT=/app/web
+
+# node:alpine already ships an unprivileged `node` user; use it rather than
+# inventing another.
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/packages/engine/dist ./packages/engine/dist
+COPY --from=build --chown=node:node /app/packages/engine/package.json ./packages/engine/
+COPY --from=build --chown=node:node /app/packages/protocol/dist ./packages/protocol/dist
+COPY --from=build --chown=node:node /app/packages/protocol/package.json ./packages/protocol/
+COPY --from=build --chown=node:node /app/apps/server/dist ./apps/server/dist
+COPY --from=build --chown=node:node /app/apps/server/package.json ./apps/server/
+COPY --from=build --chown=node:node /app/apps/web/dist ./web
+COPY --from=build --chown=node:node /app/package.json ./
+
+USER node
+EXPOSE 5000
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||5000)+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+
+CMD ["node", "apps/server/dist/index.js"]
+```
+
+- [ ] **Step 3: Écrire le fichier compose**
+
+`compose.yaml` :
+
+```yaml
+services:
+  uno:
+    build: .
+    image: uno-multiplayer:local
+    ports:
+      - '5000:5000'
+    environment:
+      # Same origin serves the client, so no CORS allowlist is needed.
+      CORS_ORIGIN: ''
+      GRACE_PERIOD_MS: '60000'
+      MAX_ROOMS: '500'
+      LOG_LEVEL: 'info'
+    restart: unless-stopped
+    # State lives in memory: never scale this past one replica. Two replicas
+    # would split rooms across processes that cannot see each other.
+    deploy:
+      replicas: 1
+```
+
+- [ ] **Step 4: Construire et vérifier l'image**
+
+```bash
+docker build -t uno-multiplayer:local .
+docker run --rm -d --name uno-check -p 5099:5000 uno-multiplayer:local
+```
+
+Puis vérifier, avec un contrôle explicite du code de sortie :
+
+```bash
+for i in $(seq 1 40); do curl -sf http://127.0.0.1:5099/healthz >/dev/null && break; sleep 0.5; done
+curl -s http://127.0.0.1:5099/healthz
+curl -s http://127.0.0.1:5099/ | head -c 200
+docker exec uno-check id -u
+docker stop uno-check
+```
+
+Expected: `{"status":"ok"}`, du HTML contenant `<div id="root">`, et un uid **différent de 0**.
+
+- [ ] **Step 5: Ajouter le job Docker à la CI**
+
+Dans `.github/workflows/ci.yml`, ajouter :
+
+```yaml
+  docker:
+    name: Docker image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: docker build -t uno-multiplayer:ci .
+      - name: Boot the image and probe it
+        run: |
+          docker run --rm -d --name uno-ci -p 5099:5000 uno-multiplayer:ci
+          for i in $(seq 1 40); do
+            curl -sf http://127.0.0.1:5099/healthz >/dev/null && break
+            sleep 0.5
+          done
+          curl -sf http://127.0.0.1:5099/healthz
+          curl -sf http://127.0.0.1:5099/ | grep -q 'id="root"'
+          test "$(docker exec uno-ci id -u)" != "0"
+          docker stop uno-ci
+```
+
+- [ ] **Step 6: Mettre à jour le README**
+
+Cocher la feuille de route :
+
+```markdown
+- [x] `apps/web` — SVG cards, four-seat table, lobby, chat
+- [x] Playwright end-to-end tests across multiple browser contexts
+- [x] Dockerfile and deployment
+```
+
+Remplacer l'encadré d'état en tête de fichier par :
+
+```markdown
+Online UNO for 2 to 4 players. Server-authoritative, written in TypeScript.
+```
+
+Et ajouter une section avant `## Licence` :
+
+```markdown
+## Running it
+
+```bash
+docker compose up --build
+```
+
+Then open <http://localhost:5000>. Create a game, share the code, and the URL
+carries it: `http://localhost:5000/?room=K7QM2X` prefills the field.
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `5000` | Listen port |
+| `HOST` | `0.0.0.0` | Listen address |
+| `CORS_ORIGIN` | empty | Comma-separated allowlist. Empty means same-origin only |
+| `GRACE_PERIOD_MS` | `60000` | How long a disconnected player keeps their seat |
+| `MAX_ROOMS` | `500` | Cap on concurrent rooms, bounding memory |
+| `STATIC_ROOT` | `/app/web` in the image | Built client to serve. Empty serves the API alone |
+| `LOG_LEVEL` | `info` | pino level |
+
+### One replica, on purpose
+
+Game state lives in memory. There is no Redis adapter and no sticky-session
+setup, so **do not scale past a single replica** — two processes would each hold
+half the rooms and neither would know about the other. A restart drops games in
+progress. At a few concurrent tables that is a deliberate trade for having no
+datastore to run, back up, or pay for.
+```
+
+- [ ] **Step 7: Vérification finale du dépôt**
+
+Run: `npm run verify && npm run build && npm run e2e`
+Expected: les trois en code 0.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add Dockerfile .dockerignore compose.yaml .github/workflows/ci.yml README.md
+git commit -m "feat(deploy): add multi-stage Docker image and deployment docs"
+```
+
+---
+
+## Critère de fin du plan C2
+
+```bash
+npm run verify && npm run build && npm run e2e
+```
+
+Les trois passent, et :
+
+- Une partie de 2 à 4 joueurs se joue dans un navigateur, de l'accueil à l'écran de fin.
+- Aucune carte adverse n'apparaît dans le document d'un autre joueur — vérifié par Playwright sur le HTML réel.
+- Un rechargement de page conserve le siège et la main exacte.
+- `docker compose up --build` sert le jeu sur le port 5000, en utilisateur non-root, avec un `HEALTHCHECK` vivant.
+- La CI couvre lint, types, format, tests unitaires sur trois versions de Node, couverture, bout en bout et construction d'image.
+
+## Auto-review du plan C2
+
+**Couverture de la spec.** §2.7 client → Tasks 1 à 8. §3.2 protocole côté client → Task 2. §3.3 consommation de `PlayerView` → Tasks 5, 6, 8. §3.6 reconnexion par jeton → Tasks 1, 2, et vérifiée en Task 9. §4.1 aucun `alert`/`prompt` → Tasks 6 et 8. §4.3 E2E → Task 9. §4.4 Docker et déploiement → Task 10.
+
+**Maquettes couvertes.** Section 01–02 cartes → plan C1 Task 5. Section 03 jetons de forme → plan C1 Task 5. Sections 04–05 table → Tasks 5 et 8. Section 06 lobby → Task 4. Section 07 sélecteur et toasts → Tasks 6 et 8. Section 08 fin de partie → Task 8. Section 09 chat → Task 7. Section 10 câblage → l'ensemble.
+
+**Cohérence des types.** `FeedEntry` et `Toast` sont définis dans `game-reducer.ts` et importés de là partout. `movesForCard` retourne `Extract<Move, { type: 'play' }>[]`, le type que `ColourPicker` consomme. `nameOf(seat)` a la même signature dans `Table`, `ChatPanel`, `GameOver` et `describeEvent`. Les pigments sont toujours des variables CSS, jamais des littéraux hexadécimaux dans le TSX. Le viewBox des cartes reste `0 0 120 168`.
+
+**Un point de vigilance signalé.** La Task 8 remplace le test `App.test.tsx` écrit au plan C1 : `App` monte désormais une socket, donc le test doit la simuler. C'est explicite dans la task plutôt que laissé à découvrir par un échec.
