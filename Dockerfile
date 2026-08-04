@@ -15,7 +15,13 @@ RUN npm ci
 COPY tsconfig.base.json tsconfig.json tsconfig.build.json ./
 COPY packages packages
 COPY apps apps
-RUN npm run build
+
+# Belt and braces alongside .dockerignore: any incremental build state that
+# reaches the context would make `tsc --build` skip projects as already built,
+# leaving their dist/ missing. The image must not depend on a clean working tree.
+RUN find . -name '*.tsbuildinfo' -not -path './node_modules/*' -delete \
+ && rm -rf packages/*/dist apps/*/dist apps/*/dist-types \
+ && npm run build
 
 # Drop dev dependencies so only what runs gets copied forward.
 RUN npm prune --omit=dev

@@ -1,14 +1,25 @@
+# Note the leading **/ on every nested pattern. A bare `*.tsbuildinfo` matches
+# only the context root, so packages/*/tsconfig.build.tsbuildinfo slipped into
+# the image while dist/ was excluded — and tsc --build then reported every
+# project "up to date" against output that was not there.
 node_modules
 **/node_modules
+dist
 **/dist
+dist-types
 **/dist-types
+*.tsbuildinfo
+**/*.tsbuildinfo
 coverage
+**/coverage
 playwright-report
 test-results
+.playwright
 .git
 .github
 docs
 e2e
-*.tsbuildinfo
 .env
+**/.env
 .env.*
+**/.env.*
