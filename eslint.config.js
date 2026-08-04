@@ -2,7 +2,7 @@ import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/coverage/**'] },
+  { ignores: ['**/dist/**', '**/dist-types/**', '**/coverage/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
@@ -35,6 +35,20 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
+    },
+  },
+  {
+    // JSX on top of the shared settings. parserOptions must repeat
+    // projectService: this block replaces the key rather than merging into it,
+    // and dropping it silently strips every type-aware rule of its types.
+    // Browser globals need no list here — `lib: DOM` in tsconfig covers them.
+    files: ['apps/web/src/**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+        ecmaFeatures: { jsx: true },
+      },
     },
   },
   {

@@ -1,0 +1,22 @@
+{
+  // The client is bundled by Vite, so it resolves modules the way a bundler
+  // does — not the way Node does. Forcing it into the repo-root program (which
+  // is NodeNext, for the server and packages) made CJS/ESM interop misresolve
+  // library default exports into module namespaces.
+  //
+  // This config covers the client INCLUDING its tests, so ESLint's project
+  // service and `npm run typecheck` both read it.
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@uno/engine": ["../../packages/engine/src/index.ts"],
+      "@uno/protocol": ["../../packages/protocol/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*", "vite.config.ts"]
+}

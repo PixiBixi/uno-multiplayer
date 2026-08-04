@@ -1,0 +1,63 @@
+:root {
+  /* Card pigments. Fixed across themes: a card is a printed object, and a red
+     card does not become cyan at night. */
+  --red: #d2321e;
+  --green: #1e9e4a;
+  --blue: #1565b8;
+  --yellow: #f0b310;
+  --bone: #f5f1e8;
+  --ink: #14100e;
+
+  /* Furniture. Green-biased neutrals, pulled toward the felt. */
+  --ground: #f2f4ef;
+  --panel: #ffffff;
+  --panel-edge: #d6dcd2;
+  --felt: #1b3730;
+  --felt-edge: #2c4d44;
+  --text: #17211d;
+  --text-dim: #566158;
+  --accent: #1e9e4a;
+
+  --step--1: 0.8125rem;
+  --step-0: 1rem;
+  --step-1: 1.3rem;
+  --step-2: 1.85rem;
+  --step-3: 2.6rem;
+
+  --r-sm: 6px;
+  --r-md: 12px;
+  --r-lg: 20px;
+
+  --display: ui-rounded, 'SF Pro Rounded', 'Segoe UI Variable', system-ui, sans-serif;
+  --body: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --data: ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ground: #101a17;
+    --panel: #172420;
+    --panel-edge: #26372f;
+    --text: #e6ece7;
+    --text-dim: #93a29a;
+    --accent: #3fc46b;
+  }
+}
+
+:root[data-theme='dark'] {
+  --ground: #101a17;
+  --panel: #172420;
+  --panel-edge: #26372f;
+  --text: #e6ece7;
+  --text-dim: #93a29a;
+  --accent: #3fc46b;
+}
+
+:root[data-theme='light'] {
+  --ground: #f2f4ef;
+  --panel: #ffffff;
+  --panel-edge: #d6dcd2;
+  --text: #17211d;
+  --text-dim: #566158;
+  --accent: #1e9e4a;
+}

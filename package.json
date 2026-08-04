@@ -10,8 +10,8 @@
     "apps/*"
   ],
   "scripts": {
-    "build": "tsc --build tsconfig.build.json",
-    "typecheck": "tsc -p tsconfig.json",
+    "build": "tsc --build tsconfig.build.json && npm run build -w @uno/web",
+    "typecheck": "tsc -p tsconfig.json && tsc -p apps/web/tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
