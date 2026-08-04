@@ -1,5 +1,5 @@
 {
-  // Solution de build : n'émet que le code de production, tests exclus.
+  // Build solution: emits production code only, tests excluded.
   "files": [],
   "references": [{ "path": "packages/engine/tsconfig.build.json" }]
 }

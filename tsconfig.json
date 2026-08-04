@@ -1,7 +1,7 @@
 {
-  // Configuration de référence : couvre TOUT le dépôt, tests et fichiers de
-  // configuration inclus. C'est elle que lisent l'éditeur, ESLint (via le
-  // project service) et `npm run typecheck`. Elle n'émet rien.
+  // Reference configuration: covers the WHOLE repo, tests and config files
+  // included. This is what the editor, ESLint (via the project service) and
+  // `npm run typecheck` read. It emits nothing.
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "noEmit": true

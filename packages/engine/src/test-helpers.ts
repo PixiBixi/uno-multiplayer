@@ -1,6 +1,6 @@
 import type { Card, CardId, Color, GameState, NumberValue, Seat } from './types.js'
 
-/** Toutes les cartes présentes dans l'état, pour l'invariant de conservation. */
+/** Every card present in the state, for the conservation invariant. */
 export function allCards(state: GameState): Card[] {
   return [...state.seats.flatMap((s) => s.hand), ...state.drawPile, ...state.discardPile]
 }
@@ -42,7 +42,7 @@ export const seatOf = (index: number, hand: Card[], over: Partial<Seat> = {}): S
   ...over,
 })
 
-/** État arbitraire, éventuellement invalide, pour tester une règle isolément. */
+/** Arbitrary, possibly invalid state, to exercise one rule in isolation. */
 export const stateOf = (over: Partial<GameState> = {}): GameState => ({
   seats: [seatOf(0, []), seatOf(1, [])],
   currentSeat: 0,

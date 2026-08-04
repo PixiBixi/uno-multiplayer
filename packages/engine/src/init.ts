@@ -23,9 +23,9 @@ export function initGame(options: { names: string[]; seed: number }): Result<Gam
     seats.push({ index, name, status: 'active', hand: dealt.taken, unoCalled: false })
   }
 
-  // La carte de départ est la première carte numérique en partant du dessus.
-  // Déterministe, sans boucle non bornée ni tirage supplémentaire : les cartes
-  // action rencontrées avant elle restent en place dans la pioche.
+  // The starting card is the first number card from the top. Deterministic,
+  // with no unbounded loop and no extra draw: action cards encountered before
+  // it stay where they are in the pile.
   let startIndex = -1
   for (let i = pile.length - 1; i >= 0; i--) {
     if (pile[i]?.kind === 'number') {
@@ -35,7 +35,7 @@ export function initGame(options: { names: string[]; seed: number }): Result<Gam
   }
   const startingCard = pile[startIndex]
   if (startingCard === undefined || startingCard.kind !== 'number') {
-    // Inatteignable : 76 cartes numériques pour au plus 28 distribuées.
+    // Unreachable: 76 number cards against at most 28 dealt.
     return err('no_number_card')
   }
   const drawPile = [...pile.slice(0, startIndex), ...pile.slice(startIndex + 1)]

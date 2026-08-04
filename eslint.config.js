@@ -11,9 +11,9 @@ export default tseslint.config(
     },
   },
   {
-    // Le moteur doit rester déterministe : aucune source d'entropie ni
-    // d'horloge. `Math.min`/`Math.imul` restent légitimes, seule la source
-    // aléatoire est bannie — le mélange passe par rng.ts et sa graine.
+    // The engine must stay deterministic: no source of entropy, no clock.
+    // `Math.min`/`Math.imul` remain legitimate; only the random source is
+    // banned — shuffling goes through rng.ts and its seed.
     files: ['packages/engine/src/**'],
     rules: {
       'no-restricted-properties': [
@@ -38,8 +38,8 @@ export default tseslint.config(
     },
   },
   {
-    // Les fichiers de configuration ne font partie d'aucun projet TS : le
-    // linting typé n'a pas de programme sur lequel s'appuyer pour eux.
+    // Config files belong to no TS project, so typed linting has no program to
+    // work from for them.
     files: ['**/*.config.ts', '**/*.config.js'],
     extends: [tseslint.configs.disableTypeChecked],
   },

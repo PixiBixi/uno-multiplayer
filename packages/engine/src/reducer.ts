@@ -22,9 +22,9 @@ function sameMove(a: Move, b: Move): boolean {
 }
 
 /**
- * Pioche `count` cartes pour un siège, en recyclant la défausse si la pioche
- * s'épuise. Si même le recyclage ne suffit pas, la pioche est plafonnée au
- * disponible plutôt que de produire des trous `undefined`.
+ * Draws `count` cards for a seat, recycling the discard pile when the draw pile
+ * runs dry. If even recycling is not enough, the draw is capped at what is
+ * available rather than producing `undefined` holes.
  */
 function drawInto(state: GameState, seatIndex: number, count: number): GameState {
   let drawPile = state.drawPile
@@ -62,7 +62,7 @@ function drawInto(state: GameState, seatIndex: number, count: number): GameState
   }
 }
 
-/** Donne la main à un siège et remet son drapeau UNO à zéro. */
+/** Hands the turn to a seat and clears its UNO flag. */
 function beginTurn(state: GameState, seatIndex: number): GameState {
   return {
     ...state,
@@ -99,8 +99,8 @@ function applyPlay(
       break
     case 'reverse':
       next = { ...next, currentColor: card.color }
-      // À deux joueurs actifs, le reverse agit comme un skip : la main revient
-      // à celui qui l'a posé (règle officielle).
+      // With two active players a reverse acts as a skip: the turn comes back
+      // to whoever played it (official rule).
       if (activeCount(next) === 2) steps = 2
       else next = { ...next, direction: next.direction === 1 ? -1 : 1 }
       break
@@ -125,11 +125,11 @@ function applyPlay(
       break
   }
 
-  // Victoire sur main vide. Vérifiée avant la pénalité : les deux cas sont
-  // exclusifs (zéro carte contre exactement une).
+  // Victory on an empty hand. Checked before the penalty: the two cases are
+  // mutually exclusive (zero cards versus exactly one).
   if (hand.length === 0) return ok({ ...next, phase: 'finished', winner: seatIndex })
 
-  // Descendre à une seule carte sans avoir annoncé UNO coûte deux cartes.
+  // Going down to a single card without calling UNO costs two cards.
   if (hand.length === 1 && !seat.unoCalled) next = drawInto(next, seatIndex, UNO_PENALTY)
 
   return ok(beginTurn(next, advance(next, seatIndex, steps)))
@@ -146,9 +146,9 @@ export function applyMove(
   if (seat === undefined) return err('not_your_turn')
   if (seat.status !== 'active') return err('seat_not_active')
 
-  // Unique porte d'entrée : un coup n'est accepté que s'il figure dans
-  // legalMoves. Pas de revalidation par cas, donc aucune divergence possible
-  // entre ce que le client voit proposé et ce que le serveur accepte.
+  // Single gate: a move is accepted only if it appears in legalMoves. No
+  // per-case revalidation, so there is no way for what the client is offered to
+  // diverge from what the server accepts.
   if (!legalMoves(state, seatIndex).some((m) => sameMove(m, move))) return err('illegal_move')
 
   switch (move.type) {
