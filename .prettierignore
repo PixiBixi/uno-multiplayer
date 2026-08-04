@@ -1,0 +1,8 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Design docs and plans are prose. Prettier would reflow the fenced code
+# samples they contain, so they stay outside its scope.
+docs/
