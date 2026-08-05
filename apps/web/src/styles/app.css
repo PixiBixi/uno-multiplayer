@@ -339,7 +339,13 @@ h3 {
 
   .table-screen > .chat-panel {
     flex: 0 0 clamp(280px, 24vw, 360px);
-    max-height: none;
+    /* Capped to the window, NOT left unbounded. .table-screen only sets a
+       min-height, so an unbounded panel grew with the log, grew the flex row
+       with it, and pushed the composer off the bottom of the page.
+       Constraining just the panel — rather than fixing the row's height — keeps
+       a short viewport free to give the felt the room it needs. */
+    max-height: calc(100dvh - 2 * clamp(0.75rem, 3vw, 1.5rem));
+    min-height: 0;
   }
 
   .table-screen > .chat-tab {
@@ -708,13 +714,30 @@ h3 {
   /* Grows to fill the panel. Without this an empty log left the input stranded
      under the header with a tall void beneath it. */
   flex: 1 1 auto;
+  /* Shrinks below its content, which is what gives overflow-y a height to work
+     against. A flex child defaults to min-height:auto and refuses to go under
+     its content size, so without this the scrollbar never appears and the log
+     pushes the panel open instead. */
+  min-height: 0;
+  /* A visible, unobtrusive scrollbar: the log is meant to look scrollable. */
+  scrollbar-width: thin;
+  scrollbar-color: rgb(245 241 232 / 0.28) transparent;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
   gap: 0.55rem;
   padding: 0.9rem;
   overflow-y: auto;
   font-size: var(--step--1);
+}
+
+/* Bottom-aligns a SHORT log while leaving a long one scrollable. Doing this with
+   `justify-content: flex-end` on the container looks identical when the log is
+   short, but once it overflows the excess spills out of the top of the scroll box
+   with scrollHeight stuck at clientHeight — the earliest lines become
+   unreachable, with no scrollbar to reach them. An auto top margin collapses to
+   zero as soon as the content overflows, so scrolling behaves normally. */
+.chat-body > *:first-child {
+  margin-top: auto;
 }
 
 .msg {

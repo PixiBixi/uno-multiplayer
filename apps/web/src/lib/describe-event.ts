@@ -1,6 +1,6 @@
 import type { Card, Color } from '@uno/engine'
 import type { GameEvent } from '@uno/protocol'
-import { cardCount, winsPhrase } from './phrase.js'
+import { cardCount, isBackPhrase, winsPhrase } from './phrase.js'
 
 const COLOR_NAME: Record<Color, string> = { R: 'Red', G: 'Green', B: 'Blue', Y: 'Yellow' }
 
@@ -47,7 +47,7 @@ export function describeEvent(
     case 'seatDisconnected':
       return `${nameOf(event.seat)} lost connection`
     case 'seatReconnected':
-      return `${nameOf(event.seat)} is back`
+      return isBackPhrase(nameOf(event.seat), event.seat === mySeat)
     case 'seatLeft':
       return `${nameOf(event.seat)} left the game`
     case 'gameOver':

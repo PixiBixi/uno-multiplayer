@@ -266,3 +266,44 @@ test('drawing a card pulses the draw pile', async ({ browser }) => {
   await expect(host.locator('.pile-draw')).toBeAttached()
   await expect(host.locator('.hand-card')).toHaveCount(8)
 })
+
+test('a long log scrolls inside its panel instead of growing the page', async ({ browser }) => {
+  const host = await openPlayer(browser)
+  const guest = await openPlayer(browser)
+
+  const code = await createGame(host, 'Ana')
+  await joinGame(guest, code, 'Ben')
+  await host.getByRole('button', { name: 'Start game' }).click()
+  await expect(host.locator('.hand-card')).toHaveCount(7)
+
+  // Well past the panel height, which is where this used to break.
+  for (let line = 0; line < 40; line += 1) {
+    await host.getByLabel('Message the table').fill(`line number ${String(line)}`)
+    await host.getByRole('button', { name: 'Send' }).click()
+  }
+  await expect(host.locator('.chat-body > *')).toHaveCount(40)
+
+  /* Three separate regressions guarded here, all layout-only and so invisible to
+     the jsdom suite:
+       - the page must not grow a scrollbar of its own,
+       - the composer must stay on screen,
+       - and the log must really scroll, with its earliest line reachable rather
+         than spilled out of the top of the scroll box. */
+  const measured = await host.evaluate(() => {
+    const body = document.querySelector('.chat-body')
+    const composer = document.querySelector('.chat-foot')
+    if (body === null || composer === null) throw new Error('chat panel is missing')
+    body.scrollTop = 0
+    return {
+      pageScrolls: document.documentElement.scrollHeight > window.innerHeight + 1,
+      composerVisible: composer.getBoundingClientRect().bottom <= window.innerHeight + 1,
+      logScrolls: body.scrollHeight > body.clientHeight,
+      firstLineText: body.firstElementChild?.textContent ?? null,
+    }
+  })
+
+  expect(measured.pageScrolls).toBe(false)
+  expect(measured.composerVisible).toBe(true)
+  expect(measured.logScrolls).toBe(true)
+  expect(measured.firstLineText).toBe('line number 0')
+})

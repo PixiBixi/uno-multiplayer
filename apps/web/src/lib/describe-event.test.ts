@@ -60,6 +60,23 @@ describe('describeEvent', () => {
     expect(describeEvent({ type: 'gameOver', winner: 0 }, asYou, 0)).toBe('You win')
   })
 
+  it('conjugates the second person when the viewer reconnects', () => {
+    const asYou = (seat: number) => (seat === 0 ? 'You' : nameOf(seat))
+    expect(describeEvent({ type: 'seatReconnected', seat: 0 }, asYou, 0)).toBe('You are back')
+  })
+
+  it('leaves every other line untouched, since they are all past tense', () => {
+    const asYou = (seat: number) => (seat === 0 ? 'You' : nameOf(seat))
+    expect(describeEvent({ type: 'cardsDrawn', seat: 0, count: 1 }, asYou, 0)).toBe(
+      'You drew a card',
+    )
+    expect(describeEvent({ type: 'unoCalled', seat: 0 }, asYou, 0)).toBe('You called UNO')
+    expect(describeEvent({ type: 'seatDisconnected', seat: 0 }, asYou, 0)).toBe(
+      'You lost connection',
+    )
+    expect(describeEvent({ type: 'seatLeft', seat: 0 }, asYou, 0)).toBe('You left the game')
+  })
+
   it('pluralises drawn cards and penalties correctly', () => {
     expect(describeEvent({ type: 'unoPenalty', seat: 0, count: 1 }, nameOf, NOT_ME)).toContain(
       '1 card',

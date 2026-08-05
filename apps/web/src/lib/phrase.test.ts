@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cardCount, winsPhrase } from './phrase.js'
+import { cardCount, isBackPhrase, winsPhrase } from './phrase.js'
 
 describe('winsPhrase', () => {
   it('conjugates the second person', () => {
@@ -24,5 +24,19 @@ describe('cardCount', () => {
     expect(cardCount(0)).toBe('0 cards')
     expect(cardCount(2)).toBe('2 cards')
     expect(cardCount(4)).toBe('4 cards')
+  })
+})
+
+describe('isBackPhrase', () => {
+  it('conjugates the second person', () => {
+    expect(isBackPhrase('You', true)).toBe('You are back')
+  })
+
+  it('conjugates the third person', () => {
+    expect(isBackPhrase('Ana', false)).toBe('Ana is back')
+  })
+
+  it('does not key off the name itself', () => {
+    expect(isBackPhrase('You', false)).toBe('You is back')
   })
 })

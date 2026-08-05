@@ -41,6 +41,10 @@ export default defineConfig({
             // exercised by the server's own integration tests.
             MOVE_BURST: '5000',
             MOVE_PER_SECOND: '5000',
+            // The chat-overflow test posts dozens of lines in a second, which a
+            // budget sized for a person would rightly throttle.
+            CHAT_BURST: '5000',
+            CHAT_PER_SECOND: '5000',
           },
         },
       }
