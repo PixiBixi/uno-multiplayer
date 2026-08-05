@@ -72,78 +72,118 @@ const gameArbitraries = [
   fc.array(fc.integer({ min: 0, max: 20 }), { minLength: 1, maxLength: 40 }),
 ] as const
 
+/**
+ * Well above what these need, on purpose. Conservation runs 300 games and checks
+ * every intermediate state of each, which measures at ~1.1s alone but was seen at
+ * 5.5s while the rest of the suite competed for cores — enough to cross vitest's
+ * 5s default and fail a run that had found nothing wrong.
+ *
+ * The alternative was cutting numRuns, which trades away the coverage that makes
+ * a property test worth having. Generous headroom still leaves a genuine hang
+ * caught, just later.
+ */
+const PROPERTY_TIMEOUT_MS = 20_000
+
 describe('card conservation', () => {
-  it('holds across randomly played games', () => {
-    fc.assert(
-      fc.property(...gameArbitraries, (seatCount, seed, picks) => {
-        for (const state of playOut(seatCount, seed, picks).states) expectConservation(state)
-      }),
-      { numRuns: 300 },
-    )
-  })
+  it(
+    'holds across randomly played games',
+    () => {
+      fc.assert(
+        fc.property(...gameArbitraries, (seatCount, seed, picks) => {
+          for (const state of playOut(seatCount, seed, picks).states) expectConservation(state)
+        }),
+        { numRuns: 300 },
+      )
+    },
+    PROPERTY_TIMEOUT_MS,
+  )
 })
 
 describe('state validity', () => {
-  it('never lets legalMoves produce a move that applyMove rejects', () => {
-    fc.assert(
-      fc.property(...gameArbitraries, (seatCount, seed, picks) => {
-        // playOut throws if a move coming out of legalMoves gets rejected.
-        expect(() => playOut(seatCount, seed, picks)).not.toThrow()
-      }),
-      { numRuns: 300 },
-    )
-  })
+  it(
+    'never lets legalMoves produce a move that applyMove rejects',
+    () => {
+      fc.assert(
+        fc.property(...gameArbitraries, (seatCount, seed, picks) => {
+          // playOut throws if a move coming out of legalMoves gets rejected.
+          expect(() => playOut(seatCount, seed, picks)).not.toThrow()
+        }),
+        { numRuns: 300 },
+      )
+    },
+    PROPERTY_TIMEOUT_MS,
+  )
 
-  it('keeps currentSeat pointing at an active seat while playing', () => {
-    fc.assert(
-      fc.property(...gameArbitraries, (seatCount, seed, picks) => {
-        for (const state of playOut(seatCount, seed, picks).states) {
-          if (state.phase !== 'playing') continue
-          expect(state.seats[state.currentSeat]?.status).toBe('active')
+  it(
+    'keeps currentSeat pointing at an active seat while playing',
+    () => {
+      fc.assert(
+        fc.property(...gameArbitraries, (seatCount, seed, picks) => {
+          for (const state of playOut(seatCount, seed, picks).states) {
+            if (state.phase !== 'playing') continue
+            expect(state.seats[state.currentSeat]?.status).toBe('active')
+          }
+        }),
+        { numRuns: 200 },
+      )
+    },
+    PROPERTY_TIMEOUT_MS,
+  )
+
+  it(
+    'never leaves a negative or fractional debt',
+    () => {
+      fc.assert(
+        fc.property(...gameArbitraries, (seatCount, seed, picks) => {
+          for (const state of playOut(seatCount, seed, picks).states) {
+            if (state.pendingDraw === null) continue
+            expect(state.pendingDraw.amount).toBeGreaterThan(0)
+            expect(Number.isInteger(state.pendingDraw.amount)).toBe(true)
+          }
+        }),
+        { numRuns: 200 },
+      )
+    },
+    PROPERTY_TIMEOUT_MS,
+  )
+
+  it(
+    'declares a winner with an empty hand whenever a game finishes',
+    () => {
+      fc.assert(
+        fc.property(...gameArbitraries, (seatCount, seed, picks) => {
+          const { final } = playOut(seatCount, seed, picks)
+          if (final.phase !== 'finished') return
+          expect(final.winner).not.toBeNull()
+          expect(final.seats[final.winner ?? -1]?.hand).toHaveLength(0)
+        }),
+        { numRuns: 200 },
+      )
+    },
+    PROPERTY_TIMEOUT_MS,
+  )
+
+  it(
+    'terminates under greedy play, for every seat count and seed',
+    () => {
+      for (const seatCount of [2, 3, 4]) {
+        for (let seed = 0; seed < 40; seed++) {
+          const final = playOutGreedy(seatCount, seed)
+          expect(final.phase, `seatCount=${seatCount} seed=${seed}`).toBe('finished')
+          expect(final.seats[final.winner ?? -1]?.hand).toHaveLength(0)
         }
-      }),
-      { numRuns: 200 },
-    )
-  })
-
-  it('never leaves a negative or fractional debt', () => {
-    fc.assert(
-      fc.property(...gameArbitraries, (seatCount, seed, picks) => {
-        for (const state of playOut(seatCount, seed, picks).states) {
-          if (state.pendingDraw === null) continue
-          expect(state.pendingDraw.amount).toBeGreaterThan(0)
-          expect(Number.isInteger(state.pendingDraw.amount)).toBe(true)
-        }
-      }),
-      { numRuns: 200 },
-    )
-  })
-
-  it('declares a winner with an empty hand whenever a game finishes', () => {
-    fc.assert(
-      fc.property(...gameArbitraries, (seatCount, seed, picks) => {
-        const { final } = playOut(seatCount, seed, picks)
-        if (final.phase !== 'finished') return
-        expect(final.winner).not.toBeNull()
-        expect(final.seats[final.winner ?? -1]?.hand).toHaveLength(0)
-      }),
-      { numRuns: 200 },
-    )
-  })
-
-  it('terminates under greedy play, for every seat count and seed', () => {
-    for (const seatCount of [2, 3, 4]) {
-      for (let seed = 0; seed < 40; seed++) {
-        const final = playOutGreedy(seatCount, seed)
-        expect(final.phase, `seatCount=${seatCount} seed=${seed}`).toBe('finished')
-        expect(final.seats[final.winner ?? -1]?.hand).toHaveLength(0)
       }
-    }
-  })
+    },
+    PROPERTY_TIMEOUT_MS,
+  )
 
-  it('is fully reproducible from seed and picks', () => {
-    const a = playOut(4, 31337, [0, 2, 1, 4]).final
-    const b = playOut(4, 31337, [0, 2, 1, 4]).final
-    expect(a).toEqual(b)
-  })
+  it(
+    'is fully reproducible from seed and picks',
+    () => {
+      const a = playOut(4, 31337, [0, 2, 1, 4]).final
+      const b = playOut(4, 31337, [0, 2, 1, 4]).final
+      expect(a).toEqual(b)
+    },
+    PROPERTY_TIMEOUT_MS,
+  )
 })
