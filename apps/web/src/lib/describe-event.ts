@@ -1,6 +1,6 @@
 import type { Card, Color } from '@uno/engine'
 import type { GameEvent } from '@uno/protocol'
-import { cardCount, isBackPhrase, winsPhrase } from './phrase.js'
+import { cardCount, isBackPhrase, matchResultPhrase, pointsCount, winsPhrase } from './phrase.js'
 
 const COLOR_NAME: Record<Color, string> = { R: 'Red', G: 'Green', B: 'Blue', Y: 'Yellow' }
 
@@ -50,11 +50,20 @@ export function describeEvent(
       return isBackPhrase(nameOf(event.seat), event.seat === mySeat)
     case 'seatLeft':
       return `${nameOf(event.seat)} left the game`
-    case 'gameOver':
-      return event.winner === null
-        ? 'Game abandoned — not enough players'
-        : winsPhrase(nameOf(event.winner), event.winner === mySeat)
+    case 'roundEnded': {
+      if (event.winner === null) return 'Round abandoned — not enough players'
+      const won = winsPhrase(nameOf(event.winner), event.winner === mySeat)
+      const awarded = event.awarded[event.winner] ?? 0
+      return `${won} the round, +${pointsCount(awarded)}`
+    }
+    case 'matchEnded':
+      return matchResultPhrase(
+        event.winners.map((seat) => nameOf(seat)),
+        event.winners.includes(mySeat),
+      )
+    case 'roundStarted':
+      return `Round ${String(event.round)} dealt`
     case 'gameRestarted':
-      return 'A new game was dealt'
+      return 'A new match was dealt'
   }
 }

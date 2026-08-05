@@ -1,3 +1,4 @@
+import type { MatchGoal } from '@uno/engine'
 import { randomInt } from 'node:crypto'
 import { err, ok, type Result } from '@uno/engine'
 import type { ErrorCode, GameEvent } from '@uno/protocol'
@@ -44,7 +45,7 @@ export class RoomManager {
     return this.rooms.size
   }
 
-  create(): Result<Room, ErrorCode> {
+  create(goal: MatchGoal): Result<Room, ErrorCode> {
     if (this.rooms.size >= this.maxRooms) return err('server_full')
 
     // Retry on the astronomically unlikely collision rather than overwrite.
@@ -54,7 +55,7 @@ export class RoomManager {
     }
     if (this.rooms.has(code)) return err('server_full')
 
-    const room = new Room(code, this.seedSource())
+    const room = new Room(code, this.seedSource(), goal)
     this.rooms.set(code, room)
     return ok(room)
   }

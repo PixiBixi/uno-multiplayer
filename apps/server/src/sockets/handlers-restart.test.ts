@@ -1,3 +1,4 @@
+import { DEFAULT_MATCH_GOAL } from '@uno/protocol'
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { PlayerView } from '@uno/protocol'
 import { io as connect, type Socket } from 'socket.io-client'
@@ -62,7 +63,10 @@ const waitFor = async (predicate: () => boolean, label: string): Promise<void> =
 /** Seats a two-player table over real sockets and starts the game. */
 const table = async () => {
   const host = newPlayer()
-  const created = await emit<CreateAck>(host, 'room:create', { playerName: 'Ana' })
+  const created = await emit<CreateAck>(host, 'room:create', {
+    playerName: 'Ana',
+    goal: DEFAULT_MATCH_GOAL,
+  })
   if (!created.ok) throw new Error('room:create failed')
   const guest = newPlayer()
   await emit<PlainAck>(guest, 'room:join', {
@@ -103,7 +107,7 @@ describe('game:restart over sockets', () => {
     const { host } = await table()
     expect(await emit<PlainAck>(host, 'game:restart', {})).toEqual({
       ok: false,
-      error: 'game_already_started',
+      error: 'round_in_progress',
     })
   })
 

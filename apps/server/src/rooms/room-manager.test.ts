@@ -1,3 +1,4 @@
+import { DEFAULT_MATCH_GOAL } from '@uno/protocol'
 import { describe, expect, it } from 'vitest'
 import { RoomManager, type Timers } from './room-manager.js'
 
@@ -38,7 +39,7 @@ const managerWith = (overrides: { maxRooms?: number } = {}) => {
 }
 
 const createdRoom = (manager: RoomManager) => {
-  const created = manager.create()
+  const created = manager.create(DEFAULT_MATCH_GOAL)
   if (!created.okay) throw new Error(created.error)
   return created.value
 }
@@ -63,9 +64,9 @@ describe('RoomManager.create', () => {
 
   it('refuses to exceed the room cap, bounding memory', () => {
     const { manager } = managerWith({ maxRooms: 2 })
-    expect(manager.create().okay).toBe(true)
-    expect(manager.create().okay).toBe(true)
-    expect(manager.create()).toEqual({ okay: false, error: 'server_full' })
+    expect(manager.create(DEFAULT_MATCH_GOAL).okay).toBe(true)
+    expect(manager.create(DEFAULT_MATCH_GOAL).okay).toBe(true)
+    expect(manager.create(DEFAULT_MATCH_GOAL)).toEqual({ okay: false, error: 'server_full' })
   })
 })
 

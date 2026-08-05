@@ -48,16 +48,28 @@ describe('describeEvent', () => {
     expect(describeEvent({ type: 'seatLeft', seat: 1 }, nameOf, NOT_ME)).toBe('Ben left the game')
   })
 
-  it('distinguishes a win from an abandoned game', () => {
-    expect(describeEvent({ type: 'gameOver', winner: 0 }, nameOf, NOT_ME)).toBe('Ana wins')
-    expect(describeEvent({ type: 'gameOver', winner: null }, nameOf, NOT_ME)).toBe(
-      'Game abandoned — not enough players',
-    )
+  it('distinguishes a win from an abandoned round', () => {
+    expect(
+      describeEvent(
+        { type: 'roundEnded', winner: 0, awarded: [77, 0], scores: [77, 0] },
+        nameOf,
+        NOT_ME,
+      ),
+    ).toBe('Ana wins the round, +77 points')
+    expect(
+      describeEvent(
+        { type: 'roundEnded', winner: null, awarded: [0, 0], scores: [0, 0] },
+        nameOf,
+        NOT_ME,
+      ),
+    ).toBe('Round abandoned — not enough players')
   })
 
   it('conjugates the second person when the viewer won', () => {
     const asYou = (seat: number) => (seat === 0 ? 'You' : nameOf(seat))
-    expect(describeEvent({ type: 'gameOver', winner: 0 }, asYou, 0)).toBe('You win')
+    expect(
+      describeEvent({ type: 'roundEnded', winner: 0, awarded: [12, 0], scores: [12, 0] }, asYou, 0),
+    ).toBe('You win the round, +12 points')
   })
 
   it('conjugates the second person when the viewer reconnects', () => {
@@ -90,7 +102,7 @@ describe('describeEvent', () => {
   })
 
   it('describes a restart', () => {
-    expect(describeEvent({ type: 'gameRestarted' }, nameOf, NOT_ME)).toBe('A new game was dealt')
+    expect(describeEvent({ type: 'gameRestarted' }, nameOf, NOT_ME)).toBe('A new match was dealt')
   })
 
   it('falls back to a seat number for an unknown seat', () => {

@@ -31,6 +31,7 @@ export function App() {
         feed={state.feed}
         toasts={state.toasts}
         onPlay={actions.playMove}
+        onNextRound={actions.nextRound}
         onRestart={actions.restartGame}
         onLeave={actions.leave}
         onSend={actions.sendChat}

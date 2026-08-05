@@ -1,5 +1,5 @@
 import type { Card, CardId } from '@uno/engine'
-import type { PlayerView } from '@uno/protocol'
+import { DEFAULT_MATCH_GOAL, type PlayerView } from '@uno/protocol'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -27,6 +27,12 @@ const viewWith = (overrides: Partial<PlayerView> = {}): PlayerView => ({
   drawPileCount: 20,
   phase: 'playing',
   winner: null,
+  match: {
+    goal: DEFAULT_MATCH_GOAL,
+    scores: [0, 0],
+    round: 1,
+    winners: null,
+  },
   ...overrides,
 })
 
@@ -37,6 +43,7 @@ const setup = (view: PlayerView) => {
     feed: [],
     toasts: [],
     onPlay: vi.fn(),
+    onNextRound: vi.fn(),
     onRestart: vi.fn(),
     onLeave: vi.fn(),
     onSend: vi.fn(),
@@ -110,6 +117,7 @@ describe('Table', () => {
         feed={[]}
         toasts={[]}
         onPlay={vi.fn()}
+        onNextRound={vi.fn()}
         onRestart={vi.fn()}
         onLeave={vi.fn()}
         onSend={vi.fn()}

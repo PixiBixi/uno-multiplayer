@@ -1,3 +1,4 @@
+import { DEFAULT_MATCH_GOAL } from './views.js'
 import { describe, expect, it } from 'vitest'
 import {
   chatSendSchema,
@@ -10,15 +11,21 @@ import {
 
 describe('roomCreateSchema', () => {
   it('accepts a normal name', () => {
-    expect(roomCreateSchema.safeParse({ playerName: 'Jeremy' }).success).toBe(true)
+    expect(
+      roomCreateSchema.safeParse({ playerName: 'Jeremy', goal: DEFAULT_MATCH_GOAL }).success,
+    ).toBe(true)
   })
 
   it('trims surrounding whitespace', () => {
-    expect(roomCreateSchema.parse({ playerName: '  Jeremy  ' }).playerName).toBe('Jeremy')
+    expect(
+      roomCreateSchema.parse({ playerName: '  Jeremy  ', goal: DEFAULT_MATCH_GOAL }).playerName,
+    ).toBe('Jeremy')
   })
 
   it('rejects an empty name', () => {
-    expect(roomCreateSchema.safeParse({ playerName: '   ' }).success).toBe(false)
+    expect(
+      roomCreateSchema.safeParse({ playerName: '   ', goal: DEFAULT_MATCH_GOAL }).success,
+    ).toBe(false)
   })
 
   it('rejects a name over 20 characters', () => {

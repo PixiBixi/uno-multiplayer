@@ -1,3 +1,4 @@
+import { DEFAULT_MATCH_GOAL } from '@uno/protocol'
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { PlayerView } from '@uno/protocol'
 import { io as connect, type Socket } from 'socket.io-client'
@@ -48,7 +49,10 @@ type JoinAck = { ok: true; sessionToken: string; seat: number } | { ok: false; e
 type PlainAck = { ok: true } | { ok: false; error: string }
 
 const createRoom = async (client: Socket, name = 'Ana') => {
-  const ack = await emit<CreateAck>(client, 'room:create', { playerName: name })
+  const ack = await emit<CreateAck>(client, 'room:create', {
+    playerName: name,
+    goal: DEFAULT_MATCH_GOAL,
+  })
   if (!ack.ok) throw new Error('room:create failed')
   return ack
 }
@@ -63,7 +67,9 @@ describe('room lifecycle over sockets', () => {
 
   it('rejects an invalid payload without dropping the connection', async () => {
     const client = newClient()
-    expect(await emit<PlainAck>(client, 'room:create', { playerName: '' })).toEqual({
+    expect(
+      await emit<PlainAck>(client, 'room:create', { playerName: '', goal: DEFAULT_MATCH_GOAL }),
+    ).toEqual({
       ok: false,
       error: 'invalid_payload',
     })

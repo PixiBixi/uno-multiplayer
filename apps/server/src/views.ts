@@ -1,5 +1,5 @@
 import { legalMoves, type GameState } from '@uno/engine'
-import type { PlayerView } from '@uno/protocol'
+import type { MatchProgress, PlayerView } from '@uno/protocol'
 
 /**
  * Builds the view for ONE seat. Opponents are reduced to a card count, and the
@@ -9,7 +9,11 @@ import type { PlayerView } from '@uno/protocol'
  * Returns null when the seat or the discard top does not exist — the caller
  * simply sends nothing rather than guessing.
  */
-export function redactFor(state: GameState, seatIndex: number): PlayerView | null {
+export function redactFor(
+  state: GameState,
+  seatIndex: number,
+  match: MatchProgress,
+): PlayerView | null {
   const seat = state.seats[seatIndex]
   const discardTop = state.discardPile[state.discardPile.length - 1]
   if (seat === undefined || discardTop === undefined) return null
@@ -36,5 +40,6 @@ export function redactFor(state: GameState, seatIndex: number): PlayerView | nul
     drawPileCount: state.drawPile.length,
     phase: state.phase,
     winner: state.winner,
+    match,
   }
 }

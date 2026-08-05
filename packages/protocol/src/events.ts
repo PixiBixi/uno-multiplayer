@@ -1,4 +1,4 @@
-import type { Card, Move } from '@uno/engine'
+import type { Card, MatchGoal, Move } from '@uno/engine'
 import type { LobbyView, PlayerView } from './views.js'
 
 export type ErrorCode =
@@ -14,6 +14,8 @@ export type ErrorCode =
   | 'rate_limited'
   | 'invalid_session'
   | 'server_full'
+  | 'round_in_progress'
+  | 'match_over'
 
 /** Narrative feed used for animations and the in-game log, never for state. */
 export type GameEvent =
@@ -24,7 +26,12 @@ export type GameEvent =
   | { type: 'seatDisconnected'; seat: number }
   | { type: 'seatReconnected'; seat: number }
   | { type: 'seatLeft'; seat: number }
-  | { type: 'gameOver'; winner: number | null }
+  /* A round ending and a match ending are two different moments, and conflating
+     them was what the old single `gameOver` did. `awarded` is what this round paid
+     out, `scores` the running totals after it. */
+  | { type: 'roundEnded'; winner: number | null; awarded: number[]; scores: number[] }
+  | { type: 'matchEnded'; winners: number[]; scores: number[] }
+  | { type: 'roundStarted'; round: number }
   | { type: 'gameRestarted' }
 
 /**
@@ -38,7 +45,7 @@ export type Ack<T = Empty> = (result: ({ ok: true } & T) | { ok: false; error: E
 
 export type ClientToServer = {
   'room:create': (
-    payload: { playerName: string },
+    payload: { playerName: string; goal: MatchGoal },
     ack: Ack<{ roomCode: string; sessionToken: string; seat: number }>,
   ) => void
   'room:join': (
@@ -50,6 +57,9 @@ export type ClientToServer = {
     ack: Ack<{ seat: number }>,
   ) => void
   'game:start': (payload: Empty, ack: Ack) => void
+  /** Deals the next round of the current match, keeping the scores. */
+  'game:nextRound': (payload: Empty, ack: Ack) => void
+  /** Abandons the standings and starts a fresh match on the same goal. */
   'game:restart': (payload: Empty, ack: Ack) => void
   'game:move': (payload: { move: Move }, ack: Ack) => void
   'chat:send': (payload: { text: string }, ack: Ack) => void

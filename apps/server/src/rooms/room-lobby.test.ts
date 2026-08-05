@@ -1,8 +1,9 @@
+import { DEFAULT_MATCH_GOAL } from '@uno/protocol'
 import { describe, expect, it } from 'vitest'
 import { Room } from './room.js'
 
 const roomWith = (...names: string[]) => {
-  const room = new Room('ABC234', 7)
+  const room = new Room('ABC234', 7, DEFAULT_MATCH_GOAL)
   names.forEach((name, i) => {
     const result = room.join(name, `socket-${i}`)
     if (!result.okay) throw new Error(result.error)
@@ -12,7 +13,7 @@ const roomWith = (...names: string[]) => {
 
 describe('Room.join', () => {
   it('starts in the lobby with nobody seated', () => {
-    const room = new Room('ABC234', 7)
+    const room = new Room('ABC234', 7, DEFAULT_MATCH_GOAL)
     expect(room.phase).toBe('lobby')
     expect(room.memberCount).toBe(0)
     expect(room.isEmpty()).toBe(true)
@@ -25,7 +26,7 @@ describe('Room.join', () => {
   })
 
   it('returns a distinct session token per seat', () => {
-    const room = new Room('ABC234', 7)
+    const room = new Room('ABC234', 7, DEFAULT_MATCH_GOAL)
     const a = room.join('Ana', 'socket-a')
     const b = room.join('Ben', 'socket-b')
     if (!a.okay || !b.okay) throw new Error('expected both joins to succeed')
@@ -71,6 +72,7 @@ describe('Room.lobbyView', () => {
         { seat: 1, name: 'Ben', status: 'active' },
       ],
       canStart: true,
+      goal: DEFAULT_MATCH_GOAL,
     })
     expect(JSON.stringify(view)).not.toContain('sessionToken')
   })

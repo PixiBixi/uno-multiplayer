@@ -26,7 +26,7 @@ describe('Home', () => {
     const { onCreate } = setup()
     await userEvent.type(screen.getByLabelText(/your name/i), '  Ana  ')
     await userEvent.click(screen.getByRole('button', { name: /create/i }))
-    expect(onCreate).toHaveBeenCalledWith('Ana')
+    expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 })
   })
 
   it('caps the name at the protocol limit', async () => {

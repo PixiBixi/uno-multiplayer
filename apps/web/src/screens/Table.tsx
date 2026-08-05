@@ -16,6 +16,7 @@ type TableProps = {
   feed: FeedEntry[]
   toasts: Toast[]
   onPlay: (move: Move) => void
+  onNextRound: () => void
   onRestart: () => void
   onLeave: () => void
   onSend: (text: string) => void
@@ -35,6 +36,7 @@ export function Table({
   feed,
   toasts,
   onPlay,
+  onNextRound,
   onRestart,
   onLeave,
   onSend,
@@ -138,6 +140,7 @@ export function Table({
             view={view}
             nameOf={nameOf}
             isHost={isHost}
+            onNextRound={onNextRound}
             onRestart={onRestart}
             onLeave={onLeave}
           />

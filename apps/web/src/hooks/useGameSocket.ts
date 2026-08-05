@@ -1,5 +1,5 @@
 import type { ClientToServer, ErrorCode, ServerToClient } from '@uno/protocol'
-import type { Move } from '@uno/engine'
+import type { MatchGoal, Move } from '@uno/engine'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { io, type Socket } from 'socket.io-client'
 import { readRoomCodeFromUrl, writeRoomCodeToUrl } from '../lib/room-url.js'
@@ -22,6 +22,8 @@ const MESSAGES: Record<ErrorCode, string> = {
   rate_limited: 'Slow down a moment.',
   invalid_session: 'Your seat was given away. Rejoin to play.',
   server_full: 'The server is at capacity. Try again shortly.',
+  round_in_progress: 'This round is still being played.',
+  match_over: 'The match is over. Start a new one to keep playing.',
 }
 
 export function useGameSocket() {
@@ -82,8 +84,8 @@ export function useGameSocket() {
   }, [])
 
   const createRoom = useCallback(
-    (playerName: string) => {
-      socketRef.current?.emit('room:create', { playerName }, (result) => {
+    (playerName: string, goal: MatchGoal) => {
+      socketRef.current?.emit('room:create', { playerName, goal }, (result) => {
         if (!result.ok) {
           fail(result.error)
           return
@@ -113,6 +115,12 @@ export function useGameSocket() {
 
   const startGame = useCallback(() => {
     socketRef.current?.emit('game:start', {}, (result) => {
+      if (!result.ok) fail(result.error)
+    })
+  }, [fail])
+
+  const nextRound = useCallback(() => {
+    socketRef.current?.emit('game:nextRound', {}, (result) => {
       if (!result.ok) fail(result.error)
     })
   }, [fail])
@@ -157,6 +165,7 @@ export function useGameSocket() {
       createRoom,
       joinRoom,
       startGame,
+      nextRound,
       restartGame,
       playMove,
       sendChat,

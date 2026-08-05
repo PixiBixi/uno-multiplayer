@@ -1,6 +1,15 @@
-import type { CardId, Move } from '@uno/engine'
+import type { CardId, MatchGoal, Move } from '@uno/engine'
 import { z } from 'zod'
-import { MAX_CHAT_LENGTH, MAX_NAME_LENGTH, ROOM_CODE_ALPHABET, ROOM_CODE_LENGTH } from './views.js'
+import {
+  MAX_CHAT_LENGTH,
+  MAX_NAME_LENGTH,
+  MAX_POINTS_TARGET,
+  MAX_ROUNDS,
+  MIN_POINTS_TARGET,
+  MIN_ROUNDS,
+  ROOM_CODE_ALPHABET,
+  ROOM_CODE_LENGTH,
+} from './views.js'
 
 const roomCode = z
   .string()
@@ -45,9 +54,25 @@ export const moveSchema: z.ZodType<Move> = z.discriminatedUnion('type', [
   z.object({ type: z.literal('callUno') }),
 ])
 
-export const roomCreateSchema = z.object({ playerName })
+/**
+ * Bounded on both variants. Without the ceilings a client could ask for a match to
+ * two billion points, which is not a match — it is a way to make the game never end.
+ */
+export const matchGoalSchema: z.ZodType<MatchGoal> = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('points'),
+    target: z.number().int().min(MIN_POINTS_TARGET).max(MAX_POINTS_TARGET),
+  }),
+  z.object({
+    kind: z.literal('rounds'),
+    count: z.number().int().min(MIN_ROUNDS).max(MAX_ROUNDS),
+  }),
+])
+
+export const roomCreateSchema = z.object({ playerName, goal: matchGoalSchema })
 export const roomJoinSchema = z.object({ roomCode, playerName })
 export const roomRejoinSchema = z.object({ roomCode, sessionToken: z.uuid() })
 export const gameStartSchema = z.object({})
+export const gameNextRoundSchema = z.object({})
 export const gameMoveSchema = z.object({ move: moveSchema })
 export const chatSendSchema = z.object({ text: z.string().trim().min(1).max(MAX_CHAT_LENGTH) })

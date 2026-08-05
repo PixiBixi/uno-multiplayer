@@ -1,8 +1,9 @@
+import { DEFAULT_MATCH_GOAL } from '@uno/protocol'
 import { describe, expect, it } from 'vitest'
 import { Room } from './room.js'
 
 const seated = (...names: string[]) => {
-  const room = new Room('ABC234', 42)
+  const room = new Room('ABC234', 42, DEFAULT_MATCH_GOAL)
   const tokens = names.map((name, i) => {
     const result = room.join(name, `socket-${i}`)
     if (!result.okay) throw new Error(result.error)
@@ -112,7 +113,12 @@ describe('Room.expireGrace', () => {
     room.disconnect('socket-1')
     const events = room.expireGrace(1)
     expect(room.phase).toBe('finished')
-    expect(events).toContainEqual({ type: 'gameOver', winner: null })
+    expect(events).toContainEqual({
+      type: 'roundEnded',
+      winner: null,
+      awarded: [0, 0],
+      scores: [0, 0],
+    })
   })
 
   it('does nothing for a seat that came back in time', () => {

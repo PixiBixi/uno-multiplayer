@@ -1,4 +1,4 @@
-import type { LobbyView, PlayerView } from '@uno/protocol'
+import { DEFAULT_MATCH_GOAL, type LobbyView, type PlayerView } from '@uno/protocol'
 import { describe, expect, it } from 'vitest'
 import { FEED_LIMIT, gameReducer, initialState } from './game-reducer.js'
 
@@ -7,6 +7,7 @@ const lobby: LobbyView = {
   hostSeat: 0,
   seats: [{ seat: 0, name: 'Ana', status: 'active' }],
   canStart: false,
+  goal: DEFAULT_MATCH_GOAL,
 }
 
 const view = { phase: 'playing', winner: null } as PlayerView
@@ -126,18 +127,21 @@ describe('gameReducer', () => {
   it('distinguishes an abandoned game from a win in its toast', () => {
     const abandoned = gameReducer(initialState, {
       type: 'event',
-      event: { type: 'gameOver', winner: null },
+      event: { type: 'roundEnded', winner: null, awarded: [0, 0], scores: [0, 0] },
     })
     expect(abandoned.toasts[0]?.tone).toBe('bad')
 
-    const won = gameReducer(initialState, { type: 'event', event: { type: 'gameOver', winner: 1 } })
+    const won = gameReducer(initialState, {
+      type: 'event',
+      event: { type: 'roundEnded', winner: 1, awarded: [0, 7], scores: [0, 7] },
+    })
     expect(won.toasts[0]?.tone).toBe('info')
   })
 
   it('dismisses a toast by id', () => {
     const withToast = gameReducer(initialState, {
       type: 'event',
-      event: { type: 'gameOver', winner: 1 },
+      event: { type: 'roundEnded', winner: 1, awarded: [0, 7], scores: [0, 7] },
     })
     const id = withToast.toasts[0]?.id
     if (id === undefined) throw new Error('expected a toast')

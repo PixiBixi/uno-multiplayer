@@ -1,5 +1,5 @@
 import type { Card as CardData, CardId } from '@uno/engine'
-import type { PlayerView } from '@uno/protocol'
+import { DEFAULT_MATCH_GOAL, type PlayerView } from '@uno/protocol'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { CentreStack } from './CentreStack.js'
@@ -17,6 +17,12 @@ const viewWith = (overrides: Partial<PlayerView> = {}): PlayerView => ({
   drawPileCount: 34,
   phase: 'playing',
   winner: null,
+  match: {
+    goal: DEFAULT_MATCH_GOAL,
+    scores: [0, 0],
+    round: 1,
+    winners: null,
+  },
   ...overrides,
 })
 

@@ -1,10 +1,10 @@
-import type { GameEvent } from '@uno/protocol'
+import { DEFAULT_MATCH_GOAL, type GameEvent } from '@uno/protocol'
 import type { Move } from '@uno/engine'
 import { describe, expect, it } from 'vitest'
 import { Room } from './room.js'
 
 const seated = (...names: string[]) => {
-  const room = new Room('ABC234', 42)
+  const room = new Room('ABC234', 42, DEFAULT_MATCH_GOAL)
   names.forEach((name, i) => {
     const result = room.join(name, `socket-${i}`)
     if (!result.okay) throw new Error(result.error)
@@ -130,6 +130,6 @@ describe('Room.move', () => {
       events.push(...result.value)
     }
     expect(room.phase).toBe('finished')
-    expect(events.some((e) => e.type === 'gameOver')).toBe(true)
+    expect(events.some((e) => e.type === 'roundEnded')).toBe(true)
   })
 })

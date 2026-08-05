@@ -1,16 +1,44 @@
-import { MAX_NAME_LENGTH, ROOM_CODE_LENGTH } from '@uno/protocol'
+import type { MatchGoal } from '@uno/engine'
+import {
+  DEFAULT_MATCH_GOAL,
+  MAX_POINTS_TARGET,
+  MAX_ROUNDS,
+  MAX_NAME_LENGTH,
+  MIN_POINTS_TARGET,
+  MIN_ROUNDS,
+  ROOM_CODE_LENGTH,
+} from '@uno/protocol'
 import { useState, type FormEvent } from 'react'
 
+/* Offered as presets rather than a bare number field, because the interesting
+   choice is the format, not the arithmetic. The field stays editable underneath
+   for anyone who wants 250. */
+const POINT_PRESETS = [250, 500, 1000] as const
+const ROUND_PRESETS = [1, 3, 5] as const
+
 type HomeProps = {
-  onCreate: (name: string) => void
+  onCreate: (name: string, goal: MatchGoal) => void
   onJoin: (roomCode: string, name: string) => void
   error: string | null
   prefilledCode: string | null
 }
 
+const clamp = (value: number, low: number, high: number): number =>
+  Number.isFinite(value) ? Math.min(high, Math.max(low, Math.round(value))) : low
+
 export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
   const [name, setName] = useState('')
   const [code, setCode] = useState(prefilledCode ?? '')
+  const [goalKind, setGoalKind] = useState<MatchGoal['kind']>(DEFAULT_MATCH_GOAL.kind)
+  const [target, setTarget] = useState(500)
+  const [rounds, setRounds] = useState(3)
+
+  /* Clamped here as well as on the server. The server is still the authority; this
+     only spares the player a round trip to learn that 0 rounds is not a match. */
+  const goal: MatchGoal =
+    goalKind === 'points'
+      ? { kind: 'points', target: clamp(target, MIN_POINTS_TARGET, MAX_POINTS_TARGET) }
+      : { kind: 'rounds', count: clamp(rounds, MIN_ROUNDS, MAX_ROUNDS) }
 
   const trimmedName = name.trim()
   const normalisedCode = code.trim().toUpperCase()
@@ -21,7 +49,7 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
      only authority — this just spares a round trip to learn the obvious. */
   const submitCreate = (event: FormEvent) => {
     event.preventDefault()
-    if (canCreate) onCreate(trimmedName)
+    if (canCreate) onCreate(trimmedName, goal)
   }
   const submitJoin = (event: FormEvent) => {
     event.preventDefault()
@@ -49,6 +77,92 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
           autoComplete="nickname"
           placeholder="Ana"
         />
+        <fieldset className="goal-picker">
+          <legend>How the match ends</legend>
+          <div className="segmented" role="group" aria-label="Match format">
+            <button
+              type="button"
+              className={goalKind === 'points' ? 'seg seg-on' : 'seg'}
+              aria-pressed={goalKind === 'points'}
+              onClick={() => {
+                setGoalKind('points')
+              }}
+            >
+              First to a score
+            </button>
+            <button
+              type="button"
+              className={goalKind === 'rounds' ? 'seg seg-on' : 'seg'}
+              aria-pressed={goalKind === 'rounds'}
+              onClick={() => {
+                setGoalKind('rounds')
+              }}
+            >
+              A set number of rounds
+            </button>
+          </div>
+
+          {goalKind === 'points' ? (
+            <div className="goal-row">
+              <label htmlFor="goal-target">Winning score</label>
+              <input
+                id="goal-target"
+                type="number"
+                inputMode="numeric"
+                value={target}
+                min={MIN_POINTS_TARGET}
+                max={MAX_POINTS_TARGET}
+                onChange={(event) => {
+                  setTarget(Number(event.target.value))
+                }}
+              />
+              <span className="preset-row">
+                {POINT_PRESETS.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    className="chip"
+                    onClick={() => {
+                      setTarget(preset)
+                    }}
+                  >
+                    {preset}
+                  </button>
+                ))}
+              </span>
+            </div>
+          ) : (
+            <div className="goal-row">
+              <label htmlFor="goal-rounds">Rounds</label>
+              <input
+                id="goal-rounds"
+                type="number"
+                inputMode="numeric"
+                value={rounds}
+                min={MIN_ROUNDS}
+                max={MAX_ROUNDS}
+                onChange={(event) => {
+                  setRounds(Number(event.target.value))
+                }}
+              />
+              <span className="preset-row">
+                {ROUND_PRESETS.map((preset) => (
+                  <button
+                    key={preset}
+                    type="button"
+                    className="chip"
+                    onClick={() => {
+                      setRounds(preset)
+                    }}
+                  >
+                    {preset === 1 ? 'Single game' : preset}
+                  </button>
+                ))}
+              </span>
+            </div>
+          )}
+        </fieldset>
+
         <button type="submit" className="btn btn-primary" disabled={!canCreate}>
           Create a game
         </button>

@@ -75,12 +75,16 @@ function toastFor(event: GameEvent): Omit<Toast, 'id'> | null {
       }
     case 'seatLeft':
       return { tone: 'bad', title: 'A player left', detail: 'Their cards went back to the pile.' }
-    case 'gameOver':
+    case 'roundEnded':
       return event.winner === null
-        ? { tone: 'bad', title: 'Game abandoned', detail: 'Not enough players remain.' }
-        : { tone: 'info', title: 'Game over', detail: 'The table is done.' }
+        ? { tone: 'bad', title: 'Round abandoned', detail: 'Not enough players remain.' }
+        : { tone: 'info', title: 'Round over', detail: 'Points go to whoever went out.' }
+    case 'matchEnded':
+      return { tone: 'info', title: 'Match over', detail: 'The standings are final.' }
+    case 'roundStarted':
+      return { tone: 'info', title: 'Next round', detail: 'The host dealt again.' }
     case 'gameRestarted':
-      return { tone: 'info', title: 'New deal', detail: 'The host started another game.' }
+      return { tone: 'info', title: 'New match', detail: 'The standings were reset.' }
     default:
       return null
   }

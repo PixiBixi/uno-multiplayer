@@ -63,7 +63,9 @@ describe('effectForFeedEvent', () => {
   it('ignores events with nothing to dramatise', () => {
     expect(effectForFeedEvent({ type: 'seatReconnected', seat: 1 })).toBeNull()
     expect(effectForFeedEvent({ type: 'gameRestarted' })).toBeNull()
-    expect(effectForFeedEvent({ type: 'gameOver', winner: 1 })).toBeNull()
+    expect(
+      effectForFeedEvent({ type: 'roundEnded', winner: 1, awarded: [0, 5], scores: [0, 5] }),
+    ).toBeNull()
     expect(effectForFeedEvent({ type: 'cardPlayed', seat: 1, card: wild4 })).toBeNull()
   })
 })

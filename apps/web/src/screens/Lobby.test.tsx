@@ -1,4 +1,4 @@
-import type { LobbyView } from '@uno/protocol'
+import { DEFAULT_MATCH_GOAL, type LobbyView } from '@uno/protocol'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -10,6 +10,7 @@ const lobbyWith = (names: string[], canStart = names.length >= 2): LobbyView => 
   hostSeat: 0,
   seats: names.map((name, seat) => ({ seat, name, status: 'active' as const })),
   canStart,
+  goal: DEFAULT_MATCH_GOAL,
 })
 
 const setup = (lobby: LobbyView, mySeat: number) => {

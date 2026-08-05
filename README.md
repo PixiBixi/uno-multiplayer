@@ -96,8 +96,27 @@ Official rules plus draw stacking, with these points pinned down explicitly:
 | Drawing voluntarily           | Ends your turn. No "you may now play the card you drew" sub-state.                                                                            |
 | Calling UNO                   | Legal only during your own turn, before playing. Going down to one card without it costs two cards.                                           |
 | Empty draw pile               | The discard pile minus its top card is reshuffled into a new draw pile. If that is still not enough, the draw is capped at what is available. |
-| Victory                       | First empty hand wins; the game ends immediately.                                                                                             |
+| Victory                       | First empty hand wins the round; the round ends immediately.                                                                                  |
 | Card conservation             | Hands + draw pile + discard pile always total 108 cards with distinct ids. Enforced by a property test.                                       |
+
+### Scoring a match
+
+A table plays a match of rounds, and the host sets how it ends when creating it:
+first to a points target, or a fixed number of rounds. **A one-round match is a
+single game** — there is no separate mode for it, because a mode meaning "stop
+after one round" is what a one-round match already is.
+
+Scoring is official Mattel: the winner of a round takes the total value of every
+card left in the other hands, number cards at face value, Skip / Reverse / Draw Two
+at 20, both wilds at 50.
+
+| Point                   | Decision                                                                                                                   |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| Round with no winner    | Awards nothing and ends the match. Scoring a round nobody finished would mean inventing a rule.                            |
+| Tie on totals           | Possible in rounds mode, and unaddressed by the official rules. Every seat on the winning total shares the win.            |
+| Tie on points           | Impossible: only the round winner scores, so only one seat can cross the target.                                           |
+| A player who leaves     | Keeps the points they earned, and their remaining cards still count for whoever went out.                                  |
+| Next round vs new match | Two distinct host actions. Letting one mean both depending on hidden state is how a player loses a scoreboard by accident. |
 
 Not implemented, deliberately: the strict Mattel +4 challenge (it needs a bluff
 UI and hand inspection), the 7-0 variant, and jump-in.
@@ -186,6 +205,7 @@ emit-only solution and excludes tests.
 - [x] `apps/web` — SVG cards, four-seat table, lobby, chat
 - [x] Playwright end-to-end tests across multiple browser contexts
 - [x] Dockerfile and deployment
+- [x] Match scoring: points target or fixed rounds, official card values
 
 Design documents live in `docs/superpowers/`: the
 [design spec](docs/superpowers/specs/2026-08-04-uno-multiplayer-design.md) records
