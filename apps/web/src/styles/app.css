@@ -921,6 +921,121 @@ h3 {
   }
 }
 
+/* ---------- Play effects ---------- */
+
+/* Every card played gets this: a fresh drop onto the discard pile. Keyed by
+   card id in CentreStack, so it replays exactly once per new top card and
+   never on a draw, which leaves the pile's top card — and its id — unchanged. */
+.pile-discard {
+  animation: fxCardDrop 380ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
+}
+
+@keyframes fxCardDrop {
+  0% {
+    transform: translateY(-22px) scale(0.85) rotate(-6deg);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(3px) scale(1.03) rotate(1deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* A decorative burst layered on top for skip, reverse, +2 and the two wilds —
+   the routine drop above still plays underneath every one of these. */
+.fx-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 15;
+  pointer-events: none;
+  overflow: hidden;
+  border-radius: inherit;
+}
+
+.fx-flash {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation-name: fxFlash;
+  animation-timing-function: ease-out;
+  animation-fill-mode: forwards;
+}
+
+.fx-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-family: var(--display);
+  font-weight: 600;
+  font-size: clamp(2rem, 8vw, 4rem);
+  letter-spacing: 0.02em;
+  -webkit-text-stroke: 3px var(--bone);
+  paint-order: stroke fill;
+  text-shadow: 0 6px 18px rgb(0 0 0 / 0.45);
+  animation-name: fxBurst;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation-fill-mode: forwards;
+}
+
+@keyframes fxFlash {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes fxBurst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.35) rotate(-10deg);
+    opacity: 0;
+  }
+  35% {
+    transform: translate(-50%, -50%) scale(1.18) rotate(4deg);
+    opacity: 1;
+  }
+  60% {
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.9) rotate(0deg);
+    opacity: 0;
+  }
+}
+
+/* The one truly "impactant" moment, by request: the table itself flinches. */
+.fx-shake {
+  animation: fxShake 500ms ease;
+}
+
+@keyframes fxShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translate(-10px, 2px) rotate(-0.6deg);
+  }
+  40% {
+    transform: translate(8px, -2px) rotate(0.5deg);
+  }
+  60% {
+    transform: translate(-6px, 1px) rotate(-0.4deg);
+  }
+  80% {
+    transform: translate(4px, -1px) rotate(0.2deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

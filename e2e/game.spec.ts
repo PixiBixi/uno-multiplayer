@@ -233,3 +233,18 @@ test('reloading while on turn costs a drawn card', async ({ browser }) => {
   await host.reload()
   await expect(host.locator('.hand-card')).toHaveCount(8)
 })
+
+test('the play-effects layer is wired into the table', async ({ browser }) => {
+  const host = await openPlayer(browser)
+  const guest = await openPlayer(browser)
+
+  const code = await createGame(host, 'Ana')
+  await joinGame(guest, code, 'Ben')
+  await host.getByRole('button', { name: 'Start game' }).click()
+  await expect(host.locator('.hand-card')).toHaveCount(7)
+
+  // Structural only: whether a burst is live at this instant is a timing
+  // question, and asserting on animation state in flight is exactly the kind
+  // of flaky check to avoid. This just proves the layer is really mounted.
+  await expect(host.locator('.fx-layer')).toBeAttached()
+})

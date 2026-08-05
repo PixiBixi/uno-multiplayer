@@ -60,7 +60,11 @@ export function CentreStack({ view }: { view: PlayerView }) {
         <p className="pile-label">{view.drawPileCount} left</p>
       </div>
 
-      <div className="pile">
+      {/* Keyed by card id, not just present for its own sake: it forces React to
+          remount this wrapper every time a new card lands, which is what makes
+          the drop animation replay on each play and never on a draw, since a
+          draw leaves the top card's id unchanged. */}
+      <div className="pile pile-discard" key={view.discardTop.id}>
         <Card card={view.discardTop} />
       </div>
 

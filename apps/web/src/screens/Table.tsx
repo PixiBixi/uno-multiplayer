@@ -1,9 +1,11 @@
 import type { Move } from '@uno/engine'
 import type { LobbyView, PlayerView } from '@uno/protocol'
+import { useCallback, useState } from 'react'
 import { CentreStack } from '../components/CentreStack.js'
 import { ChatPanel } from '../components/ChatPanel.js'
 import { GameOver } from '../components/GameOver.js'
 import { Hand } from '../components/Hand.js'
+import { PlayEffects } from '../components/PlayEffects.js'
 import { Seat } from '../components/Seat.js'
 import { Toaster } from '../components/Toaster.js'
 import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
@@ -52,9 +54,22 @@ export function Table({
 
   const isHost = lobby !== null && lobby.hostSeat === view.you.seat
 
+  // Lifted out of PlayEffects rather than computed independently here: it is
+  // the single source of truth for "a wild4 burst is currently live", and the
+  // table itself — not just the burst overlay — is what shakes.
+  const [shaking, setShaking] = useState(false)
+  const handleShake = useCallback((value: boolean) => {
+    setShaking(value)
+  }, [])
+
   return (
     <main className="table-screen">
-      <div className="table-surface">
+      <div className={shaking ? 'table-surface fx-shake' : 'table-surface'}>
+        <PlayEffects
+          discardTop={view.discardTop}
+          currentColor={view.currentColor}
+          onShake={handleShake}
+        />
         <div className="table-grid">
           {view.opponents.slice(0, 3).map((opponent, index) => (
             <div className={`area-${AREAS[index] ?? 'north'}`} key={opponent.seat}>
