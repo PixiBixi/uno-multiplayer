@@ -248,3 +248,21 @@ test('the play-effects layer is wired into the table', async ({ browser }) => {
   // of flaky check to avoid. This just proves the layer is really mounted.
   await expect(host.locator('.fx-layer')).toBeAttached()
 })
+
+test('drawing a card pulses the draw pile', async ({ browser }) => {
+  const host = await openPlayer(browser)
+  const guest = await openPlayer(browser)
+
+  const code = await createGame(host, 'Ana')
+  await joinGame(guest, code, 'Ben')
+  await host.getByRole('button', { name: 'Start game' }).click()
+  await expect(host.locator('.hand-card')).toHaveCount(7)
+
+  // Seat 0 opens, so the host holds the turn and can always choose to draw.
+  await host.getByRole('button', { name: 'Draw card' }).click()
+
+  /* The pulse class is applied for as long as a draw has happened at all, so
+     this is a state assertion rather than a race against a 420ms animation. */
+  await expect(host.locator('.pile-draw')).toBeAttached()
+  await expect(host.locator('.hand-card')).toHaveCount(8)
+})

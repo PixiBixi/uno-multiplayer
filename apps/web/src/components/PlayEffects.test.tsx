@@ -1,89 +1,86 @@
-import type { Card, CardId } from '@uno/engine'
-import { act, render } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { EFFECT_DURATION_MS } from '../lib/play-effects.js'
+import { render } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
+import type { ActiveEffect } from '../lib/play-effects.js'
 import { PlayEffects } from './PlayEffects.js'
 
-const id = (value: string) => value as CardId
-const num = (cardId: string): Card => ({ id: id(cardId), kind: 'number', color: 'R', value: 3 })
-const wild4 = (cardId: string): Card => ({ id: id(cardId), kind: 'wild4' })
-const skip = (cardId: string): Card => ({ id: id(cardId), kind: 'skip', color: 'G' })
-
-beforeEach(() => {
-  vi.useFakeTimers()
-})
-
-afterEach(() => {
-  vi.useRealTimers()
-})
+/* Purely presentational now: what to show and for how long is decided by
+   useTableEffects, which has its own tests. These cover the drawing. */
 
 describe('PlayEffects', () => {
-  it('bursts for nothing on first paint, even when the top card is already a wild4', () => {
-    const { container } = render(<PlayEffects discardTop={wild4('a')} currentColor="R" />)
+  it('renders nothing but the layer when no burst is live', () => {
+    const { container } = render(<PlayEffects effects={[]} />)
+    expect(container.querySelector('.fx-layer')).not.toBeNull()
     expect(container.querySelector('.fx-label')).toBeNull()
   })
 
-  it('bursts when a new wild4 lands on the pile', () => {
-    const { container, rerender } = render(<PlayEffects discardTop={num('a')} currentColor="R" />)
-    rerender(<PlayEffects discardTop={wild4('b')} currentColor="Y" />)
-    expect(container.querySelector('.fx-label')?.textContent).toBe('+4')
+  it('labels each card kind the way a player would name it', () => {
+    const cases: [ActiveEffect, string][] = [
+      [{ key: 'a', kind: 'wild4', color: 'G' }, '+4'],
+      [{ key: 'b', kind: 'wild', color: 'Y' }, 'WILD'],
+      [{ key: 'c', kind: 'draw2', color: 'B' }, '+2'],
+      [{ key: 'd', kind: 'skip', color: 'R' }, 'SKIP'],
+      [{ key: 'e', kind: 'reverse', color: 'G' }, 'REVERSE'],
+      [{ key: 'f', kind: 'uno' }, 'UNO!'],
+    ]
+    for (const [effect, label] of cases) {
+      const { container, unmount } = render(<PlayEffects effects={[effect]} />)
+      expect(container.querySelector('.fx-label')?.textContent).toBe(label)
+      unmount()
+    }
   })
 
-  it('colours the burst with the view’s own post-move colour', () => {
-    const { container, rerender } = render(<PlayEffects discardTop={num('a')} currentColor="R" />)
-    rerender(<PlayEffects discardTop={skip('b')} currentColor="G" />)
+  it('tints a card burst with the colour it was given', () => {
+    const { container } = render(<PlayEffects effects={[{ key: 'a', kind: 'skip', color: 'G' }]} />)
     expect(container.querySelector<HTMLElement>('.fx-label')?.style.color).toBe('var(--green)')
   })
 
-  it('does nothing for a plain number card', () => {
-    const { container, rerender } = render(<PlayEffects discardTop={num('a')} currentColor="R" />)
-    rerender(<PlayEffects discardTop={num('b')} currentColor="R" />)
-    expect(container.querySelector('.fx-label')).toBeNull()
-  })
-
-  it('does not re-fire while the same top card stays up, such as after a draw', () => {
-    const { container, rerender } = render(<PlayEffects discardTop={num('a')} currentColor="R" />)
-    rerender(<PlayEffects discardTop={wild4('b')} currentColor="R" />)
-    rerender(<PlayEffects discardTop={wild4('b')} currentColor="R" />)
-    expect(container.querySelectorAll('.fx-label')).toHaveLength(1)
-  })
-
-  it('clears the burst once its duration elapses', () => {
-    const { container, rerender } = render(<PlayEffects discardTop={num('a')} currentColor="R" />)
-    rerender(<PlayEffects discardTop={wild4('b')} currentColor="R" />)
-    expect(container.querySelector('.fx-label')).not.toBeNull()
-    act(() => {
-      vi.advanceTimersByTime(EFFECT_DURATION_MS.wild4 + 10)
-    })
-    expect(container.querySelector('.fx-label')).toBeNull()
-  })
-
-  it('reports shaking only while a wild4 burst is live', () => {
-    const onShake = vi.fn()
-    const { rerender } = render(
-      <PlayEffects discardTop={num('a')} currentColor="R" onShake={onShake} />,
+  it('gives wild4 the four-colour pinwheel, since it has no colour of its own', () => {
+    const { container } = render(
+      <PlayEffects effects={[{ key: 'a', kind: 'wild4', color: 'G' }]} />,
     )
-    onShake.mockClear()
-    rerender(<PlayEffects discardTop={wild4('b')} currentColor="R" onShake={onShake} />)
-    expect(onShake).toHaveBeenLastCalledWith(true)
-    act(() => {
-      vi.advanceTimersByTime(EFFECT_DURATION_MS.wild4 + 10)
-    })
-    expect(onShake).toHaveBeenLastCalledWith(false)
+    expect(container.querySelector<HTMLElement>('.fx-flash')?.style.background).toContain(
+      'conic-gradient',
+    )
   })
 
-  it('does not shake for a lesser card such as skip', () => {
-    const onShake = vi.fn()
-    const { rerender } = render(
-      <PlayEffects discardTop={num('a')} currentColor="R" onShake={onShake} />,
+  it('falls back to the UNO red for a burst with no colour', () => {
+    const { container } = render(<PlayEffects effects={[{ key: 'a', kind: 'uno' }]} />)
+    expect(container.querySelector<HTMLElement>('.fx-label')?.style.color).toBe('var(--red)')
+  })
+
+  it('marks the uno burst so it can bounce differently from a card landing', () => {
+    const { container } = render(<PlayEffects effects={[{ key: 'a', kind: 'uno' }]} />)
+    expect(container.querySelector('.fx-label-uno')).not.toBeNull()
+  })
+
+  it('does not mark a card burst as a uno burst', () => {
+    const { container } = render(
+      <PlayEffects effects={[{ key: 'a', kind: 'draw2', color: 'B' }]} />,
     )
-    onShake.mockClear()
-    rerender(<PlayEffects discardTop={skip('b')} currentColor="G" onShake={onShake} />)
-    expect(onShake).not.toHaveBeenCalledWith(true)
+    expect(container.querySelector('.fx-label-uno')).toBeNull()
+  })
+
+  it('drives each burst with the duration its kind declares', () => {
+    const { container } = render(
+      <PlayEffects effects={[{ key: 'a', kind: 'wild4', color: 'G' }]} />,
+    )
+    expect(container.querySelector<HTMLElement>('.fx-label')?.style.animationDuration).toBe('900ms')
+  })
+
+  it('draws several live bursts at once', () => {
+    const { container } = render(
+      <PlayEffects
+        effects={[
+          { key: 'a', kind: 'skip', color: 'R' },
+          { key: 'b', kind: 'uno' },
+        ]}
+      />,
+    )
+    expect(container.querySelectorAll('.fx-label')).toHaveLength(2)
   })
 
   it('renders as a decorative, non-blocking layer', () => {
-    const { container } = render(<PlayEffects discardTop={num('a')} currentColor="R" />)
+    const { container } = render(<PlayEffects effects={[]} />)
     expect(container.querySelector('.fx-layer')?.getAttribute('aria-hidden')).toBe('true')
   })
 })

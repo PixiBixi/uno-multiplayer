@@ -50,11 +50,23 @@ function DirectionBadge({ direction }: { direction: 1 | -1 }) {
   )
 }
 
-export function CentreStack({ view }: { view: PlayerView }) {
+type CentreStackProps = {
+  view: PlayerView
+  /** Bumped once per draw. Used as a key so the pulse replays each time. */
+  drawNonce?: number
+}
+
+export function CentreStack({ view, drawNonce = 0 }: CentreStackProps) {
   return (
     <div className="centre-stack">
       <div className="pile-group">
-        <div className="pile">
+        {/* Keyed on the nonce so a new element mounts per draw and the CSS
+            animation runs again. The class is withheld at nonce 0 so the pile
+            does not pulse merely because the table just appeared. */}
+        <div
+          className={drawNonce > 0 ? 'pile pile-draw' : 'pile'}
+          key={`draw-${String(drawNonce)}`}
+        >
           <CardBack />
         </div>
         <p className="pile-label">{view.drawPileCount} left</p>

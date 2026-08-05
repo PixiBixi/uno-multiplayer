@@ -1,6 +1,6 @@
 import type { Card, CardId } from '@uno/engine'
 import { describe, expect, it } from 'vitest'
-import { EFFECT_DURATION_MS, effectForCard } from './play-effects.js'
+import { EFFECT_DURATION_MS, effectForCard, effectForFeedEvent } from './play-effects.js'
 
 const id = (value: string) => value as CardId
 const wild4: Card = { id: id('w4'), kind: 'wild4' }
@@ -44,5 +44,26 @@ describe('EFFECT_DURATION_MS', () => {
 
   it('gives every kind a positive duration', () => {
     for (const ms of Object.values(EFFECT_DURATION_MS)) expect(ms).toBeGreaterThan(0)
+  })
+})
+
+describe('effectForFeedEvent', () => {
+  it('turns a uno call into an overlay burst', () => {
+    expect(effectForFeedEvent({ type: 'unoCalled', seat: 1 })).toEqual({ overlay: 'uno' })
+  })
+
+  it('turns a draw into a pile pulse rather than an overlay burst', () => {
+    expect(effectForFeedEvent({ type: 'cardsDrawn', seat: 1, count: 1 })).toEqual({ pulse: 'draw' })
+  })
+
+  it('pulses for a uno penalty too, since cards really did leave the pile', () => {
+    expect(effectForFeedEvent({ type: 'unoPenalty', seat: 0, count: 2 })).toEqual({ pulse: 'draw' })
+  })
+
+  it('ignores events with nothing to dramatise', () => {
+    expect(effectForFeedEvent({ type: 'seatReconnected', seat: 1 })).toBeNull()
+    expect(effectForFeedEvent({ type: 'gameRestarted' })).toBeNull()
+    expect(effectForFeedEvent({ type: 'gameOver', winner: 1 })).toBeNull()
+    expect(effectForFeedEvent({ type: 'cardPlayed', seat: 1, card: wild4 })).toBeNull()
   })
 })

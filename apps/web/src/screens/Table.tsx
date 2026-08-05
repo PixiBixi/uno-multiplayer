@@ -1,6 +1,5 @@
 import type { Move } from '@uno/engine'
 import type { LobbyView, PlayerView } from '@uno/protocol'
-import { useCallback, useState } from 'react'
 import { CentreStack } from '../components/CentreStack.js'
 import { ChatPanel } from '../components/ChatPanel.js'
 import { GameOver } from '../components/GameOver.js'
@@ -9,6 +8,7 @@ import { PlayEffects } from '../components/PlayEffects.js'
 import { Seat } from '../components/Seat.js'
 import { Toaster } from '../components/Toaster.js'
 import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
+import { useTableEffects } from '../hooks/useTableEffects.js'
 
 type TableProps = {
   view: PlayerView
@@ -54,22 +54,19 @@ export function Table({
 
   const isHost = lobby !== null && lobby.hostSeat === view.you.seat
 
-  // Lifted out of PlayEffects rather than computed independently here: it is
-  // the single source of truth for "a wild4 burst is currently live", and the
-  // table itself — not just the burst overlay — is what shakes.
-  const [shaking, setShaking] = useState(false)
-  const handleShake = useCallback((value: boolean) => {
-    setShaking(value)
-  }, [])
+  /* One hook owns every flourish: the burst overlay, the table shake and the
+     draw-pile pulse each land in a different part of the tree below, but the
+     "what have I already reacted to" bookkeeping stays in a single place. */
+  const { effects, shaking, drawNonce } = useTableEffects({
+    discardTop: view.discardTop,
+    currentColor: view.currentColor,
+    feed,
+  })
 
   return (
     <main className="table-screen">
       <div className={shaking ? 'table-surface fx-shake' : 'table-surface'}>
-        <PlayEffects
-          discardTop={view.discardTop}
-          currentColor={view.currentColor}
-          onShake={handleShake}
-        />
+        <PlayEffects effects={effects} />
         <div className="table-grid">
           {view.opponents.slice(0, 3).map((opponent, index) => (
             <div className={`area-${AREAS[index] ?? 'north'}`} key={opponent.seat}>
@@ -84,7 +81,7 @@ export function Table({
           ))}
 
           <div className="area-centre">
-            <CentreStack view={view} />
+            <CentreStack view={view} drawNonce={drawNonce} />
           </div>
 
           <div className="area-south">
