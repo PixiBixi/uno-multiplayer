@@ -1,4 +1,4 @@
-import { isWild, type Card, type Color } from '@uno/engine'
+import { cardPoints, isWild, type Card, type Color } from '@uno/engine'
 
 export type HandSort = 'dealt' | 'colour' | 'value'
 
@@ -16,24 +16,10 @@ const COLOUR_RANK: Record<Color, number> = { R: 0, G: 1, B: 2, Y: 3 }
 /** Wilds have no colour, so they sit after every coloured card. */
 const NO_COLOUR = 4
 
-/**
- * Official UNO scoring: a number card is worth its face, an action card 20, a
- * wild 50. "By value" therefore means something in the game rather than being an
- * arbitrary order — the heaviest cards to shed end up together.
- */
-export function cardPoints(card: Card): number {
-  switch (card.kind) {
-    case 'number':
-      return card.value
-    case 'skip':
-    case 'reverse':
-    case 'draw2':
-      return 20
-    case 'wild':
-    case 'wild4':
-      return 50
-  }
-}
+/* "By value" sorts on the engine's own scoring — a number card is worth its face,
+   an action card 20, a wild 50 — so the order means something in the game rather
+   than being arbitrary, and the heaviest cards to shed end up together. It lives in
+   the engine because it is also what settles a round. */
 
 const colourRank = (card: Card): number => (isWild(card) ? NO_COLOUR : COLOUR_RANK[card.color])
 

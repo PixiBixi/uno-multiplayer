@@ -1,6 +1,6 @@
 import type { Card, CardId, Color, NumberValue } from '@uno/engine'
 import { describe, expect, it } from 'vitest'
-import { cardPoints, sortHand } from './sort-hand.js'
+import { sortHand } from './sort-hand.js'
 
 const num = (id: string, color: Color, value: NumberValue): Card => ({
   id: id as CardId,
@@ -16,24 +16,6 @@ const act = (id: string, kind: 'skip' | 'reverse' | 'draw2', color: Color): Card
 const wild = (id: string, kind: 'wild' | 'wild4'): Card => ({ id: id as CardId, kind })
 
 const ids = (cards: Card[]) => cards.map((card) => card.id)
-
-describe('cardPoints', () => {
-  it('scores a number card at its face value', () => {
-    expect(cardPoints(num('a', 'R', 0))).toBe(0)
-    expect(cardPoints(num('b', 'R', 9))).toBe(9)
-  })
-
-  it('scores every action card at 20', () => {
-    expect(cardPoints(act('a', 'skip', 'R'))).toBe(20)
-    expect(cardPoints(act('b', 'reverse', 'G'))).toBe(20)
-    expect(cardPoints(act('c', 'draw2', 'B'))).toBe(20)
-  })
-
-  it('scores both wilds at 50', () => {
-    expect(cardPoints(wild('a', 'wild'))).toBe(50)
-    expect(cardPoints(wild('b', 'wild4'))).toBe(50)
-  })
-})
 
 describe("sortHand('dealt')", () => {
   it('keeps the order the server sent', () => {

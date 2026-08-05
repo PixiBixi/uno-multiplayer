@@ -59,6 +59,26 @@ export type GameState = {
   winner: number | null
 }
 
+/**
+ * How a match ends. A one-round match is a single game, which is why there is no
+ * separate 'single' variant: a mode meaning "stop after one round" is what a
+ * one-round match already is.
+ */
+export type MatchGoal = { kind: 'points'; target: number } | { kind: 'rounds'; count: number }
+
+/**
+ * Match bookkeeping, deliberately outside GameState — a round has no business
+ * knowing it belongs to a match, and the property tests that guard the round rules
+ * should not have to carry match state through them.
+ */
+export type MatchState = {
+  goal: MatchGoal
+  /** Cumulative points, indexed by seat. */
+  scores: number[]
+  /** 1-based, and names the round about to be played. */
+  round: number
+}
+
 export type Move =
   | { type: 'play'; cardId: CardId; chosenColor?: Color }
   | { type: 'draw' }
