@@ -1,5 +1,7 @@
 import { MAX_SEATS, type LobbyView } from '@uno/protocol'
 import type { SeatStatus } from '@uno/engine'
+import { CopyButton } from '../components/CopyButton.js'
+import { roomLink } from '../lib/room-url.js'
 
 const SEAT_PIGMENT = ['var(--red)', 'var(--blue)', 'var(--yellow)', 'var(--green)']
 
@@ -27,6 +29,12 @@ export function Lobby({ lobby, mySeat, onStart, onLeave }: LobbyProps) {
         <span className="eyebrow">Game code</span>
         <p className="code-display">{lobby.roomCode}</p>
         <p className="hint">Share this with the people you want to play.</p>
+        {/* Both, because they suit different conversations: a code to read out
+            loud, a link to paste where a code would just have to be retyped. */}
+        <div className="copy-row">
+          <CopyButton value={lobby.roomCode} label="Copy code" subject="Game code" />
+          <CopyButton value={roomLink(lobby.roomCode)} label="Copy link" subject="Invite link" />
+        </div>
       </div>
 
       <ul className="roster">

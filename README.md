@@ -199,8 +199,15 @@ covers the work done so far.
 docker compose up --build
 ```
 
-Then open <http://localhost:5050>. Create a game, share the code, and the URL
-carries it: `http://localhost:5050/?room=K7QM2X` prefills the field.
+Then open <http://localhost:5050>. Create a game and the lobby offers two ways to
+share it: **Copy code** for a code to read out loud, and **Copy link** for
+`http://localhost:5050/?room=K7QM2X`, which prefills the field for whoever opens
+it.
+
+Copying works over plain HTTP as well as HTTPS. `navigator.clipboard` does not
+exist outside a secure context, so `apps/web/src/lib/clipboard.ts` falls back to a
+selection-based copy — without it the buttons would work on localhost and silently
+do nothing on a self-hosted instance reached by IP.
 
 | Variable                         | Default                 | Purpose                                                            |
 | -------------------------------- | ----------------------- | ------------------------------------------------------------------ |

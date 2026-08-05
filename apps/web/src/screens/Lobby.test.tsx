@@ -1,7 +1,8 @@
 import type { LobbyView } from '@uno/protocol'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { readRoomCodeFromUrl } from '../lib/room-url.js'
 import { Lobby } from './Lobby.js'
 
 const lobbyWith = (names: string[], canStart = names.length >= 2): LobbyView => ({
@@ -73,5 +74,45 @@ describe('Lobby', () => {
     seats[1] = { seat: 1, name: 'Ben', status: 'disconnected' }
     setup({ ...lobby, seats }, 0)
     expect(screen.getByText(/reconnecting/i)).toBeTruthy()
+  })
+
+  describe('sharing the table', () => {
+    const clipboard: string[] = []
+
+    beforeEach(() => {
+      clipboard.length = 0
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: (text: string) => {
+            clipboard.push(text)
+            return Promise.resolve()
+          },
+        },
+        configurable: true,
+      })
+    })
+
+    afterEach(() => {
+      Reflect.deleteProperty(navigator, 'clipboard')
+    })
+
+    it('copies the bare code, for reading out loud', async () => {
+      setup(lobbyWith(['Ana', 'Ben']), 0)
+      await userEvent.click(screen.getByRole('button', { name: /copy code/i }))
+      expect(clipboard).toEqual(['K7QM2X'])
+    })
+
+    it('copies a link that carries the code, not just the current address', async () => {
+      setup(lobbyWith(['Ana', 'Ben']), 0)
+      await userEvent.click(screen.getByRole('button', { name: /copy link/i }))
+      // The whole point of the link: whoever opens it arrives at this table.
+      expect(readRoomCodeFromUrl(new URL(clipboard[0] ?? '').search)).toBe('K7QM2X')
+    })
+
+    it('offers both to a guest too, so any player can pull in the fourth', async () => {
+      setup(lobbyWith(['Ana', 'Ben']), 1)
+      await userEvent.click(screen.getByRole('button', { name: /copy link/i }))
+      expect(clipboard).toHaveLength(1)
+    })
   })
 })

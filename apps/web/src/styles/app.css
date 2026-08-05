@@ -145,6 +145,50 @@ h3 {
   letter-spacing: 0.22em;
 }
 
+.copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+}
+
+/* A column, so a failure message lands under the button it belongs to instead of
+   shoving its neighbour sideways. */
+.copy-cell {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.btn-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  /* Narrower than a primary action, but still 44px tall via .btn — these sit
+     close to other controls on a phone. */
+  padding: 0.5rem 0.95rem;
+  font-size: var(--step--1);
+  /* Restated to add colour, so the copied tint fades rather than snapping. */
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
+}
+
+.btn-copy.is-copied {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* Deliberately not red: at this size a red that reads on the light ground drops
+   to 3.6:1 on the dark one, and the sentence carries the meaning without help
+   from colour anyway. */
+.copy-failed {
+  font-size: var(--step--1);
+  font-weight: 600;
+  color: var(--text);
+}
+
 /* ---------- Cards ---------- */
 
 .card-button {
