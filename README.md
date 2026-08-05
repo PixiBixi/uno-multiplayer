@@ -257,6 +257,44 @@ page. HSTS is merely dishonest by comparison — browsers ignore it over plain h
 Both are helmet defaults, which `apps/server/src/http.ts` now switches off unless
 this flag says otherwise.
 
+### Behind Traefik
+
+`compose.traefik.yaml` is ready to use — replace the hostname, the cert resolver
+and the network name:
+
+```bash
+docker compose -f compose.traefik.yaml up -d --build
+```
+
+**No WebSocket configuration is needed.** Traefik proxies the upgrade itself,
+unlike nginx, where forgetting `Upgrade` and `Connection` headers is the classic
+way to break Socket.IO. This is verified rather than assumed: the full Playwright
+suite plays complete multi-player games through a real Traefik with only the four
+routing labels in that file.
+
+```bash
+# What that verification looks like, against any deployed instance
+E2E_BASE_URL="https://uno.example.com" npx playwright test
+```
+
+Three things that do matter:
+
+- **`BEHIND_TLS=true`.** Traefik terminates TLS, so the container speaks plain
+  HTTP while players arrive over HTTPS. Without the flag the app drops HSTS.
+- **No `ports:` mapping.** Traefik reaches the container over the shared network.
+  Publishing 5050 on the host adds a plain-HTTP way in that bypasses TLS.
+- **`external: true` on the network.** Without it compose creates a second network
+  that Traefik never watches, and every request 404s.
+
+Rate limiting is keyed on the Socket.IO connection, not on the client IP, so it
+behaves correctly when every request arrives from Traefik's address. `trustProxy`
+is deliberately left off: nothing keys on IP, so enabling it would only let a
+client spoof `X-Forwarded-For` into the logs.
+
+On **Docker 29 or newer**, Traefik releases before v3.6 fail to read the Docker
+provider at all — `client version 1.24 is too old` in the Traefik log, and every
+route 404s. Either upgrade Traefik or set `DOCKER_API_VERSION=1.44` on it.
+
 ### One replica, on purpose
 
 Game state lives in memory. There is no Redis adapter and no sticky-session

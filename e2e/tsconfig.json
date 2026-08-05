@@ -6,6 +6,11 @@
   "compilerOptions": {
     "noEmit": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    // Both runtimes, unusually. The specs run in Node under the Playwright
+    // runner and read process.env; the callbacks they hand to page.evaluate run
+    // in the browser. Without "node" here `process` is untyped, and the typed
+    // lint rules reject reading it rather than the compiler catching it.
+    "types": ["node"],
     "module": "ESNext",
     "moduleResolution": "bundler"
   },

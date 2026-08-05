@@ -1,0 +1,43 @@
+# Deployment behind an existing Traefik. Replace the three placeholders and run:
+#
+#   docker compose -f compose.traefik.yaml up -d --build
+#
+# Verified end to end: the full Playwright suite plays complete games through
+# Traefik with exactly these labels and no WebSocket configuration of any kind.
+services:
+  uno:
+    build: .
+    image: uno-multiplayer:local
+    environment:
+      # Traefik terminates TLS, so players reach this over HTTPS even though the
+      # container itself speaks plain HTTP. Without this the app drops HSTS.
+      BEHIND_TLS: 'true'
+      # Same origin serves the client, so no allowlist is needed.
+      CORS_ORIGIN: ''
+      GRACE_PERIOD_MS: '60000'
+      MAX_ROOMS: '500'
+      LOG_LEVEL: 'info'
+    # No `ports:` on purpose. Traefik reaches the container over the shared
+    # network; publishing 5050 on the host would expose a plain-HTTP way in that
+    # bypasses TLS entirely.
+    networks: [traefik]
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.uno.rule=Host(`REPLACE.example.com`)
+      - traefik.http.routers.uno.entrypoints=websecure
+      - traefik.http.routers.uno.tls.certresolver=REPLACE_RESOLVER
+      - traefik.http.services.uno.loadbalancer.server.port=5050
+    restart: unless-stopped
+    # State lives in memory: never scale this past one replica. Traefik makes
+    # scaling a one-line change, and it would break the game rather than spread
+    # it — two replicas would each hold half the rooms, and neither would know
+    # about the other.
+    deploy:
+      replicas: 1
+
+networks:
+  traefik:
+    # The network your Traefik already watches. `external: true` means compose
+    # joins it rather than creating a second one Traefik cannot see.
+    name: REPLACE_TRAEFIK_NETWORK
+    external: true

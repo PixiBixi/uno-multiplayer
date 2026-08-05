@@ -268,6 +268,16 @@ test('drawing a card pulses the draw pile', async ({ browser }) => {
 })
 
 test('a long log scrolls inside its panel instead of growing the page', async ({ browser }) => {
+  /* Needs more chat than a person would ever send in a second, which the webServer
+     block grants by raising CHAT_BURST. Against an already-running instance that
+     block does not apply, so the limiter — correctly — stops this at 5 messages.
+     Skipped rather than weakened: the assertion is about a long log, and a short
+     one would prove nothing. */
+  test.skip(
+    process.env['E2E_BASE_URL'] !== undefined,
+    'needs a raised chat rate limit, which only the suite-managed server has',
+  )
+
   const host = await openPlayer(browser)
   const guest = await openPlayer(browser)
 
