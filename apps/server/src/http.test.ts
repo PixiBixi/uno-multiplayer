@@ -38,6 +38,40 @@ describe('security headers', () => {
     const response = await (await appWith()).inject({ method: 'GET', url: '/healthz' })
     expect(response.headers['x-powered-by']).toBeUndefined()
   })
+
+  /* Two helmet defaults that assume TLS. Left on, they take a plain-http
+     deployment from working to serving a blank page: every asset request gets
+     rewritten to a https URL with nothing listening behind it. */
+  describe('without BEHIND_TLS', () => {
+    it('does not upgrade asset requests to https', async () => {
+      const response = await (await appWith()).inject({ method: 'GET', url: '/healthz' })
+      expect(response.headers['content-security-policy']).not.toContain('upgrade-insecure-requests')
+    })
+
+    it('does not promise HSTS it cannot keep', async () => {
+      const response = await (await appWith()).inject({ method: 'GET', url: '/healthz' })
+      expect(response.headers['strict-transport-security']).toBeUndefined()
+    })
+  })
+
+  describe('with BEHIND_TLS', () => {
+    it('upgrades asset requests to https', async () => {
+      const instance = await appWith({ BEHIND_TLS: 'true' })
+      const response = await instance.inject({ method: 'GET', url: '/healthz' })
+      expect(response.headers['content-security-policy']).toContain('upgrade-insecure-requests')
+    })
+
+    it('sends HSTS', async () => {
+      const instance = await appWith({ BEHIND_TLS: 'true' })
+      const response = await instance.inject({ method: 'GET', url: '/healthz' })
+      expect(response.headers['strict-transport-security']).toContain('max-age=')
+    })
+
+    it('refuses to boot on a spelling it does not recognise', () => {
+      // Reading `TRUE` as false would silently drop both protections.
+      expect(() => loadConfig({ NODE_ENV: 'test', BEHIND_TLS: 'TRUE' })).toThrow()
+    })
+  })
 })
 
 describe('CORS', () => {

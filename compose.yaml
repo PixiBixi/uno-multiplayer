@@ -7,6 +7,10 @@ services:
     environment:
       # Same origin serves the client, so no CORS allowlist is needed.
       CORS_ORIGIN: ''
+      # Quoted, and 'false' rather than false: unquoted YAML true/false reaches
+      # the container as 'true'/'false' anyway, but only by accident of the
+      # serialiser. Set this to 'true' once a proxy puts HTTPS in front.
+      BEHIND_TLS: 'false'
       GRACE_PERIOD_MS: '60000'
       MAX_ROOMS: '500'
       LOG_LEVEL: 'info'

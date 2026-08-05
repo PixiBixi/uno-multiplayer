@@ -32,8 +32,18 @@ export async function buildApp(config: Config) {
         connectSrc: ["'self'", 'ws:', 'wss:'],
         scriptSrc: ["'self'"],
         styleSrc: ["'self'"],
+        /* helmet emits this by default, and it is actively harmful when the
+           premise is wrong: it rewrites every asset request to https, so a
+           server reached over plain http answers with a CSS and JS URL that has
+           no TLS behind it and the page renders blank. `null` removes it, `[]`
+           emits it valueless — which is the form the directive takes. */
+        upgradeInsecureRequests: config.behindTls ? [] : null,
       },
     },
+    /* Same reasoning, opposite failure mode: browsers ignore HSTS delivered over
+       plain http, so it does no damage there — but it does promise something this
+       deployment cannot keep, and a header that lies is worth removing. */
+    strictTransportSecurity: config.behindTls,
   })
 
   // An empty allowlist means same-origin only: no header is emitted at all.

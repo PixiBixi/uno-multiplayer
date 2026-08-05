@@ -214,12 +214,28 @@ do nothing on a self-hosted instance reached by IP.
 | `PORT`                           | `5050`                  | Listen port. Not 5000: macOS Control Center binds that for AirPlay |
 | `HOST`                           | `0.0.0.0`               | Listen address                                                     |
 | `CORS_ORIGIN`                    | empty                   | Comma-separated allowlist. Empty means same-origin only            |
+| `BEHIND_TLS`                     | `false`                 | Set `true` when players reach you over HTTPS. See below            |
 | `GRACE_PERIOD_MS`                | `60000`                 | How long a disconnected player keeps their seat                    |
 | `MAX_ROOMS`                      | `500`                   | Cap on concurrent rooms, bounding memory                           |
 | `STATIC_ROOT`                    | `/app/web` in the image | Built client to serve. Empty serves the API alone                  |
 | `MOVE_BURST` / `MOVE_PER_SECOND` | `20` / `2`              | Move rate limit, sized for a human                                 |
 | `CHAT_BURST` / `CHAT_PER_SECOND` | `5` / `0.5`             | Chat rate limit, tighter                                           |
 | `LOG_LEVEL`                      | `info`                  | pino level                                                         |
+
+### `BEHIND_TLS`
+
+Set it to `true` when players reach the server over HTTPS, including through a
+reverse proxy that terminates TLS. It turns on the two security headers that
+assume TLS — HSTS, and the CSP's `upgrade-insecure-requests`.
+
+It defaults to `false` because those headers do not merely add nothing without
+TLS, they break the app. `upgrade-insecure-requests` rewrites every asset request
+to `https://`, so a server reached at `http://192.168.1.20:5050` answers with CSS
+and JS URLs that have no TLS behind them: `ERR_SSL_PROTOCOL_ERROR`, and a blank
+page. HSTS is merely dishonest by comparison — browsers ignore it over plain http.
+
+Both are helmet defaults, which `apps/server/src/http.ts` now switches off unless
+this flag says otherwise.
 
 ### One replica, on purpose
 

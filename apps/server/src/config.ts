@@ -8,6 +8,18 @@ const envSchema = z.object({
   PORT: z.coerce.number().int().min(1).max(65535).default(5050),
   /** Comma-separated allowlist. Empty means same-origin only. */
   CORS_ORIGIN: z.string().default(''),
+  /**
+   * Whether players reach this server over HTTPS — directly, or through a proxy
+   * that terminates TLS. Governs the two headers that only make sense when that
+   * is true; http.ts explains what each does when the premise is wrong.
+   *
+   * Defaults to false because that is how the project ships and how the README's
+   * quickstart runs it: `docker compose up` then open http://localhost:5050.
+   *
+   * Deliberately strict about spelling. A security flag that read `TRUE` as false
+   * would be worse than one that refuses to boot.
+   */
+  BEHIND_TLS: z.enum(['true', 'false']).default('false'),
   GRACE_PERIOD_MS: z.coerce.number().int().min(0).default(60_000),
   MAX_ROOMS: z.coerce.number().int().min(1).default(500),
   /** Path to the built client. Empty means serve nothing (API only). */
@@ -28,6 +40,7 @@ export type Config = {
   host: string
   port: number
   corsOrigins: string[]
+  behindTls: boolean
   gracePeriodMs: number
   maxRooms: number
   staticRoot: string | null
@@ -51,6 +64,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     corsOrigins: parsed.CORS_ORIGIN.split(',')
       .map((origin) => origin.trim())
       .filter((origin) => origin.length > 0),
+    behindTls: parsed.BEHIND_TLS === 'true',
     gracePeriodMs: parsed.GRACE_PERIOD_MS,
     maxRooms: parsed.MAX_ROOMS,
     staticRoot: parsed.STATIC_ROOT.trim().length > 0 ? parsed.STATIC_ROOT.trim() : null,
