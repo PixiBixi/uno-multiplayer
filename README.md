@@ -206,6 +206,29 @@ emit-only solution and excludes tests.
 - [x] Playwright end-to-end tests across multiple browser contexts
 - [x] Dockerfile and deployment
 - [x] Match scoring: points target or fixed rounds, official card values
+- [ ] **Your own hand falls below the fold on a phone** — see below
+- [ ] Deploy it somewhere real and play a game with actual people
+- [ ] A bot, so a table can be tried alone or filled to three
+
+### Known issue: the hand is off-screen on a phone
+
+Measured on an iPhone 13 viewport (390 × 844) with a game in progress:
+
+```
+horizontalOverflow: false      undersizedTapTargets: []
+handCards: 7                   pageScrollsVertically: true
+```
+
+The good half holds — nothing overflows sideways and every tap target clears
+44 px. But the seven cards wrap onto a second row that the viewport cuts off, so a
+player has to scroll to see their own hand, which is the one thing that should
+never be hidden. The cause is above it: the deck, the direction pill, **Draw card**
+and the three sort buttons each take a full row before the hand gets any height.
+
+Scrolling the hand horizontally in one row is the likely fix, rather than letting
+it wrap. Worth checking against a real browser's geometry rather than by eye — and
+worth sampling _after_ transitions settle, since this project has twice been
+fooled by a screenshot taken mid-fade.
 
 Design documents live in `docs/superpowers/`: the
 [design spec](docs/superpowers/specs/2026-08-04-uno-multiplayer-design.md) records
