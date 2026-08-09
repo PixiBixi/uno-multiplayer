@@ -1388,3 +1388,89 @@ h3 {
     animation: none;
   }
 }
+
+/* ---------- Help ---------- */
+
+.help {
+  border: 1px solid var(--panel-edge);
+  border-radius: var(--r-md);
+  background: var(--panel);
+}
+
+.help-summary {
+  /* 44px of target even though a summary is only as tall as its text. */
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0.6rem 0.9rem;
+  font-family: var(--display);
+  font-size: var(--step--1);
+  font-weight: 600;
+  cursor: pointer;
+  /* The browser's own marker sits oddly against a flex summary; the rotating
+     caret below replaces it. */
+  list-style: none;
+}
+
+.help-summary::-webkit-details-marker {
+  display: none;
+}
+
+.help-summary::after {
+  content: '';
+  margin-left: auto;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg) translate(-2px, -2px);
+  opacity: 0.6;
+  transition: transform 180ms ease;
+}
+
+.help[open] .help-summary::after {
+  transform: rotate(-135deg) translate(-2px, -2px);
+}
+
+.help-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 0 0.9rem 0.9rem;
+}
+
+.value-list {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: var(--step--1);
+}
+
+.value-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.value-row dt {
+  color: var(--text-dim);
+}
+
+/* A dotted leader, so the eye can cross the gap from a name to its number. Mixed
+   toward the text rather than using --panel-edge, which sits too close to the
+   panel it is drawn on to be seen at all. */
+.value-row::before {
+  content: '';
+  order: 1;
+  flex: 1;
+  border-bottom: 1px dotted color-mix(in oklab, var(--text-dim) 55%, transparent);
+  transform: translateY(-0.2em);
+}
+
+.value-row dd {
+  order: 2;
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}

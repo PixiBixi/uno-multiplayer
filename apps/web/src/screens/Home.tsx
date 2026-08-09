@@ -13,6 +13,7 @@ import {
   ROOM_CODE_LENGTH,
 } from '@uno/protocol'
 import { useState, type FormEvent } from 'react'
+import { CardValues } from '../components/CardValues.js'
 
 /* Offered as presets rather than a bare number field, because the interesting
    choice is the format, not the arithmetic. The field stays editable underneath
@@ -250,6 +251,8 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
           Join game
         </button>
       </form>
+
+      <CardValues />
     </main>
   )
 }
