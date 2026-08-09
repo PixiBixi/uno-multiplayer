@@ -29,6 +29,8 @@ const finished = (winner: number | null, match: MatchBits = {}): PlayerView => (
   drawPileCount: 10,
   phase: 'finished',
   winner,
+  turnDeadline: null,
+  nextRoundDeadline: null,
   match: {
     goal: match.goal ?? { kind: 'points', target: 500 },
     scores: match.scores ?? [0, 0, 0],

@@ -11,6 +11,7 @@ const lobbyWith = (names: string[], canStart = names.length >= 2): LobbyView => 
   seats: names.map((name, seat) => ({ seat, name, status: 'active' as const })),
   canStart,
   goal: DEFAULT_MATCH_GOAL,
+  pace: null,
 })
 
 const setup = (lobby: LobbyView, mySeat: number) => {

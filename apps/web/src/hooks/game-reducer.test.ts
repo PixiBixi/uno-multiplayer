@@ -8,6 +8,7 @@ const lobby: LobbyView = {
   seats: [{ seat: 0, name: 'Ana', status: 'active' }],
   canStart: false,
   goal: DEFAULT_MATCH_GOAL,
+  pace: null,
 }
 
 const view = { phase: 'playing', winner: null } as PlayerView

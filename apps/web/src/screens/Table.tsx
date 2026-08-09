@@ -9,6 +9,7 @@ import { Seat } from '../components/Seat.js'
 import { Toaster } from '../components/Toaster.js'
 import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
 import { useTableEffects } from '../hooks/useTableEffects.js'
+import { useCountdown } from '../hooks/useCountdown.js'
 import { useTableSounds } from '../hooks/useTableSounds.js'
 
 type TableProps = {
@@ -71,6 +72,9 @@ export function Table({
      the colour chosen for a wild. */
   const { muted, toggleMuted } = useTableSounds({ feed, isMyTurn: myTurn, mySeat: view.you.seat })
 
+  // Null on a table with no clock, which is what keeps Blazing opt-in.
+  const secondsLeft = useCountdown(view.turnDeadline)
+
   return (
     <main className="table-screen">
       <div className={shaking ? 'table-surface fx-shake' : 'table-surface'}>
@@ -120,6 +124,21 @@ export function Table({
 
           <div className="area-centre">
             <CentreStack view={view} drawNonce={drawNonce} />
+            {secondsLeft !== null && (
+              /* A live region so the number is announced as it falls, and urgent
+                 only at the end — a polite update every second would queue up
+                 behind itself in a screen reader. */
+              <p
+                className={secondsLeft <= 3 ? 'turn-clock turn-clock-urgent' : 'turn-clock'}
+                role="status"
+                aria-live={secondsLeft <= 3 ? 'assertive' : 'off'}
+              >
+                <span className="turn-clock-number">{secondsLeft}</span>
+                <span className="turn-clock-label">
+                  {myTurn ? 'seconds to play' : 'seconds left'}
+                </span>
+              </p>
+            )}
           </div>
 
           <div className="area-south">

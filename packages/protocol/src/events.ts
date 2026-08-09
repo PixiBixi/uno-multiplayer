@@ -1,5 +1,5 @@
 import type { Card, MatchGoal, Move } from '@uno/engine'
-import type { LobbyView, PlayerView } from './views.js'
+import type { LobbyView, MatchPace, PlayerView } from './views.js'
 
 export type ErrorCode =
   | 'room_not_found'
@@ -32,6 +32,9 @@ export type GameEvent =
   | { type: 'roundEnded'; winner: number | null; awarded: number[]; scores: number[] }
   | { type: 'matchEnded'; winners: number[]; scores: number[] }
   | { type: 'roundStarted'; round: number }
+  /* The clock played for somebody. Distinct from cardsDrawn so the log can say
+     why, and so the client can react to a forced turn differently. */
+  | { type: 'turnTimedOut'; seat: number }
   | { type: 'gameRestarted' }
 
 /**
@@ -45,7 +48,7 @@ export type Ack<T = Empty> = (result: ({ ok: true } & T) | { ok: false; error: E
 
 export type ClientToServer = {
   'room:create': (
-    payload: { playerName: string; goal: MatchGoal },
+    payload: { playerName: string; goal: MatchGoal; pace: MatchPace },
     ack: Ack<{ roomCode: string; sessionToken: string; seat: number }>,
   ) => void
   'room:join': (

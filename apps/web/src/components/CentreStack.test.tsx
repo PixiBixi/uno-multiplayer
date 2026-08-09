@@ -17,6 +17,8 @@ const viewWith = (overrides: Partial<PlayerView> = {}): PlayerView => ({
   drawPileCount: 34,
   phase: 'playing',
   winner: null,
+  turnDeadline: null,
+  nextRoundDeadline: null,
   match: {
     goal: DEFAULT_MATCH_GOAL,
     scores: [0, 0],

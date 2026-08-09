@@ -1,4 +1,5 @@
 import type { PlayerView } from '@uno/protocol'
+import { useCountdown } from '../hooks/useCountdown.js'
 import { matchResultPhrase, pointsCount, winsPhrase } from '../lib/phrase.js'
 
 type GameOverProps = {
@@ -17,6 +18,8 @@ type GameOverProps = {
  */
 export function GameOver({ view, nameOf, isHost, onNextRound, onRestart, onLeave }: GameOverProps) {
   const { match } = view
+  // Only ever set on a Blazing table, where the next round deals itself.
+  const dealingIn = useCountdown(view.nextRoundDeadline)
   const winners = match.winners ?? []
   const matchOver = match.winners !== null
   const abandoned = view.winner === null
@@ -67,6 +70,12 @@ export function GameOver({ view, nameOf, isHost, onNextRound, onRestart, onLeave
           ))}
         </ul>
 
+        {dealingIn !== null && (
+          <p className="hint" role="status">
+            Next round deals in <b>{dealingIn}</b>…
+          </p>
+        )}
+
         <div className="over-actions">
           {isHost ? (
             <>
@@ -87,7 +96,9 @@ export function GameOver({ view, nameOf, isHost, onNextRound, onRestart, onLeave
             <p className="hint">
               {matchOver
                 ? 'Waiting for the host to start a new match.'
-                : 'Waiting for the host to deal the next round.'}
+                : dealingIn !== null
+                  ? 'The next round starts on its own.'
+                  : 'Waiting for the host to deal the next round.'}
             </p>
           )}
           <button type="button" className="btn" onClick={onLeave}>

@@ -15,6 +15,7 @@ export type SoundName =
   | 'matchWon'
   | 'matchOver'
   | 'yourTurn'
+  | 'timedOut'
 
 /**
  * Which sound a played card makes. Unlike the visual burst — which reads the view
@@ -54,6 +55,10 @@ export function soundForEvent(event: GameEvent, mySeat: number): SoundName | nul
       return 'draw'
     case 'unoCalled':
       return 'uno'
+    case 'turnTimedOut':
+      /* Sounded for everyone, not only the seat it happened to: at speed the
+         table needs to hear that play moved on without a card being chosen. */
+      return 'timedOut'
     case 'roundEnded':
       return event.winner === mySeat ? 'roundWon' : 'roundOver'
     case 'matchEnded':

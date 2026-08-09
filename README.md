@@ -207,9 +207,35 @@ emit-only solution and excludes tests.
 - [x] Dockerfile and deployment
 - [x] Match scoring: points target or fixed rounds, official card values
 - [x] Sound: synthesised cues for play, draws, action cards, UNO, turn and endings
+- [x] Blazing: an optional per-turn clock, with rounds that deal themselves
+- [x] An error boundary, so a bad render explains itself instead of blanking
 - [ ] **Your own hand falls below the fold on a phone** — see below
 - [ ] Deploy it somewhere real and play a game with actual people
 - [ ] A bot, so a table can be tried alone or filled to three
+
+### Blazing
+
+An optional per-turn clock, chosen by the host when creating the table. It exists
+because an idle player used to freeze the game forever: the only timer in the
+server was the disconnect grace period, so somebody who stayed connected and simply
+stopped playing blocked everyone, including the host, with no way out.
+
+It is opt-in rather than a rule on every table, because a clock changes the game
+rather than protecting it — thinking time is part of UNO, and a group playing over
+dinner does not want one.
+
+| Point                            | Decision                                                                                                                                                                                                      |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| When time runs out               | The server plays **draw**, even for a seat holding something playable. Choosing a card for someone is choosing their move; drawing is always legal, always neutral, and never spends a card they were saving. |
+| With a draw stacked against them | `acceptDraw` instead, since `draw` is not legal in that state.                                                                                                                                                |
+| When they could only call UNO    | Nothing is forced. That penalty belongs to the player who forgot, not to the clock.                                                                                                                           |
+| Between rounds                   | Five seconds, then the next round deals itself. Fixed rather than exposed: a second dial for it would be a setting nobody has an opinion about.                                                               |
+| Where the timer lives            | `RoomManager`, never `Room` — `Room` stays synchronous and timer-free, which is what keeps the whole lifecycle testable without a clock.                                                                      |
+
+The countdown is driven by a **deadline** in the view, not a duration the client
+counts down from. A client that drops frames, sleeps a tab or reconnects mid-turn
+would otherwise drift away from the server about when time is up; reading the
+remainder of an absolute stamp cannot drift.
 
 ### Sound
 

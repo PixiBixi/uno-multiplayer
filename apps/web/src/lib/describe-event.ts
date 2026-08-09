@@ -63,6 +63,8 @@ export function describeEvent(
       )
     case 'roundStarted':
       return `Round ${String(event.round)} dealt`
+    case 'turnTimedOut':
+      return event.seat === mySeat ? 'You ran out of time' : `${nameOf(event.seat)} ran out of time`
     case 'gameRestarted':
       return 'A new match was dealt'
   }

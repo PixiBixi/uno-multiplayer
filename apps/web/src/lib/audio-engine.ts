@@ -165,6 +165,12 @@ const RECIPES: Record<SoundName, Recipe> = {
     tone(context, out, at + 0.12, { from: 784, duration: 0.18, type: 'sine', gain: 0.1 })
   },
 
+  timedOut: (context, out, at) => {
+    // Falling and dry: the sound of a turn being taken away, not a card played.
+    tone(context, out, at, { from: 300, to: 120, duration: 0.18, type: 'square', gain: 0.09 })
+    noise(context, out, at + 0.02, { duration: 0.1, cutoff: 700, gain: 0.1 })
+  },
+
   /* Four endings, not two. Winning and watching someone else win are different
      events to the person listening, and one shared cue for both congratulates the
      loser. The pairs are deliberately built from the same material — the same

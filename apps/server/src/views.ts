@@ -9,10 +9,13 @@ import type { MatchProgress, PlayerView } from '@uno/protocol'
  * Returns null when the seat or the discard top does not exist — the caller
  * simply sends nothing rather than guessing.
  */
+type Deadlines = { turnDeadline: number | null; nextRoundDeadline: number | null }
+
 export function redactFor(
   state: GameState,
   seatIndex: number,
   match: MatchProgress,
+  deadlines: Deadlines = { turnDeadline: null, nextRoundDeadline: null },
 ): PlayerView | null {
   const seat = state.seats[seatIndex]
   const discardTop = state.discardPile[state.discardPile.length - 1]
@@ -41,5 +44,6 @@ export function redactFor(
     phase: state.phase,
     winner: state.winner,
     match,
+    ...deadlines,
   }
 }

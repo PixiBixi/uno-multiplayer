@@ -66,6 +66,7 @@ const table = async () => {
   const created = await emit<CreateAck>(host, 'room:create', {
     playerName: 'Ana',
     goal: DEFAULT_MATCH_GOAL,
+    pace: null,
   })
   if (!created.ok) throw new Error('room:create failed')
   const guest = newPlayer()

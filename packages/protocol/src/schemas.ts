@@ -7,8 +7,11 @@ import {
   MAX_ROUNDS,
   MIN_POINTS_TARGET,
   MIN_ROUNDS,
+  MAX_TURN_SECONDS,
+  MIN_TURN_SECONDS,
   ROOM_CODE_ALPHABET,
   ROOM_CODE_LENGTH,
+  type MatchPace,
 } from './views.js'
 
 const roomCode = z
@@ -69,7 +72,19 @@ export const matchGoalSchema: z.ZodType<MatchGoal> = z.discriminatedUnion('kind'
   }),
 ])
 
-export const roomCreateSchema = z.object({ playerName, goal: matchGoalSchema })
+/** Null is the ordinary case — a table with no clock — so it is spelled out. */
+export const matchPaceSchema: z.ZodType<MatchPace> = z.union([
+  z.null(),
+  z.object({
+    turnSeconds: z.number().int().min(MIN_TURN_SECONDS).max(MAX_TURN_SECONDS),
+  }),
+])
+
+export const roomCreateSchema = z.object({
+  playerName,
+  goal: matchGoalSchema,
+  pace: matchPaceSchema,
+})
 export const roomJoinSchema = z.object({ roomCode, playerName })
 export const roomRejoinSchema = z.object({ roomCode, sessionToken: z.uuid() })
 export const gameStartSchema = z.object({})

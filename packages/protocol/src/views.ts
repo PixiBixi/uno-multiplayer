@@ -17,6 +17,30 @@ export const MAX_ROUNDS = 20
 /** What a host gets by default: the official target. */
 export const DEFAULT_MATCH_GOAL: MatchGoal = { kind: 'points', target: 500 }
 
+/* Below three seconds nobody can read their hand; above two minutes it has
+   stopped being a limit. Enforced at the socket boundary, not only in the lobby. */
+export const MIN_TURN_SECONDS = 3
+export const MAX_TURN_SECONDS = 120
+export const DEFAULT_TURN_SECONDS = 15
+
+/**
+ * Fixed rather than exposed. It exists so a fast match does not stall waiting for
+ * the host to click Next round, and a second dial for it would be a setting nobody
+ * has an opinion about.
+ */
+export const BETWEEN_ROUNDS_SECONDS = 5
+
+/**
+ * How fast a table is played. Independent of MatchGoal, which says how a match
+ * ENDS rather than how quickly it runs — hence a separate field and not a third
+ * goal variant.
+ *
+ * `null` means what every table did before this existed: no clock at all. It lives
+ * in the protocol rather than the engine because a time limit is a house setting,
+ * not a rule of UNO, and the engine stays free of clocks.
+ */
+export type MatchPace = { turnSeconds: number } | null
+
 /** Alphabet without ambiguous characters: no O/0, no I/1. */
 export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
@@ -37,6 +61,18 @@ export type PlayerView = {
   phase: GamePhase
   winner: number | null
   match: MatchProgress
+  /**
+   * When the seat on turn runs out, as an epoch millisecond stamp, or null when
+   * the table has no clock.
+   *
+   * A deadline rather than a remaining duration on purpose: a client that drops a
+   * frame, sleeps a tab or reconnects mid-turn must not end up disagreeing with
+   * the server about when time is up. The server owns the deadline; the client
+   * only renders what is left of it.
+   */
+  turnDeadline: number | null
+  /** When the next round deals itself, on a table that does that. */
+  nextRoundDeadline: number | null
 }
 
 /**
@@ -61,4 +97,5 @@ export type LobbyView = {
   seats: { seat: number; name: string; status: SeatStatus }[]
   canStart: boolean
   goal: MatchGoal
+  pace: MatchPace
 }

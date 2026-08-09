@@ -1,6 +1,6 @@
 import { createServer, type Server as HttpServer } from 'node:http'
 import type { MatchGoal } from '@uno/engine'
-import { DEFAULT_MATCH_GOAL, type PlayerView } from '@uno/protocol'
+import { DEFAULT_MATCH_GOAL, type MatchPace, type PlayerView } from '@uno/protocol'
 import { io as connect, type Socket } from 'socket.io-client'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { loadConfig } from '../config.js'
@@ -102,11 +102,11 @@ const playRoundToCompletion = async (playerA: Player, playerB: Player): Promise<
   }
 }
 
-const table = async (goal: MatchGoal = DEFAULT_MATCH_GOAL) => {
+const table = async (goal: MatchGoal = DEFAULT_MATCH_GOAL, pace: MatchPace = null) => {
   const host = newPlayer()
   const guest = newPlayer()
 
-  const created = await emit<CreateAck>(host, 'room:create', { playerName: 'Ana', goal })
+  const created = await emit<CreateAck>(host, 'room:create', { playerName: 'Ana', goal, pace })
   if (!created.ok) throw new Error('room:create failed')
   await emit<PlainAck>(guest, 'room:join', { roomCode: created.roomCode, playerName: 'Ben' })
   await emit<PlainAck>(host, 'game:start', {})

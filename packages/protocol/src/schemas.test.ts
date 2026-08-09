@@ -12,19 +12,22 @@ import {
 describe('roomCreateSchema', () => {
   it('accepts a normal name', () => {
     expect(
-      roomCreateSchema.safeParse({ playerName: 'Jeremy', goal: DEFAULT_MATCH_GOAL }).success,
+      roomCreateSchema.safeParse({ playerName: 'Jeremy', goal: DEFAULT_MATCH_GOAL, pace: null })
+        .success,
     ).toBe(true)
   })
 
   it('trims surrounding whitespace', () => {
     expect(
-      roomCreateSchema.parse({ playerName: '  Jeremy  ', goal: DEFAULT_MATCH_GOAL }).playerName,
+      roomCreateSchema.parse({ playerName: '  Jeremy  ', goal: DEFAULT_MATCH_GOAL, pace: null })
+        .playerName,
     ).toBe('Jeremy')
   })
 
   it('rejects an empty name', () => {
     expect(
-      roomCreateSchema.safeParse({ playerName: '   ', goal: DEFAULT_MATCH_GOAL }).success,
+      roomCreateSchema.safeParse({ playerName: '   ', goal: DEFAULT_MATCH_GOAL, pace: null })
+        .success,
     ).toBe(false)
   })
 

@@ -3,6 +3,7 @@ import {
   applyMove,
   applyRound,
   err,
+  legalMoves,
   initGame,
   markSeatLeft,
   matchWinners,
@@ -24,6 +25,7 @@ import {
   type ErrorCode,
   type GameEvent,
   type LobbyView,
+  type MatchPace,
   type MatchProgress,
   type PlayerView,
 } from '@uno/protocol'
@@ -53,13 +55,65 @@ export class Room {
   private host = 0
   private game: GameState | null = null
   private readonly goal: MatchGoal
+  private readonly pace: MatchPace
+  /* Held, never computed. Room owns no clock — RoomManager hands these in, the
+     same way it hands in a seed, so the whole lifecycle stays testable without
+     time passing. */
+  private turnDeadline: number | null = null
+  private nextRoundDeadline: number | null = null
   /** Null until the first round is dealt; the goal is known from creation. */
   private match: MatchState | null = null
 
-  constructor(code: string, seed: number, goal: MatchGoal) {
+  constructor(code: string, seed: number, goal: MatchGoal, pace: MatchPace = null) {
     this.code = code
     this.seed = seed
     this.goal = goal
+    this.pace = pace
+  }
+
+  /** Null on a table with no clock, which is what makes the rest opt-in. */
+  get turnSeconds(): number | null {
+    return this.pace?.turnSeconds ?? null
+  }
+
+  /** True while somebody could still be timed out. */
+  get awaitingMove(): boolean {
+    return this.game !== null && this.game.phase === 'playing'
+  }
+
+  get currentSeat(): number | null {
+    return this.game?.currentSeat ?? null
+  }
+
+  /** A round has ended, the match has not, so another deal is due. */
+  get betweenRounds(): boolean {
+    return this.game !== null && this.game.phase === 'finished' && !this.matchOver
+  }
+
+  /**
+   * The clock dealing the next round rather than the host.
+   *
+   * Distinct from nextRound(): no seat asked for this, so there is no host to
+   * check, and it reports nothing when the table can no longer deal — everybody
+   * having left during the pause is an ordinary way for a fast match to end.
+   */
+  dealNextRoundAutomatically(nextSeed: number): GameEvent[] {
+    if (this.game === null || this.match === null) return []
+    if (this.game.phase !== 'finished' || this.matchOver) return []
+
+    const dealt = this.dealRound(nextSeed)
+    if (!dealt.okay) return []
+
+    this.game = dealt.value
+    return [{ type: 'roundStarted', round: this.match.round }]
+  }
+
+  setTurnDeadline(at: number | null): void {
+    this.turnDeadline = at
+  }
+
+  setNextRoundDeadline(at: number | null): void {
+    this.nextRoundDeadline = at
   }
 
   get phase(): RoomPhase {
@@ -113,6 +167,7 @@ export class Room {
       seats: this.members.map((m) => ({ seat: m.seat, name: m.name, status: m.status })),
       canStart: this.activeMemberCount() >= MIN_SEATS,
       goal: this.goal,
+      pace: this.pace,
     }
   }
 
@@ -236,7 +291,10 @@ export class Room {
 
   viewFor(seat: number): PlayerView | null {
     if (this.game === null) return null
-    return redactFor(this.game, seat, this.matchProgress())
+    return redactFor(this.game, seat, this.matchProgress(), {
+      turnDeadline: this.turnDeadline,
+      nextRoundDeadline: this.nextRoundDeadline,
+    })
   }
 
   move(seat: number, move: Move): Result<GameEvent[], ErrorCode> {
@@ -253,6 +311,40 @@ export class Room {
       ...diffEvents(before, result.value, seat, move),
       ...this.settleRound(before, result.value),
     ])
+  }
+
+  /**
+   * Plays for whoever is on turn when their time runs out.
+   *
+   * Always a draw, even when they held something playable: choosing a card for
+   * someone is choosing their move, while drawing is the one action that is always
+   * legal, always neutral, and never spends a card they were saving. It ends the
+   * turn, which is the entire point of the clock.
+   *
+   * A pending draw against them makes `draw` illegal, so accepting it is the same
+   * decision taken on their behalf. If neither is available — the seat could only
+   * have called UNO — nothing is forced: that penalty belongs to the player who
+   * forgot, not to the clock.
+   */
+  forceTurnMove(): GameEvent[] {
+    const before = this.game
+    if (before === null || before.phase !== 'playing') return []
+
+    const seat = before.currentSeat
+    const moves = legalMoves(before, seat)
+    const forced =
+      moves.find((move) => move.type === 'acceptDraw') ?? moves.find((move) => move.type === 'draw')
+    if (forced === undefined) return []
+
+    const result = applyMove(before, seat, forced)
+    if (!result.okay) return []
+    this.game = result.value
+
+    return [
+      { type: 'turnTimedOut', seat },
+      ...diffEvents(before, result.value, seat, forced),
+      ...this.settleRound(before, result.value),
+    ]
   }
 
   disconnect(socketId: string): { seat: number; events: GameEvent[] } | null {

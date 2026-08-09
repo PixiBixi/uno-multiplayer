@@ -73,6 +73,7 @@ describe('Room.lobbyView', () => {
       ],
       canStart: true,
       goal: DEFAULT_MATCH_GOAL,
+      pace: null,
     })
     expect(JSON.stringify(view)).not.toContain('sessionToken')
   })

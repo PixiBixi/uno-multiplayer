@@ -94,6 +94,25 @@ export function registerSocketHandlers(
     }
   }
 
+  /**
+   * Restarts whichever clock the room is now owed and pushes the result.
+   *
+   * Called after anything that can change whose turn it is. Both arms are safe to
+   * call unconditionally: each clears itself when the room is not in its state, so
+   * a table with no pace simply ends up with no timers and null deadlines.
+   */
+  const retime = (room: Room): void => {
+    const afterExpiry = (events: GameEvent[]): void => {
+      if (events.length > 0) broadcastEvents(room, events)
+      // Re-timed before broadcasting, so the deadline every player receives is
+      // already the next seat's rather than the one that just elapsed.
+      retime(room)
+      broadcastViews(room)
+    }
+    rooms.armTurn(room, afterExpiry)
+    rooms.armNextRound(room, afterExpiry)
+  }
+
   const broadcastEvents = (room: Room, events: GameEvent[]): void => {
     for (const event of events) io.to(room.code).emit('game:event', event)
   }
@@ -111,7 +130,7 @@ export function registerSocketHandlers(
           ack({ ok: false, error: 'invalid_payload' })
           return
         }
-        const created = rooms.create(data.goal)
+        const created = rooms.create(data.goal, data.pace)
         if (!created.okay) {
           ack({ ok: false, error: created.error })
           return
@@ -178,6 +197,7 @@ export function registerSocketHandlers(
         ack({ ok: true, seat: rejoined.value.seat })
         broadcastLobby(room)
         broadcastEvents(room, [{ type: 'seatReconnected', seat: rejoined.value.seat }])
+        retime(room)
         broadcastViews(room)
       })
     })
@@ -199,6 +219,7 @@ export function registerSocketHandlers(
           return
         }
         ack({ ok: true })
+        retime(presence.room)
         broadcastLobby(presence.room)
         broadcastViews(presence.room)
       })
@@ -222,6 +243,7 @@ export function registerSocketHandlers(
         }
         ack({ ok: true })
         broadcastEvents(presence.room, dealt.value)
+        retime(presence.room)
         broadcastViews(presence.room)
       })
     })
@@ -244,6 +266,7 @@ export function registerSocketHandlers(
         }
         ack({ ok: true })
         broadcastEvents(presence.room, restarted.value)
+        retime(presence.room)
         broadcastLobby(presence.room)
         broadcastViews(presence.room)
       })
@@ -272,6 +295,7 @@ export function registerSocketHandlers(
         }
         ack({ ok: true })
         broadcastEvents(presence.room, applied.value)
+        retime(presence.room)
         broadcastViews(presence.room)
       })
     })
@@ -315,11 +339,15 @@ export function registerSocketHandlers(
         if (result === null) return
 
         broadcastEvents(room, result.events)
+        // A disconnection moves the turn past the seat that left, so the clock
+        // now belongs to somebody else.
+        retime(room)
         broadcastLobby(room)
         broadcastViews(room)
 
         rooms.scheduleGrace(room, result.seat, (events) => {
           broadcastEvents(room, events)
+          retime(room)
           broadcastLobby(room)
           broadcastViews(room)
         })

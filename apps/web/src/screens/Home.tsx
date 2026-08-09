@@ -1,4 +1,5 @@
 import type { MatchGoal } from '@uno/engine'
+import type { MatchPace } from '@uno/protocol'
 import {
   DEFAULT_MATCH_GOAL,
   MAX_POINTS_TARGET,
@@ -6,6 +7,9 @@ import {
   MAX_NAME_LENGTH,
   MIN_POINTS_TARGET,
   MIN_ROUNDS,
+  DEFAULT_TURN_SECONDS,
+  MAX_TURN_SECONDS,
+  MIN_TURN_SECONDS,
   ROOM_CODE_LENGTH,
 } from '@uno/protocol'
 import { useState, type FormEvent } from 'react'
@@ -15,9 +19,10 @@ import { useState, type FormEvent } from 'react'
    for anyone who wants 250. */
 const POINT_PRESETS = [250, 500, 1000] as const
 const ROUND_PRESETS = [1, 3, 5] as const
+const TURN_PRESETS = [5, 10, 15, 30] as const
 
 type HomeProps = {
-  onCreate: (name: string, goal: MatchGoal) => void
+  onCreate: (name: string, goal: MatchGoal, pace: MatchPace) => void
   onJoin: (roomCode: string, name: string) => void
   error: string | null
   prefilledCode: string | null
@@ -32,6 +37,12 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
   const [goalKind, setGoalKind] = useState<MatchGoal['kind']>(DEFAULT_MATCH_GOAL.kind)
   const [target, setTarget] = useState(500)
   const [rounds, setRounds] = useState(3)
+  const [blazing, setBlazing] = useState(false)
+  const [turnSeconds, setTurnSeconds] = useState(DEFAULT_TURN_SECONDS)
+
+  const pace: MatchPace = blazing
+    ? { turnSeconds: clamp(turnSeconds, MIN_TURN_SECONDS, MAX_TURN_SECONDS) }
+    : null
 
   /* Clamped here as well as on the server. The server is still the authority; this
      only spares the player a round trip to learn that 0 rounds is not a match. */
@@ -49,7 +60,7 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
      only authority — this just spares a round trip to learn the obvious. */
   const submitCreate = (event: FormEvent) => {
     event.preventDefault()
-    if (canCreate) onCreate(trimmedName, goal)
+    if (canCreate) onCreate(trimmedName, goal, pace)
   }
   const submitJoin = (event: FormEvent) => {
     event.preventDefault()
@@ -160,6 +171,57 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
                 ))}
               </span>
             </div>
+          )}
+        </fieldset>
+
+        <fieldset className="goal-picker">
+          <legend>Blazing</legend>
+          <label className="switch-row">
+            <input
+              type="checkbox"
+              checked={blazing}
+              onChange={(event) => {
+                setBlazing(event.target.checked)
+              }}
+            />
+            <span>Put a clock on every turn</span>
+          </label>
+
+          {blazing && (
+            <>
+              <div className="goal-row">
+                <label htmlFor="turn-seconds">Seconds per turn</label>
+                <input
+                  id="turn-seconds"
+                  type="number"
+                  inputMode="numeric"
+                  value={turnSeconds}
+                  min={MIN_TURN_SECONDS}
+                  max={MAX_TURN_SECONDS}
+                  onChange={(event) => {
+                    setTurnSeconds(Number(event.target.value))
+                  }}
+                />
+                <span className="preset-row">
+                  {TURN_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      className="chip"
+                      onClick={() => {
+                        setTurnSeconds(preset)
+                      }}
+                    >
+                      {preset}
+                    </button>
+                  ))}
+                </span>
+              </div>
+              <p className="hint">
+                Run out and you draw a card, even if you had one to play. Rounds deal themselves
+                five seconds after the last one ends.
+              </p>
+            </>
           )}
         </fieldset>
 
