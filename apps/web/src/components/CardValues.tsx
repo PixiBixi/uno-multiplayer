@@ -34,8 +34,10 @@ const DECK_TOTAL = buildDeck().reduce((sum, card) => sum + cardPoints(card), 0)
 
 export function CardValues() {
   return (
-    <details className="help">
-      <summary className="help-summary">What are the cards worth?</summary>
+    <aside className="help" aria-labelledby="help-title">
+      <h2 className="help-title" id="help-title">
+        What the cards are worth
+      </h2>
       <div className="help-body">
         <p className="hint">
           Win a round and you score everything left in the other players’ hands. Nobody scores for
@@ -57,6 +59,6 @@ export function CardValues() {
           worth knowing before picking one.
         </p>
       </div>
-    </details>
+    </aside>
   )
 }

@@ -1,6 +1,5 @@
 import { buildDeck, cardPoints, type Card, type CardId } from '@uno/engine'
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { CardValues } from './CardValues.js'
 
@@ -9,36 +8,26 @@ import { CardValues } from './CardValues.js'
    drifted apart, which is the one failure this component exists to prevent. */
 const card = (partial: Omit<Card, 'id'> | Card): Card => ({ ...partial, id: 'x' as CardId }) as Card
 
-/* A <details> keeps its content in the DOM when closed — the browser hides it, it
-   is not removed — so "collapsed" is a question about the open attribute, not about
-   whether the text can be found. */
-const helpElement = (): HTMLDetailsElement => {
-  const summary = screen.getByText(/what are the cards worth/i)
-  const details = summary.closest('details')
-  if (details === null) throw new Error('the summary is not inside a details')
-  return details
-}
-
-const openHelp = async () => {
-  render(<CardValues />)
-  await userEvent.click(screen.getByText(/what are the cards worth/i))
-  return helpElement()
-}
+const valueFor = (label: string): string | undefined =>
+  screen.getByText(label).parentElement?.querySelector('dd')?.textContent ?? undefined
 
 describe('CardValues', () => {
-  it('starts collapsed, so it never crowds the form above it', () => {
+  it('is readable without opening anything', () => {
+    // It was a disclosure first, which meant a click and a scroll to read six
+    // numbers on a screen that had room to spare.
     render(<CardValues />)
-    expect(helpElement().open).toBe(false)
-  })
-
-  it('opens on the summary', async () => {
-    const details = await openHelp()
-    expect(details.open).toBe(true)
     expect(screen.getByText(/win a round and you score/i)).toBeTruthy()
+    expect(document.querySelector('details')).toBeNull()
   })
 
-  it('shows the engine’s value for each action card', async () => {
-    await openHelp()
+  it('is a landmark with a name, so it can be skipped to and skipped over', () => {
+    render(<CardValues />)
+    const region = screen.getByRole('complementary', { name: /what the cards are worth/i })
+    expect(region).toBeTruthy()
+  })
+
+  it('shows the engine’s value for each action card', () => {
+    render(<CardValues />)
 
     const expected = [
       { label: 'Skip', card: card({ kind: 'skip', color: 'G' }) },
@@ -49,30 +38,33 @@ describe('CardValues', () => {
     ]
 
     for (const row of expected) {
-      const term = screen.getByText(row.label)
-      const value = term.parentElement?.querySelector('dd')?.textContent
-      expect(value).toBe(String(cardPoints(row.card)))
+      expect(valueFor(row.label)).toBe(String(cardPoints(row.card)))
     }
   })
 
-  it('describes number cards by the range the engine actually produces', async () => {
-    await openHelp()
+  it('describes number cards by the range the engine actually produces', () => {
+    render(<CardValues />)
     const low = cardPoints(card({ kind: 'number', color: 'R', value: 0 }))
     const high = cardPoints(card({ kind: 'number', color: 'R', value: 9 }))
 
-    const row = screen.getByText('Number cards').parentElement?.querySelector('dd')?.textContent
+    const row = valueFor('Number cards')
     expect(row).toContain(String(low))
     expect(row).toContain(String(high))
   })
 
-  it('totals the real deck rather than quoting a remembered number', async () => {
-    await openHelp()
+  it('totals the real deck rather than quoting a remembered number', () => {
+    render(<CardValues />)
     const total = buildDeck().reduce((sum, deckCard) => sum + cardPoints(deckCard), 0)
     expect(screen.getByText(String(total))).toBeTruthy()
   })
 
-  it('says the losers score nothing, which is the part people get wrong', async () => {
-    await openHelp()
+  it('says the losers score nothing, which is the part people get wrong', () => {
+    render(<CardValues />)
     expect(screen.getByText(/nobody scores for the cards they were still holding/i)).toBeTruthy()
+  })
+
+  it('warns that a target costs more rounds at two players than at four', () => {
+    render(<CardValues />)
+    expect(screen.getByText(/far more rounds at two players than at four/i)).toBeTruthy()
   })
 })

@@ -228,6 +228,29 @@ h3 {
   gap: 1.25rem;
 }
 
+/* Past this width the single column leaves most of the screen empty while the
+   card values sit below the fold. Moving them alongside costs nothing and means
+   nobody has to scroll — or click — to read six numbers.
+
+   Two children only, wrapped deliberately: letting a dozen form elements
+   auto-place into a grid put the tagline in the same tall row as the help and
+   left a screen-high gap above the first field. */
+@media (min-width: 900px) {
+  .home {
+    max-width: 56rem;
+    display: grid;
+    grid-template-columns: 26rem minmax(0, 1fr);
+    align-items: start;
+    column-gap: 2.5rem;
+  }
+}
+
+.home-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
 .home h1 {
   font-size: var(--step-3);
   letter-spacing: -0.02em;
@@ -1397,46 +1420,21 @@ h3 {
   background: var(--panel);
 }
 
-.help-summary {
-  /* 44px of target even though a summary is only as tall as its text. */
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  padding: 0.6rem 0.9rem;
-  font-family: var(--display);
+.help-title {
+  margin: 0;
+  padding: 0.75rem 0.9rem 0;
   font-size: var(--step--1);
   font-weight: 600;
-  cursor: pointer;
-  /* The browser's own marker sits oddly against a flex summary; the rotating
-     caret below replaces it. */
-  list-style: none;
-}
-
-.help-summary::-webkit-details-marker {
-  display: none;
-}
-
-.help-summary::after {
-  content: '';
-  margin-left: auto;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(45deg) translate(-2px, -2px);
-  opacity: 0.6;
-  transition: transform 180ms ease;
-}
-
-.help[open] .help-summary::after {
-  transform: rotate(-135deg) translate(-2px, -2px);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
 }
 
 .help-body {
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
-  padding: 0 0.9rem 0.9rem;
+  padding: 0.7rem 0.9rem 0.9rem;
 }
 
 .value-list {

@@ -70,147 +70,73 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
 
   return (
     <main className="home">
-      <h1>UNO</h1>
-      <p className="hint">Two to four players. Share the code and deal.</p>
+      <div className="home-column">
+        <h1>UNO</h1>
+        <p className="hint">Two to four players. Share the code and deal.</p>
 
-      {error !== null && (
-        <p className="banner banner-bad" role="alert">
-          {error}
-        </p>
-      )}
+        {error !== null && (
+          <p className="banner banner-bad" role="alert">
+            {error}
+          </p>
+        )}
 
-      <form className="home-form" onSubmit={submitCreate}>
-        <label htmlFor="player-name">Your name</label>
-        <input
-          id="player-name"
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          maxLength={MAX_NAME_LENGTH}
-          autoComplete="nickname"
-          placeholder="Ana"
-        />
-        <fieldset className="goal-picker">
-          <legend>How the match ends</legend>
-          <div className="segmented" role="group" aria-label="Match format">
-            <button
-              type="button"
-              className={goalKind === 'points' ? 'seg seg-on' : 'seg'}
-              aria-pressed={goalKind === 'points'}
-              onClick={() => {
-                setGoalKind('points')
-              }}
-            >
-              First to a score
-            </button>
-            <button
-              type="button"
-              className={goalKind === 'rounds' ? 'seg seg-on' : 'seg'}
-              aria-pressed={goalKind === 'rounds'}
-              onClick={() => {
-                setGoalKind('rounds')
-              }}
-            >
-              A set number of rounds
-            </button>
-          </div>
-
-          {goalKind === 'points' ? (
-            <div className="goal-row">
-              <label htmlFor="goal-target">Winning score</label>
-              <input
-                id="goal-target"
-                type="number"
-                inputMode="numeric"
-                value={target}
-                min={MIN_POINTS_TARGET}
-                max={MAX_POINTS_TARGET}
-                onChange={(event) => {
-                  setTarget(Number(event.target.value))
+        <form className="home-form" onSubmit={submitCreate}>
+          <label htmlFor="player-name">Your name</label>
+          <input
+            id="player-name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            maxLength={MAX_NAME_LENGTH}
+            autoComplete="nickname"
+            placeholder="Ana"
+          />
+          <fieldset className="goal-picker">
+            <legend>How the match ends</legend>
+            <div className="segmented" role="group" aria-label="Match format">
+              <button
+                type="button"
+                className={goalKind === 'points' ? 'seg seg-on' : 'seg'}
+                aria-pressed={goalKind === 'points'}
+                onClick={() => {
+                  setGoalKind('points')
                 }}
-              />
-              <span className="preset-row">
-                {POINT_PRESETS.map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    className="chip"
-                    onClick={() => {
-                      setTarget(preset)
-                    }}
-                  >
-                    {preset}
-                  </button>
-                ))}
-              </span>
-            </div>
-          ) : (
-            <div className="goal-row">
-              <label htmlFor="goal-rounds">Rounds</label>
-              <input
-                id="goal-rounds"
-                type="number"
-                inputMode="numeric"
-                value={rounds}
-                min={MIN_ROUNDS}
-                max={MAX_ROUNDS}
-                onChange={(event) => {
-                  setRounds(Number(event.target.value))
+              >
+                First to a score
+              </button>
+              <button
+                type="button"
+                className={goalKind === 'rounds' ? 'seg seg-on' : 'seg'}
+                aria-pressed={goalKind === 'rounds'}
+                onClick={() => {
+                  setGoalKind('rounds')
                 }}
-              />
-              <span className="preset-row">
-                {ROUND_PRESETS.map((preset) => (
-                  <button
-                    key={preset}
-                    type="button"
-                    className="chip"
-                    onClick={() => {
-                      setRounds(preset)
-                    }}
-                  >
-                    {preset === 1 ? 'Single game' : preset}
-                  </button>
-                ))}
-              </span>
+              >
+                A set number of rounds
+              </button>
             </div>
-          )}
-        </fieldset>
 
-        <fieldset className="goal-picker">
-          <legend>Blazing</legend>
-          <label className="switch-row">
-            <input
-              type="checkbox"
-              checked={blazing}
-              onChange={(event) => {
-                setBlazing(event.target.checked)
-              }}
-            />
-            <span>Put a clock on every turn</span>
-          </label>
-
-          {blazing && (
-            <>
+            {goalKind === 'points' ? (
               <div className="goal-row">
-                <label htmlFor="turn-seconds">Seconds per turn</label>
+                <label htmlFor="goal-target">Winning score</label>
                 <input
-                  id="turn-seconds"
+                  id="goal-target"
                   type="number"
                   inputMode="numeric"
-                  value={turnSeconds}
-                  min={MIN_TURN_SECONDS}
-                  max={MAX_TURN_SECONDS}
+                  value={target}
+                  min={MIN_POINTS_TARGET}
+                  max={MAX_POINTS_TARGET}
                   onChange={(event) => {
-                    setTurnSeconds(Number(event.target.value))
+                    setTarget(Number(event.target.value))
                   }}
                 />
                 <span className="preset-row">
-                  {TURN_PRESETS.map((preset) => (
+                  {POINT_PRESETS.map((preset) => (
                     <button
                       key={preset}
                       type="button"
                       className="chip"
                       onClick={() => {
-                        setTurnSeconds(preset)
+                        setTarget(preset)
                       }}
                     >
                       {preset}
@@ -218,39 +144,115 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
                   ))}
                 </span>
               </div>
-              <p className="hint">
-                Run out and you draw a card, even if you had one to play. Rounds deal themselves
-                five seconds after the last one ends.
-              </p>
-            </>
-          )}
-        </fieldset>
+            ) : (
+              <div className="goal-row">
+                <label htmlFor="goal-rounds">Rounds</label>
+                <input
+                  id="goal-rounds"
+                  type="number"
+                  inputMode="numeric"
+                  value={rounds}
+                  min={MIN_ROUNDS}
+                  max={MAX_ROUNDS}
+                  onChange={(event) => {
+                    setRounds(Number(event.target.value))
+                  }}
+                />
+                <span className="preset-row">
+                  {ROUND_PRESETS.map((preset) => (
+                    <button
+                      key={preset}
+                      type="button"
+                      className="chip"
+                      onClick={() => {
+                        setRounds(preset)
+                      }}
+                    >
+                      {preset === 1 ? 'Single game' : preset}
+                    </button>
+                  ))}
+                </span>
+              </div>
+            )}
+          </fieldset>
 
-        <button type="submit" className="btn btn-primary" disabled={!canCreate}>
-          Create a game
-        </button>
-      </form>
+          <fieldset className="goal-picker">
+            <legend>Blazing</legend>
+            <label className="switch-row">
+              <input
+                type="checkbox"
+                checked={blazing}
+                onChange={(event) => {
+                  setBlazing(event.target.checked)
+                }}
+              />
+              <span>Put a clock on every turn</span>
+            </label>
 
-      <div className="home-divider">
-        <span>or join one</span>
+            {blazing && (
+              <>
+                <div className="goal-row">
+                  <label htmlFor="turn-seconds">Seconds per turn</label>
+                  <input
+                    id="turn-seconds"
+                    type="number"
+                    inputMode="numeric"
+                    value={turnSeconds}
+                    min={MIN_TURN_SECONDS}
+                    max={MAX_TURN_SECONDS}
+                    onChange={(event) => {
+                      setTurnSeconds(Number(event.target.value))
+                    }}
+                  />
+                  <span className="preset-row">
+                    {TURN_PRESETS.map((preset) => (
+                      <button
+                        key={preset}
+                        type="button"
+                        className="chip"
+                        onClick={() => {
+                          setTurnSeconds(preset)
+                        }}
+                      >
+                        {preset}
+                      </button>
+                    ))}
+                  </span>
+                </div>
+                <p className="hint">
+                  Run out and you draw a card, even if you had one to play. Rounds deal themselves
+                  five seconds after the last one ends.
+                </p>
+              </>
+            )}
+          </fieldset>
+
+          <button type="submit" className="btn btn-primary" disabled={!canCreate}>
+            Create a game
+          </button>
+        </form>
+
+        <div className="home-divider">
+          <span>or join one</span>
+        </div>
+
+        <form className="home-form" onSubmit={submitJoin}>
+          <label htmlFor="room-code">Game code</label>
+          <input
+            id="room-code"
+            className="code-input"
+            value={code}
+            onChange={(event) => setCode(event.target.value.toUpperCase())}
+            maxLength={ROOM_CODE_LENGTH}
+            autoComplete="off"
+            spellCheck={false}
+            placeholder="K7QM2X"
+          />
+          <button type="submit" className="btn" disabled={!canJoin}>
+            Join game
+          </button>
+        </form>
       </div>
-
-      <form className="home-form" onSubmit={submitJoin}>
-        <label htmlFor="room-code">Game code</label>
-        <input
-          id="room-code"
-          className="code-input"
-          value={code}
-          onChange={(event) => setCode(event.target.value.toUpperCase())}
-          maxLength={ROOM_CODE_LENGTH}
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="K7QM2X"
-        />
-        <button type="submit" className="btn" disabled={!canJoin}>
-          Join game
-        </button>
-      </form>
 
       <CardValues />
     </main>
