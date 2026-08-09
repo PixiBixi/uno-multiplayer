@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createAudioEngine, type AudioEngine } from '../lib/audio-engine.js'
 import { readMuted, writeMuted } from '../lib/preferences.js'
 import { soundsForEvents, type SoundName } from '../lib/sounds.js'
-import type { FeedEntry } from './game-reducer.js'
+import { highestFeedId, type FeedEntry } from './game-reducer.js'
 
 type UseTableSounds = {
   feed: FeedEntry[]
@@ -11,9 +11,6 @@ type UseTableSounds = {
   /** Needed to tell winning apart from watching someone else win. */
   mySeat: number
 }
-
-const highestId = (feed: FeedEntry[]): number =>
-  feed.reduce((highest, entry) => (entry.id > highest ? entry.id : highest), 0)
 
 /**
  * Turns table events into sound, and owns the mute preference.
@@ -30,7 +27,7 @@ export function useTableSounds({ feed, isMyTurn, mySeat }: UseTableSounds) {
   /* Starts at what is already on screen, exactly as useTableEffects does. A first
      paint — including the one after a reconnect, which arrives with the whole
      backlog — must not replay every sound of the last ten minutes at once. */
-  const lastFeedId = useRef(highestId(feed))
+  const lastFeedId = useRef(highestFeedId(feed))
   const wasMyTurn = useRef(isMyTurn)
 
   const mutedRef = useRef(muted)
@@ -65,7 +62,7 @@ export function useTableSounds({ feed, isMyTurn, mySeat }: UseTableSounds) {
   useEffect(() => {
     const fresh = feed.filter((entry) => entry.id > lastFeedId.current)
     if (fresh.length === 0) return
-    lastFeedId.current = highestId(fresh)
+    lastFeedId.current = highestFeedId(fresh)
 
     const events = fresh.flatMap((entry) => (entry.kind === 'event' ? [entry.event] : []))
     for (const name of soundsForEvents(events, mySeat)) play(name)

@@ -1,8 +1,7 @@
-import type { Card, Color } from '@uno/engine'
+import type { Card } from '@uno/engine'
 import type { GameEvent } from '@uno/protocol'
 import { cardCount, isBackPhrase, matchResultPhrase, pointsCount, winsPhrase } from './phrase.js'
-
-const COLOR_NAME: Record<Color, string> = { R: 'Red', G: 'Green', B: 'Blue', Y: 'Yellow' }
+import { COLOR_NAME } from './palette.js'
 
 function cardName(card: Card): string {
   switch (card.kind) {

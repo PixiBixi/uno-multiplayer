@@ -7,16 +7,13 @@ import {
   type ActiveEffect,
   type EffectKind,
 } from '../lib/play-effects.js'
-import type { FeedEntry } from './game-reducer.js'
+import { highestFeedId, type FeedEntry } from './game-reducer.js'
 
 type UseTableEffects = {
   discardTop: Card
   currentColor: Color
   feed: FeedEntry[]
 }
-
-const highestId = (feed: FeedEntry[]): number =>
-  feed.reduce((highest, entry) => (entry.id > highest ? entry.id : highest), 0)
 
 /**
  * Owns every transient table flourish in one place, so the "what have I already
@@ -36,7 +33,7 @@ export function useTableEffects({ discardTop, currentColor, feed }: UseTableEffe
      entries — must not replay a storm of animations for moves that happened
      minutes ago. */
   const lastCardId = useRef(discardTop.id)
-  const lastFeedId = useRef(highestId(feed))
+  const lastFeedId = useRef(highestFeedId(feed))
 
   const timers = useRef<ReturnType<typeof setTimeout>[]>([])
   const nextKey = useRef(0)
@@ -73,7 +70,7 @@ export function useTableEffects({ discardTop, currentColor, feed }: UseTableEffe
   useEffect(() => {
     const fresh = feed.filter((entry) => entry.id > lastFeedId.current)
     if (fresh.length === 0) return
-    lastFeedId.current = highestId(fresh)
+    lastFeedId.current = highestFeedId(fresh)
 
     for (const entry of fresh) {
       if (entry.kind !== 'event') continue

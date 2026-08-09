@@ -2,8 +2,7 @@ import { MAX_SEATS, type LobbyView } from '@uno/protocol'
 import type { SeatStatus } from '@uno/engine'
 import { CopyButton } from '../components/CopyButton.js'
 import { roomLink } from '../lib/room-url.js'
-
-const SEAT_PIGMENT = ['var(--red)', 'var(--blue)', 'var(--yellow)', 'var(--green)']
+import { pigmentForSeat } from '../lib/palette.js'
 
 const STATUS_LABEL: Record<SeatStatus, string | null> = {
   active: null,
@@ -42,7 +41,7 @@ export function Lobby({ lobby, mySeat, onStart, onLeave }: LobbyProps) {
           const status = STATUS_LABEL[seat.status]
           return (
             <li key={seat.seat} className={seat.status === 'active' ? 'slot' : 'slot slot-away'}>
-              <span className="avatar" style={{ background: SEAT_PIGMENT[seat.seat % 4] }}>
+              <span className="avatar" style={{ background: pigmentForSeat(seat.seat) }}>
                 {seat.name.slice(0, 1).toUpperCase()}
               </span>
               <span>{seat.name}</span>

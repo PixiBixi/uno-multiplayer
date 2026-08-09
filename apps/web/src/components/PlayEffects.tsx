@@ -1,5 +1,5 @@
-import type { Color } from '@uno/engine'
 import { EFFECT_DURATION_MS, type ActiveEffect } from '../lib/play-effects.js'
+import { COLOR_VALUE } from '../lib/palette.js'
 
 const LABEL: Record<ActiveEffect['kind'], string> = {
   wild4: '+4',
@@ -8,13 +8,6 @@ const LABEL: Record<ActiveEffect['kind'], string> = {
   skip: 'SKIP',
   reverse: 'REVERSE',
   uno: 'UNO!',
-}
-
-const COLOR_VALUE: Record<Color, string> = {
-  R: 'var(--red)',
-  G: 'var(--green)',
-  B: 'var(--blue)',
-  Y: 'var(--yellow)',
 }
 
 const tint = (effect: ActiveEffect): string =>

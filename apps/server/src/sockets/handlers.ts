@@ -211,6 +211,20 @@ export function registerSocketHandlers(
      * Deliberately the same path as an unexpected disconnect, minus the grace
      * period: somebody who pressed Leave is not coming back to that seat.
      */
+    /**
+     * The seat this socket is sitting in, or null after telling the caller there
+     * is none. Six handlers began with the same six lines; a change to what "not
+     * at a table" means had to be remembered in all of them.
+     */
+    const seated = (ack: (result: AckFailure) => void): Presence | null => {
+      const presence = presences.get(socket.id)
+      if (presence === undefined) {
+        ack({ ok: false, error: 'room_not_found' })
+        return null
+      }
+      return presence
+    }
+
     socket.on('room:leave', (payload, ack) => {
       attempt(ack, () => {
         if (parsePayload(emptyPayloadSchema, payload) === null) {
@@ -248,11 +262,8 @@ export function registerSocketHandlers(
           ack({ ok: false, error: 'invalid_payload' })
           return
         }
-        const presence = presences.get(socket.id)
-        if (presence === undefined) {
-          ack({ ok: false, error: 'room_not_found' })
-          return
-        }
+        const presence = seated(ack)
+        if (presence === null) return
         const started = presence.room.start(presence.seat)
         if (!started.okay) {
           ack({ ok: false, error: started.error })
@@ -271,11 +282,8 @@ export function registerSocketHandlers(
           ack({ ok: false, error: 'invalid_payload' })
           return
         }
-        const presence = presences.get(socket.id)
-        if (presence === undefined) {
-          ack({ ok: false, error: 'room_not_found' })
-          return
-        }
+        const presence = seated(ack)
+        if (presence === null) return
         const dealt = presence.room.nextRound(presence.seat, rooms.nextSeed())
         if (!dealt.okay) {
           ack({ ok: false, error: dealt.error })
@@ -294,11 +302,8 @@ export function registerSocketHandlers(
           ack({ ok: false, error: 'invalid_payload' })
           return
         }
-        const presence = presences.get(socket.id)
-        if (presence === undefined) {
-          ack({ ok: false, error: 'room_not_found' })
-          return
-        }
+        const presence = seated(ack)
+        if (presence === null) return
         const restarted = presence.room.restart(presence.seat, rooms.nextSeed())
         if (!restarted.okay) {
           ack({ ok: false, error: restarted.error })
@@ -319,11 +324,8 @@ export function registerSocketHandlers(
           ack({ ok: false, error: 'invalid_payload' })
           return
         }
-        const presence = presences.get(socket.id)
-        if (presence === undefined) {
-          ack({ ok: false, error: 'room_not_found' })
-          return
-        }
+        const presence = seated(ack)
+        if (presence === null) return
         if (!moveLimiter.allow(socket.id)) {
           ack({ ok: false, error: 'rate_limited' })
           return
@@ -347,11 +349,8 @@ export function registerSocketHandlers(
           ack({ ok: false, error: 'invalid_payload' })
           return
         }
-        const presence = presences.get(socket.id)
-        if (presence === undefined) {
-          ack({ ok: false, error: 'room_not_found' })
-          return
-        }
+        const presence = seated(ack)
+        if (presence === null) return
         if (!chatLimiter.allow(socket.id)) {
           ack({ ok: false, error: 'rate_limited' })
           return

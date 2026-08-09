@@ -1,5 +1,3 @@
-export const ENGINE_VERSION = '0.1.0'
-
 export { buildDeck, takeFromTop } from './deck.js'
 export { MAX_PLAYERS, MIN_PLAYERS, initGame, type InitError } from './init.js'
 export { UNO_PENALTY, applyMove, skipDisconnectedTurn } from './reducer.js'

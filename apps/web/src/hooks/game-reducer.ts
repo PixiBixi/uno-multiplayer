@@ -90,6 +90,11 @@ function toastFor(event: GameEvent): Omit<Toast, 'id'> | null {
   }
 }
 
+/** The newest entry already on screen. Both effect hooks need it to tell a fresh
+ *  event from the backlog a reconnect replays. */
+export const highestFeedId = (feed: FeedEntry[]): number =>
+  feed.reduce((highest, entry) => (entry.id > highest ? entry.id : highest), 0)
+
 const withFeed = (state: ClientState, entry: OmitEach<FeedEntry, 'id'>): ClientState => {
   const feed: FeedEntry[] = [...state.feed, { ...entry, id: state.nextId }]
   return {

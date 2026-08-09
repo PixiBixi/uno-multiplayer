@@ -1,15 +1,8 @@
 import { isWild, type Card as CardData, type Color } from '@uno/engine'
+import { COLOR_NAME, COLOR_VALUE } from '../lib/palette.js'
 
-const PIGMENT: Record<Color, string> = {
-  R: 'var(--red)',
-  G: 'var(--green)',
-  B: 'var(--blue)',
-  Y: 'var(--yellow)',
-}
 const BONE = 'var(--bone)'
 const INK = 'var(--ink)'
-const COLOR_NAME: Record<Color, string> = { R: 'Red', G: 'Green', B: 'Blue', Y: 'Yellow' }
-
 /**
  * Shape per pigment: the non-chromatic channel. Colour is the rule in UNO, not
  * decoration, so it cannot also be the only way to read a card. Around one man
@@ -89,10 +82,10 @@ function ShapeToken({ color, x, y }: { color: Color; x: number; y: number }) {
 
 function Quadrants({ cx, cy, r }: { cx: number; cy: number; r: number }) {
   const wedges: Array<[string, string]> = [
-    [`M${cx} ${cy} L${cx} ${cy - r} A${r} ${r} 0 0 1 ${cx + r} ${cy} Z`, PIGMENT.R],
-    [`M${cx} ${cy} L${cx + r} ${cy} A${r} ${r} 0 0 1 ${cx} ${cy + r} Z`, PIGMENT.Y],
-    [`M${cx} ${cy} L${cx} ${cy + r} A${r} ${r} 0 0 1 ${cx - r} ${cy} Z`, PIGMENT.G],
-    [`M${cx} ${cy} L${cx - r} ${cy} A${r} ${r} 0 0 1 ${cx} ${cy - r} Z`, PIGMENT.B],
+    [`M${cx} ${cy} L${cx} ${cy - r} A${r} ${r} 0 0 1 ${cx + r} ${cy} Z`, COLOR_VALUE.R],
+    [`M${cx} ${cy} L${cx + r} ${cy} A${r} ${r} 0 0 1 ${cx} ${cy + r} Z`, COLOR_VALUE.Y],
+    [`M${cx} ${cy} L${cx} ${cy + r} A${r} ${r} 0 0 1 ${cx - r} ${cy} Z`, COLOR_VALUE.G],
+    [`M${cx} ${cy} L${cx - r} ${cy} A${r} ${r} 0 0 1 ${cx} ${cy - r} Z`, COLOR_VALUE.B],
   ]
   return (
     <>
@@ -180,7 +173,7 @@ type CardProps = {
 
 export function Card({ card, onPlay, disabled = false }: CardProps) {
   const wild = isWild(card)
-  const pigment = wild ? INK : PIGMENT[card.color]
+  const pigment = wild ? INK : COLOR_VALUE[card.color]
   const faceFill = wild ? BONE : pigment
   const tokenColor: Color = wild ? 'R' : card.color
   const label = disabled ? `${cardLabel(card)} — not playable this turn` : cardLabel(card)

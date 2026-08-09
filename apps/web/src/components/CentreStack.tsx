@@ -2,14 +2,7 @@ import type { Color } from '@uno/engine'
 import type { PlayerView } from '@uno/protocol'
 import { Card } from './Card.js'
 import { CardBack } from './CardBack.js'
-
-const COLOR_NAME: Record<Color, string> = { R: 'Red', G: 'Green', B: 'Blue', Y: 'Yellow' }
-const COLOR_VALUE: Record<Color, string> = {
-  R: 'var(--red)',
-  G: 'var(--green)',
-  B: 'var(--blue)',
-  Y: 'var(--yellow)',
-}
+import { COLOR_NAME, COLOR_VALUE } from '../lib/palette.js'
 
 /** The same shape tokens the cards use, so the colour in play is readable
  *  without relying on hue. */

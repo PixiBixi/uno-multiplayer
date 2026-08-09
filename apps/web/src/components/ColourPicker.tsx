@@ -1,15 +1,8 @@
 import type { Color, Move } from '@uno/engine'
 import { useEffect } from 'react'
+import { COLOR_NAME, COLOR_VALUE } from '../lib/palette.js'
 
 type PlayMove = Extract<Move, { type: 'play' }>
-
-const COLOR_NAME: Record<Color, string> = { R: 'Red', G: 'Green', B: 'Blue', Y: 'Yellow' }
-const COLOR_VALUE: Record<Color, string> = {
-  R: 'var(--red)',
-  G: 'var(--green)',
-  B: 'var(--blue)',
-  Y: 'var(--yellow)',
-}
 
 function Glyph({ color }: { color: Color }) {
   const fill = 'currentColor'

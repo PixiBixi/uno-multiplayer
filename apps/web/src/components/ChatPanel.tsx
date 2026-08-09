@@ -2,8 +2,7 @@ import { MAX_CHAT_LENGTH } from '@uno/protocol'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { FeedEntry } from '../hooks/game-reducer.js'
 import { describeEvent } from '../lib/describe-event.js'
-
-const SEAT_PIGMENT = ['var(--red)', 'var(--blue)', 'var(--yellow)', 'var(--green)']
+import { pigmentForSeat } from '../lib/palette.js'
 
 type ChatPanelProps = {
   feed: FeedEntry[]
@@ -103,7 +102,7 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
             <div className={mine ? 'msg msg-mine' : 'msg'} key={entry.id}>
               <div className="msg-bubble">
                 {!mine && (
-                  <span className="msg-who" style={{ color: SEAT_PIGMENT[entry.seat % 4] }}>
+                  <span className="msg-who" style={{ color: pigmentForSeat(entry.seat) }}>
                     {entry.name}
                   </span>
                 )}
