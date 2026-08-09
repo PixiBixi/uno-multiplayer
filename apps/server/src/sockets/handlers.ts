@@ -204,6 +204,28 @@ export function registerSocketHandlers(
       })
     })
 
+    socket.on('game:nextRound', (payload, ack) => {
+      attempt(ack, () => {
+        if (parsePayload(emptyPayloadSchema, payload) === null) {
+          ack({ ok: false, error: 'invalid_payload' })
+          return
+        }
+        const presence = presences.get(socket.id)
+        if (presence === undefined) {
+          ack({ ok: false, error: 'room_not_found' })
+          return
+        }
+        const dealt = presence.room.nextRound(presence.seat, rooms.nextSeed())
+        if (!dealt.okay) {
+          ack({ ok: false, error: dealt.error })
+          return
+        }
+        ack({ ok: true })
+        broadcastEvents(presence.room, dealt.value)
+        broadcastViews(presence.room)
+      })
+    })
+
     socket.on('game:restart', (payload, ack) => {
       attempt(ack, () => {
         if (parsePayload(emptyPayloadSchema, payload) === null) {
