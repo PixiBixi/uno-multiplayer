@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App.js'
+import { ErrorBoundary } from './components/ErrorBoundary.js'
 import './styles/tokens.css'
 import './styles/app.css'
 
@@ -9,6 +10,10 @@ if (host === null) throw new Error('missing #root element')
 
 createRoot(host).render(
   <StrictMode>
-    <App />
+    {/* Outside App, so a throw anywhere inside it — including in the socket hook
+        that feeds every screen — still lands somewhere. */}
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
   </StrictMode>,
 )
