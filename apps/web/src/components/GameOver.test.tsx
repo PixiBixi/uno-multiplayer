@@ -1,5 +1,5 @@
 import type { Card, CardId, MatchGoal } from '@uno/engine'
-import type { PlayerView } from '@uno/protocol'
+import type { PlayerView, SeatStats } from '@uno/protocol'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
@@ -13,7 +13,22 @@ type MatchBits = {
   scores?: number[]
   round?: number
   winners?: number[] | null
+  stats?: SeatStats[]
 }
+
+const noStats = (): SeatStats => ({
+  cardsPlayed: 0,
+  wild4Played: 0,
+  draw2Played: 0,
+  cardsDrawn: 0,
+  unoCalls: 0,
+  unoPenalties: 0,
+  timeouts: 0,
+  roundsWon: 0,
+})
+
+export const statsWith = (overrides: Partial<SeatStats>[]): SeatStats[] =>
+  overrides.map((over) => ({ ...noStats(), ...over }))
 
 const finished = (winner: number | null, match: MatchBits = {}): PlayerView => ({
   you: { seat: 0, hand: [top, top], legalMoves: [] },
@@ -36,6 +51,7 @@ const finished = (winner: number | null, match: MatchBits = {}): PlayerView => (
     scores: match.scores ?? [0, 0, 0],
     round: match.round ?? 2,
     winners: match.winners ?? null,
+    stats: match.stats ?? [noStats(), noStats(), noStats()],
   },
 })
 
@@ -131,5 +147,50 @@ describe('GameOver on an abandoned round', () => {
     const { onLeave } = setup(finished(null))
     await userEvent.click(screen.getByRole('button', { name: /leave table/i }))
     expect(onLeave).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('the end-of-match awards', () => {
+  const withStats = (stats: Partial<SeatStats>[]) =>
+    finished(0, { winners: [0], scores: [510, 90, 60], stats: statsWith(stats) })
+
+  it('appear only once the match is over', () => {
+    // Between rounds the standings are what people are reading; trivia under
+    // them would bury the thing that matters.
+    setup(finished(0, { stats: statsWith([{ wild4Played: 3 }, {}, {}]) }))
+    expect(screen.queryByText(/most wild draw fours/i)).toBeNull()
+  })
+
+  it('names who played the most Wild Draw Fours, with the count', () => {
+    setup(withStats([{ wild4Played: 3 }, { wild4Played: 1 }, {}]))
+    const row = screen.getByText(/most wild draw fours/i).parentElement?.textContent
+    expect(row).toMatch(/You/)
+    expect(row).toMatch(/3/)
+  })
+
+  it('leaves out an award nobody earned', () => {
+    // A "most Wild Draw Fours: 0" line is noise, not a result.
+    setup(withStats([{ cardsPlayed: 4 }, { cardsPlayed: 2 }, {}]))
+    expect(screen.queryByText(/most wild draw fours/i)).toBeNull()
+    expect(screen.getByText(/most cards played/i)).toBeTruthy()
+  })
+
+  it('leaves out an award everybody tied on, since nobody stood out', () => {
+    setup(withStats([{ timeouts: 2 }, { timeouts: 2 }, { timeouts: 2 }]))
+    expect(screen.queryByText(/ran out of time/i)).toBeNull()
+  })
+
+  it('names everyone on a partial tie rather than picking one', () => {
+    setup(withStats([{ unoPenalties: 2 }, { unoPenalties: 2 }, { unoPenalties: 0 }]))
+    const row = screen.getByText(/forgot uno most/i).parentElement?.textContent
+    expect(row).toMatch(/You/)
+    expect(row).toMatch(/Ben/)
+    expect(row).not.toMatch(/Cleo/)
+  })
+
+  it('shows nothing at all when a match was too quiet to have a story', () => {
+    setup(withStats([{}, {}, {}]))
+    expect(screen.queryByRole('list', { name: /award/i })).toBeNull()
+    expect(screen.queryByText(/most cards played/i)).toBeNull()
   })
 })

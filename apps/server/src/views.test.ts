@@ -9,6 +9,7 @@ const progress: MatchProgress = {
   scores: [0, 0, 0],
   round: 1,
   winners: null,
+  stats: [],
 }
 
 const game = (seed = 21) => {

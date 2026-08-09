@@ -34,6 +34,7 @@ const viewWith = (overrides: Partial<PlayerView> = {}): PlayerView => ({
     scores: [0, 0],
     round: 1,
     winners: null,
+    stats: [],
   },
   ...overrides,
 })

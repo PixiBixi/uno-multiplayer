@@ -76,6 +76,24 @@ export type PlayerView = {
 }
 
 /**
+ * What each seat did over the whole match, for the scoreboard at the end.
+ *
+ * Not a rule and not needed to play — purely something to laugh at afterwards —
+ * so it lives here rather than in the engine, and is counted from the event feed
+ * the server already produces rather than from any new bookkeeping.
+ */
+export type SeatStats = {
+  cardsPlayed: number
+  wild4Played: number
+  draw2Played: number
+  cardsDrawn: number
+  unoCalls: number
+  unoPenalties: number
+  timeouts: number
+  roundsWon: number
+}
+
+/**
  * Where the match stands. `scores` is indexed by seat, joined against the names
  * the view already carries rather than repeating them.
  *
@@ -89,6 +107,8 @@ export type MatchProgress = {
   /** 1-based, and names the round currently being played. */
   round: number
   winners: number[] | null
+  /** Indexed by seat, like `scores`. */
+  stats: SeatStats[]
 }
 
 export type LobbyView = {

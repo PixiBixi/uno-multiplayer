@@ -1,4 +1,4 @@
-import type { PlayerView } from '@uno/protocol'
+import type { PlayerView, SeatStats } from '@uno/protocol'
 import { useCountdown } from '../hooks/useCountdown.js'
 import { matchResultPhrase, pointsCount, winsPhrase } from '../lib/phrase.js'
 
@@ -31,6 +31,10 @@ export function GameOver({ view, nameOf, isHost, onNextRound, onRestart, onLeave
   const standings = seats
     .map((seat) => ({ seat, score: match.scores[seat] ?? 0 }))
     .sort((a, b) => b.score - a.score || a.seat - b.seat)
+
+  /* Only at the end of a match. Between rounds the standings are what people are
+     reading, and a table of trivia underneath would bury them. */
+  const awards = matchOver ? pickAwards(match.stats, seats, nameOf) : []
 
   const goalLine =
     match.goal.kind === 'points'
@@ -76,6 +80,17 @@ export function GameOver({ view, nameOf, isHost, onNextRound, onRestart, onLeave
           </p>
         )}
 
+        {awards.length > 0 && (
+          <ul className="awards">
+            {awards.map((award) => (
+              <li className="award" key={award.title}>
+                <span className="award-title">{award.title}</span>
+                <span className="award-holder">{award.holder}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
         <div className="over-actions">
           {isHost ? (
             <>
@@ -108,4 +123,48 @@ export function GameOver({ view, nameOf, isHost, onNextRound, onRestart, onLeave
       </div>
     </div>
   )
+}
+
+type Award = { title: string; holder: string }
+
+/**
+ * The handful of things worth saying out loud at the end of a match.
+ *
+ * Only awards somebody actually earned: a "most Wild Draw Fours" line reading
+ * zero is noise, and a leader board of nothing is worse than no leader board. A
+ * tie names everyone rather than picking arbitrarily, because arbitrary is
+ * exactly what people argue about.
+ */
+function pickAwards(
+  stats: SeatStats[],
+  seats: number[],
+  nameOf: (seat: number) => string,
+): Award[] {
+  const leadersOf = (pick: (seat: SeatStats) => number): { names: string[]; value: number } => {
+    const scored = seats.map((seat) => ({
+      seat,
+      value: pick(stats[seat] ?? ({} as SeatStats)) ?? 0,
+    }))
+    const best = Math.max(0, ...scored.map((row) => row.value))
+    return {
+      value: best,
+      names: scored.filter((row) => row.value === best).map((row) => nameOf(row.seat)),
+    }
+  }
+
+  const candidates: { title: string; pick: (seat: SeatStats) => number; suffix: string }[] = [
+    { title: 'Most Wild Draw Fours', pick: (s) => s.wild4Played, suffix: '' },
+    { title: 'Most cards drawn', pick: (s) => s.cardsDrawn, suffix: '' },
+    { title: 'Forgot UNO most', pick: (s) => s.unoPenalties, suffix: '' },
+    { title: 'Ran out of time most', pick: (s) => s.timeouts, suffix: '' },
+    { title: 'Most cards played', pick: (s) => s.cardsPlayed, suffix: '' },
+  ]
+
+  return candidates.flatMap((candidate) => {
+    const { names, value } = leadersOf(candidate.pick)
+    if (value === 0) return []
+    // Everybody level means nobody stood out, which is not an award.
+    if (names.length === seats.length) return []
+    return [{ title: candidate.title, holder: `${names.join(' & ')} (${String(value)})` }]
+  })
 }

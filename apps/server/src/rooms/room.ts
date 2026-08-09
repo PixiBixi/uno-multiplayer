@@ -30,6 +30,7 @@ import {
   type PlayerView,
 } from '@uno/protocol'
 import { redactFor } from '../views.js'
+import { emptyStatsFor, tally } from './stats.js'
 
 export type Member = {
   seat: number
@@ -61,6 +62,7 @@ export class Room {
      time passing. */
   private turnDeadline: number | null = null
   private nextRoundDeadline: number | null = null
+  private stats = emptyStatsFor(0)
   /** Null until the first round is dealt; the goal is known from creation. */
   private match: MatchState | null = null
 
@@ -69,6 +71,17 @@ export class Room {
     this.seed = seed
     this.goal = goal
     this.pace = pace
+  }
+
+  /**
+   * Every event this room reports leaves through here, so the match tally is
+   * taken in one place rather than at each of the eight paths that produce one.
+   * Miss a path and the statistics quietly under-count; a test cross-checks the
+   * totals against the events actually returned, so missing one fails loudly.
+   */
+  private record(events: GameEvent[]): GameEvent[] {
+    if (events.length > 0) this.stats = tally(this.stats, events)
+    return events
   }
 
   /** Null on a table with no clock, which is what makes the rest opt-in. */
@@ -105,7 +118,7 @@ export class Room {
     if (!dealt.okay) return []
 
     this.game = dealt.value
-    return [{ type: 'roundStarted', round: this.match.round }]
+    return this.record([{ type: 'roundStarted', round: this.match.round }])
   }
 
   setTurnDeadline(at: number | null): void {
@@ -183,6 +196,7 @@ export class Room {
       scores: [...match.scores],
       round: match.round,
       winners: matchWinners(match),
+      stats: this.stats.map((seat) => ({ ...seat })),
     }
   }
 
@@ -250,6 +264,7 @@ export class Room {
 
     this.game = dealt.value
     this.match = startMatch(this.goal, this.members.length)
+    this.stats = emptyStatsFor(this.members.length)
     return ok([])
   }
 
@@ -268,7 +283,7 @@ export class Room {
     if (!dealt.okay) return err(dealt.error)
 
     this.game = dealt.value
-    return ok([{ type: 'roundStarted', round: this.match.round }])
+    return ok(this.record([{ type: 'roundStarted', round: this.match.round }]))
   }
 
   /**
@@ -286,7 +301,9 @@ export class Room {
 
     this.game = dealt.value
     this.match = startMatch(this.goal, this.members.length)
-    return ok([{ type: 'gameRestarted' }])
+    // A new match starts from nothing; the old tally described a different one.
+    this.stats = emptyStatsFor(this.members.length)
+    return ok(this.record([{ type: 'gameRestarted' }]))
   }
 
   viewFor(seat: number): PlayerView | null {
@@ -307,10 +324,12 @@ export class Room {
     }
 
     this.game = result.value
-    return ok([
-      ...diffEvents(before, result.value, seat, move),
-      ...this.settleRound(before, result.value),
-    ])
+    return ok(
+      this.record([
+        ...diffEvents(before, result.value, seat, move),
+        ...this.settleRound(before, result.value),
+      ]),
+    )
   }
 
   /**
@@ -340,11 +359,11 @@ export class Room {
     if (!result.okay) return []
     this.game = result.value
 
-    return [
+    return this.record([
       { type: 'turnTimedOut', seat },
       ...diffEvents(before, result.value, seat, forced),
       ...this.settleRound(before, result.value),
-    ]
+    ])
   }
 
   disconnect(socketId: string): { seat: number; events: GameEvent[] } | null {
@@ -360,7 +379,10 @@ export class Room {
       // table never stalls on someone who is gone.
       this.game = skipDisconnectedTurn(setSeatStatus(this.game, member.seat, 'disconnected'))
     }
-    return { seat: member.seat, events: [{ type: 'seatDisconnected', seat: member.seat }] }
+    return {
+      seat: member.seat,
+      events: this.record([{ type: 'seatDisconnected', seat: member.seat }]),
+    }
   }
 
   rejoin(sessionToken: string, socketId: string): Result<{ seat: number }, ErrorCode> {
@@ -392,7 +414,7 @@ export class Room {
       this.game = markSeatLeft(before, seat)
       events.push(...this.settleRound(before, this.game))
     }
-    return events
+    return this.record(events)
   }
 
   /** The host role follows the lowest-indexed seat still present. */
