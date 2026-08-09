@@ -169,6 +169,17 @@ export class Room {
     return this.members.every((m) => m.socketId === null)
   }
 
+  /**
+   * Nobody could come back even if they tried: every member has left for good, or
+   * nobody ever sat down. Distinct from isEmpty(), which is merely "no sockets
+   * attached right now" and is also true of a table whose players are mid-reload.
+   */
+  get abandoned(): boolean {
+    // `every` on no members is true, which is the right answer for a room created
+    // and never joined.
+    return this.members.every((member) => member.status === 'left')
+  }
+
   activeMemberCount(): number {
     return this.members.filter((m) => m.status === 'active').length
   }

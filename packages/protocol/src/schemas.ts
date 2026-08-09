@@ -87,6 +87,7 @@ export const roomCreateSchema = z.object({
 })
 export const roomJoinSchema = z.object({ roomCode, playerName })
 export const roomRejoinSchema = z.object({ roomCode, sessionToken: z.uuid() })
+export const roomLeaveSchema = z.object({})
 export const gameStartSchema = z.object({})
 export const gameNextRoundSchema = z.object({})
 export const gameMoveSchema = z.object({ move: moveSchema })

@@ -59,6 +59,8 @@ export type ClientToServer = {
     payload: { roomCode: string; sessionToken: string },
     ack: Ack<{ seat: number }>,
   ) => void
+  /** Gives up the seat. Without it the server never learns the player is gone. */
+  'room:leave': (payload: Empty, ack: Ack) => void
   'game:start': (payload: Empty, ack: Ack) => void
   /** Deals the next round of the current match, keeping the scores. */
   'game:nextRound': (payload: Empty, ack: Ack) => void

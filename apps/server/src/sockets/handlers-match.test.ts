@@ -102,6 +102,14 @@ const playRoundToCompletion = async (playerA: Player, playerB: Player): Promise<
   }
 }
 
+/**
+ * Well above what these need. Driving a whole round over real sockets measures
+ * well under a second alone, but it was seen crossing vitest's 5s default while
+ * the rest of the suite competed for cores — failing a run that had found nothing
+ * wrong, exactly as the engine's property tests once did.
+ */
+const SOCKET_ROUND_TIMEOUT_MS = 20_000
+
 const table = async (goal: MatchGoal = DEFAULT_MATCH_GOAL, pace: MatchPace = null) => {
   const host = newPlayer()
   const guest = newPlayer()
@@ -161,33 +169,37 @@ describe('game:nextRound over sockets', () => {
    * missing-match one above, and just as invisible to a test that never goes
    * through the socket.
    */
-  it('deals a fresh round and pushes it to every remaining player', async () => {
-    /* Played to a real finish rather than ended by a disconnect: disconnecting
+  it(
+    'deals a fresh round and pushes it to every remaining player',
+    async () => {
+      /* Played to a real finish rather than ended by a disconnect: disconnecting
        the only other player leaves nobody active to deal a next round to, which
        would mask this test behind too_few_players instead of exercising it. */
-    const { host, guest } = await table({ kind: 'rounds', count: 3 })
-    await playRoundToCompletion(host, guest)
-    await waitFor(() => host.view()?.phase === 'finished', 'the round to end')
-    expect(host.view()?.match.winners).toBeNull() // the match, not just the round
-    const roundBefore = host.view()?.match.round
+      const { host, guest } = await table({ kind: 'rounds', count: 3 })
+      await playRoundToCompletion(host, guest)
+      await waitFor(() => host.view()?.phase === 'finished', 'the round to end')
+      expect(host.view()?.match.winners).toBeNull() // the match, not just the round
+      const roundBefore = host.view()?.match.round
 
-    const before = [host.version(), guest.version()] as const
-    const result = await emit<PlainAck>(host, 'game:nextRound', {})
-    expect(result).toEqual({ ok: true })
+      const before = [host.version(), guest.version()] as const
+      const result = await emit<PlainAck>(host, 'game:nextRound', {})
+      expect(result).toEqual({ ok: true })
 
-    /* Waiting on BOTH views, not just the host's. Asserting as soon as one has
+      /* Waiting on BOTH views, not just the host's. Asserting as soon as one has
        arrived reads the other's view of the round that just ended — where the
        player who went out holds an empty hand, which looks exactly like a deal
        that never happened. */
-    await waitFor(
-      () => host.version() > before[0] && guest.version() > before[1],
-      'both views of the next round',
-    )
-    for (const player of [host, guest]) {
-      expect(player.view()?.you.hand).toHaveLength(7)
-      expect(player.view()?.match.round).toBe(roundBefore)
-    }
-  })
+      await waitFor(
+        () => host.version() > before[0] && guest.version() > before[1],
+        'both views of the next round',
+      )
+      for (const player of [host, guest]) {
+        expect(player.view()?.you.hand).toHaveLength(7)
+        expect(player.view()?.match.round).toBe(roundBefore)
+      }
+    },
+    SOCKET_ROUND_TIMEOUT_MS,
+  )
 
   it('refuses while the round is still being played', async () => {
     const { host } = await table({ kind: 'rounds', count: 3 })
@@ -197,19 +209,23 @@ describe('game:nextRound over sockets', () => {
     })
   })
 
-  it('refuses from a guest', async () => {
-    /* The guest has to still be connected to ask, so the round is played out
+  it(
+    'refuses from a guest',
+    async () => {
+      /* The guest has to still be connected to ask, so the round is played out
        rather than ended by disconnecting them — emitting on a closed socket just
        hangs waiting for an ack that will never come. */
-    const { host, guest } = await table({ kind: 'rounds', count: 3 })
-    await playRoundToCompletion(host, guest)
-    await waitFor(() => host.view()?.phase === 'finished', 'the round to end')
+      const { host, guest } = await table({ kind: 'rounds', count: 3 })
+      await playRoundToCompletion(host, guest)
+      await waitFor(() => host.view()?.phase === 'finished', 'the round to end')
 
-    expect(await emit<PlainAck>(guest, 'game:nextRound', {})).toEqual({
-      ok: false,
-      error: 'not_host',
-    })
-  })
+      expect(await emit<PlainAck>(guest, 'game:nextRound', {})).toEqual({
+        ok: false,
+        error: 'not_host',
+      })
+    },
+    SOCKET_ROUND_TIMEOUT_MS,
+  )
 
   it('refuses once the match itself is over', async () => {
     const { host, guest } = await table({ kind: 'rounds', count: 1 })

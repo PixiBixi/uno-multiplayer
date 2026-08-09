@@ -3,6 +3,7 @@ import { randomInt } from 'node:crypto'
 import { err, ok, type Result } from '@uno/engine'
 import {
   BETWEEN_ROUNDS_SECONDS,
+  MIN_SEATS,
   type ErrorCode,
   type GameEvent,
   type MatchPace,
@@ -38,6 +39,8 @@ export class RoomManager {
   private readonly graceTimers = new Map<string, unknown>()
   private readonly turnTimers = new Map<string, unknown>()
   private readonly roundTimers = new Map<string, unknown>()
+  /** When a room last became empty, so purge can tell "gone" from "gone for good". */
+  private readonly emptySince = new Map<string, number>()
   private readonly maxRooms: number
   private readonly gracePeriodMs: number
   private readonly timers: Timers
@@ -110,7 +113,10 @@ export class RoomManager {
     this.cancelTurn(room)
 
     const seconds = room.turnSeconds
-    if (seconds === null || !room.awaitingMove) {
+    /* activeMemberCount, not just awaitingMove. With every seat gone the clock
+       would expire, find no legal move, change nothing, and be armed again by the
+       caller — forever, against a room nobody is sitting at. */
+    if (seconds === null || !room.awaitingMove || room.activeMemberCount() === 0) {
       room.setTurnDeadline(null)
       return
     }
@@ -143,7 +149,11 @@ export class RoomManager {
    */
   armNextRound(room: Room, onExpire: (events: GameEvent[]) => void): void {
     this.cancelNextRound(room)
-    if (room.turnSeconds === null || !room.betweenRounds) {
+    /* The dealing guard also requires two active members, and this one used not
+       to. A round ending with one player left made the deal fail, changed nothing
+       about the room, and the caller armed it again — every five seconds for the
+       life of the process, pushing a countdown that could never resolve. */
+    if (room.turnSeconds === null || !room.betweenRounds || room.activeMemberCount() < MIN_SEATS) {
       room.setNextRoundDeadline(null)
       return
     }
@@ -169,14 +179,37 @@ export class RoomManager {
   }
 
   /** Drops rooms nobody is connected to. Returns how many went away. */
+  /**
+   * Drops rooms nobody is connected to. Returns how many went away.
+   *
+   * "Empty" alone is not enough: it becomes true the instant every socket id is
+   * null, which includes players still inside their grace period. Purge runs on
+   * the same cadence as that grace period, so it used to win whenever its tick
+   * landed first — cancelling the very grace timers it was pre-empting, and
+   * losing the game for anyone who reloaded at the wrong moment. A room now has
+   * to have STAYED empty for a full grace period.
+   */
   purge(): number {
     let removed = 0
     for (const [code, room] of this.rooms) {
-      if (!room.isEmpty()) continue
+      if (!room.isEmpty()) {
+        this.emptySince.delete(code)
+        continue
+      }
+
+      /* An abandoned room goes at once: rejoin refuses a seat that has left, so
+         holding it for a grace period protects nobody. Only a room whose players
+         might still be mid-reload gets the wait. */
+      if (!room.abandoned) {
+        const since = this.emptySince.get(code) ?? this.now()
+        this.emptySince.set(code, since)
+        if (this.now() - since < this.gracePeriodMs) continue
+      }
       for (let seat = 0; seat < room.memberCount; seat++) this.cancelGrace(room, seat)
       this.cancelTurn(room)
       this.cancelNextRound(room)
       this.rooms.delete(code)
+      this.emptySince.delete(code)
       removed++
     }
     return removed

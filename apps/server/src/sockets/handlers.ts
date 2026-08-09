@@ -202,6 +202,46 @@ export function registerSocketHandlers(
       })
     })
 
+    /**
+     * Giving up a seat on purpose, which used to be a client-only idea: the
+     * button cleared local state and the server was never told. The seat kept a
+     * dead socket id forever, so the room could never be reclaimed, and the
+     * socket stayed in the old socket.io room and kept receiving its chat.
+     *
+     * Deliberately the same path as an unexpected disconnect, minus the grace
+     * period: somebody who pressed Leave is not coming back to that seat.
+     */
+    socket.on('room:leave', (payload, ack) => {
+      attempt(ack, () => {
+        if (parsePayload(emptyPayloadSchema, payload) === null) {
+          ack({ ok: false, error: 'invalid_payload' })
+          return
+        }
+        const presence = presences.get(socket.id)
+        // Leaving twice, or from a stale tab, is not an error worth reporting.
+        if (presence === undefined) {
+          ack({ ok: true })
+          return
+        }
+
+        const { room } = presence
+        const result = room.disconnect(socket.id)
+        presences.delete(socket.id)
+        moveLimiter.forget(socket.id)
+        chatLimiter.forget(socket.id)
+        void socket.leave(room.code)
+        ack({ ok: true })
+
+        if (result === null) return
+        // No grace timer: the seat is given up, not lost.
+        room.expireGrace(result.seat)
+        broadcastEvents(room, [...result.events, { type: 'seatLeft', seat: result.seat }])
+        retime(room)
+        broadcastLobby(room)
+        broadcastViews(room)
+      })
+    })
+
     socket.on('game:start', (payload, ack) => {
       attempt(ack, () => {
         if (parsePayload(emptyPayloadSchema, payload) === null) {

@@ -151,6 +151,9 @@ export function useGameSocket() {
 
   const roomCode = state.roomCode
   const leave = useCallback(() => {
+    // Told to the server first: without this the seat keeps a dead socket id and
+    // the room can never be reclaimed.
+    socketRef.current?.emit('room:leave', {}, () => undefined)
     if (roomCode !== null) clearSession(roomCode)
     dispatch({ type: 'left' })
   }, [roomCode])
