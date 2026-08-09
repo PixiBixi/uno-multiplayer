@@ -121,6 +121,19 @@ at 20, both wilds at 50.
 Not implemented, deliberately: the strict Mattel +4 challenge (it needs a bluff
 UI and hand inspection), the 7-0 variant, and jump-in.
 
+## Language
+
+The interface is available in English and French. A browser asking for French gets
+it; a chip on the home screen switches instantly and the choice is remembered.
+
+Every catalogue entry that varies is a function rather than a template, because a
+template can only express the grammar of whichever language was written first.
+English builds "Ana wins" from a name and an s; French builds "Ana gagne" from a
+different stem, and "You win" becomes "Tu gagnes" where the verb changes rather
+than the pronoun. English pluralises at zero and French does not. Adding a language
+means adding one file that satisfies `Messages`; the tests check that no catalogue
+has drifted from another.
+
 ## Development
 
 Requires Node 22 or later. The repo pins the Active LTS in `.nvmrc`.
@@ -208,6 +221,8 @@ emit-only solution and excludes tests.
 - [x] Match scoring: points target or fixed rounds, official card values
 - [x] Sound: synthesised cues for play, draws, action cards, UNO, turn and endings
 - [x] Blazing: an optional per-turn clock, with rounds that deal themselves
+- [x] End-of-match awards, counted from the event feed
+- [x] English and French, with each language owning its own grammar
 - [x] An error boundary, so a bad render explains itself instead of blanking
 - [ ] **Your own hand falls below the fold on a phone** — see below
 - [ ] Deploy it somewhere real and play a game with actual people
@@ -283,6 +298,9 @@ Scrolling the hand horizontally in one row is the likely fix, rather than lettin
 it wrap. Worth checking against a real browser's geometry rather than by eye — and
 worth sampling _after_ transitions settle, since this project has twice been
 fooled by a screenshot taken mid-fade.
+
+An architecture wiki lives in [`openwiki/`](openwiki/quickstart.md) — start there
+for how the pieces fit together and what to watch out for when changing each area.
 
 Design documents live in `docs/superpowers/`: the
 [design spec](docs/superpowers/specs/2026-08-04-uno-multiplayer-design.md) records
