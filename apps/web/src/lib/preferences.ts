@@ -26,3 +26,30 @@ export function writeHandSort(mode: HandSort): void {
     /* The preference will not survive a reload. Play continues. */
   }
 }
+
+const MUTED_KEY = 'uno.pref.muted'
+
+/**
+ * Sound is on unless someone turned it off, which is the norm for a game — and
+ * safe here because no sound can fire before the click that creates or joins a
+ * table. Nobody is ambushed by opening the page.
+ *
+ * Stored as the exception rather than the state: only the exact string 'true'
+ * means muted, so a corrupted or half-written value falls back to audible rather
+ * than to a silence the player cannot explain.
+ */
+export function readMuted(): boolean {
+  try {
+    return window.localStorage.getItem(MUTED_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+export function writeMuted(muted: boolean): void {
+  try {
+    window.localStorage.setItem(MUTED_KEY, muted ? 'true' : 'false')
+  } catch {
+    /* The preference will not survive a reload. Play continues. */
+  }
+}

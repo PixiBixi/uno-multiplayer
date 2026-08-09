@@ -206,9 +206,37 @@ emit-only solution and excludes tests.
 - [x] Playwright end-to-end tests across multiple browser contexts
 - [x] Dockerfile and deployment
 - [x] Match scoring: points target or fixed rounds, official card values
+- [x] Sound: synthesised cues for play, draws, action cards, UNO, turn and endings
 - [ ] **Your own hand falls below the fold on a phone** — see below
 - [ ] Deploy it somewhere real and play a game with actual people
 - [ ] A bot, so a table can be tried alone or filled to three
+
+### Sound
+
+Every cue is synthesised with the Web Audio API — `apps/web/src/lib/audio-engine.ts`
+is oscillators and envelopes, not a single audio file. That keeps binary assets out
+of the repository and the image, avoids licence questions, and makes each sound a
+few numbers to edit rather than a clip to re-record.
+
+The split matters for testing. `sounds.ts` decides _which_ cue an event deserves
+and is a pure function, tested like any other; `audio-engine.ts` turns a name into
+noise and is unit-testable by nothing, since jsdom has no Web Audio. It is checked
+in a real browser instead, by wrapping `AudioContext` and asserting oscillators
+actually start.
+
+Two details that are easy to get wrong:
+
+- **An AudioContext is born suspended** and stays mute until a user gesture. The
+  first cue of a session therefore races the unlock — measurement showed the
+  context is not even constructed until then — so `play` resumes and _then_ emits
+  rather than dropping the sound.
+- **Winning and watching someone win are different events.** Endings come in
+  pairs, `roundWon`/`roundOver` and `matchWon`/`matchOver`, because a single cue
+  for both congratulates the loser.
+
+Sound is on by default with a mute toggle on the felt, persisted in
+`localStorage`. Nothing can play before the click that creates or joins a table,
+so opening the page is never a surprise.
 
 ### Known issue: the hand is off-screen on a phone
 

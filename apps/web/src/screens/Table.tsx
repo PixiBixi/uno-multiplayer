@@ -9,6 +9,7 @@ import { Seat } from '../components/Seat.js'
 import { Toaster } from '../components/Toaster.js'
 import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
 import { useTableEffects } from '../hooks/useTableEffects.js'
+import { useTableSounds } from '../hooks/useTableSounds.js'
 
 type TableProps = {
   view: PlayerView
@@ -65,10 +66,45 @@ export function Table({
     feed,
   })
 
+  /* Sound is a separate hook rather than part of the one above, because it reads
+     a different source: the feed alone, since a cue needs the card's kind and not
+     the colour chosen for a wild. */
+  const { muted, toggleMuted } = useTableSounds({ feed, isMyTurn: myTurn, mySeat: view.you.seat })
+
   return (
     <main className="table-screen">
       <div className={shaking ? 'table-surface fx-shake' : 'table-surface'}>
         <PlayEffects effects={effects} />
+        <button
+          type="button"
+          className="sound-toggle"
+          onClick={toggleMuted}
+          aria-pressed={muted}
+          aria-label={muted ? 'Unmute sound' : 'Mute sound'}
+          title={muted ? 'Unmute sound' : 'Mute sound'}
+        >
+          <svg
+            width={20}
+            height={20}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+            {muted ? (
+              <path d="m16 9 5 6m0-6-5 6" />
+            ) : (
+              <>
+                <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+                <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+              </>
+            )}
+          </svg>
+        </button>
         <div className="table-grid">
           {view.opponents.slice(0, 3).map((opponent, index) => (
             <div className={`area-${AREAS[index] ?? 'north'}`} key={opponent.seat}>

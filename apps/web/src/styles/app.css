@@ -1290,3 +1290,42 @@ h3 {
 .chip:hover {
   border-color: var(--accent);
 }
+
+/* ---------- Sound toggle ---------- */
+
+/* Pinned to the felt rather than placed in the control row: it is a setting, not
+   a move, and it must not sit among the buttons a player reaches for under time
+   pressure. */
+.sound-toggle {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.6rem;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  appearance: none;
+  border: 1px solid rgb(245 241 232 / 0.16);
+  border-radius: 999px;
+  background: rgb(20 16 14 / 0.35);
+  color: var(--bone);
+  cursor: pointer;
+  /* Quiet until wanted: it competes with the table for attention otherwise. */
+  opacity: 0.55;
+  transition:
+    opacity 180ms ease,
+    border-color 180ms ease;
+}
+
+.sound-toggle:hover,
+.sound-toggle:focus-visible {
+  opacity: 1;
+  border-color: var(--accent);
+}
+
+/* Muted is a state worth seeing at a glance, so it stays fully visible. */
+.sound-toggle[aria-pressed='true'] {
+  opacity: 1;
+  color: var(--yellow);
+}
