@@ -1,6 +1,7 @@
 import type { Color, Move } from '@uno/engine'
 import { useEffect } from 'react'
 import { COLOR_NAME, COLOR_VALUE } from '../lib/palette.js'
+import { useMessages } from '../i18n/index.js'
 
 type PlayMove = Extract<Move, { type: 'play' }>
 
@@ -28,6 +29,7 @@ type ColourPickerProps = {
  * choosing a move, so there is nothing to validate.
  */
 export function ColourPicker({ options, onChoose, onCancel }: ColourPickerProps) {
+  const t = useMessages()
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onCancel()
@@ -39,7 +41,7 @@ export function ColourPicker({ options, onChoose, onCancel }: ColourPickerProps)
   return (
     <div className="picker-veil">
       <div className="picker" role="dialog" aria-modal="true" aria-label="Choose the new colour">
-        <h2 className="picker-title">Choose a colour</h2>
+        <h2 className="picker-title">{t.table.chooseColour}</h2>
         <div className="picker-grid">
           {options.map((move) => {
             const color = move.chosenColor

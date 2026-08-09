@@ -35,10 +35,14 @@ export type Messages = {
 
   /** One entry per GameEvent the log can describe. */
   event: {
-    cardPlayed: (name: string, card: Card) => string
-    cardsDrawn: (name: string, count: number) => string
-    unoCalled: (name: string) => string
-    unoPenalty: (name: string, count: number) => string
+    /* `isYou` on every one of these, because French needs it where English does
+       not: "You played" survives with one form, "Toi a posé" does not — it has to
+       become "Tu as posé". Passing the person to all of them lets each language
+       decide whether it cares. */
+    cardPlayed: (name: string, isYou: boolean, card: Card) => string
+    cardsDrawn: (name: string, isYou: boolean, count: number) => string
+    unoCalled: (name: string, isYou: boolean) => string
+    unoPenalty: (name: string, isYou: boolean, count: number) => string
     seatDisconnected: (name: string) => string
     seatReconnected: (name: string, isYou: boolean) => string
     seatLeft: (name: string) => string
@@ -74,6 +78,7 @@ export type Messages = {
   help: {
     title: string
     intro: string
+    numberCardsLabel: string
     numberCards: (low: number, high: number) => string
     skip: string
     reverse: string
@@ -123,6 +128,8 @@ export type Messages = {
     say: string
     send: string
     messageTable: string
+    chatPanel: string
+    collapsePanel: string
     you: string
     seat: (n: number) => string
   }

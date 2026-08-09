@@ -48,11 +48,17 @@ export const fr: Messages = {
   count: { cards: cartes, points, list: liste },
 
   event: {
-    cardPlayed: (name, card) => `${name} a posé ${nomCarte(card)}`,
-    cardsDrawn: (name, count) =>
-      count === 1 ? `${name} a pioché une carte` : `${name} a pioché ${cartes(count)}`,
-    unoCalled: (name) => `${name} a crié UNO`,
-    unoPenalty: (name, count) => `${name} a oublié de crier UNO et pioche ${cartes(count)}`,
+    cardPlayed: (name, isYou, card) =>
+      isYou ? `Tu as posé ${nomCarte(card)}` : `${name} a posé ${nomCarte(card)}`,
+    cardsDrawn: (name, isYou, count) => {
+      const quoi = count === 1 ? 'une carte' : cartes(count)
+      return isYou ? `Tu as pioché ${quoi}` : `${name} a pioché ${quoi}`
+    },
+    unoCalled: (name, isYou) => (isYou ? 'Tu as crié UNO' : `${name} a crié UNO`),
+    unoPenalty: (name, isYou, count) =>
+      isYou
+        ? `Tu as oublié de crier UNO et tu pioches ${cartes(count)}`
+        : `${name} a oublié de crier UNO et pioche ${cartes(count)}`,
     seatDisconnected: (name) => `${name} a perdu la connexion`,
     seatReconnected: (name, isYou) => (isYou ? 'Te revoilà' : `${name} est de retour`),
     seatLeft: (name) => `${name} a quitté la partie`,
@@ -99,6 +105,7 @@ export const fr: Messages = {
     title: 'Ce que valent les cartes',
     intro:
       'Gagne une manche et tu marques tout ce qui reste dans les mains des autres. Personne ne marque pour les cartes qu’il tenait encore.',
+    numberCardsLabel: 'Cartes chiffrées',
     numberCards: (low, high) => `${String(low)} à ${String(high)}, leur valeur faciale`,
     skip: 'Passe',
     reverse: 'Inversion',
@@ -149,6 +156,8 @@ export const fr: Messages = {
     say: 'Dis quelque chose…',
     send: 'Envoyer',
     messageTable: 'Écrire à la table',
+    chatPanel: 'Discussion et journal de la table',
+    collapsePanel: 'Replier le panneau',
     you: 'Toi',
     seat: (n) => `Siège ${String(n)}`,
   },

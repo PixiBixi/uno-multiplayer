@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { CATALOGUES, LocaleContext, detectLocale, writeLocale, type Locale } from './index.js'
 
 /**
@@ -11,12 +11,16 @@ import { CATALOGUES, LocaleContext, detectLocale, writeLocale, type Locale } fro
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<Locale>(detectLocale)
 
+  /* Also on mount, not only on a manual change. A French browser was rendering
+     French while the document still declared lang="en" — measured, not guessed —
+     which tells a screen reader to pronounce it in an English voice. */
+  useEffect(() => {
+    document.documentElement.lang = locale
+  }, [locale])
+
   const change = useCallback((next: Locale) => {
     writeLocale(next)
     setLocale(next)
-    // Assistive technology and hyphenation both read this; leaving it stale tells
-    // a screen reader to pronounce French with an English voice.
-    document.documentElement.lang = next
   }, [])
 
   const value = useMemo(

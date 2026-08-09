@@ -38,12 +38,16 @@ export const en: Messages = {
   colour: (colour) => COLOUR[colour],
   count: { cards, points, list },
 
+  /* English keeps one form for both persons in these, so the `isYou` argument
+     goes unused here. It exists because French cannot: "Toi a posé" is wrong and
+     has to become "Tu as posé". */
+  /* eslint-disable @typescript-eslint/no-unused-vars */
   event: {
-    cardPlayed: (name, card) => `${name} played a ${cardName(card)}`,
-    cardsDrawn: (name, count) =>
+    cardPlayed: (name, _isYou, card) => `${name} played a ${cardName(card)}`,
+    cardsDrawn: (name, _isYou, count) =>
       count === 1 ? `${name} drew a card` : `${name} drew ${cards(count)}`,
-    unoCalled: (name) => `${name} called UNO`,
-    unoPenalty: (name, count) => `${name} forgot to call UNO and drew ${cards(count)}`,
+    unoCalled: (name, _isYou) => `${name} called UNO`,
+    unoPenalty: (name, _isYou, count) => `${name} forgot to call UNO and drew ${cards(count)}`,
     seatDisconnected: (name) => `${name} lost connection`,
     // The only verb in the log that changes person: everything else is past tense.
     seatReconnected: (name, isYou) => (isYou ? 'You are back' : `${name} is back`),
@@ -63,6 +67,7 @@ export const en: Messages = {
     roundStarted: (round) => `Round ${String(round)} dealt`,
     gameRestarted: () => 'A new match was dealt',
   },
+  /* eslint-enable @typescript-eslint/no-unused-vars */
 
   home: {
     tagline: 'Two to four players. Share the code and deal.',
@@ -90,6 +95,7 @@ export const en: Messages = {
     title: 'What the cards are worth',
     intro:
       'Win a round and you score everything left in the other players’ hands. Nobody scores for the cards they were still holding.',
+    numberCardsLabel: 'Number cards',
     numberCards: (low, high) => `${String(low)}–${String(high)}, their face value`,
     skip: 'Skip',
     reverse: 'Reverse',
@@ -140,6 +146,8 @@ export const en: Messages = {
     say: 'Say something…',
     send: 'Send',
     messageTable: 'Message the table',
+    chatPanel: 'Table chat and log',
+    collapsePanel: 'Collapse the table panel',
     you: 'You',
     seat: (n) => `Seat ${String(n)}`,
   },

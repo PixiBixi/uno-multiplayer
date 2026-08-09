@@ -63,7 +63,7 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
   }
 
   return (
-    <section className="chat-panel" aria-label="Table chat and log">
+    <section className="chat-panel" aria-label={messages.table.chatPanel}>
       <header className="chat-head">
         <span>Table</span>
         <button
@@ -72,7 +72,7 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
           onClick={() => {
             setOpen(false)
           }}
-          aria-label="Collapse the table panel"
+          aria-label={messages.table.collapsePanel}
         >
           <svg
             width={16}
@@ -129,10 +129,10 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
           }}
           maxLength={MAX_CHAT_LENGTH}
           autoComplete="off"
-          placeholder="Say something…"
+          placeholder={messages.table.say}
         />
         <button type="submit" className="btn btn-primary">
-          Send
+          {messages.table.send}
         </button>
       </form>
     </section>

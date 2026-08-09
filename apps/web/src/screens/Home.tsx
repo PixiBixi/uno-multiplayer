@@ -14,6 +14,7 @@ import {
 } from '@uno/protocol'
 import { useState, type FormEvent } from 'react'
 import { CardValues } from '../components/CardValues.js'
+import { LOCALES, LOCALE_NAME, useLocale, useMessages, useSetLocale } from '../i18n/index.js'
 
 /* Offered as presets rather than a bare number field, because the interesting
    choice is the format, not the arithmetic. The field stays editable underneath
@@ -33,6 +34,9 @@ const clamp = (value: number, low: number, high: number): number =>
   Number.isFinite(value) ? Math.min(high, Math.max(low, Math.round(value))) : low
 
 export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
+  const t = useMessages()
+  const locale = useLocale()
+  const setLocale = useSetLocale()
   const [name, setName] = useState('')
   const [code, setCode] = useState(prefilledCode ?? '')
   const [goalKind, setGoalKind] = useState<MatchGoal['kind']>(DEFAULT_MATCH_GOAL.kind)
@@ -72,7 +76,7 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
     <main className="home">
       <div className="home-column">
         <h1>UNO</h1>
-        <p className="hint">Two to four players. Share the code and deal.</p>
+        <p className="hint">{t.home.tagline}</p>
 
         {error !== null && (
           <p className="banner banner-bad" role="alert">
@@ -81,17 +85,17 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
         )}
 
         <form className="home-form" onSubmit={submitCreate}>
-          <label htmlFor="player-name">Your name</label>
+          <label htmlFor="player-name">{t.home.yourName}</label>
           <input
             id="player-name"
             value={name}
             onChange={(event) => setName(event.target.value)}
             maxLength={MAX_NAME_LENGTH}
             autoComplete="nickname"
-            placeholder="Ana"
+            placeholder={t.home.namePlaceholder}
           />
           <fieldset className="goal-picker">
-            <legend>How the match ends</legend>
+            <legend>{t.home.matchEnds}</legend>
             <div className="segmented" role="group" aria-label="Match format">
               <button
                 type="button"
@@ -101,7 +105,7 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
                   setGoalKind('points')
                 }}
               >
-                First to a score
+                {t.home.firstToScore}
               </button>
               <button
                 type="button"
@@ -111,13 +115,13 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
                   setGoalKind('rounds')
                 }}
               >
-                A set number of rounds
+                {t.home.setRounds}
               </button>
             </div>
 
             {goalKind === 'points' ? (
               <div className="goal-row">
-                <label htmlFor="goal-target">Winning score</label>
+                <label htmlFor="goal-target">{t.home.winningScore}</label>
                 <input
                   id="goal-target"
                   type="number"
@@ -146,7 +150,7 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
               </div>
             ) : (
               <div className="goal-row">
-                <label htmlFor="goal-rounds">Rounds</label>
+                <label htmlFor="goal-rounds">{t.home.rounds}</label>
                 <input
                   id="goal-rounds"
                   type="number"
@@ -168,7 +172,7 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
                         setRounds(preset)
                       }}
                     >
-                      {preset === 1 ? 'Single game' : preset}
+                      {preset === 1 ? t.home.singleGame : preset}
                     </button>
                   ))}
                 </span>
@@ -177,7 +181,7 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
           </fieldset>
 
           <fieldset className="goal-picker">
-            <legend>Blazing</legend>
+            <legend>{t.home.blazing}</legend>
             <label className="switch-row">
               <input
                 type="checkbox"
@@ -186,13 +190,13 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
                   setBlazing(event.target.checked)
                 }}
               />
-              <span>Put a clock on every turn</span>
+              <span>{t.home.clockOnEveryTurn}</span>
             </label>
 
             {blazing && (
               <>
                 <div className="goal-row">
-                  <label htmlFor="turn-seconds">Seconds per turn</label>
+                  <label htmlFor="turn-seconds">{t.home.secondsPerTurn}</label>
                   <input
                     id="turn-seconds"
                     type="number"
@@ -219,25 +223,22 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
                     ))}
                   </span>
                 </div>
-                <p className="hint">
-                  Run out and you draw a card, even if you had one to play. Rounds deal themselves
-                  five seconds after the last one ends.
-                </p>
+                <p className="hint">{t.home.blazingHint}</p>
               </>
             )}
           </fieldset>
 
           <button type="submit" className="btn btn-primary" disabled={!canCreate}>
-            Create a game
+            {t.home.createGame}
           </button>
         </form>
 
         <div className="home-divider">
-          <span>or join one</span>
+          <span>{t.home.orJoin}</span>
         </div>
 
         <form className="home-form" onSubmit={submitJoin}>
-          <label htmlFor="room-code">Game code</label>
+          <label htmlFor="room-code">{t.home.gameCode}</label>
           <input
             id="room-code"
             className="code-input"
@@ -249,9 +250,26 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
             placeholder="K7QM2X"
           />
           <button type="submit" className="btn" disabled={!canJoin}>
-            Join game
+            {t.home.joinGame}
           </button>
         </form>
+        <div className="lang-row">
+          <span className="hint">{t.home.language}</span>
+          {LOCALES.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={option === locale ? 'chip chip-on' : 'chip'}
+              aria-pressed={option === locale}
+              lang={option}
+              onClick={() => {
+                setLocale(option)
+              }}
+            >
+              {LOCALE_NAME[option]}
+            </button>
+          ))}
+        </div>
       </div>
 
       <CardValues />

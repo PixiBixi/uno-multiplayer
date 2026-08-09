@@ -21,13 +21,13 @@ export function describeEvent(
   const m = messages.event
   switch (event.type) {
     case 'cardPlayed':
-      return m.cardPlayed(nameOf(event.seat), event.card)
+      return m.cardPlayed(nameOf(event.seat), event.seat === mySeat, event.card)
     case 'cardsDrawn':
-      return m.cardsDrawn(nameOf(event.seat), event.count)
+      return m.cardsDrawn(nameOf(event.seat), event.seat === mySeat, event.count)
     case 'unoCalled':
-      return m.unoCalled(nameOf(event.seat))
+      return m.unoCalled(nameOf(event.seat), event.seat === mySeat)
     case 'unoPenalty':
-      return m.unoPenalty(nameOf(event.seat), event.count)
+      return m.unoPenalty(nameOf(event.seat), event.seat === mySeat, event.count)
     case 'seatDisconnected':
       return m.seatDisconnected(nameOf(event.seat))
     case 'seatReconnected':

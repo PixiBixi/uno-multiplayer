@@ -1,14 +1,8 @@
 import { MAX_SEATS, type LobbyView } from '@uno/protocol'
-import type { SeatStatus } from '@uno/engine'
 import { CopyButton } from '../components/CopyButton.js'
 import { roomLink } from '../lib/room-url.js'
 import { pigmentForSeat } from '../lib/palette.js'
-
-const STATUS_LABEL: Record<SeatStatus, string | null> = {
-  active: null,
-  disconnected: 'reconnecting…',
-  left: 'left',
-}
+import { useMessages } from '../i18n/index.js'
 
 type LobbyProps = {
   lobby: LobbyView
@@ -18,6 +12,7 @@ type LobbyProps = {
 }
 
 export function Lobby({ lobby, mySeat, onStart, onLeave }: LobbyProps) {
+  const t = useMessages()
   const isHost = mySeat === lobby.hostSeat
   const hostName = lobby.seats.find((seat) => seat.seat === lobby.hostSeat)?.name ?? 'the host'
   const emptySeats = Math.max(0, MAX_SEATS - lobby.seats.length)
@@ -25,20 +20,33 @@ export function Lobby({ lobby, mySeat, onStart, onLeave }: LobbyProps) {
   return (
     <main className="lobby">
       <div className="stack">
-        <span className="eyebrow">Game code</span>
+        <span className="eyebrow">{t.lobby.gameCodeLabel}</span>
         <p className="code-display">{lobby.roomCode}</p>
-        <p className="hint">Share this with the people you want to play.</p>
+        <p className="hint">{t.lobby.shareHint}</p>
         {/* Both, because they suit different conversations: a code to read out
             loud, a link to paste where a code would just have to be retyped. */}
         <div className="copy-row">
-          <CopyButton value={lobby.roomCode} label="Copy code" subject="Game code" />
-          <CopyButton value={roomLink(lobby.roomCode)} label="Copy link" subject="Invite link" />
+          <CopyButton
+            value={lobby.roomCode}
+            label={t.lobby.copyCode}
+            subject={t.lobby.codeCopied}
+          />
+          <CopyButton
+            value={roomLink(lobby.roomCode)}
+            label={t.lobby.copyLink}
+            subject={t.lobby.linkCopied}
+          />
         </div>
       </div>
 
       <ul className="roster">
         {lobby.seats.map((seat) => {
-          const status = STATUS_LABEL[seat.status]
+          const status =
+            seat.status === 'disconnected'
+              ? t.lobby.reconnecting
+              : seat.status === 'left'
+                ? t.lobby.left
+                : null
           return (
             <li key={seat.seat} className={seat.status === 'active' ? 'slot' : 'slot slot-away'}>
               <span className="avatar" style={{ background: pigmentForSeat(seat.seat) }}>
@@ -46,14 +54,14 @@ export function Lobby({ lobby, mySeat, onStart, onLeave }: LobbyProps) {
               </span>
               <span>{seat.name}</span>
               {status !== null && <span className="slot-status">{status}</span>}
-              {seat.seat === lobby.hostSeat && <span className="host-tag">Host</span>}
+              {seat.seat === lobby.hostSeat && <span className="host-tag">{t.lobby.host}</span>}
             </li>
           )
         })}
         {Array.from({ length: emptySeats }, (_, index) => (
           <li key={`empty-${String(index)}`} className="slot slot-empty">
             <span className="avatar avatar-empty">—</span>
-            <span>Waiting for a player…</span>
+            <span>{t.lobby.waitingForPlayer}</span>
           </li>
         ))}
       </ul>
@@ -68,16 +76,16 @@ export function Lobby({ lobby, mySeat, onStart, onLeave }: LobbyProps) {
             onClick={onStart}
             disabled={!lobby.canStart}
           >
-            Start game
+            {t.lobby.startGame}
           </button>
-          {!lobby.canStart && <p className="hint">A game needs at least two players.</p>}
+          {!lobby.canStart && <p className="hint">{t.lobby.needTwo}</p>}
         </div>
       ) : (
-        <p className="hint">Waiting for {hostName} to start the game.</p>
+        <p className="hint">{t.lobby.waitingForHost(hostName)}</p>
       )}
 
       <button type="button" className="btn" onClick={onLeave}>
-        Leave table
+        {t.lobby.leaveTable}
       </button>
     </main>
   )

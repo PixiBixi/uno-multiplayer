@@ -70,8 +70,24 @@ describe('grammar each language owns', () => {
   it('describes a played card as a whole sentence per language', () => {
     // Not "{name} played a {card}" with the card slotted in: French puts the verb
     // in the perfect and needs no article here.
-    expect(CATALOGUES.en.event.cardPlayed('Ana', num(7))).toBe('Ana played a Red 7')
-    expect(CATALOGUES.fr.event.cardPlayed('Ana', num(7))).toBe('Ana a posé Rouge 7')
+    expect(CATALOGUES.en.event.cardPlayed('Ana', false, num(7))).toBe('Ana played a Red 7')
+    expect(CATALOGUES.fr.event.cardPlayed('Ana', false, num(7))).toBe('Ana a posé Rouge 7')
+  })
+
+  it('conjugates the second person where a language needs it and not where it does not', () => {
+    /* Caught by playing a game in French rather than by reading the catalogue:
+       "Toi a posé Joker" is wrong, and no amount of reviewing an English-shaped
+       message list would have shown it. English keeps one form for both persons
+       here; French does not, so the person is passed to every event and each
+       language decides whether it cares. */
+    expect(CATALOGUES.en.event.cardPlayed('You', true, num(7))).toBe('You played a Red 7')
+    expect(CATALOGUES.fr.event.cardPlayed('Toi', true, num(7))).toBe('Tu as posé Rouge 7')
+
+    expect(CATALOGUES.fr.event.unoCalled('Toi', true)).toBe('Tu as crié UNO')
+    expect(CATALOGUES.fr.event.unoCalled('Ana', false)).toBe('Ana a crié UNO')
+
+    expect(CATALOGUES.fr.event.cardsDrawn('Toi', true, 2)).toContain('Tu as pioché')
+    expect(CATALOGUES.fr.event.cardsDrawn('Ana', false, 2)).toContain('Ana a pioché')
   })
 
   it('covers every error code in both languages', () => {

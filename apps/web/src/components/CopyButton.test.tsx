@@ -12,7 +12,8 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
-const setup = () => render(<CopyButton value="8A242X" label="Copy code" subject="Game code" />)
+const setup = () =>
+  render(<CopyButton value="8A242X" label="Copy code" subject="Game code copied" />)
 
 describe('CopyButton', () => {
   it('puts the value on the clipboard', async () => {

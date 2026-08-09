@@ -1,6 +1,7 @@
 import type { PlayerView, SeatStats } from '@uno/protocol'
 import { useCountdown } from '../hooks/useCountdown.js'
-import { matchResultPhrase, pointsCount, winsPhrase } from '../lib/phrase.js'
+import { useMessages } from '../i18n/index.js'
+import type { Messages } from '../i18n/messages.js'
 
 type GameOverProps = {
   view: PlayerView
@@ -17,6 +18,7 @@ type GameOverProps = {
  * follows: another round while the match runs, a whole new match once it is over.
  */
 export function GameOver({ view, nameOf, isHost, onNextRound, onRestart, onLeave }: GameOverProps) {
+  const t = useMessages()
   const { match } = view
   // Only ever set on a Blazing table, where the next round deals itself.
   const dealingIn = useCountdown(view.nextRoundDeadline)
@@ -34,30 +36,30 @@ export function GameOver({ view, nameOf, isHost, onNextRound, onRestart, onLeave
 
   /* Only at the end of a match. Between rounds the standings are what people are
      reading, and a table of trivia underneath would bury them. */
-  const awards = matchOver ? pickAwards(match.stats, seats, nameOf) : []
+  const awards = matchOver ? pickAwards(match.stats, seats, nameOf, t) : []
 
   const goalLine =
     match.goal.kind === 'points'
-      ? `First to ${pointsCount(match.goal.target)}`
-      : `Round ${String(Math.min(match.round, match.goal.count))} of ${String(match.goal.count)}`
+      ? t.over.firstTo(match.goal.target)
+      : t.over.roundOf(Math.min(match.round, match.goal.count), match.goal.count)
 
   return (
     <div className="over-veil">
       <div className="over-card" role="dialog" aria-modal="true">
         {matchOver ? (
           <h2>
-            {matchResultPhrase(
+            {t.event.matchResult(
               winners.map((seat) => nameOf(seat)),
               winners.includes(view.you.seat),
             )}
           </h2>
         ) : abandoned ? (
           <>
-            <h2>Round abandoned</h2>
-            <p className="hint">A game needs two players, so this one ends with no winner.</p>
+            <h2>{t.over.roundAbandoned}</h2>
+            <p className="hint">{t.over.needsTwo}</p>
           </>
         ) : (
-          <h2>{winsPhrase(nameOf(view.winner ?? -1), view.winner === view.you.seat)} the round</h2>
+          <h2>{t.over.winsRound(nameOf(view.winner ?? -1), view.winner === view.you.seat)}</h2>
         )}
 
         <p className="eyebrow">{goalLine}</p>
@@ -76,7 +78,7 @@ export function GameOver({ view, nameOf, isHost, onNextRound, onRestart, onLeave
 
         {dealingIn !== null && (
           <p className="hint" role="status">
-            Next round deals in <b>{dealingIn}</b>…
+            {t.over.dealsIn(dealingIn)}
           </p>
         )}
 
@@ -96,7 +98,7 @@ export function GameOver({ view, nameOf, isHost, onNextRound, onRestart, onLeave
             <>
               {!matchOver && (
                 <button type="button" className="btn btn-primary" onClick={onNextRound}>
-                  Next round
+                  {t.over.nextRound}
                 </button>
               )}
               <button
@@ -104,20 +106,20 @@ export function GameOver({ view, nameOf, isHost, onNextRound, onRestart, onLeave
                 className={matchOver ? 'btn btn-primary' : 'btn'}
                 onClick={onRestart}
               >
-                New match
+                {t.over.newMatch}
               </button>
             </>
           ) : (
             <p className="hint">
               {matchOver
-                ? 'Waiting for the host to start a new match.'
+                ? t.over.waitingNewMatch
                 : dealingIn !== null
-                  ? 'The next round starts on its own.'
-                  : 'Waiting for the host to deal the next round.'}
+                  ? t.over.dealsItself
+                  : t.over.waitingNextRound}
             </p>
           )}
           <button type="button" className="btn" onClick={onLeave}>
-            Leave table
+            {t.lobby.leaveTable}
           </button>
         </div>
       </div>
@@ -139,6 +141,7 @@ function pickAwards(
   stats: SeatStats[],
   seats: number[],
   nameOf: (seat: number) => string,
+  t: Messages,
 ): Award[] {
   const leadersOf = (pick: (seat: SeatStats) => number): { names: string[]; value: number } => {
     const scored = seats.map((seat) => ({
@@ -153,11 +156,11 @@ function pickAwards(
   }
 
   const candidates: { title: string; pick: (seat: SeatStats) => number; suffix: string }[] = [
-    { title: 'Most Wild Draw Fours', pick: (s) => s.wild4Played, suffix: '' },
-    { title: 'Most cards drawn', pick: (s) => s.cardsDrawn, suffix: '' },
-    { title: 'Forgot UNO most', pick: (s) => s.unoPenalties, suffix: '' },
-    { title: 'Ran out of time most', pick: (s) => s.timeouts, suffix: '' },
-    { title: 'Most cards played', pick: (s) => s.cardsPlayed, suffix: '' },
+    { title: t.over.awards.mostWild4, pick: (s) => s.wild4Played, suffix: '' },
+    { title: t.over.awards.mostDrawn, pick: (s) => s.cardsDrawn, suffix: '' },
+    { title: t.over.awards.forgotUno, pick: (s) => s.unoPenalties, suffix: '' },
+    { title: t.over.awards.ranOutOfTime, pick: (s) => s.timeouts, suffix: '' },
+    { title: t.over.awards.mostPlayed, pick: (s) => s.cardsPlayed, suffix: '' },
   ]
 
   return candidates.flatMap((candidate) => {

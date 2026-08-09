@@ -11,6 +11,7 @@ import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
 import { useTableEffects } from '../hooks/useTableEffects.js'
 import { useCountdown } from '../hooks/useCountdown.js'
 import { useTableSounds } from '../hooks/useTableSounds.js'
+import { useMessages } from '../i18n/index.js'
 
 type TableProps = {
   view: PlayerView
@@ -44,16 +45,17 @@ export function Table({
   onSend,
   onDismissToast,
 }: TableProps) {
+  const t = useMessages()
   const myTurn = view.currentSeat === view.you.seat
   const canDraw = view.you.legalMoves.some((move) => move.type === 'draw')
   const acceptDraw = view.you.legalMoves.find((move) => move.type === 'acceptDraw')
   const canCallUno = view.you.legalMoves.some((move) => move.type === 'callUno')
 
   const nameOf = (seat: number): string => {
-    if (seat === view.you.seat) return 'You'
+    if (seat === view.you.seat) return t.table.you
     const opponent = view.opponents.find((candidate) => candidate.seat === seat)
     if (opponent !== undefined) return opponent.name
-    return lobby?.seats.find((candidate) => candidate.seat === seat)?.name ?? `Seat ${String(seat)}`
+    return lobby?.seats.find((candidate) => candidate.seat === seat)?.name ?? t.table.seat(seat)
   }
 
   const isHost = lobby !== null && lobby.hostSeat === view.you.seat
@@ -84,8 +86,8 @@ export function Table({
           className="sound-toggle"
           onClick={toggleMuted}
           aria-pressed={muted}
-          aria-label={muted ? 'Unmute sound' : 'Mute sound'}
-          title={muted ? 'Unmute sound' : 'Mute sound'}
+          aria-label={muted ? t.table.unmuteSound : t.table.muteSound}
+          title={muted ? t.table.unmuteSound : t.table.muteSound}
         >
           <svg
             width={20}
@@ -135,7 +137,7 @@ export function Table({
               >
                 <span className="turn-clock-number">{secondsLeft}</span>
                 <span className="turn-clock-label">
-                  {myTurn ? 'seconds to play' : 'seconds left'}
+                  {myTurn ? t.table.secondsToPlay : t.table.secondsLeft}
                 </span>
               </p>
             )}
@@ -151,7 +153,7 @@ export function Table({
                     onPlay(acceptDraw)
                   }}
                 >
-                  Take {view.pendingDraw?.amount ?? 0}
+                  {t.table.take(view.pendingDraw?.amount ?? 0)}
                 </button>
               ) : (
                 <button
@@ -162,7 +164,7 @@ export function Table({
                     onPlay({ type: 'draw' })
                   }}
                 >
-                  Draw card
+                  {t.table.drawCard}
                 </button>
               )}
               {/* The UNO control only exists when calling it is a legal move. */}
@@ -183,9 +185,9 @@ export function Table({
 
             <p className={myTurn ? 'plate plate-turn' : 'plate'}>
               <span className="presence presence-active" aria-hidden="true" />
-              <span>You</span>
+              <span>{t.table.you}</span>
               <span className="plate-count">{view.you.hand.length}</span>
-              {myTurn && <span className="plate-note">your turn</span>}
+              {myTurn && <span className="plate-note">{t.table.yourTurn}</span>}
             </p>
           </div>
         </div>

@@ -55,7 +55,9 @@ describe('CardValues', () => {
   it('totals the real deck rather than quoting a remembered number', () => {
     render(<CardValues />)
     const total = buildDeck().reduce((sum, deckCard) => sum + cardPoints(deckCard), 0)
-    expect(screen.getByText(String(total))).toBeTruthy()
+    // Inside a sentence now that the copy is translated, so match on the text
+    // rather than expecting the number to be a node of its own.
+    expect(screen.getByText(new RegExp(String(total)))).toBeTruthy()
   })
 
   it('says the losers score nothing, which is the part people get wrong', () => {

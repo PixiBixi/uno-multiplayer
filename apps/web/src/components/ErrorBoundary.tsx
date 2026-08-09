@@ -1,4 +1,5 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { Component, type ContextType, type ErrorInfo, type ReactNode } from 'react'
+import { LocaleContext } from '../i18n/index.js'
 import { readRoomCodeFromUrl } from '../lib/room-url.js'
 
 type ErrorBoundaryProps = { children: ReactNode }
@@ -15,6 +16,11 @@ type ErrorBoundaryState = { failed: boolean }
  * else in the app is a function component.
  */
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  /* A class component reads context through this static, which is the only way
+     to translate a screen that exists because everything else broke. */
+  static override contextType = LocaleContext
+  declare context: ContextType<typeof LocaleContext>
+
   override state: ErrorBoundaryState = { failed: false }
 
   static getDerivedStateFromError(): ErrorBoundaryState {
@@ -34,20 +40,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
        what cannot be trusted at this point. It is also still correct: the lobby
        wrote the code there when the table was created or joined. */
     const roomCode = readRoomCodeFromUrl()
+    const t = this.context.messages
 
     return (
       <main className="home">
         <h1>UNO</h1>
         <p className="banner banner-bad" role="alert">
-          Something in the table stopped working.
+          {t.crash.heading}
         </p>
-        <p className="hint">
-          Your seat is still held. Reloading rejoins the same game — the server keeps the state, so
-          nothing is lost but this screen.
-        </p>
+        <p className="hint">{t.crash.seatHeld}</p>
         {roomCode !== null && (
           <div className="stack">
-            <span className="eyebrow">Game code</span>
+            <span className="eyebrow">{t.lobby.gameCodeLabel}</span>
             <p className="code-display">{roomCode}</p>
           </div>
         )}
@@ -58,7 +62,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             window.location.reload()
           }}
         >
-          Reload and rejoin
+          {t.crash.reload}
         </button>
       </main>
     )

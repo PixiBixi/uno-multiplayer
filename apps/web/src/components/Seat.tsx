@@ -1,5 +1,6 @@
 import type { SeatStatus } from '@uno/engine'
 import { CardBack } from './CardBack.js'
+import { useMessages } from '../i18n/index.js'
 
 /** A fan wider than this stops communicating and starts costing layout. */
 const MAX_FANNED = 6
@@ -19,6 +20,7 @@ type SeatProps = {
 }
 
 export function Seat({ name, handCount, status, isTurn, orientation }: SeatProps) {
+  const t = useMessages()
   const shown = Math.min(handCount, MAX_FANNED)
   const statusText = STATUS_TEXT[status]
 
@@ -36,7 +38,7 @@ export function Seat({ name, handCount, status, isTurn, orientation }: SeatProps
         <span>{name}</span>
         <span className="plate-count">{handCount}</span>
         {/* Turn state and presence are never colour-only. */}
-        {isTurn && <span className="plate-note">their turn</span>}
+        {isTurn && <span className="plate-note">{t.table.theirTurn}</span>}
         {statusText !== null && <span className="plate-note">{statusText}</span>}
       </p>
     </div>

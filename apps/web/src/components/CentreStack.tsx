@@ -3,6 +3,7 @@ import type { PlayerView } from '@uno/protocol'
 import { Card } from './Card.js'
 import { CardBack } from './CardBack.js'
 import { COLOR_NAME, COLOR_VALUE } from '../lib/palette.js'
+import { useMessages } from '../i18n/index.js'
 
 /** The same shape tokens the cards use, so the colour in play is readable
  *  without relying on hue. */
@@ -19,6 +20,7 @@ function ColourGlyph({ color }: { color: Color }) {
 }
 
 function DirectionBadge({ direction }: { direction: 1 | -1 }) {
+  const t = useMessages()
   return (
     <p className="dir-badge">
       <svg
@@ -38,7 +40,7 @@ function DirectionBadge({ direction }: { direction: 1 | -1 }) {
       </svg>
       {/* Named, not just drawn: an arrow alone is ambiguous at a glance, and the
           server has always carried `direction` — the interface used to ignore it. */}
-      <span>{direction === 1 ? 'Clockwise' : 'Anticlockwise'}</span>
+      <span>{direction === 1 ? t.table.clockwise : t.table.anticlockwise}</span>
     </p>
   )
 }

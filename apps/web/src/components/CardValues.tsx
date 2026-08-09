@@ -1,4 +1,5 @@
 import { buildDeck, cardPoints, type Card, type CardId } from '@uno/engine'
+import { useMessages } from '../i18n/index.js'
 
 /**
  * What the cards are worth, read from the engine rather than written out here.
@@ -17,32 +18,30 @@ const DRAW2: Card = { id: 'help-draw2' as CardId, kind: 'draw2', color: 'Y' }
 const WILD: Card = { id: 'help-wild' as CardId, kind: 'wild' }
 const WILD4: Card = { id: 'help-wild4' as CardId, kind: 'wild4' }
 
-const ROWS: { label: string; value: string }[] = [
-  {
-    label: 'Number cards',
-    value: `${String(cardPoints(NUMBER_LOW))}–${String(cardPoints(NUMBER_HIGH))}, their face value`,
-  },
-  { label: 'Skip', value: String(cardPoints(SKIP)) },
-  { label: 'Reverse', value: String(cardPoints(REVERSE)) },
-  { label: 'Draw Two', value: String(cardPoints(DRAW2)) },
-  { label: 'Wild', value: String(cardPoints(WILD)) },
-  { label: 'Wild Draw Four', value: String(cardPoints(WILD4)) },
-]
-
 /** Counted from the real deck, so it stays true if the deck ever changes. */
 const DECK_TOTAL = buildDeck().reduce((sum, card) => sum + cardPoints(card), 0)
 
 export function CardValues() {
+  const t = useMessages()
+
+  const ROWS: { label: string; value: string }[] = [
+    {
+      label: t.help.numberCardsLabel,
+      value: t.help.numberCards(cardPoints(NUMBER_LOW), cardPoints(NUMBER_HIGH)),
+    },
+    { label: t.help.skip, value: String(cardPoints(SKIP)) },
+    { label: t.help.reverse, value: String(cardPoints(REVERSE)) },
+    { label: t.help.drawTwo, value: String(cardPoints(DRAW2)) },
+    { label: t.help.wild, value: String(cardPoints(WILD)) },
+    { label: t.help.wildFour, value: String(cardPoints(WILD4)) },
+  ]
   return (
     <aside className="help" aria-labelledby="help-title">
       <h2 className="help-title" id="help-title">
-        What the cards are worth
+        {t.help.title}
       </h2>
       <div className="help-body">
-        <p className="hint">
-          Win a round and you score everything left in the other players’ hands. Nobody scores for
-          the cards they were still holding.
-        </p>
+        <p className="hint">{t.help.intro}</p>
 
         <dl className="value-list">
           {ROWS.map((row) => (
@@ -53,11 +52,7 @@ export function CardValues() {
           ))}
         </dl>
 
-        <p className="hint">
-          A full deck is <b>{DECK_TOTAL}</b> points. A round pays out only what the losers were
-          still holding, so the same target takes far more rounds at two players than at four —
-          worth knowing before picking one.
-        </p>
+        <p className="hint">{t.help.deckTotal(DECK_TOTAL)}</p>
       </div>
     </aside>
   )

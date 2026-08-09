@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { copyText } from '../lib/clipboard.js'
+import { useMessages } from '../i18n/index.js'
 
 const REVERT_AFTER_MS = 1800
 
@@ -15,11 +16,16 @@ type CopyButtonProps = {
    * command. The confirmation is carried by the icon and the live region instead.
    */
   label: string
-  /** Names the thing in the spoken confirmation: "Game code copied". */
+  /**
+   * The whole spoken confirmation, not a noun the component appends "copied" to.
+   * Building it here would force every language to put the verb where English
+   * does; the caller takes it from the catalogue instead.
+   */
   subject: string
 }
 
 export function CopyButton({ value, label, subject }: CopyButtonProps) {
+  const t = useMessages()
   const [outcome, setOutcome] = useState<Outcome>('idle')
   const timer = useRef<number | null>(null)
 
@@ -76,7 +82,7 @@ export function CopyButton({ value, label, subject }: CopyButtonProps) {
 
       {/* Spoken, never seen: the icon already says "copied" to anyone watching. */}
       <span className="visually-hidden" role="status">
-        {copied ? `${subject} copied` : ''}
+        {copied ? subject : ''}
       </span>
 
       {/* Seen only on failure. A copy that quietly does nothing is the one
@@ -84,7 +90,7 @@ export function CopyButton({ value, label, subject }: CopyButtonProps) {
           it costs a little layout shift on a rare error. */}
       {outcome === 'failed' && (
         <span className="copy-failed" role="status">
-          Couldn’t copy — select it by hand
+          {t.lobby.copyFailed}
         </span>
       )}
     </span>
