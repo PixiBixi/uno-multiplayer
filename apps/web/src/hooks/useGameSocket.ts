@@ -4,27 +4,10 @@ import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { io, type Socket } from 'socket.io-client'
 import { readRoomCodeFromUrl, writeRoomCodeToUrl } from '../lib/room-url.js'
 import { clearSession, readSession, writeSession } from '../lib/session.js'
+import { useMessages } from '../i18n/index.js'
 import { gameReducer, initialState } from './game-reducer.js'
 
 type TypedSocket = Socket<ServerToClient, ClientToServer>
-
-/** Wording from the player's side of the screen: what happened, in their terms. */
-const MESSAGES: Record<ErrorCode, string> = {
-  room_not_found: 'No game with that code.',
-  room_full: 'That game already has four players.',
-  invalid_payload: 'That did not look right. Try again.',
-  not_host: 'Only the host can do that.',
-  too_few_players: 'A game needs at least two players.',
-  game_already_started: 'That game is already under way.',
-  game_not_started: 'The game has not started yet.',
-  illegal_move: 'That card cannot be played right now.',
-  not_your_turn: 'It is not your turn.',
-  rate_limited: 'Slow down a moment.',
-  invalid_session: 'Your seat was given away. Rejoin to play.',
-  server_full: 'The server is at capacity. Try again shortly.',
-  round_in_progress: 'This round is still being played.',
-  match_over: 'The match is over. Start a new one to keep playing.',
-}
 
 export function useGameSocket() {
   const [state, dispatch] = useReducer(gameReducer, initialState)
@@ -54,7 +37,7 @@ export function useGameSocket() {
     const onEvent: ServerToClient['game:event'] = (event) => dispatch({ type: 'event', event })
     const onChat: ServerToClient['chat:message'] = (message) => dispatch({ type: 'chat', message })
     const onError: ServerToClient['error'] = ({ code }) =>
-      dispatch({ type: 'error', message: MESSAGES[code] })
+      dispatch({ type: 'error', message: messagesRef.current.error[code] })
 
     socket.on('connect', onConnect)
     socket.on('disconnect', onDisconnect)
@@ -79,8 +62,14 @@ export function useGameSocket() {
     }
   }, [])
 
+  /* Read through a ref rather than closed over, so switching language does not
+     rebuild every action callback and re-register the socket listeners. */
+  const messages = useMessages()
+  const messagesRef = useRef(messages)
+  messagesRef.current = messages
+
   const fail = useCallback((code: ErrorCode) => {
-    dispatch({ type: 'error', message: MESSAGES[code] })
+    dispatch({ type: 'error', message: messagesRef.current.error[code] })
   }, [])
 
   const createRoom = useCallback(

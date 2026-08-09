@@ -1,6 +1,7 @@
 import { MAX_CHAT_LENGTH } from '@uno/protocol'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { FeedEntry } from '../hooks/game-reducer.js'
+import { useMessages } from '../i18n/index.js'
 import { describeEvent } from '../lib/describe-event.js'
 import { pigmentForSeat } from '../lib/palette.js'
 
@@ -12,6 +13,7 @@ type ChatPanelProps = {
 }
 
 export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
+  const messages = useMessages()
   const [open, setOpen] = useState(true)
   const [draft, setDraft] = useState('')
   const bodyRef = useRef<HTMLDivElement | null>(null)
@@ -93,7 +95,7 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
           if (entry.kind === 'event') {
             return (
               <p className="sys-line" data-system="" key={entry.id}>
-                {describeEvent(entry.event, nameOf, mySeat)}
+                {describeEvent(entry.event, nameOf, mySeat, messages)}
               </p>
             )
           }

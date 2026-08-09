@@ -1,70 +1,57 @@
-import type { Card } from '@uno/engine'
 import type { GameEvent } from '@uno/protocol'
-import { cardCount, isBackPhrase, matchResultPhrase, pointsCount, winsPhrase } from './phrase.js'
-import { COLOR_NAME } from './palette.js'
-
-function cardName(card: Card): string {
-  switch (card.kind) {
-    case 'number':
-      return `${COLOR_NAME[card.color]} ${card.value}`
-    case 'skip':
-      return `${COLOR_NAME[card.color]} skip`
-    case 'reverse':
-      return `${COLOR_NAME[card.color]} reverse`
-    case 'draw2':
-      return `${COLOR_NAME[card.color]} draw two`
-    case 'wild':
-      return 'Wild'
-    case 'wild4':
-      return 'Wild draw four'
-  }
-}
+import type { Messages } from '../i18n/messages.js'
 
 /**
- * Turns a server event into a line a player understands. Written from the
- * player's side of the screen: names, not seat indices, wherever one is known.
+ * Turns a server event into a line a player understands, in their language.
+ *
+ * Each case picks a whole sentence from the catalogue rather than assembling one
+ * from fragments. Assembling here would bake English word order into every
+ * translation: "Ana played a Red 7" and "Ana a posé Rouge 7" do not decompose the
+ * same way, and neither does a plural or a conjugation.
  *
  * `mySeat` is passed rather than inferred from the name, so the second person
- * gets the right verb without string-matching "You".
+ * gets the right verb without string-matching a display name.
  */
 export function describeEvent(
   event: GameEvent,
   nameOf: (seat: number) => string,
   mySeat: number,
+  messages: Messages,
 ): string {
+  const m = messages.event
   switch (event.type) {
     case 'cardPlayed':
-      return `${nameOf(event.seat)} played a ${cardName(event.card)}`
+      return m.cardPlayed(nameOf(event.seat), event.card)
     case 'cardsDrawn':
-      return event.count === 1
-        ? `${nameOf(event.seat)} drew a card`
-        : `${nameOf(event.seat)} drew ${cardCount(event.count)}`
+      return m.cardsDrawn(nameOf(event.seat), event.count)
     case 'unoCalled':
-      return `${nameOf(event.seat)} called UNO`
+      return m.unoCalled(nameOf(event.seat))
     case 'unoPenalty':
-      return `${nameOf(event.seat)} forgot to call UNO and drew ${cardCount(event.count)}`
+      return m.unoPenalty(nameOf(event.seat), event.count)
     case 'seatDisconnected':
-      return `${nameOf(event.seat)} lost connection`
+      return m.seatDisconnected(nameOf(event.seat))
     case 'seatReconnected':
-      return isBackPhrase(nameOf(event.seat), event.seat === mySeat)
+      return m.seatReconnected(nameOf(event.seat), event.seat === mySeat)
     case 'seatLeft':
-      return `${nameOf(event.seat)} left the game`
+      return m.seatLeft(nameOf(event.seat))
+    case 'turnTimedOut':
+      return m.turnTimedOut(nameOf(event.seat), event.seat === mySeat)
     case 'roundEnded': {
-      if (event.winner === null) return 'Round abandoned — not enough players'
-      const won = winsPhrase(nameOf(event.winner), event.winner === mySeat)
-      const awarded = event.awarded[event.winner] ?? 0
-      return `${won} the round, +${pointsCount(awarded)}`
+      if (event.winner === null) return m.roundAbandoned()
+      return m.roundWon(
+        nameOf(event.winner),
+        event.winner === mySeat,
+        event.awarded[event.winner] ?? 0,
+      )
     }
     case 'matchEnded':
-      return matchResultPhrase(
+      return m.matchResult(
         event.winners.map((seat) => nameOf(seat)),
         event.winners.includes(mySeat),
       )
     case 'roundStarted':
-      return `Round ${String(event.round)} dealt`
-    case 'turnTimedOut':
-      return event.seat === mySeat ? 'You ran out of time' : `${nameOf(event.seat)} ran out of time`
+      return m.roundStarted(event.round)
     case 'gameRestarted':
-      return 'A new match was dealt'
+      return m.gameRestarted()
   }
 }
