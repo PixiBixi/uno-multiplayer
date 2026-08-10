@@ -32,6 +32,7 @@ import {
   type MatchPace,
   type MatchProgress,
   type PlayerView,
+  type TableConfiguration,
 } from '@uno/protocol'
 import { redactFor } from '../views.js'
 import { emptyStatsFor, tally } from './stats.js'
@@ -59,11 +60,13 @@ export class Room {
   private readonly members: Member[] = []
   private host = 0
   private game: GameState | null = null
-  private readonly goal: MatchGoal
-  private readonly pace: MatchPace
-  /** Chosen once at creation: changing the rules mid-match would rewrite a game
-   *  that has already been played under the old ones. */
-  private readonly rules: TableRules
+  /* Settable from the lobby by the host and frozen by the first deal of the match —
+     see configure(). Not readonly any more, and not mutable for long: changing any of
+     the three mid-match would rewrite a contest that has already been partly played
+     under the old ones. */
+  private goal: MatchGoal
+  private pace: MatchPace
+  private rules: TableRules
   /* Held, never computed. Room owns no clock — RoomManager hands these in, the
      same way it hands in a seed, so the whole lifecycle stays testable without
      time passing. */
@@ -209,6 +212,42 @@ export class Room {
     return this.members.filter((m) => m.status === 'active').length
   }
 
+  /**
+   * Whether the host may still change the goal, the pace or the rules.
+   *
+   * Derived from the match having begun, deliberately not from `canStart`: that reports
+   * how many seats are filled, and a room can be un-startable while already holding a
+   * dealt round and a score — somebody left mid-match. Gating on it would reopen the
+   * rules at exactly the moment they must not move.
+   *
+   * `match` rather than `game`: the lock is the first deal of the MATCH, not of each
+   * round, because a match spans rounds and carries a score.
+   */
+  get configurable(): boolean {
+    return this.match === null
+  }
+
+  /**
+   * Changes the table before it is dealt. The host's job, and only theirs.
+   *
+   * Partial by design: a field absent from `changes` is left alone, so toggling one rule
+   * cannot write back a goal the client read a moment earlier. `pace` distinguishes
+   * absent from null — null takes the clock off the table.
+   *
+   * Reports no event. There is no narrative feed in the lobby and nothing here belongs
+   * in the match statistics; the result reaches players as a fresh `room:state`, which
+   * carries the whole configuration anyway and therefore covers a reconnection too.
+   */
+  configure(bySeat: number, changes: TableConfiguration): Result<GameEvent[], ErrorCode> {
+    if (!this.configurable) return err('game_already_started')
+    if (bySeat !== this.host) return err('not_host')
+
+    if (changes.goal !== undefined) this.goal = changes.goal
+    if (changes.pace !== undefined) this.pace = changes.pace
+    if (changes.rules !== undefined) this.rules = changes.rules
+    return ok([])
+  }
+
   lobbyView(): LobbyView {
     return {
       roomCode: this.code,
@@ -217,6 +256,8 @@ export class Room {
       canStart: this.activeMemberCount() >= MIN_SEATS,
       goal: this.goal,
       pace: this.pace,
+      rules: this.rules,
+      configurable: this.configurable,
     }
   }
 

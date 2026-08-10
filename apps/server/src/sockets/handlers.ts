@@ -2,6 +2,7 @@ import type { Server as HttpServer } from 'node:http'
 import {
   chatSendSchema,
   gameMoveSchema,
+  roomConfigureSchema,
   roomCreateSchema,
   roomJoinSchema,
   roomRejoinSchema,
@@ -253,6 +254,41 @@ export function registerSocketHandlers(
         retime(room)
         broadcastLobby(room)
         broadcastViews(room)
+      })
+    })
+
+    /**
+     * The host changing the table from the lobby.
+     *
+     * The guard lives in `Room.configure`, which is checked here — when the event is
+     * handled — and never at render: a host can press Start and toggle a rule in the
+     * same breath, and whichever arrives second must lose.
+     *
+     * `broadcastLobby`, not an ack carrying the new view: the guest watching the host
+     * toggle Jump-in is the entire reason configuration moved into the lobby, and a
+     * change that only refreshed the sender would satisfy a naive test and fail the
+     * feature.
+     *
+     * No `retime`. Nothing here can move a turn — there is no turn — and a pace chosen
+     * in the lobby is a number the deal will read, not a clock. RoomManager arms it at
+     * the deal, as it always has.
+     */
+    socket.on('room:configure', (payload, ack) => {
+      attempt(ack, () => {
+        const data = parsePayload(roomConfigureSchema, payload)
+        if (data === null) {
+          ack({ ok: false, error: 'invalid_payload' })
+          return
+        }
+        const presence = seated(ack)
+        if (presence === null) return
+        const applied = presence.room.configure(presence.seat, data)
+        if (!applied.okay) {
+          ack({ ok: false, error: applied.error })
+          return
+        }
+        ack({ ok: true })
+        broadcastLobby(presence.room)
       })
     })
 
