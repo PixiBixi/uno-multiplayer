@@ -7,7 +7,7 @@
 # step now fails if these two lines and .nvmrc disagree.
 
 # ---- build ----
-FROM node:24-alpine AS build
+FROM node:26-alpine AS build
 WORKDIR /app
 
 # Manifests first: the dependency layer then survives source-only changes.
@@ -33,7 +33,7 @@ RUN find . -name '*.tsbuildinfo' -not -path './node_modules/*' -delete \
 RUN npm prune --omit=dev
 
 # ---- runtime ----
-FROM node:24-alpine AS runtime
+FROM node:26-alpine AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production \
