@@ -19,16 +19,25 @@ likely to surprise you are:
 - **Calling UNO is legal only during your own turn, before playing.** Going down to
   one card without it costs two cards, applied automatically — unless the table
   opted into the Liar call-out below, which makes the penalty manual.
+- **A 7 and a 0 are ordinary number cards** unless the table opted into Seven-Zero,
+  also below.
 
 Deliberately not implemented: the strict Mattel +4 challenge (it needs a bluff UI
-and hand inspection), the 7-0 variant, and jump-in.
+and hand inspection) and jump-in.
 
-## Table rules: the Liar call-out
+## Table rules
 
 `TableRules` in `packages/engine/src/types.ts`, chosen by the host at creation and
-off by default. It lives in the engine rather than beside `MatchPace` in the
-protocol, unlike the clock: a time limit is a house setting the engine never sees,
-while this one changes what the rules ARE and the reducer has to read it.
+every flag off by default. It lives in the engine rather than beside `MatchPace` in
+the protocol, unlike the clock: a time limit is a house setting the engine never
+sees, while these change what the rules ARE and the reducer has to read them.
+
+Each flag is Zod-defaulted at the socket boundary on its own, not only the object as
+a whole. A client built when `liar` was the only option sends `{ liar }`; rejecting
+that would break a client that can play perfectly well and is simply asking for a
+table without the newer rule.
+
+### The Liar call-out
 
 With `liar` on, a seat that reaches one card without calling UNO becomes
 `vulnerable` instead of drawing two, and any other **active** seat may play
@@ -52,6 +61,48 @@ Three things about it are worth knowing before touching that code:
 `sameMove` compares the target as well as the type. Without that, a legal call-out
 against one seat would authorise one against any seat — the sort of gap the single
 `legalMoves` gate exists to prevent.
+
+### Seven-Zero
+
+With `sevenZero` on, a **7** swaps hands with a player of the mover's choice and a
+**0** passes every hand one seat along in the current direction of play.
+
+Choosing whom to swap with is a second decision after playing a card, so it reuses
+the shape a wild's colour already has rather than inventing one:
+`legalMoves` emits one `{ type: 'play', cardId, swapWith }` per legal target, and the
+client renders a picker from the moves it was given. `sameMove` therefore compares
+`swapWith` too — without it, two different targets look like the same move and a 7
+offered against one seat authorises taking any seat's hand.
+
+Four things about it are worth knowing before touching that code:
+
+- **The effect is applied after the win check.** First empty hand wins,
+  unconditionally, so a 7 or a 0 played as a last card ends the round and no hand
+  moves. `legalMoves` offers no target for that card, since there is nothing to
+  choose. The alternative — swapping the win away — makes a 7 unplayable as a last
+  card, which is a trap rather than a rule.
+- **Only active seats take part**, as swap targets and in the rotation alike. A seat
+  that has left holds nothing, so swapping into it would hand somebody a free win; a
+  seat merely disconnected is holding its hand until the grace period ends, and
+  giving it away would bring the player back to a hand chosen by an event they never
+  saw. A 7 with nobody else active falls back to an ordinary card rather than
+  becoming unplayable.
+- **The rotation reads `direction`**, which is why a reverse played earlier in the
+  round changes where hands go, and why rotating at two players is a swap. `advance`
+  is a rotation of exactly the active seats, so the mapping is a bijection and
+  conservation holds by construction.
+- **No automatic UNO penalty is ever charged on a play that permutes hands.** With
+  `liar` on, every seat whose hand moved has its window recomputed from what it now
+  holds — one card uncalled opens one, anything else shuts one, because being accused
+  of holding a card you no longer hold is a bug. Without `liar`, nothing is charged
+  at all: the automatic penalty punishes an omission, and nobody can be said to have
+  failed to declare a hand they were handed. It also keeps draws and permutations off
+  the same move, which is what lets `diffEvents` stay a hand-size diff instead of
+  having to compare card ids.
+
+Events are `handsSwapped { seat, with }` and `handsRotated { direction }`, derived in
+`diffEvents` from the card and the table's rules rather than from hand sizes — a swap
+between two seats holding four cards each changes no count at all.
 
 ## Scoring a match
 

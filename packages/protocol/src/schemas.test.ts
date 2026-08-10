@@ -48,9 +48,9 @@ describe('roomCreateSchema', () => {
       playerName: 'Jeremy',
       goal: DEFAULT_MATCH_GOAL,
       pace: null,
-      rules: { liar: true },
+      rules: { liar: true, sevenZero: true },
     })
-    expect(parsed.rules).toEqual({ liar: true })
+    expect(parsed.rules).toEqual({ liar: true, sevenZero: true })
   })
 
   it('falls back to plain UNO when the field is absent', () => {
@@ -60,7 +60,20 @@ describe('roomCreateSchema', () => {
       goal: DEFAULT_MATCH_GOAL,
       pace: null,
     })
-    expect(parsed.rules).toEqual({ liar: false })
+    expect(parsed.rules).toEqual({ liar: false, sevenZero: false })
+  })
+
+  it('fills in an option a client has never heard of', () => {
+    /* A client built when `liar` was the only rule sends only that. Rejecting it
+       would break a client that can play perfectly well; it is asking for a table
+       without the newer rule, which is exactly what it gets. */
+    const parsed = roomCreateSchema.parse({
+      playerName: 'Jeremy',
+      goal: DEFAULT_MATCH_GOAL,
+      pace: null,
+      rules: { liar: true },
+    })
+    expect(parsed.rules).toEqual({ liar: true, sevenZero: false })
   })
 
   it('rejects rules that are not booleans', () => {
@@ -70,6 +83,14 @@ describe('roomCreateSchema', () => {
         goal: DEFAULT_MATCH_GOAL,
         pace: null,
         rules: { liar: 'yes' },
+      }).success,
+    ).toBe(false)
+    expect(
+      roomCreateSchema.safeParse({
+        playerName: 'Jeremy',
+        goal: DEFAULT_MATCH_GOAL,
+        pace: null,
+        rules: { liar: false, sevenZero: 1 },
       }).success,
     ).toBe(false)
   })
@@ -145,6 +166,27 @@ describe('moveSchema', () => {
 
   it('rejects an unknown move type', () => {
     expect(moveSchema.safeParse({ type: 'teleport' }).success).toBe(false)
+  })
+
+  it('accepts a 7 played with a swap target, and keeps it', () => {
+    const parsed = moveSchema.safeParse({ type: 'play', cardId: '7R#3', swapWith: 2 })
+    expect(parsed.success).toBe(true)
+    expect(parsed.data).toEqual({ type: 'play', cardId: '7R#3', swapWith: 2 })
+  })
+
+  it('omits the swap target rather than sending an explicit undefined', () => {
+    /* Under exactOptionalPropertyTypes an absent key and an undefined one are
+       different types, and the engine declares the key absent. */
+    const parsed = moveSchema.parse({ type: 'play', cardId: '7R#3' })
+    expect('swapWith' in parsed).toBe(false)
+  })
+
+  it('rejects a swap target that could not be a seat', () => {
+    expect(moveSchema.safeParse({ type: 'play', cardId: '7R#3', swapWith: 4 }).success).toBe(false)
+    expect(moveSchema.safeParse({ type: 'play', cardId: '7R#3', swapWith: -1 }).success).toBe(false)
+    expect(moveSchema.safeParse({ type: 'play', cardId: '7R#3', swapWith: 1.5 }).success).toBe(
+      false,
+    )
   })
 
   it('accepts a call-out against a seat that could exist', () => {

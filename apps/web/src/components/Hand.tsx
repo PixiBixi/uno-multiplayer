@@ -4,6 +4,7 @@ import { readHandSort, writeHandSort } from '../lib/preferences.js'
 import { HAND_SORTS, SORT_LABEL, sortHand, type HandSort } from '../lib/sort-hand.js'
 import { Card } from './Card.js'
 import { ColourPicker } from './ColourPicker.js'
+import { TargetPicker, type SwapTarget } from './TargetPicker.js'
 
 type PlayMove = Extract<Move, { type: 'play' }>
 
@@ -21,16 +22,24 @@ type HandProps = {
   cards: CardData[]
   legalMoves: Move[]
   onPlay: (move: Move) => void
+  /**
+   * The seats a Seven-Zero swap could take a hand from, for naming them in the
+   * picker. Required rather than optional so a table that forgets to pass them is a
+   * compile error and not a dialog full of blanks.
+   */
+  targets: SwapTarget[]
 }
 
-export function Hand({ cards, legalMoves, onPlay }: HandProps) {
+export function Hand({ cards, legalMoves, onPlay, targets }: HandProps) {
   const [pending, setPending] = useState<PlayMove[] | null>(null)
   const [sort, setSort] = useState<HandSort>(() => readHandSort())
 
   const choose = (options: PlayMove[]) => {
     const only = options[0]
     if (only === undefined) return
-    // One option means no choice to make; several means a wild needs a colour.
+    /* One option means no choice to make — an ordinary card, or a 7 at a table where
+       exactly one other seat could take the hand, which the spec is explicit about:
+       it swaps rather than quietly doing nothing. */
     if (options.length === 1) onPlay(only)
     else setPending(options)
   }
@@ -81,18 +90,33 @@ export function Hand({ cards, legalMoves, onPlay }: HandProps) {
         })}
       </div>
 
-      {pending !== null && (
-        <ColourPicker
-          options={pending}
-          onChoose={(move) => {
-            setPending(null)
-            onPlay(move)
-          }}
-          onCancel={() => {
-            setPending(null)
-          }}
-        />
-      )}
+      {/* Which second decision it is comes from the moves themselves: a wild's
+          options carry a colour, a 7's carry a seat. Nothing else has to be known. */}
+      {pending !== null &&
+        (pending[0]?.swapWith === undefined ? (
+          <ColourPicker
+            options={pending}
+            onChoose={(move) => {
+              setPending(null)
+              onPlay(move)
+            }}
+            onCancel={() => {
+              setPending(null)
+            }}
+          />
+        ) : (
+          <TargetPicker
+            options={pending}
+            targets={targets}
+            onChoose={(move) => {
+              setPending(null)
+              onPlay(move)
+            }}
+            onCancel={() => {
+              setPending(null)
+            }}
+          />
+        ))}
     </>
   )
 }

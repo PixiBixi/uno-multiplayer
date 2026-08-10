@@ -53,6 +53,15 @@ export const en: Messages = {
       if (targetIsYou) return `${by} caught you without UNO`
       return `${by} caught ${target} without UNO`
     },
+    handsSwapped: (by, byIsYou, target, targetIsYou) => {
+      if (byIsYou) return `You played a 7 and took ${target}’s hand`
+      if (targetIsYou) return `${by} played a 7 and took your hand`
+      return `${by} played a 7 and took ${target}’s hand`
+    },
+    handsRotated: (clockwise) =>
+      clockwise
+        ? 'A 0 sent every hand one seat clockwise'
+        : 'A 0 sent every hand one seat anticlockwise',
     seatDisconnected: (name) => `${name} lost connection`,
     // The only verb in the log that changes person: everything else is past tense.
     seatReconnected: (name, isYou) => (isYou ? 'You are back' : `${name} is back`),
@@ -97,6 +106,9 @@ export const en: Messages = {
     liar: 'Let players call out a forgotten UNO',
     liarHint:
       'Forgetting to call UNO costs nothing unless somebody says so before the end of your next turn. Watch each other.',
+    sevenZero: 'Play the Seven-Zero variant',
+    sevenZeroHint:
+      'A 7 swaps your hand with a player you choose; a 0 sends every hand one seat along, in the direction of play.',
     language: 'Language',
   },
 
@@ -141,6 +153,8 @@ export const en: Messages = {
     callUno: 'UNO!',
     callOut: 'Liar!',
     callOutOn: (name) => `Call ${name} a liar`,
+    chooseSwapTarget: 'Whose hand do you want?',
+    swapTarget: (name, count) => `${name}, ${cards(count)}`,
     clockwise: 'Clockwise',
     anticlockwise: 'Anticlockwise',
     inPlay: (colour) => `${colour} in play`,

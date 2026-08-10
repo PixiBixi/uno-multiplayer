@@ -13,7 +13,10 @@ import { emptyStatsFor, tally } from './stats.js'
  */
 
 const liarRoom = (): Room => {
-  const room = new Room('ABC234', 42, { kind: 'rounds', count: 3 }, null, { liar: true })
+  const room = new Room('ABC234', 42, { kind: 'rounds', count: 3 }, null, {
+    liar: true,
+    sevenZero: false,
+  })
   room.join('Ana', 'socket-0')
   room.join('Ben', 'socket-1')
   room.join('Cleo', 'socket-2')

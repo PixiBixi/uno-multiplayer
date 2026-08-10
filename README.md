@@ -119,7 +119,7 @@ at 20, both wilds at 50.
 | Next round vs new match | Two distinct host actions. Letting one mean both depending on hidden state is how a player loses a scoreboard by accident. |
 
 Not implemented, deliberately: the strict Mattel +4 challenge (it needs a bluff
-UI and hand inspection), the 7-0 variant, and jump-in.
+UI and hand inspection) and jump-in.
 
 ### The Liar call-out
 
@@ -140,6 +140,28 @@ accused draws the same two cards the automatic rule charged.
 | The turn order              | Untouched. A call-out is a side effect on one hand and never ends a round, which keeps it out of the turn-advance logic entirely.                       |
 | Escaping it                 | Call UNO on your own next turn, before playing. A late call still counts.                                                                               |
 | How it is tracked           | A `vulnerable` flag on the seat, not a timer. The window is measured in turns, which the engine already counts, and the engine has no clock.            |
+
+### Seven-Zero
+
+The other optional house rule, also off by default: **a 7 swaps your hand with a
+player you choose, and a 0 sends every hand one seat along** in the current
+direction of play.
+
+Choosing whom to swap with is a second decision after playing the card, exactly like
+choosing a colour after a wild, so it reuses that shape. `legalMoves` emits one
+`play` move per legal target and the client renders a picker from what it was
+offered — it neither knows that a 7 swaps nor who a legal target is.
+
+| Point                      | Decision                                                                                                                                                                                                                                                    |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Who may be swapped with    | Any other **active** seat. Not one that has left — its hand went back to the pile, so swapping into it would hand somebody a free win — and not one merely disconnected either.                                                                             |
+| Two players                | A 7 has exactly one legal target, so it always swaps. Not quietly made a no-op: that would silently change what the card is worth.                                                                                                                          |
+| A 0 with two players       | Rotating two hands is a swap, which is correct.                                                                                                                                                                                                             |
+| Direction                  | The rotation follows `direction`, so a reverse played earlier in the round changes where the hands go.                                                                                                                                                      |
+| A 7 or 0 as your last card | The round ends and no hand moves. First empty hand wins, unconditionally — a 7 that could swap the win away would be unplayable as a last card, which is a trap rather than a rule.                                                                         |
+| UNO after hands move       | Whoever is left holding one card uncalled becomes open to a call-out, if the table also plays the Liar rule. Nobody draws the automatic penalty for it: you cannot fail to declare a hand you were handed, and a window is escapable on your own next turn. |
+| Card conservation          | Untouched. Hands are permuted and nothing is created, which the property tests assert across generated games with the option on.                                                                                                                            |
+| Nobody else active         | A 7 falls back to an ordinary card rather than becoming unplayable, and a 0 rotates nothing.                                                                                                                                                                |
 
 ## Language
 
@@ -242,6 +264,7 @@ emit-only solution and excludes tests.
 - [x] Sound: synthesised cues for play, draws, action cards, UNO, turn and endings
 - [x] Blazing: an optional per-turn clock, with rounds that deal themselves
 - [x] The Liar call-out: an optional table rule for a manual UNO penalty
+- [x] Seven-Zero: an optional table rule where a 7 swaps hands and a 0 rotates them
 - [x] End-of-match awards, counted from the event feed
 - [x] English and French, with each language owning its own grammar
 - [x] An error boundary, so a bad render explains itself instead of blanking

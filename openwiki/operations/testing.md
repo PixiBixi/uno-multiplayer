@@ -37,7 +37,11 @@ bugs shipped through exactly this gap:
 
 `apps/server/src/sockets/handlers-match.test.ts` and `handlers-leave.test.ts` close
 both by driving real connections. When adding a client action, write the socket
-test, not only the `Room` test.
+test, not only the `Room` test. `handlers-liar.test.ts` and
+`handlers-sevenzero.test.ts` do the same for the two optional table rules — each
+drives a real round until the server offers the move, then plays it over the wire.
+Both carry an explicit 20s timeout and raise `MOVE_BURST`, because a scripted round
+outruns both vitest's 5s default and a rate limit sized for a person.
 
 ## Test your tests
 
@@ -52,6 +56,13 @@ is the difference between a guard and a decoration:
   tests; making a call-out legal against a seat that is not vulnerable fails twelve
   across the engine, the room and the wire; and hiding the Liar button while the
   move is offered fails four in the browser suite.
+- Ten mutations were re-run against Seven-Zero. The instructive ones: ignoring
+  `swapWith` in `sameMove` fails seven, rotating against `direction` fails five,
+  making a departed seat a legal swap target fails six, deriving no hands-moved event
+  in the room fails four, charging the automatic UNO penalty on a play that permutes
+  fails five, and never rendering the target picker fails three in the browser suite.
+  Worth noting what the property tests did **not** catch: swapping with a seat that
+  has left conserves the deck perfectly well, so only the unit tests refuse it.
 
 Equally worth knowing: some things **cannot** drift and so cannot be tested for. The
 help panel reads `cardPoints` from the engine, and so do its tests — change the

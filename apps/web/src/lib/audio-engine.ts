@@ -165,6 +165,15 @@ const RECIPES: Record<SoundName, Recipe> = {
     tone(context, out, at + 0.12, { from: 784, duration: 0.18, type: 'sine', gain: 0.1 })
   },
 
+  swap: (context, out, at) => {
+    /* Two sweeps crossing, one rising and one falling, plus the papery noise of
+       cards actually changing hands. Deliberately built from the same material as
+       `reverse`, which is the other cue for the table being turned around. */
+    tone(context, out, at, { from: 380, to: 760, duration: 0.16, type: 'triangle', gain: 0.09 })
+    tone(context, out, at, { from: 760, to: 380, duration: 0.16, type: 'triangle', gain: 0.09 })
+    noise(context, out, at + 0.05, { duration: 0.12, cutoff: 2100, gain: 0.12 })
+  },
+
   timedOut: (context, out, at) => {
     // Falling and dry: the sound of a turn being taken away, not a card played.
     tone(context, out, at, { from: 300, to: 120, duration: 0.18, type: 'square', gain: 0.09 })

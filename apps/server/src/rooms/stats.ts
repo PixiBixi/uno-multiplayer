@@ -76,6 +76,12 @@ export function tally(stats: SeatStats[], events: GameEvent[]): SeatStats[] {
          is not one of the things this scoreboard keeps. */
       case 'calledOut':
         break
+      /* Nor these. Hands moving is not a card played or a card drawn — the deck is
+         merely rearranged — and a "hands taken" column would be a statistic about
+         one optional rule rather than about the game. */
+      case 'handsSwapped':
+      case 'handsRotated':
+        break
       // Nothing to count: presence changes and deals are not anybody's doing.
       case 'seatDisconnected':
       case 'seatReconnected':

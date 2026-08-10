@@ -721,6 +721,15 @@ h3 {
   transform: translateY(-3px);
 }
 
+/* A Seven-Zero swap target. Shares .picker-grid with the colour swatches, but reads
+   as text rather than as a colour: a name and a card count are what the choice is
+   actually about, and there is no colour to show. */
+.swap-target {
+  min-height: 56px;
+  justify-content: center;
+  font-size: var(--step--1);
+}
+
 /* ---------- Hand sort ---------- */
 
 .sort-control {

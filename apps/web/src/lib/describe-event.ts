@@ -35,6 +35,17 @@ export function describeEvent(
         nameOf(event.target),
         event.target === mySeat,
       )
+    case 'handsSwapped':
+      return m.handsSwapped(
+        nameOf(event.seat),
+        event.seat === mySeat,
+        nameOf(event.with),
+        event.with === mySeat,
+      )
+    case 'handsRotated':
+      // A direction, not a 1 or a -1: the sentence has to name which way, and each
+      // language spells that out for itself.
+      return m.handsRotated(event.direction === 1)
     case 'seatDisconnected':
       return m.seatDisconnected(nameOf(event.seat))
     case 'seatReconnected':

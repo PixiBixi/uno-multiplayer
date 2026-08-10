@@ -46,6 +46,11 @@ export type Messages = {
     /* Two people in one sentence, so both persons are passed: French conjugates
        the accuser and the accused differently, and English does not. */
     calledOut: (by: string, byIsYou: boolean, target: string, targetIsYou: boolean) => string
+    /* Two people again, and the same reason: French conjugates the seat that played
+       the 7 and the seat it took a hand from differently. */
+    handsSwapped: (by: string, byIsYou: boolean, target: string, targetIsYou: boolean) => string
+    /** `clockwise` rather than the raw 1 / -1: the sentence names a direction. */
+    handsRotated: (clockwise: boolean) => string
     seatDisconnected: (name: string) => string
     seatReconnected: (name: string, isYou: boolean) => string
     seatLeft: (name: string) => string
@@ -78,6 +83,8 @@ export type Messages = {
     tableRules: string
     liar: string
     liarHint: string
+    sevenZero: string
+    sevenZeroHint: string
     language: string
   }
 
@@ -122,6 +129,10 @@ export type Messages = {
     callOut: string
     /** Its accessible name, which has to say who is being accused. */
     callOutOn: (name: string) => string
+    /** Title of the Seven-Zero target picker, the 7's answer to choosing a colour. */
+    chooseSwapTarget: string
+    /** One target button: whose hand it is, and how many cards you would take. */
+    swapTarget: (name: string, cards: number) => string
     clockwise: string
     anticlockwise: string
     inPlay: (colour: string) => string

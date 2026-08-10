@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { Hand, movesForCard } from './Hand.js'
+import type { SwapTarget } from './TargetPicker.js'
 
 const id = (value: string) => value as CardId
 const red7: CardData = { id: id('r7'), kind: 'number', color: 'R', value: 7 }
@@ -13,6 +14,18 @@ const wildOptions: Move[] = (['R', 'G', 'B', 'Y'] as const).map((chosenColor) =>
   type: 'play',
   cardId: id('w'),
   chosenColor,
+}))
+
+const seats: SwapTarget[] = [
+  { seat: 1, name: 'Ben', handCount: 4 },
+  { seat: 2, name: 'Cleo', handCount: 1 },
+]
+
+/** What the server offers for a 7 at a three-seat Seven-Zero table. */
+const swapOptions: Move[] = [1, 2].map((swapWith) => ({
+  type: 'play',
+  cardId: id('r7'),
+  swapWith,
 }))
 
 describe('movesForCard', () => {
@@ -32,7 +45,9 @@ describe('movesForCard', () => {
 
 describe('Hand', () => {
   it('renders every held card', () => {
-    const { container } = render(<Hand cards={[red7, blue3]} legalMoves={[]} onPlay={vi.fn()} />)
+    const { container } = render(
+      <Hand cards={[red7, blue3]} legalMoves={[]} targets={seats} onPlay={vi.fn()} />,
+    )
     // Scoped to the hand: the sort control contributes buttons of its own.
     expect(container.querySelectorAll('.hand-card')).toHaveLength(2)
   })
@@ -42,6 +57,7 @@ describe('Hand', () => {
       <Hand
         cards={[red7, blue3]}
         legalMoves={[{ type: 'play', cardId: id('r7') }]}
+        targets={seats}
         onPlay={vi.fn()}
       />,
     )
@@ -52,7 +68,12 @@ describe('Hand', () => {
   it('plays a coloured card straight away', async () => {
     const onPlay = vi.fn()
     render(
-      <Hand cards={[red7]} legalMoves={[{ type: 'play', cardId: id('r7') }]} onPlay={onPlay} />,
+      <Hand
+        cards={[red7]}
+        legalMoves={[{ type: 'play', cardId: id('r7') }]}
+        targets={seats}
+        onPlay={onPlay}
+      />,
     )
     await userEvent.click(screen.getByRole('button', { name: /red 7/i }))
     expect(onPlay).toHaveBeenCalledWith({ type: 'play', cardId: id('r7') })
@@ -60,7 +81,7 @@ describe('Hand', () => {
 
   it('opens the colour picker for a wild instead of guessing', async () => {
     const onPlay = vi.fn()
-    render(<Hand cards={[wild]} legalMoves={wildOptions} onPlay={onPlay} />)
+    render(<Hand cards={[wild]} legalMoves={wildOptions} targets={seats} onPlay={onPlay} />)
     await userEvent.click(screen.getByRole('button', { name: /^wild$/i }))
     expect(onPlay).not.toHaveBeenCalled()
     expect(screen.getByRole('dialog', { name: /colour/i })).toBeTruthy()
@@ -68,15 +89,47 @@ describe('Hand', () => {
 
   it('plays the wild with the colour chosen', async () => {
     const onPlay = vi.fn()
-    render(<Hand cards={[wild]} legalMoves={wildOptions} onPlay={onPlay} />)
+    render(<Hand cards={[wild]} legalMoves={wildOptions} targets={seats} onPlay={onPlay} />)
     await userEvent.click(screen.getByRole('button', { name: /^wild$/i }))
     await userEvent.click(screen.getByRole('button', { name: /green/i }))
     expect(onPlay).toHaveBeenCalledWith({ type: 'play', cardId: id('w'), chosenColor: 'G' })
   })
 
+  it('asks whose hand to take when the server offered more than one target', async () => {
+    const onPlay = vi.fn()
+    render(<Hand cards={[red7]} legalMoves={swapOptions} targets={seats} onPlay={onPlay} />)
+    await userEvent.click(screen.getByRole('button', { name: /red 7/i }))
+    expect(onPlay).not.toHaveBeenCalled()
+
+    // Named by seat and card count: taking a hand of one is a very different move
+    // from taking a hand of four.
+    const picker = screen.getByRole('dialog', { name: /whose hand/i })
+    expect(picker.textContent).toContain('Ben, 4 cards')
+    expect(picker.textContent).toContain('Cleo, 1 card')
+  })
+
+  it('plays the 7 with the target chosen, and nothing else', async () => {
+    const onPlay = vi.fn()
+    render(<Hand cards={[red7]} legalMoves={swapOptions} targets={seats} onPlay={onPlay} />)
+    await userEvent.click(screen.getByRole('button', { name: /red 7/i }))
+    await userEvent.click(screen.getByRole('button', { name: /cleo/i }))
+    expect(onPlay).toHaveBeenCalledWith({ type: 'play', cardId: id('r7'), swapWith: 2 })
+  })
+
+  it('swaps straight away when the server offered a single target', async () => {
+    /* A two-player table: a 7 has exactly one possible target, so there is nothing
+       to ask. It still swaps rather than quietly doing nothing. */
+    const onPlay = vi.fn()
+    const only: Move[] = [{ type: 'play', cardId: id('r7'), swapWith: 1 }]
+    render(<Hand cards={[red7]} legalMoves={only} targets={seats} onPlay={onPlay} />)
+    await userEvent.click(screen.getByRole('button', { name: /red 7/i }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(onPlay).toHaveBeenCalledWith({ type: 'play', cardId: id('r7'), swapWith: 1 })
+  })
+
   it('closes the picker without playing when cancelled', async () => {
     const onPlay = vi.fn()
-    render(<Hand cards={[wild]} legalMoves={wildOptions} onPlay={onPlay} />)
+    render(<Hand cards={[wild]} legalMoves={wildOptions} targets={seats} onPlay={onPlay} />)
     await userEvent.click(screen.getByRole('button', { name: /^wild$/i }))
     await userEvent.click(screen.getByRole('button', { name: /cancel/i }))
     expect(screen.queryByRole('dialog')).toBeNull()
@@ -102,13 +155,13 @@ describe('Hand sorting', () => {
   })
 
   it('leaves the dealt order alone by default', () => {
-    render(<Hand cards={mixed} legalMoves={[]} onPlay={vi.fn()} />)
+    render(<Hand cards={mixed} legalMoves={[]} targets={seats} onPlay={vi.fn()} />)
     expect(screen.getByRole('button', { name: /as dealt/i })).toHaveProperty('ariaPressed', 'true')
     expect(labels()[0]).toMatch(/yellow 9/i)
   })
 
   it('groups by colour on request, wilds last', async () => {
-    render(<Hand cards={mixed} legalMoves={[]} onPlay={vi.fn()} />)
+    render(<Hand cards={mixed} legalMoves={[]} targets={seats} onPlay={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: /by colour/i }))
     const order = labels()
     expect(order[0]).toMatch(/red 0/i)
@@ -116,7 +169,7 @@ describe('Hand sorting', () => {
   })
 
   it('orders by points on request, lightest first', async () => {
-    render(<Hand cards={mixed} legalMoves={[]} onPlay={vi.fn()} />)
+    render(<Hand cards={mixed} legalMoves={[]} targets={seats} onPlay={vi.fn()} />)
     await userEvent.click(screen.getByRole('button', { name: /by value/i }))
     const order = labels()
     expect(order[0]).toMatch(/red 0/i)
@@ -126,17 +179,24 @@ describe('Hand sorting', () => {
   })
 
   it('remembers the choice for the next hand', async () => {
-    const { unmount } = render(<Hand cards={mixed} legalMoves={[]} onPlay={vi.fn()} />)
+    const { unmount } = render(
+      <Hand cards={mixed} legalMoves={[]} targets={seats} onPlay={vi.fn()} />,
+    )
     await userEvent.click(screen.getByRole('button', { name: /by colour/i }))
     unmount()
 
-    render(<Hand cards={mixed} legalMoves={[]} onPlay={vi.fn()} />)
+    render(<Hand cards={mixed} legalMoves={[]} targets={seats} onPlay={vi.fn()} />)
     expect(screen.getByRole('button', { name: /by colour/i })).toHaveProperty('ariaPressed', 'true')
   })
 
   it('keeps playability attached to the card, not to its position', async () => {
     render(
-      <Hand cards={mixed} legalMoves={[{ type: 'play', cardId: id('gs') }]} onPlay={vi.fn()} />,
+      <Hand
+        cards={mixed}
+        legalMoves={[{ type: 'play', cardId: id('gs') }]}
+        targets={seats}
+        onPlay={vi.fn()}
+      />,
     )
     await userEvent.click(screen.getByRole('button', { name: /by colour/i }))
     expect(screen.getByRole('button', { name: /green skip/i })).toHaveProperty('disabled', false)
@@ -144,7 +204,7 @@ describe('Hand sorting', () => {
   })
 
   it('offers no sort control for a single card', () => {
-    render(<Hand cards={[red7]} legalMoves={[]} onPlay={vi.fn()} />)
+    render(<Hand cards={[red7]} legalMoves={[]} targets={seats} onPlay={vi.fn()} />)
     expect(screen.queryByRole('group', { name: /sort/i })).toBeNull()
   })
 })

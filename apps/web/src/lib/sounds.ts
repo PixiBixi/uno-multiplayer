@@ -16,6 +16,8 @@ export type SoundName =
   | 'matchOver'
   | 'yourTurn'
   | 'timedOut'
+  /** Hands changing places, on a Seven-Zero table. */
+  | 'swap'
 
 /**
  * Which sound a played card makes. Unlike the visual burst — which reads the view
@@ -59,6 +61,12 @@ export function soundForEvent(event: GameEvent, mySeat: number): SoundName | nul
     case 'unoCalled':
     case 'calledOut':
       return 'uno'
+    /* One cue for both, because a rotation IS a swap generalised — the same rule
+       moving hands around, and the same thing to notice: what you are holding is
+       not what you were holding. The card itself already sounded as a number. */
+    case 'handsSwapped':
+    case 'handsRotated':
+      return 'swap'
     case 'turnTimedOut':
       /* Sounded for everyone, not only the seat it happened to: at speed the
          table needs to hear that play moved on without a card being chosen. */

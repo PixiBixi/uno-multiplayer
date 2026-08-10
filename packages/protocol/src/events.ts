@@ -27,6 +27,12 @@ export type GameEvent =
      `unoPenalty` against the target, so the statistics and the sound cue for a
      forgotten UNO keep working whichever rule charged it. */
   | { type: 'calledOut'; by: number; target: number }
+  /* Seven-Zero, the two ways hands move without a card being drawn. Named events
+     rather than left to the hand-size diff: a swap between two seats holding four
+     cards each changes no count at all, and one that does change counts would
+     otherwise be reported as a draw that never happened. */
+  | { type: 'handsSwapped'; seat: number; with: number }
+  | { type: 'handsRotated'; direction: 1 | -1 }
   | { type: 'seatDisconnected'; seat: number }
   | { type: 'seatReconnected'; seat: number }
   | { type: 'seatLeft'; seat: number }

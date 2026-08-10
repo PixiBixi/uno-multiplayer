@@ -46,6 +46,13 @@ describe('soundForEvent', () => {
     expect(soundForEvent({ type: 'calledOut', by: 1, target: 0 }, 0)).toBe('uno')
   })
 
+  it('sounds hands moving, with one cue for a swap and a rotation alike', () => {
+    /* A rotation is a swap generalised — the same rule, and the same thing to
+       notice: what you are holding is not what you were holding. */
+    expect(soundForEvent({ type: 'handsSwapped', seat: 1, with: 0 }, 0)).toBe('swap')
+    expect(soundForEvent({ type: 'handsRotated', direction: -1 }, 0)).toBe('swap')
+  })
+
   it('tells winning a round apart from watching one be won', () => {
     const ended: GameEvent = { type: 'roundEnded', winner: 0, awarded: [30, 0], scores: [30, 0] }
     expect(soundForEvent(ended, 0)).toBe('roundWon')

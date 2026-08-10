@@ -57,10 +57,15 @@ export type Seat = {
 export type TableRules = {
   /** Forgetting UNO costs nothing unless somebody calls it out. */
   liar: boolean
+  /**
+   * A 7 swaps hands with a chosen player; a 0 passes every hand one seat along in
+   * the current direction of play.
+   */
+  sevenZero: boolean
 }
 
 /** Plain UNO, which is what a host who picks nothing gets. */
-export const DEFAULT_TABLE_RULES: TableRules = { liar: false }
+export const DEFAULT_TABLE_RULES: TableRules = { liar: false, sevenZero: false }
 
 /**
  * Outstanding draw debt. `kind` mirrors the card's own `kind`, which turns the
@@ -110,7 +115,13 @@ export type MatchState = {
 }
 
 export type Move =
-  | { type: 'play'; cardId: CardId; chosenColor?: Color }
+  /**
+   * `chosenColor` for a wild and `swapWith` for a 7 on a Seven-Zero table are the
+   * same idea: a second decision the card demands, carried by the move rather than
+   * asked for afterwards. `legalMoves` enumerates them, so neither is ever a
+   * free-form value the reducer has to validate on its own.
+   */
+  | { type: 'play'; cardId: CardId; chosenColor?: Color; swapWith?: number }
   | { type: 'draw' }
   | { type: 'acceptDraw' }
   | { type: 'callUno' }

@@ -64,6 +64,15 @@ export const fr: Messages = {
       if (targetIsYou) return `${by} t’a pris en flagrant délit : UNO oublié`
       return `${by} a pris ${target} en flagrant délit : UNO oublié`
     },
+    handsSwapped: (by, byIsYou, target, targetIsYou) => {
+      if (byIsYou) return `Tu as posé un 7 et pris la main de ${target}`
+      if (targetIsYou) return `${by} a posé un 7 et pris ta main`
+      return `${by} a posé un 7 et pris la main de ${target}`
+    },
+    handsRotated: (clockwise) =>
+      clockwise
+        ? 'Un 0 a fait tourner toutes les mains d’un siège dans le sens horaire'
+        : 'Un 0 a fait tourner toutes les mains d’un siège dans le sens antihoraire',
     seatDisconnected: (name) => `${name} a perdu la connexion`,
     seatReconnected: (name, isYou) => (isYou ? 'Te revoilà' : `${name} est de retour`),
     seatLeft: (name) => `${name} a quitté la partie`,
@@ -107,6 +116,9 @@ export const fr: Messages = {
     liar: 'Laisser les joueurs dénoncer un UNO oublié',
     liarHint:
       'Oublier de crier UNO ne coûte rien, sauf si quelqu’un le remarque avant la fin de ton tour suivant. Surveillez-vous.',
+    sevenZero: 'Jouer la variante Sept-Zéro',
+    sevenZeroHint:
+      'Un 7 échange ta main avec celle d’un joueur de ton choix ; un 0 fait tourner toutes les mains d’un siège, dans le sens du jeu.',
     language: 'Langue',
   },
 
@@ -151,6 +163,8 @@ export const fr: Messages = {
     callUno: 'UNO !',
     callOut: 'Menteur !',
     callOutOn: (name) => `Accuser ${name} : menteur`,
+    chooseSwapTarget: 'Quelle main veux-tu ?',
+    swapTarget: (name, count) => `${name}, ${cartes(count)}`,
     clockwise: 'Sens horaire',
     anticlockwise: 'Sens antihoraire',
     inPlay: (colour) => `${colour} en jeu`,

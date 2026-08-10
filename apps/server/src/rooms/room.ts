@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import {
   DEFAULT_TABLE_RULES,
+  activeCount,
   applyMove,
   applyRound,
   err,
@@ -13,6 +14,7 @@ import {
   setSeatStatus,
   skipDisconnectedTurn,
   startMatch,
+  type Card,
   type GameState,
   type MatchGoal,
   type MatchState,
@@ -450,6 +452,37 @@ export class Room {
 }
 
 /**
+ * The Seven-Zero effect a play had, or null when it had none.
+ *
+ * Read from the card and the table's rules rather than from hand sizes, which a
+ * permutation can leave entirely unchanged: two seats holding four cards each swap
+ * to no visible difference at all. A finished round means the card emptied a hand
+ * and the round ended before any hand could move — first empty hand wins, and the
+ * reducer settles that before the effect.
+ */
+function sevenZeroEvent(
+  after: GameState,
+  seat: number,
+  move: Move,
+  played: Card,
+): GameEvent | null {
+  if (!after.rules.sevenZero || move.type !== 'play') return null
+  if (after.phase !== 'playing' || played.kind !== 'number') return null
+
+  /* `swapWith` is present only when the reducer really swapped: legalMoves offers a
+     bare 7 when nobody else is active or when the card wins the round, and the move
+     gate compares the field. */
+  if (played.value === 7) {
+    return move.swapWith === undefined ? null : { type: 'handsSwapped', seat, with: move.swapWith }
+  }
+  // Rotating a single active hand is a no-op, and reporting one would be a lie.
+  if (played.value === 0 && activeCount(after) > 1) {
+    return { type: 'handsRotated', direction: after.direction }
+  }
+  return null
+}
+
+/**
  * Derives the narrative feed by comparing the state before and after. Deriving
  * rather than hand-emitting means an event can never contradict the state it
  * describes.
@@ -476,6 +509,17 @@ function diffEvents(before: GameState, after: GameState, seat: number, move: Mov
   const played = after.discardPile[after.discardPile.length - 1]
   if (played !== undefined && after.discardPile.length > before.discardPile.length) {
     events.push({ type: 'cardPlayed', seat, card: played })
+
+    /* Seven-Zero moved hands, so every difference in size below is that permutation
+       and not one card was drawn: the reducer deliberately charges no automatic UNO
+       penalty on a play that permutes, which is what keeps this a size diff rather
+       than an id diff. Reporting a swap as a draw is exactly the sort of event that
+       would contradict the state it describes. */
+    const permutation = sevenZeroEvent(after, seat, move, played)
+    if (permutation !== null) {
+      events.push(permutation)
+      return events
+    }
   }
 
   for (const seatAfter of after.seats) {

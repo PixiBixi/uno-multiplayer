@@ -197,7 +197,14 @@ export function Table({
               )}
             </div>
 
-            <Hand cards={view.you.hand} legalMoves={view.you.legalMoves} onPlay={onPlay} />
+            {/* `opponents` is exactly what the swap picker needs to name a seat, so
+                it is passed through rather than rebuilt. */}
+            <Hand
+              cards={view.you.hand}
+              legalMoves={view.you.legalMoves}
+              onPlay={onPlay}
+              targets={view.opponents}
+            />
 
             <p className={myTurn ? 'plate plate-turn' : 'plate'}>
               <span className="presence presence-active" aria-hidden="true" />

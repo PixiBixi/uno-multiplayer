@@ -167,7 +167,7 @@ describe('the Liar call-out on the wire', () => {
   it(
     'is offered to the seat that is not on turn, and accepted from it',
     async () => {
-      const { players } = await table({ liar: true })
+      const { players } = await table({ liar: true, sevenZero: false })
       const caller = await playUntilOffered(players)
 
       const move = callOutOffered(caller)
@@ -200,7 +200,7 @@ describe('the Liar call-out on the wire', () => {
   it(
     'tells the whole table who called whom',
     async () => {
-      const { players } = await table({ liar: true })
+      const { players } = await table({ liar: true, sevenZero: false })
       const caller = await playUntilOffered(players)
       const move = callOutOffered(caller)
       if (move === undefined) throw new Error('no call-out was offered')
@@ -232,7 +232,7 @@ describe('the Liar call-out on the wire', () => {
   it(
     'refuses a call-out against a seat that is not holding one card uncalled',
     async () => {
-      const { host, guest } = await table({ liar: true })
+      const { host, guest } = await table({ liar: true, sevenZero: false })
       const targetSeat = guest.view()?.you.seat ?? 1
       expect(callOutOffered(host)).toBeUndefined()
 
@@ -246,7 +246,7 @@ describe('the Liar call-out on the wire', () => {
   it(
     'refuses a call-out payload naming an impossible seat',
     async () => {
-      const { host } = await table({ liar: true })
+      const { host } = await table({ liar: true, sevenZero: false })
       expect(
         await emit<PlainAck>(host, 'game:move', { move: { type: 'callOut', target: 99 } }),
       ).toEqual({ ok: false, error: 'invalid_payload' })
@@ -259,7 +259,7 @@ describe('the Liar call-out on the wire', () => {
     async () => {
       /* A plain table played the same way: the penalty is charged automatically, so
          no seat is ever left open to an accusation and no button ever appears. */
-      const { host, players } = await table({ liar: false })
+      const { host, players } = await table({ liar: false, sevenZero: false })
       await expect(playUntilOffered(players)).rejects.toThrow(
         /ended before anybody forgot|nobody ever went down/,
       )

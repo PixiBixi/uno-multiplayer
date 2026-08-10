@@ -45,8 +45,9 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
   const [blazing, setBlazing] = useState(false)
   const [turnSeconds, setTurnSeconds] = useState(DEFAULT_TURN_SECONDS)
   const [liar, setLiar] = useState(false)
+  const [sevenZero, setSevenZero] = useState(false)
 
-  const rules: TableRules = { liar }
+  const rules: TableRules = { liar, sevenZero }
 
   const pace: MatchPace = blazing
     ? { turnSeconds: clamp(turnSeconds, MIN_TURN_SECONDS, MAX_TURN_SECONDS) }
@@ -246,6 +247,18 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
             {/* Shown whether it is on or off: the interesting question is what the
                 option does, which you need answered before deciding. */}
             <p className="hint">{t.home.liarHint}</p>
+
+            <label className="switch-row">
+              <input
+                type="checkbox"
+                checked={sevenZero}
+                onChange={(event) => {
+                  setSevenZero(event.target.checked)
+                }}
+              />
+              <span>{t.home.sevenZero}</span>
+            </label>
+            <p className="hint">{t.home.sevenZeroHint}</p>
           </fieldset>
 
           <button type="submit" className="btn btn-primary" disabled={!canCreate}>

@@ -56,6 +56,29 @@ describe('describeEvent', () => {
     )
   })
 
+  it('describes a swap from either side of it', () => {
+    const asYou = (seat: number) => (seat === 0 ? 'You' : nameOf(seat))
+    expect(describeEvent({ type: 'handsSwapped', seat: 1, with: 2 }, nameOf, NOT_ME, en)).toBe(
+      'Ben played a 7 and took Cleo’s hand',
+    )
+    expect(describeEvent({ type: 'handsSwapped', seat: 0, with: 2 }, asYou, 0, en)).toBe(
+      'You played a 7 and took Cleo’s hand',
+    )
+    expect(describeEvent({ type: 'handsSwapped', seat: 1, with: 0 }, asYou, 0, en)).toBe(
+      'Ben played a 7 and took your hand',
+    )
+  })
+
+  it('names the direction a rotation sent the hands', () => {
+    // A reverse earlier in the round changes it, so the log has to say which way.
+    expect(describeEvent({ type: 'handsRotated', direction: 1 }, nameOf, NOT_ME, en)).toContain(
+      'clockwise',
+    )
+    expect(describeEvent({ type: 'handsRotated', direction: -1 }, nameOf, NOT_ME, en)).toContain(
+      'anticlockwise',
+    )
+  })
+
   it('describes presence changes', () => {
     expect(describeEvent({ type: 'seatDisconnected', seat: 1 }, nameOf, NOT_ME, en)).toBe(
       'Ben lost connection',

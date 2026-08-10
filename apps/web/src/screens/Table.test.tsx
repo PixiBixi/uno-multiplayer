@@ -134,6 +134,44 @@ describe('Table', () => {
     expect(screen.getAllByRole('button', { name: /liar/i })).toHaveLength(2)
   })
 
+  it('renders a swap picker from the moves the server offered, naming the seats', async () => {
+    /* Straight through from the view: the client neither knows that a 7 swaps nor who
+       a legal target is, only that two moves reference the same card. */
+    const seven: Card = { id: 'seven' as CardId, kind: 'number', color: 'R', value: 7 }
+    const { onPlay } = setup(
+      viewWith({
+        you: {
+          seat: 0,
+          hand: [seven],
+          legalMoves: [
+            { type: 'play', cardId: seven.id, swapWith: 1 },
+            { type: 'play', cardId: seven.id, swapWith: 3 },
+          ],
+        },
+      }),
+    )
+    await userEvent.click(screen.getByRole('button', { name: /red 7/i }))
+
+    const picker = screen.getByRole('dialog', { name: /whose hand/i })
+    // Ben holds 4 and Dan holds 7 in this view; Cleo was never offered.
+    expect(picker.textContent).toContain('Ben, 4 cards')
+    expect(picker.textContent).toContain('Dan, 7 cards')
+    expect(picker.textContent).not.toContain('Cleo')
+
+    await userEvent.click(screen.getByRole('button', { name: /dan/i }))
+    expect(onPlay).toHaveBeenCalledWith({ type: 'play', cardId: seven.id, swapWith: 3 })
+  })
+
+  it('offers no swap picker when the server offered a plain play', () => {
+    const seven: Card = { id: 'seven' as CardId, kind: 'number', color: 'R', value: 7 }
+    setup(
+      viewWith({
+        you: { seat: 0, hand: [seven], legalMoves: [{ type: 'play', cardId: seven.id }] },
+      }),
+    )
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
   it('labels the accept-draw control with what it costs', () => {
     setup(
       viewWith({

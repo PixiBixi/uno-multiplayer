@@ -100,6 +100,24 @@ describe('grammar each language owns', () => {
     expect(CATALOGUES.fr.table.callOut).toBe('Menteur !')
   })
 
+  it('names the Seven-Zero option in each language', () => {
+    // The variant has a French name of its own; leaving it in English would be the
+    // one untranslated word on the screen.
+    expect(CATALOGUES.en.home.sevenZero).toContain('Seven-Zero')
+    expect(CATALOGUES.fr.home.sevenZero).toContain('Sept-Zéro')
+  })
+
+  it('conjugates a swap for both people in it, and counts the hand each way', () => {
+    expect(CATALOGUES.fr.event.handsSwapped('Toi', true, 'Ana', false)).toContain('Tu as posé')
+    expect(CATALOGUES.fr.event.handsSwapped('Ana', false, 'Toi', true)).toContain('pris ta main')
+
+    // The target button pluralises by each language's own rule, zero included.
+    expect(CATALOGUES.en.table.swapTarget('Ana', 1)).toBe('Ana, 1 card')
+    expect(CATALOGUES.fr.table.swapTarget('Ana', 1)).toBe('Ana, 1 carte')
+    expect(CATALOGUES.en.table.swapTarget('Ana', 4)).toBe('Ana, 4 cards')
+    expect(CATALOGUES.fr.table.swapTarget('Ana', 4)).toBe('Ana, 4 cartes')
+  })
+
   it('covers every error code in both languages', () => {
     const codes = Object.keys(CATALOGUES.en.error).sort()
     expect(Object.keys(CATALOGUES.fr.error).sort()).toEqual(codes)

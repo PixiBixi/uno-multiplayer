@@ -28,6 +28,7 @@ describe('Home', () => {
     await userEvent.click(screen.getByRole('button', { name: /create/i }))
     expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
       liar: false,
+      sevenZero: false,
     })
   })
 
@@ -38,6 +39,20 @@ describe('Home', () => {
     await userEvent.click(screen.getByRole('button', { name: /create/i }))
     expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
       liar: true,
+      sevenZero: false,
+    })
+  })
+
+  it('switches Seven-Zero on independently of the Liar call-out', async () => {
+    // Two separate house rules, not one switch with two effects: a group may want
+    // either, both, or neither.
+    const { onCreate } = setup()
+    await userEvent.type(screen.getByLabelText(/your name/i), 'Ana')
+    await userEvent.click(screen.getByLabelText(/seven-zero/i))
+    await userEvent.click(screen.getByRole('button', { name: /create/i }))
+    expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
+      liar: false,
+      sevenZero: true,
     })
   })
 

@@ -46,41 +46,57 @@ const cardId = z
   .transform((value) => value as CardId)
 
 /**
- * Produces an engine `Move` directly. The play variant omits `chosenColor`
- * rather than setting it to undefined: under `exactOptionalPropertyTypes` an
- * absent key and an explicit undefined are different types, and the engine
- * declares the key absent.
+ * Bounded by the table size. The engine refuses a seat that is not a legal target
+ * anyway, but a seat number is an index and an unbounded one has no business
+ * reaching the reducer at all.
+ */
+const seatNumber = z
+  .number()
+  .int()
+  .min(0)
+  .max(MAX_SEATS - 1)
+
+/**
+ * Produces an engine `Move` directly. The play variant omits `chosenColor` and
+ * `swapWith` rather than setting them to undefined: under
+ * `exactOptionalPropertyTypes` an absent key and an explicit undefined are
+ * different types, and the engine declares the keys absent.
  */
 export const moveSchema: z.ZodType<Move> = z.discriminatedUnion('type', [
   z
-    .object({ type: z.literal('play'), cardId, chosenColor: colorSchema.optional() })
-    .transform((value): Move =>
-      value.chosenColor === undefined
-        ? { type: 'play', cardId: value.cardId }
-        : { type: 'play', cardId: value.cardId, chosenColor: value.chosenColor },
-    ),
+    .object({
+      type: z.literal('play'),
+      cardId,
+      chosenColor: colorSchema.optional(),
+      /** Whose hand a 7 takes, on a Seven-Zero table. */
+      swapWith: seatNumber.optional(),
+    })
+    .transform((value): Move => ({
+      type: 'play',
+      cardId: value.cardId,
+      ...(value.chosenColor === undefined ? {} : { chosenColor: value.chosenColor }),
+      ...(value.swapWith === undefined ? {} : { swapWith: value.swapWith }),
+    })),
   z.object({ type: z.literal('draw') }),
   z.object({ type: z.literal('acceptDraw') }),
   z.object({ type: z.literal('callUno') }),
-  /* Bounded by the table size. The engine refuses a call-out against a seat that
-     is not vulnerable anyway, but a seat number is an index and an unbounded one
-     has no business reaching the reducer at all. */
-  z.object({
-    type: z.literal('callOut'),
-    target: z
-      .number()
-      .int()
-      .min(0)
-      .max(MAX_SEATS - 1),
-  }),
+  z.object({ type: z.literal('callOut'), target: seatNumber }),
 ])
 
 /**
  * The optional rules a host switches on at creation. Booleans have no interesting
  * bounds, but the field still goes through Zod like every other payload: a client
  * can send whatever it likes.
+ *
+ * Each flag defaults on its own rather than only the object as a whole. A client
+ * built when `liar` was the only option sends `{ liar }` and nothing else, and
+ * rejecting that outright would break a client that is perfectly able to play —
+ * it simply asks for a table without the newer rule, which is what it wants.
  */
-export const tableRulesSchema: z.ZodType<TableRules> = z.object({ liar: z.boolean() })
+export const tableRulesSchema: z.ZodType<TableRules> = z.object({
+  liar: z.boolean().default(false),
+  sevenZero: z.boolean().default(false),
+})
 
 /**
  * Bounded on both variants. Without the ceilings a client could ask for a match to

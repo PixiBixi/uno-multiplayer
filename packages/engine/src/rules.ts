@@ -1,4 +1,4 @@
-import { COLORS, type Card, type GameState, type Move } from './types.js'
+import { COLORS, isWild, type Card, type GameState, type Move } from './types.js'
 
 export function isPlayable(card: Card, state: GameState): boolean {
   // An outstanding debt closes everything down: only the same type can raise,
@@ -67,6 +67,44 @@ function callOutMoves(state: GameState, seatIndex: number): Move[] {
     .map((s) => ({ type: 'callOut', target: s.index }))
 }
 
+/**
+ * Whom a 7 may take a hand from, on a table that opted into `sevenZero`.
+ *
+ * Active seats only. A seat that has left had its hand returned to the pile, so
+ * swapping into it would hand somebody an empty hand and a free win; a seat that is
+ * merely disconnected is holding its hand until the grace period runs out, and
+ * giving it away would bring the player back to a hand chosen by an event they
+ * never saw.
+ */
+function swapTargets(state: GameState, seatIndex: number): number[] {
+  return state.seats
+    .filter((s) => s.index !== seatIndex && s.status === 'active')
+    .map((s) => s.index)
+}
+
+/**
+ * The moves for laying one card down: one per colour for a wild, one per swap
+ * target for a 7 on a Seven-Zero table, and otherwise the single plain play.
+ *
+ * Enumerating the second decision as separate moves is what keeps the client free
+ * of rules — it renders a picker from what it was offered — and leaves the reducer
+ * with nothing to validate beyond "is this one of the moves I produced".
+ */
+function playMoves(state: GameState, seatIndex: number, card: Card, handSize: number): Move[] {
+  if (isWild(card)) {
+    return COLORS.map((chosenColor) => ({ type: 'play', cardId: card.id, chosenColor }))
+  }
+
+  /* No target on the card that empties the hand: the round ends there and no hand
+     moves, so there is nothing to choose. Nor when nobody else is active, which
+     would otherwise leave a hand of 7s with no legal card in it. */
+  const swappable =
+    state.rules.sevenZero && card.kind === 'number' && card.value === 7 && handSize > 1
+  const targets = swappable ? swapTargets(state, seatIndex) : []
+  if (targets.length === 0) return [{ type: 'play', cardId: card.id }]
+  return targets.map((swapWith) => ({ type: 'play', cardId: card.id, swapWith }))
+}
+
 export function legalMoves(state: GameState, seatIndex: number): Move[] {
   if (state.phase !== 'playing') return []
   const seat = state.seats[seatIndex]
@@ -81,13 +119,7 @@ export function legalMoves(state: GameState, seatIndex: number): Move[] {
   const moves: Move[] = []
   for (const card of seat.hand) {
     if (!isPlayable(card, state)) continue
-    if (card.kind === 'wild' || card.kind === 'wild4') {
-      // One move per colour: picking a colour becomes picking a move, so there
-      // is no free-form input for the server to validate.
-      for (const chosenColor of COLORS) moves.push({ type: 'play', cardId: card.id, chosenColor })
-    } else {
-      moves.push({ type: 'play', cardId: card.id })
-    }
+    moves.push(...playMoves(state, seatIndex, card, seat.hand.length))
   }
 
   moves.push(state.pendingDraw !== null ? { type: 'acceptDraw' } : { type: 'draw' })

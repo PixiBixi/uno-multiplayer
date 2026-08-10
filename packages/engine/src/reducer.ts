@@ -16,7 +16,10 @@ export const UNO_PENALTY = 2
 function sameMove(a: Move, b: Move): boolean {
   if (a.type !== b.type) return false
   if (a.type === 'play' && b.type === 'play') {
-    return a.cardId === b.cardId && a.chosenColor === b.chosenColor
+    /* Every field of the second decision, not just the card. Ignoring `swapWith`
+       would make two different swap targets look like the same move, so a 7 offered
+       against one seat would authorise taking any seat's hand. */
+    return a.cardId === b.cardId && a.chosenColor === b.chosenColor && a.swapWith === b.swapWith
   }
   /* The target matters as much as the type. Comparing the type alone would let a
      call-out against a vulnerable seat authorise one against any seat, charging
@@ -96,6 +99,48 @@ function openWindow(state: GameState, seatIndex: number): GameState {
 }
 
 /**
+ * Seven-Zero: a 7 exchanges two hands outright. Nothing is created or destroyed,
+ * so the 108-card invariant is untouched by construction.
+ */
+function swapHands(state: GameState, a: number, b: number): GameState {
+  const first = state.seats[a]
+  const second = state.seats[b]
+  if (first === undefined || second === undefined || a === b) return state
+  return {
+    ...state,
+    seats: state.seats.map((s) => {
+      if (s.index === a) return { ...s, hand: second.hand }
+      if (s.index === b) return { ...s, hand: first.hand }
+      return s
+    }),
+  }
+}
+
+/**
+ * Seven-Zero: a 0 passes every hand one seat along, following `direction` — so a
+ * reverse played earlier in the round changes where the hands go.
+ *
+ * Active seats only, and `advance` is a rotation of exactly those, which makes the
+ * mapping a bijection: every active hand lands on exactly one active seat. Anyone
+ * absent keeps what they are holding, for the same reason they cannot be a swap
+ * target.
+ */
+function rotateHands(state: GameState): GameState {
+  const incoming = new Map<number, Card[]>()
+  for (const seat of state.seats) {
+    if (seat.status !== 'active') continue
+    incoming.set(advance(state, seat.index, 1), seat.hand)
+  }
+  return {
+    ...state,
+    seats: state.seats.map((s) => {
+      const hand = incoming.get(s.index)
+      return hand === undefined ? s : { ...s, hand }
+    }),
+  }
+}
+
+/**
  * Ends `from`'s turn and hands it on.
  *
  * Closing the window here is the bound that makes the rule a game rather than a
@@ -161,20 +206,55 @@ function applyPlay(
       break
   }
 
-  // Victory on an empty hand. Checked before the penalty: the two cases are
-  // mutually exclusive (zero cards versus exactly one).
+  /* Victory on an empty hand. Checked before the penalty — the two cases are
+     mutually exclusive, zero cards versus exactly one — and before the Seven-Zero
+     effect below, so the first empty hand wins unconditionally. A 7 that could swap
+     the win away would make the card unplayable as a last card, which is a trap
+     rather than a rule. */
   if (hand.length === 0) return ok({ ...next, phase: 'finished', winner: seatIndex })
+
+  /* Seven-Zero. The seats whose hands moved, empty when none did: a 7 with no
+     target offered because nobody else is active, or a 0 at a table with a single
+     active seat, both leave every hand where it was. */
+  let permuted: number[] = []
+  if (state.rules.sevenZero && card.kind === 'number') {
+    if (card.value === 7 && move.swapWith !== undefined) {
+      next = swapHands(next, seatIndex, move.swapWith)
+      permuted = [seatIndex, move.swapWith]
+    } else if (card.value === 0 && activeCount(next) > 1) {
+      next = rotateHands(next)
+      permuted = next.seats.filter((s) => s.status === 'active').map((s) => s.index)
+    }
+  }
 
   /* This seat's turn is ending, so any window opened on an earlier turn closes —
      deliberately before a new one may open just below. The other order would let
      a seat that forgets UNO twice in a row escape the second one. */
   next = closeWindow(next, seatIndex)
 
-  if (hand.length === 1 && !seat.unoCalled) {
-    /* With `liar` on, forgetting costs nothing until somebody notices; the seat
-       merely becomes open to an accusation. Without it the penalty is automatic,
-       exactly as it always was. */
-    next = state.rules.liar ? openWindow(next, seatIndex) : drawInto(next, seatIndex, UNO_PENALTY)
+  if (permuted.length === 0) {
+    if (hand.length === 1 && !seat.unoCalled) {
+      /* With `liar` on, forgetting costs nothing until somebody notices; the seat
+         merely becomes open to an accusation. Without it the penalty is automatic,
+         exactly as it always was. */
+      next = state.rules.liar ? openWindow(next, seatIndex) : drawInto(next, seatIndex, UNO_PENALTY)
+    }
+  } else if (state.rules.liar) {
+    /* Hands moved, so who owes the table an UNO is re-decided from what each seat
+       now holds: one card uncalled opens a window, anything else shuts one, because
+       being accused of holding a card you no longer hold is a bug and not a rule.
+       Recomputed rather than penalised, and only on a Liar table: the automatic
+       penalty punishes an omission, and after a permutation nobody is holding the
+       hand they held when the turn began. A window is the fair instrument here
+       precisely because it is escapable — call UNO on your own next turn. */
+    for (const index of permuted) {
+      const moved = next.seats[index]
+      if (moved === undefined) continue
+      next =
+        moved.hand.length === 1 && !moved.unoCalled
+          ? openWindow(next, index)
+          : closeWindow(next, index)
+    }
   }
 
   return ok(beginTurn(next, advance(next, seatIndex, steps)))

@@ -54,7 +54,7 @@ describe('markSeatLeft', () => {
 
   it('takes any Liar window with it, since the hand went back to the pile', () => {
     const state = stateOf({
-      rules: { liar: true },
+      rules: { liar: true, sevenZero: false },
       seats: [seatOf(0, []), seatOf(1, [], { vulnerable: true }), seatOf(2, [])],
     })
     expect(markSeatLeft(state, 1).seats[1]?.vulnerable).toBe(false)
