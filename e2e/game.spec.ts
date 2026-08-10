@@ -359,7 +359,12 @@ test('the End turn control is on screen once a drawn card can be played', async 
         await draw.click()
         await page.waitForTimeout(100)
       }
-      if (await page.getByRole('button', { name: 'End turn' }).isVisible().catch(() => false)) {
+      if (
+        await page
+          .getByRole('button', { name: 'End turn' })
+          .isVisible()
+          .catch(() => false)
+      ) {
         deciding = page
         break
       }
@@ -379,7 +384,10 @@ test('the End turn control is on screen once a drawn card can be played', async 
   await expect(deciding.getByRole('button', { name: 'End turn' })).toHaveCount(0)
   await expect(deciding.locator('.hand-card')).toHaveCount(held)
   await expect(
-    deciding.locator('.sys-line').filter({ hasText: /ended (your|their) turn/ }).first(),
+    deciding
+      .locator('.sys-line')
+      .filter({ hasText: /ended (your|their) turn/ })
+      .first(),
   ).toBeVisible()
 })
 

@@ -458,7 +458,12 @@ describe('Seven-Zero keeps every invariant', () => {
   it('actually swaps and actually rotates, or the properties above prove nothing', () => {
     const totals = [0, 1, 2, 3, 4]
       .map((seed) =>
-        playOutSevenZero(3, seed, [0, 1, 2, 3], { liar: true, sevenZero: true, jumpIn: false, playDrawnCard: false }),
+        playOutSevenZero(3, seed, [0, 1, 2, 3], {
+          liar: true,
+          sevenZero: true,
+          jumpIn: false,
+          playDrawnCard: false,
+        }),
       )
       .reduce(
         (sum, game) => ({

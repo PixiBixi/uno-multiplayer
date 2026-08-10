@@ -439,7 +439,12 @@ describe('jump-in on the wire', () => {
   it(
     'refuses an off-turn play as not that seat’s turn without the option',
     async () => {
-      const { players } = await table({ liar: false, sevenZero: false, jumpIn: false, playDrawnCard: false })
+      const { players } = await table({
+        liar: false,
+        sevenZero: false,
+        jumpIn: false,
+        playDrawnCard: false,
+      })
       const waiting = players.find((p) => p !== onTurn(players))
       const cardId = waiting?.view()?.you.hand[0]?.id
       if (waiting === undefined || cardId === undefined) throw new Error('no waiting seat')

@@ -416,9 +416,7 @@ describe('the clock and the card you just drew', () => {
 
     clock.advance(10_000)
 
-    expect(events.filter((event) => event.type === 'turnTimedOut')).toHaveLength(
-      timeoutsBefore + 1,
-    )
+    expect(events.filter((event) => event.type === 'turnTimedOut')).toHaveLength(timeoutsBefore + 1)
     // Not one card more: a pass takes nothing.
     expect(room.viewFor(reached.seat)?.you.hand.length).toBe(held)
     expect(room.currentSeat).not.toBe(reached.seat)

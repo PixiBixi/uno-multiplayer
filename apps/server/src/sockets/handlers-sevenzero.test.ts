@@ -167,7 +167,12 @@ describe('Seven-Zero on the wire', () => {
   it(
     'offers one play per target and swaps the two hands when one is chosen',
     async () => {
-      const { players } = await table({ liar: false, sevenZero: true, jumpIn: false, playDrawnCard: false })
+      const { players } = await table({
+        liar: false,
+        sevenZero: true,
+        jumpIn: false,
+        playDrawnCard: false,
+      })
       const { player, move } = await playUntilOffered(players, (p) => swapsOffered(p)[0])
 
       // A second decision the server enumerated, exactly like a wild's colours.
@@ -201,7 +206,12 @@ describe('Seven-Zero on the wire', () => {
   it(
     'tells the whole table whose hands moved, and calls it a swap rather than a draw',
     async () => {
-      const { players } = await table({ liar: false, sevenZero: true, jumpIn: false, playDrawnCard: false })
+      const { players } = await table({
+        liar: false,
+        sevenZero: true,
+        jumpIn: false,
+        playDrawnCard: false,
+      })
       const { player, move } = await playUntilOffered(players, (p) => swapsOffered(p)[0])
       const seat = player.view()?.you.seat
       /* Only what this one move produced. Getting to a playable 7 legitimately
@@ -230,7 +240,12 @@ describe('Seven-Zero on the wire', () => {
   it(
     'reports a 0 as every hand rotating, in the direction of play',
     async () => {
-      const { players } = await table({ liar: false, sevenZero: true, jumpIn: false, playDrawnCard: false })
+      const { players } = await table({
+        liar: false,
+        sevenZero: true,
+        jumpIn: false,
+        playDrawnCard: false,
+      })
       const { player, move } = await playUntilOffered(players, zeroOffered)
       const held = players.map((p) => (p.view()?.you.hand ?? []).map((card) => card.id))
       // A 0 does not change the direction, so the one in play is where hands go.
@@ -264,7 +279,12 @@ describe('Seven-Zero on the wire', () => {
     async () => {
       /* Swapping with yourself is the clearest case: the card id is right and the
          target is not, which is precisely the pair that has to be compared. */
-      const { players } = await table({ liar: false, sevenZero: true, jumpIn: false, playDrawnCard: false })
+      const { players } = await table({
+        liar: false,
+        sevenZero: true,
+        jumpIn: false,
+        playDrawnCard: false,
+      })
       const { player, move } = await playUntilOffered(players, (p) => swapsOffered(p)[0])
       const own = player.view()?.you.seat ?? 0
 
@@ -287,7 +307,12 @@ describe('Seven-Zero on the wire', () => {
   it(
     'refuses a swap payload naming an impossible seat',
     async () => {
-      const { host } = await table({ liar: false, sevenZero: true, jumpIn: false, playDrawnCard: false })
+      const { host } = await table({
+        liar: false,
+        sevenZero: true,
+        jumpIn: false,
+        playDrawnCard: false,
+      })
       const cardId = host.view()?.you.hand[0]?.id ?? 'nothing'
       expect(
         await emit<PlainAck>(host, 'game:move', { move: { type: 'play', cardId, swapWith: 99 } }),
@@ -299,7 +324,12 @@ describe('Seven-Zero on the wire', () => {
   it(
     'never offers a swap on a table that did not ask for the option',
     async () => {
-      const { players } = await table({ liar: false, sevenZero: false, jumpIn: false, playDrawnCard: false })
+      const { players } = await table({
+        liar: false,
+        sevenZero: false,
+        jumpIn: false,
+        playDrawnCard: false,
+      })
       await expect(playUntilOffered(players, (p) => swapsOffered(p)[0])).rejects.toThrow(
         /ended before the move was ever offered|nobody was ever offered/,
       )

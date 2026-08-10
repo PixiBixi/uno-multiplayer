@@ -141,11 +141,7 @@ const send = async (players: Player[], mover: Player, move: Move): Promise<void>
  * Drawing on every turn rather than playing is deliberate: the state being hunted exists
  * only after a voluntary draw, so a drive that played its cards would rarely reach it.
  */
-const drawUntilDeciding = async (
-  players: Player[],
-  host: Player,
-  limit = 600,
-): Promise<Player> => {
+const drawUntilDeciding = async (players: Player[], host: Player, limit = 600): Promise<Player> => {
   for (let turn = 0; turn < limit; turn += 1) {
     const view = players[0]?.view()
     if (view == null) throw new Error('no view at all')
@@ -238,7 +234,10 @@ describe('the drawn card on the wire', () => {
       await waitFor(() => {
         const first = players[0]?.view()
         if (first == null) return false
-        return first.currentSeat !== seat && players.every((p) => p.view()?.currentSeat === first.currentSeat)
+        return (
+          first.currentSeat !== seat &&
+          players.every((p) => p.view()?.currentSeat === first.currentSeat)
+        )
       }, 'every seat to agree the turn moved on')
     },
     SOCKET_ROUND_TIMEOUT_MS,
