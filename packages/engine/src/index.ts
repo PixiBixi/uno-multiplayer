@@ -7,6 +7,7 @@ export { markSeatLeft, setSeatStatus } from './seats.js'
 export { nextInt, nextRandom, shuffle } from './rng.js'
 export {
   COLORS,
+  DEFAULT_TABLE_RULES,
   err,
   isWild,
   ok,
@@ -25,5 +26,6 @@ export {
   type RuleViolation,
   type Seat,
   type SeatStatus,
+  type TableRules,
   type WildCard,
 } from './types.js'

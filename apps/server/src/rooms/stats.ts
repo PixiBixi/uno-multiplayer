@@ -71,6 +71,11 @@ export function tally(stats: SeatStats[], events: GameEvent[]): SeatStats[] {
         if (seat !== undefined) seat.roundsWon += 1
         break
       }
+      /* Nothing of its own to count: the two cards arrive as `unoPenalty` against
+         the target, which is already counted above, and spotting a forgotten UNO
+         is not one of the things this scoreboard keeps. */
+      case 'calledOut':
+        break
       // Nothing to count: presence changes and deals are not anybody's doing.
       case 'seatDisconnected':
       case 'seatReconnected':

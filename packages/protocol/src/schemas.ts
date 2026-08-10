@@ -1,8 +1,15 @@
-import type { CardId, MatchGoal, Move } from '@uno/engine'
+import {
+  DEFAULT_TABLE_RULES,
+  type CardId,
+  type MatchGoal,
+  type Move,
+  type TableRules,
+} from '@uno/engine'
 import { z } from 'zod'
 import {
   MAX_CHAT_LENGTH,
   MAX_NAME_LENGTH,
+  MAX_SEATS,
   MAX_POINTS_TARGET,
   MAX_ROUNDS,
   MIN_POINTS_TARGET,
@@ -55,7 +62,25 @@ export const moveSchema: z.ZodType<Move> = z.discriminatedUnion('type', [
   z.object({ type: z.literal('draw') }),
   z.object({ type: z.literal('acceptDraw') }),
   z.object({ type: z.literal('callUno') }),
+  /* Bounded by the table size. The engine refuses a call-out against a seat that
+     is not vulnerable anyway, but a seat number is an index and an unbounded one
+     has no business reaching the reducer at all. */
+  z.object({
+    type: z.literal('callOut'),
+    target: z
+      .number()
+      .int()
+      .min(0)
+      .max(MAX_SEATS - 1),
+  }),
 ])
+
+/**
+ * The optional rules a host switches on at creation. Booleans have no interesting
+ * bounds, but the field still goes through Zod like every other payload: a client
+ * can send whatever it likes.
+ */
+export const tableRulesSchema: z.ZodType<TableRules> = z.object({ liar: z.boolean() })
 
 /**
  * Bounded on both variants. Without the ceilings a client could ask for a match to
@@ -84,6 +109,10 @@ export const roomCreateSchema = z.object({
   playerName,
   goal: matchGoalSchema,
   pace: matchPaceSchema,
+  /* Defaulted rather than required, unlike the goal and the pace: a client built
+     before table options existed asks for a plain UNO table by saying nothing,
+     which is exactly what it wants. */
+  rules: tableRulesSchema.default(DEFAULT_TABLE_RULES),
 })
 export const roomJoinSchema = z.object({ roomCode, playerName })
 export const roomRejoinSchema = z.object({ roomCode, sessionToken: z.uuid() })

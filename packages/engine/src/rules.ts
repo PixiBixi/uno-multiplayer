@@ -48,11 +48,35 @@ export function advance(state: GameState, from: number, steps: number): number {
   return index
 }
 
+/**
+ * One call-out per seat currently open to one, or nothing at all on a table that
+ * did not opt into `liar`.
+ *
+ * Only ever offered while the target really is vulnerable, which is what makes a
+ * wrong accusation impossible rather than punishable: penalising a bad guess
+ * punishes paying attention badly instead of rewarding paying attention well.
+ *
+ * The target has to be active. A seat that has left had its hand returned to the
+ * pile, and drawing two into it would hand whoever goes out free points for cards
+ * nobody is holding.
+ */
+function callOutMoves(state: GameState, seatIndex: number): Move[] {
+  if (!state.rules.liar) return []
+  return state.seats
+    .filter((s) => s.index !== seatIndex && s.status === 'active' && s.vulnerable)
+    .map((s) => ({ type: 'callOut', target: s.index }))
+}
+
 export function legalMoves(state: GameState, seatIndex: number): Move[] {
   if (state.phase !== 'playing') return []
-  if (state.currentSeat !== seatIndex) return []
   const seat = state.seats[seatIndex]
   if (seat === undefined || seat.status !== 'active') return []
+
+  /* This early return used to be unconditional: nobody but the seat on turn had
+     anything to do. A call-out is the single exception, so an off-turn seat now
+     gets exactly those and nothing else. */
+  const callOuts = callOutMoves(state, seatIndex)
+  if (state.currentSeat !== seatIndex) return callOuts
 
   const moves: Move[] = []
   for (const card of seat.hand) {
@@ -67,6 +91,11 @@ export function legalMoves(state: GameState, seatIndex: number): Move[] {
   }
 
   moves.push(state.pendingDraw !== null ? { type: 'acceptDraw' } : { type: 'draw' })
-  if (!seat.unoCalled && seat.hand.length === 2) moves.push({ type: 'callUno' })
-  return moves
+  /* Two cards is the ordinary moment to call it, before playing down to one. A
+     vulnerable seat gets the offer too: closing its own window on its next turn,
+     before playing, is how it escapes an accusation. */
+  if (!seat.unoCalled && (seat.hand.length === 2 || seat.vulnerable)) {
+    moves.push({ type: 'callUno' })
+  }
+  return [...moves, ...callOuts]
 }

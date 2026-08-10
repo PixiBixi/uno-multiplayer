@@ -130,7 +130,7 @@ export function registerSocketHandlers(
           ack({ ok: false, error: 'invalid_payload' })
           return
         }
-        const created = rooms.create(data.goal, data.pace)
+        const created = rooms.create(data.goal, data.pace, data.rules)
         if (!created.okay) {
           ack({ ok: false, error: created.error })
           return

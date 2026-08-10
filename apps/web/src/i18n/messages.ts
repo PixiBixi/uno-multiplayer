@@ -43,6 +43,9 @@ export type Messages = {
     cardsDrawn: (name: string, isYou: boolean, count: number) => string
     unoCalled: (name: string, isYou: boolean) => string
     unoPenalty: (name: string, isYou: boolean, count: number) => string
+    /* Two people in one sentence, so both persons are passed: French conjugates
+       the accuser and the accused differently, and English does not. */
+    calledOut: (by: string, byIsYou: boolean, target: string, targetIsYou: boolean) => string
     seatDisconnected: (name: string) => string
     seatReconnected: (name: string, isYou: boolean) => string
     seatLeft: (name: string) => string
@@ -72,6 +75,9 @@ export type Messages = {
     clockOnEveryTurn: string
     secondsPerTurn: string
     blazingHint: string
+    tableRules: string
+    liar: string
+    liarHint: string
     language: string
   }
 
@@ -112,6 +118,10 @@ export type Messages = {
     drawCard: string
     take: (n: number) => string
     callUno: string
+    /** The button itself, short enough to sit beside a seat. */
+    callOut: string
+    /** Its accessible name, which has to say who is being accused. */
+    callOutOn: (name: string) => string
     clockwise: string
     anticlockwise: string
     inPlay: (colour: string) => string

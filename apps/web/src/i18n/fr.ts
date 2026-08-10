@@ -59,6 +59,11 @@ export const fr: Messages = {
       isYou
         ? `Tu as oublié de crier UNO et tu pioches ${cartes(count)}`
         : `${name} a oublié de crier UNO et pioche ${cartes(count)}`,
+    calledOut: (by, byIsYou, target, targetIsYou) => {
+      if (byIsYou) return `Tu as pris ${target} en flagrant délit : UNO oublié`
+      if (targetIsYou) return `${by} t’a pris en flagrant délit : UNO oublié`
+      return `${by} a pris ${target} en flagrant délit : UNO oublié`
+    },
     seatDisconnected: (name) => `${name} a perdu la connexion`,
     seatReconnected: (name, isYou) => (isYou ? 'Te revoilà' : `${name} est de retour`),
     seatLeft: (name) => `${name} a quitté la partie`,
@@ -98,6 +103,10 @@ export const fr: Messages = {
     secondsPerTurn: 'Secondes par tour',
     blazingHint:
       'Le temps écoulé, tu pioches — même si tu avais une carte à jouer. Les manches s’enchaînent cinq secondes après la précédente.',
+    tableRules: 'Règles de table',
+    liar: 'Laisser les joueurs dénoncer un UNO oublié',
+    liarHint:
+      'Oublier de crier UNO ne coûte rien, sauf si quelqu’un le remarque avant la fin de ton tour suivant. Surveillez-vous.',
     language: 'Langue',
   },
 
@@ -140,6 +149,8 @@ export const fr: Messages = {
     drawCard: 'Piocher',
     take: (n) => `Prendre ${String(n)}`,
     callUno: 'UNO !',
+    callOut: 'Menteur !',
+    callOutOn: (name) => `Accuser ${name} : menteur`,
     clockwise: 'Sens horaire',
     anticlockwise: 'Sens antihoraire',
     inPlay: (colour) => `${colour} en jeu`,

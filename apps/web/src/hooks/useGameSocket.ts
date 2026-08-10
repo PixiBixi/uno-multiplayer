@@ -1,5 +1,5 @@
 import type { ClientToServer, ErrorCode, MatchPace, ServerToClient } from '@uno/protocol'
-import type { MatchGoal, Move } from '@uno/engine'
+import type { MatchGoal, Move, TableRules } from '@uno/engine'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { io, type Socket } from 'socket.io-client'
 import { readRoomCodeFromUrl, writeRoomCodeToUrl } from '../lib/room-url.js'
@@ -73,8 +73,8 @@ export function useGameSocket() {
   }, [])
 
   const createRoom = useCallback(
-    (playerName: string, goal: MatchGoal, pace: MatchPace) => {
-      socketRef.current?.emit('room:create', { playerName, goal, pace }, (result) => {
+    (playerName: string, goal: MatchGoal, pace: MatchPace, rules: TableRules) => {
+      socketRef.current?.emit('room:create', { playerName, goal, pace, rules }, (result) => {
         if (!result.ok) {
           fail(result.error)
           return

@@ -40,6 +40,12 @@ describe('soundForEvent', () => {
     expect(soundForEvent({ type: 'unoCalled', seat: 0 }, 0)).toBe('uno')
   })
 
+  it('sounds a call-out with the same cue as the call it punishes', () => {
+    /* Reusing the UNO cue rather than inventing a sound: the two moments belong to
+       the same rule, and the cards it costs already arrive as a separate `draw`. */
+    expect(soundForEvent({ type: 'calledOut', by: 1, target: 0 }, 0)).toBe('uno')
+  })
+
   it('tells winning a round apart from watching one be won', () => {
     const ended: GameEvent = { type: 'roundEnded', winner: 0, awarded: [30, 0], scores: [30, 0] }
     expect(soundForEvent(ended, 0)).toBe('roundWon')

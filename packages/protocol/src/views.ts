@@ -41,6 +41,11 @@ export const BETWEEN_ROUNDS_SECONDS = 5
  */
 export type MatchPace = { turnSeconds: number } | null
 
+/* The optional table rules — the Liar call-out and whatever joins it — are NOT
+   here beside MatchPace, deliberately: a clock is a house setting the engine never
+   sees, while those change what the rules are and the reducer has to read them.
+   See `TableRules` in @uno/engine. */
+
 /** Alphabet without ambiguous characters: no O/0, no I/1. */
 export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 

@@ -51,6 +51,12 @@ export function Table({
   const acceptDraw = view.you.legalMoves.find((move) => move.type === 'acceptDraw')
   const canCallUno = view.you.legalMoves.some((move) => move.type === 'callUno')
 
+  /* The one move that is legal off turn, and the client still evaluates nothing:
+     an opponent gets a Liar button only because the server put a call-out against
+     that exact seat in this view. */
+  const callOutAgainst = (seat: number): Move | undefined =>
+    view.you.legalMoves.find((move) => move.type === 'callOut' && move.target === seat)
+
   const nameOf = (seat: number): string => {
     if (seat === view.you.seat) return t.table.you
     const opponent = view.opponents.find((candidate) => candidate.seat === seat)
@@ -112,17 +118,27 @@ export function Table({
           </svg>
         </button>
         <div className="table-grid">
-          {view.opponents.slice(0, 3).map((opponent, index) => (
-            <div className={`area-${AREAS[index] ?? 'north'}`} key={opponent.seat}>
-              <Seat
-                name={opponent.name}
-                handCount={opponent.handCount}
-                status={opponent.status}
-                isTurn={view.currentSeat === opponent.seat}
-                orientation={index === 1 ? 'horizontal' : 'vertical'}
-              />
-            </div>
-          ))}
+          {view.opponents.slice(0, 3).map((opponent, index) => {
+            const callOut = callOutAgainst(opponent.seat)
+            return (
+              <div className={`area-${AREAS[index] ?? 'north'}`} key={opponent.seat}>
+                <Seat
+                  name={opponent.name}
+                  handCount={opponent.handCount}
+                  status={opponent.status}
+                  isTurn={view.currentSeat === opponent.seat}
+                  orientation={index === 1 ? 'horizontal' : 'vertical'}
+                  onCallOut={
+                    callOut === undefined
+                      ? null
+                      : () => {
+                          onPlay(callOut)
+                        }
+                  }
+                />
+              </div>
+            )
+          })}
 
           <div className="area-centre">
             <CentreStack view={view} drawNonce={drawNonce} />

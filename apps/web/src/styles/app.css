@@ -505,6 +505,20 @@ h3 {
   margin-top: -46px;
 }
 
+/* Only ever rendered when the server offered the move, so it is deliberately loud:
+   the window it belongs to closes at the end of the accused seat's next turn. */
+.btn-liar {
+  background: var(--red);
+  border-color: transparent;
+  color: var(--bone);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  /* Narrower than a primary action but still 44px tall through .btn: a tap target
+     is a tap target wherever it sits. */
+  padding: 0.4rem 0.9rem;
+  font-size: var(--step--1);
+}
+
 .plate {
   display: inline-flex;
   align-items: center;

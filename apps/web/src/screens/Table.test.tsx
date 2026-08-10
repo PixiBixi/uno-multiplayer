@@ -92,6 +92,48 @@ describe('Table', () => {
     expect(onPlay).toHaveBeenCalledWith({ type: 'callUno' })
   })
 
+  it('offers no call-out unless the server put one in the view', () => {
+    // The client evaluates no rule: a hand of one card next door means nothing to
+    // it until the move arrives.
+    setup(viewWith({ opponents: [{ seat: 1, name: 'Ben', handCount: 1, status: 'active' }] }))
+    expect(screen.queryByRole('button', { name: /liar/i })).toBeNull()
+  })
+
+  it('puts a Liar button beside the opponent the server named, and only them', async () => {
+    const { onPlay } = setup(
+      viewWith({
+        you: { seat: 0, hand: [mine], legalMoves: [{ type: 'callOut', target: 2 }] },
+      }),
+    )
+    const buttons = screen.getAllByRole('button', { name: /liar/i })
+    expect(buttons).toHaveLength(1)
+
+    /* Beside Cleo, seat 2 — the second opponent in the view, which the layout puts
+       at the north edge. A button under the wrong name accuses the wrong player. */
+    const north = document.querySelector('.area-north')
+    expect(north?.textContent).toContain('Cleo')
+    expect(north?.contains(buttons[0] ?? null)).toBe(true)
+
+    await userEvent.click(buttons[0] as HTMLElement)
+    expect(onPlay).toHaveBeenCalledWith({ type: 'callOut', target: 2 })
+  })
+
+  it('offers one per vulnerable opponent', () => {
+    setup(
+      viewWith({
+        you: {
+          seat: 0,
+          hand: [mine],
+          legalMoves: [
+            { type: 'callOut', target: 1 },
+            { type: 'callOut', target: 3 },
+          ],
+        },
+      }),
+    )
+    expect(screen.getAllByRole('button', { name: /liar/i })).toHaveLength(2)
+  })
+
   it('labels the accept-draw control with what it costs', () => {
     setup(
       viewWith({

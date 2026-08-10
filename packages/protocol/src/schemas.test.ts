@@ -42,6 +42,37 @@ describe('roomCreateSchema', () => {
   it('rejects a non-string name', () => {
     expect(roomCreateSchema.safeParse({ playerName: 42 }).success).toBe(false)
   })
+
+  it('takes the table rules the host chose', () => {
+    const parsed = roomCreateSchema.parse({
+      playerName: 'Jeremy',
+      goal: DEFAULT_MATCH_GOAL,
+      pace: null,
+      rules: { liar: true },
+    })
+    expect(parsed.rules).toEqual({ liar: true })
+  })
+
+  it('falls back to plain UNO when the field is absent', () => {
+    // A client that predates table options still gets a table it understands.
+    const parsed = roomCreateSchema.parse({
+      playerName: 'Jeremy',
+      goal: DEFAULT_MATCH_GOAL,
+      pace: null,
+    })
+    expect(parsed.rules).toEqual({ liar: false })
+  })
+
+  it('rejects rules that are not booleans', () => {
+    expect(
+      roomCreateSchema.safeParse({
+        playerName: 'Jeremy',
+        goal: DEFAULT_MATCH_GOAL,
+        pace: null,
+        rules: { liar: 'yes' },
+      }).success,
+    ).toBe(false)
+  })
 })
 
 describe('roomJoinSchema', () => {
@@ -114,6 +145,18 @@ describe('moveSchema', () => {
 
   it('rejects an unknown move type', () => {
     expect(moveSchema.safeParse({ type: 'teleport' }).success).toBe(false)
+  })
+
+  it('accepts a call-out against a seat that could exist', () => {
+    expect(moveSchema.safeParse({ type: 'callOut', target: 3 }).success).toBe(true)
+  })
+
+  it('rejects a call-out against a seat that could not', () => {
+    // Bounded here as well as in the engine: a client can send whatever it likes.
+    expect(moveSchema.safeParse({ type: 'callOut', target: 4 }).success).toBe(false)
+    expect(moveSchema.safeParse({ type: 'callOut', target: -1 }).success).toBe(false)
+    expect(moveSchema.safeParse({ type: 'callOut', target: 1.5 }).success).toBe(false)
+    expect(moveSchema.safeParse({ type: 'callOut' }).success).toBe(false)
   })
 
   it('rejects a cardId that is absurdly long', () => {

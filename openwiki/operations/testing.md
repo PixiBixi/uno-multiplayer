@@ -48,6 +48,10 @@ is the difference between a guard and a decoration:
 - Deleting the `game:nextRound` handler fails four socket tests.
 - Forcing a play instead of a draw on timeout fails two Blazing tests.
 - Bypassing the statistics funnel on the move path fails two tally tests.
+- Dropping the chosen table rules on the `room:create` path fails two Liar socket
+  tests; making a call-out legal against a seat that is not vulnerable fails twelve
+  across the engine, the room and the wire; and hiding the Liar button while the
+  move is offered fails four in the browser suite.
 
 Equally worth knowing: some things **cannot** drift and so cannot be tested for. The
 help panel reads `cardPoints` from the engine, and so do its tests — change the

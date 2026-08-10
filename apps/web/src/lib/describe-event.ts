@@ -28,6 +28,13 @@ export function describeEvent(
       return m.unoCalled(nameOf(event.seat), event.seat === mySeat)
     case 'unoPenalty':
       return m.unoPenalty(nameOf(event.seat), event.seat === mySeat, event.count)
+    case 'calledOut':
+      return m.calledOut(
+        nameOf(event.by),
+        event.by === mySeat,
+        nameOf(event.target),
+        event.target === mySeat,
+      )
     case 'seatDisconnected':
       return m.seatDisconnected(nameOf(event.seat))
     case 'seatReconnected':

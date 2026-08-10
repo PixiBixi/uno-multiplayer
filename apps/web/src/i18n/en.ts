@@ -48,6 +48,11 @@ export const en: Messages = {
       count === 1 ? `${name} drew a card` : `${name} drew ${cards(count)}`,
     unoCalled: (name, _isYou) => `${name} called UNO`,
     unoPenalty: (name, _isYou, count) => `${name} forgot to call UNO and drew ${cards(count)}`,
+    calledOut: (by, byIsYou, target, targetIsYou) => {
+      if (byIsYou) return `You caught ${target} without UNO`
+      if (targetIsYou) return `${by} caught you without UNO`
+      return `${by} caught ${target} without UNO`
+    },
     seatDisconnected: (name) => `${name} lost connection`,
     // The only verb in the log that changes person: everything else is past tense.
     seatReconnected: (name, isYou) => (isYou ? 'You are back' : `${name} is back`),
@@ -88,6 +93,10 @@ export const en: Messages = {
     secondsPerTurn: 'Seconds per turn',
     blazingHint:
       'Run out and you draw a card, even if you had one to play. Rounds deal themselves five seconds after the last one ends.',
+    tableRules: 'House rules',
+    liar: 'Let players call out a forgotten UNO',
+    liarHint:
+      'Forgetting to call UNO costs nothing unless somebody says so before the end of your next turn. Watch each other.',
     language: 'Language',
   },
 
@@ -130,6 +139,8 @@ export const en: Messages = {
     drawCard: 'Draw card',
     take: (n) => `Take ${String(n)}`,
     callUno: 'UNO!',
+    callOut: 'Liar!',
+    callOutOn: (name) => `Call ${name} a liar`,
     clockwise: 'Clockwise',
     anticlockwise: 'Anticlockwise',
     inPlay: (colour) => `${colour} in play`,

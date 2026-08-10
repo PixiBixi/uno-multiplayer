@@ -53,7 +53,11 @@ export function soundForEvent(event: GameEvent, mySeat: number): SoundName | nul
     case 'cardsDrawn':
     case 'unoPenalty':
       return 'draw'
+    /* A call-out shares the cue of the call it punishes rather than getting one of
+       its own: the two belong to a single rule, and the cards it costs already
+       arrive separately as a draw. */
     case 'unoCalled':
+    case 'calledOut':
       return 'uno'
     case 'turnTimedOut':
       /* Sounded for everyone, not only the seat it happened to: at speed the

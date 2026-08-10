@@ -1,6 +1,6 @@
-import type { MatchGoal } from '@uno/engine'
+import type { MatchGoal, TableRules } from '@uno/engine'
 import { randomInt } from 'node:crypto'
-import { err, ok, type Result } from '@uno/engine'
+import { DEFAULT_TABLE_RULES, err, ok, type Result } from '@uno/engine'
 import {
   BETWEEN_ROUNDS_SECONDS,
   MIN_SEATS,
@@ -59,7 +59,11 @@ export class RoomManager {
     return this.rooms.size
   }
 
-  create(goal: MatchGoal, pace: MatchPace = null): Result<Room, ErrorCode> {
+  create(
+    goal: MatchGoal,
+    pace: MatchPace = null,
+    rules: TableRules = DEFAULT_TABLE_RULES,
+  ): Result<Room, ErrorCode> {
     if (this.rooms.size >= this.maxRooms) return err('server_full')
 
     // Retry on the astronomically unlikely collision rather than overwrite.
@@ -69,7 +73,7 @@ export class RoomManager {
     }
     if (this.rooms.has(code)) return err('server_full')
 
-    const room = new Room(code, this.seedSource(), goal, pace)
+    const room = new Room(code, this.seedSource(), goal, pace, rules)
     this.rooms.set(code, room)
     return ok(room)
   }

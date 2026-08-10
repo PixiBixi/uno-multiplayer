@@ -1,3 +1,4 @@
+import { DEFAULT_TABLE_RULES } from './types.js'
 import type { Card, CardId, Color, GameState, NumberValue, Seat } from './types.js'
 
 /** Every card present in the state, for the conservation invariant. */
@@ -39,6 +40,7 @@ export const seatOf = (index: number, hand: Card[], over: Partial<Seat> = {}): S
   status: 'active',
   hand,
   unoCalled: false,
+  vulnerable: false,
   ...over,
 })
 
@@ -54,6 +56,7 @@ export const stateOf = (over: Partial<GameState> = {}): GameState => ({
   rngState: 1,
   phase: 'playing',
   winner: null,
+  rules: DEFAULT_TABLE_RULES,
   ...over,
 })
 

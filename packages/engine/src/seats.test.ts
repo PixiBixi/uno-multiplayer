@@ -52,6 +52,14 @@ describe('markSeatLeft', () => {
     expect(markSeatLeft(state, 0).seats[1]?.unoCalled).toBe(false)
   })
 
+  it('takes any Liar window with it, since the hand went back to the pile', () => {
+    const state = stateOf({
+      rules: { liar: true },
+      seats: [seatOf(0, []), seatOf(1, [], { vulnerable: true }), seatOf(2, [])],
+    })
+    expect(markSeatLeft(state, 1).seats[1]?.vulnerable).toBe(false)
+  })
+
   it('aborts the game when fewer than two seats remain active', () => {
     const state = stateOf({ seats: [seatOf(0, []), seatOf(1, [])] })
     const next = markSeatLeft(state, 1)

@@ -18,6 +18,10 @@ function sameMove(a: Move, b: Move): boolean {
   if (a.type === 'play' && b.type === 'play') {
     return a.cardId === b.cardId && a.chosenColor === b.chosenColor
   }
+  /* The target matters as much as the type. Comparing the type alone would let a
+     call-out against a vulnerable seat authorise one against any seat, charging
+     two cards to somebody who did nothing wrong. */
+  if (a.type === 'callOut' && b.type === 'callOut') return a.target === b.target
   return true
 }
 
@@ -69,6 +73,38 @@ function beginTurn(state: GameState, seatIndex: number): GameState {
     currentSeat: seatIndex,
     seats: state.seats.map((s) => (s.index === seatIndex ? { ...s, unoCalled: false } : s)),
   }
+}
+
+/**
+ * Closes the Liar window on one seat. Called out, called UNO, or simply out of
+ * time — the three ways the window shuts all land here.
+ */
+function closeWindow(state: GameState, seatIndex: number): GameState {
+  if (state.seats[seatIndex]?.vulnerable !== true) return state
+  return {
+    ...state,
+    seats: state.seats.map((s) => (s.index === seatIndex ? { ...s, vulnerable: false } : s)),
+  }
+}
+
+/** Opens one: this seat is holding a single card and never said so. */
+function openWindow(state: GameState, seatIndex: number): GameState {
+  return {
+    ...state,
+    seats: state.seats.map((s) => (s.index === seatIndex ? { ...s, vulnerable: true } : s)),
+  }
+}
+
+/**
+ * Ends `from`'s turn and hands it on.
+ *
+ * Closing the window here is the bound that makes the rule a game rather than a
+ * trap: a seat stays open to an accusation until the end of its NEXT turn, which
+ * is this moment, and not a second longer.
+ */
+function passTurn(state: GameState, from: number, steps: number): GameState {
+  const closed = closeWindow(state, from)
+  return beginTurn(closed, advance(closed, from, steps))
 }
 
 function applyPlay(
@@ -129,10 +165,36 @@ function applyPlay(
   // mutually exclusive (zero cards versus exactly one).
   if (hand.length === 0) return ok({ ...next, phase: 'finished', winner: seatIndex })
 
-  // Going down to a single card without calling UNO costs two cards.
-  if (hand.length === 1 && !seat.unoCalled) next = drawInto(next, seatIndex, UNO_PENALTY)
+  /* This seat's turn is ending, so any window opened on an earlier turn closes —
+     deliberately before a new one may open just below. The other order would let
+     a seat that forgets UNO twice in a row escape the second one. */
+  next = closeWindow(next, seatIndex)
+
+  if (hand.length === 1 && !seat.unoCalled) {
+    /* With `liar` on, forgetting costs nothing until somebody notices; the seat
+       merely becomes open to an accusation. Without it the penalty is automatic,
+       exactly as it always was. */
+    next = state.rules.liar ? openWindow(next, seatIndex) : drawInto(next, seatIndex, UNO_PENALTY)
+  }
 
   return ok(beginTurn(next, advance(next, seatIndex, steps)))
+}
+
+/**
+ * The Liar call-out. Two cards for the target — the same UNO_PENALTY the
+ * automatic rule charged, so switching the option on cannot make forgetting
+ * cheaper or dearer — and nothing at all for the accuser.
+ *
+ * Whose turn it is never changes and no round ever ends here, which keeps the one
+ * off-turn move in the game out of the turn-advance logic entirely.
+ */
+function applyCallOut(
+  state: GameState,
+  move: Extract<Move, { type: 'callOut' }>,
+): Result<GameState, RuleViolation> {
+  // Unreachable through the legalMoves gate, which only offers existing seats.
+  if (state.seats[move.target] === undefined) return err('illegal_move')
+  return ok(closeWindow(drawInto(state, move.target, UNO_PENALTY), move.target))
 }
 
 export function applyMove(
@@ -141,7 +203,10 @@ export function applyMove(
   move: Move,
 ): Result<GameState, RuleViolation> {
   if (state.phase !== 'playing') return err('game_finished')
-  if (state.currentSeat !== seatIndex) return err('not_your_turn')
+  /* A call-out is exempt, and is the only move that is. Everything else still
+     answers to whose turn it is, and is refused as such rather than as an
+     illegal move, so the client can say which of the two went wrong. */
+  if (state.currentSeat !== seatIndex && move.type !== 'callOut') return err('not_your_turn')
   const seat = state.seats[seatIndex]
   if (seat === undefined) return err('not_your_turn')
   if (seat.status !== 'active') return err('seat_not_active')
@@ -153,22 +218,28 @@ export function applyMove(
 
   switch (move.type) {
     case 'callUno':
+      /* Calling it closes any window on this seat: a late call still counts, which
+         is the escape a vulnerable seat has on its own next turn. */
       return ok({
         ...state,
-        seats: state.seats.map((s) => (s.index === seatIndex ? { ...s, unoCalled: true } : s)),
+        seats: state.seats.map((s) =>
+          s.index === seatIndex ? { ...s, unoCalled: true, vulnerable: false } : s,
+        ),
       })
     case 'draw': {
       const drawn = drawInto(state, seatIndex, 1)
-      return ok(beginTurn(drawn, advance(drawn, seatIndex, 1)))
+      return ok(passTurn(drawn, seatIndex, 1))
     }
     case 'acceptDraw': {
       const debt = state.pendingDraw
       if (debt === null) return err('illegal_move')
       const drawn = drawInto({ ...state, pendingDraw: null }, seatIndex, debt.amount)
-      return ok(beginTurn(drawn, advance(drawn, seatIndex, 1)))
+      return ok(passTurn(drawn, seatIndex, 1))
     }
     case 'play':
       return applyPlay(state, seatIndex, move)
+    case 'callOut':
+      return applyCallOut(state, move)
   }
 }
 
@@ -193,6 +264,8 @@ export function skipDisconnectedTurn(state: GameState): GameState {
         ? drawInto({ ...next, pendingDraw: null }, from, debt.amount)
         : drawInto(next, from, 1)
 
+    // Their turn happened, however absently, so their window closes with it.
+    next = closeWindow(next, from)
     const gaining = advance(next, from, 1)
     if (gaining === from) break
     next = beginTurn(next, gaining)

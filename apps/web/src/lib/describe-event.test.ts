@@ -43,6 +43,19 @@ describe('describeEvent', () => {
     )
   })
 
+  it('describes a call-out from either side of it', () => {
+    const asYou = (seat: number) => (seat === 0 ? 'You' : nameOf(seat))
+    expect(describeEvent({ type: 'calledOut', by: 1, target: 2 }, nameOf, NOT_ME, en)).toBe(
+      'Ben caught Cleo without UNO',
+    )
+    expect(describeEvent({ type: 'calledOut', by: 0, target: 2 }, asYou, 0, en)).toBe(
+      'You caught Cleo without UNO',
+    )
+    expect(describeEvent({ type: 'calledOut', by: 1, target: 0 }, asYou, 0, en)).toBe(
+      'Ben caught you without UNO',
+    )
+  })
+
   it('describes presence changes', () => {
     expect(describeEvent({ type: 'seatDisconnected', seat: 1 }, nameOf, NOT_ME, en)).toBe(
       'Ben lost connection',

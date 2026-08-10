@@ -4,7 +4,7 @@ import { initGame } from './init.js'
 import { applyMove } from './reducer.js'
 import { legalMoves } from './rules.js'
 import { expectConservation } from './test-helpers.js'
-import type { GameState } from './types.js'
+import type { GameState, TableRules } from './types.js'
 
 const MAX_TURNS = 600
 
@@ -44,8 +44,9 @@ function playOut(
  * termination is meaningful — a random policy draws so often that hands grow
  * without bound.
  */
-function playOutGreedy(seatCount: number, seed: number): GameState {
-  const init = initGame({ names: ['a', 'b', 'c', 'd'].slice(0, seatCount), seed })
+function playOutGreedy(seatCount: number, seed: number, rules?: TableRules): GameState {
+  const names = ['a', 'b', 'c', 'd'].slice(0, seatCount)
+  const init = rules === undefined ? initGame({ names, seed }) : initGame({ names, seed, rules })
   if (!init.okay) throw new Error(init.error)
 
   let state = init.value
@@ -183,6 +184,126 @@ describe('state validity', () => {
       const a = playOut(4, 31337, [0, 2, 1, 4]).final
       const b = playOut(4, 31337, [0, 2, 1, 4]).final
       expect(a).toEqual(b)
+    },
+    PROPERTY_TIMEOUT_MS,
+  )
+})
+
+/**
+ * A Liar table where nobody ever calls UNO and everybody is watching: before each
+ * turn, every seat that can call somebody out does.
+ *
+ * The policy is deliberately not the sensible one. A seat that calls UNO never
+ * becomes vulnerable, so a greedy player exercises none of this — the interesting
+ * games are the ones full of forgotten UNOs.
+ */
+function playOutWatchful(
+  seatCount: number,
+  seed: number,
+  picks: readonly number[],
+): { states: GameState[]; callOuts: number } {
+  const init = initGame({
+    names: ['a', 'b', 'c', 'd'].slice(0, seatCount),
+    seed,
+    rules: { liar: true },
+  })
+  if (!init.okay) throw new Error(init.error)
+
+  let state = init.value
+  const states: GameState[] = [state]
+  let callOuts = 0
+
+  for (let turn = 0; turn < MAX_TURNS && state.phase === 'playing'; turn++) {
+    for (const watcher of state.seats) {
+      const callOut = legalMoves(state, watcher.index).find((m) => m.type === 'callOut')
+      if (callOut === undefined) continue
+      const called = applyMove(state, watcher.index, callOut)
+      if (!called.okay) throw new Error(`legal call-out rejected: ${called.error}`)
+      state = called.value
+      states.push(state)
+      callOuts += 1
+    }
+
+    const moves = legalMoves(state, state.currentSeat)
+    const playable = moves.filter((m) => m.type === 'play')
+    const pick = picks[turn % picks.length] ?? 0
+    const move =
+      playable.length > 0
+        ? playable[pick % playable.length]
+        : (moves.find((m) => m.type === 'acceptDraw') ?? moves.find((m) => m.type === 'draw'))
+    if (move === undefined) break
+    const result = applyMove(state, state.currentSeat, move)
+    if (!result.okay) throw new Error(`legal move rejected: ${result.error}`)
+    state = result.value
+    states.push(state)
+  }
+
+  return { states, callOuts }
+}
+
+describe('the Liar call-out keeps every invariant', () => {
+  it(
+    'conserves the deck, including through a penalty nobody was on turn for',
+    () => {
+      fc.assert(
+        fc.property(...gameArbitraries, (seatCount, seed, picks) => {
+          for (const state of playOutWatchful(seatCount, seed, picks).states) {
+            expectConservation(state)
+          }
+        }),
+        { numRuns: 200 },
+      )
+    },
+    PROPERTY_TIMEOUT_MS,
+  )
+
+  it(
+    'never offers a call-out that applyMove then rejects',
+    () => {
+      fc.assert(
+        fc.property(...gameArbitraries, (seatCount, seed, picks) => {
+          // playOutWatchful throws if anything legalMoves offered is refused.
+          expect(() => playOutWatchful(seatCount, seed, picks)).not.toThrow()
+        }),
+        { numRuns: 200 },
+      )
+    },
+    PROPERTY_TIMEOUT_MS,
+  )
+
+  it(
+    'keeps currentSeat on an active seat, which a call-out must never move',
+    () => {
+      fc.assert(
+        fc.property(...gameArbitraries, (seatCount, seed, picks) => {
+          for (const state of playOutWatchful(seatCount, seed, picks).states) {
+            if (state.phase !== 'playing') continue
+            expect(state.seats[state.currentSeat]?.status).toBe('active')
+          }
+        }),
+        { numRuns: 200 },
+      )
+    },
+    PROPERTY_TIMEOUT_MS,
+  )
+
+  it('actually calls somebody out, or the three properties above prove nothing', () => {
+    const total = [0, 1, 2, 3, 4]
+      .map((seed) => playOutWatchful(3, seed, [0, 1, 2]).callOuts)
+      .reduce((sum, count) => sum + count, 0)
+    expect(total).toBeGreaterThan(0)
+  })
+
+  it(
+    'still terminates under greedy play with the option on',
+    () => {
+      for (const seatCount of [2, 3, 4]) {
+        for (let seed = 0; seed < 40; seed++) {
+          const final = playOutGreedy(seatCount, seed, { liar: true })
+          expect(final.phase, `seatCount=${seatCount} seed=${seed}`).toBe('finished')
+          expect(final.seats[final.winner ?? -1]?.hand).toHaveLength(0)
+        }
+      }
     },
     PROPERTY_TIMEOUT_MS,
   )

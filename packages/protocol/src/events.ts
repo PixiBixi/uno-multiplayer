@@ -1,4 +1,4 @@
-import type { Card, MatchGoal, Move } from '@uno/engine'
+import type { Card, MatchGoal, Move, TableRules } from '@uno/engine'
 import type { LobbyView, MatchPace, PlayerView } from './views.js'
 
 export type ErrorCode =
@@ -23,6 +23,10 @@ export type GameEvent =
   | { type: 'cardsDrawn'; seat: number; count: number }
   | { type: 'unoCalled'; seat: number }
   | { type: 'unoPenalty'; seat: number; count: number }
+  /* Who noticed, and who it cost. The two cards themselves still arrive as
+     `unoPenalty` against the target, so the statistics and the sound cue for a
+     forgotten UNO keep working whichever rule charged it. */
+  | { type: 'calledOut'; by: number; target: number }
   | { type: 'seatDisconnected'; seat: number }
   | { type: 'seatReconnected'; seat: number }
   | { type: 'seatLeft'; seat: number }
@@ -48,7 +52,7 @@ export type Ack<T = Empty> = (result: ({ ok: true } & T) | { ok: false; error: E
 
 export type ClientToServer = {
   'room:create': (
-    payload: { playerName: string; goal: MatchGoal; pace: MatchPace },
+    payload: { playerName: string; goal: MatchGoal; pace: MatchPace; rules: TableRules },
     ack: Ack<{ roomCode: string; sessionToken: string; seat: number }>,
   ) => void
   'room:join': (

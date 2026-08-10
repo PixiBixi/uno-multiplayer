@@ -17,10 +17,41 @@ likely to surprise you are:
 - **Drawing voluntarily ends your turn.** There is no "you may now play the card
   you drew" sub-state, which removes a whole class of UI and protocol complexity.
 - **Calling UNO is legal only during your own turn, before playing.** Going down to
-  one card without it costs two cards, applied automatically.
+  one card without it costs two cards, applied automatically — unless the table
+  opted into the Liar call-out below, which makes the penalty manual.
 
 Deliberately not implemented: the strict Mattel +4 challenge (it needs a bluff UI
 and hand inspection), the 7-0 variant, and jump-in.
+
+## Table rules: the Liar call-out
+
+`TableRules` in `packages/engine/src/types.ts`, chosen by the host at creation and
+off by default. It lives in the engine rather than beside `MatchPace` in the
+protocol, unlike the clock: a time limit is a house setting the engine never sees,
+while this one changes what the rules ARE and the reducer has to read it.
+
+With `liar` on, a seat that reaches one card without calling UNO becomes
+`vulnerable` instead of drawing two, and any other **active** seat may play
+`{ type: 'callOut', target }` to charge it the same `UNO_PENALTY`.
+
+Three things about it are worth knowing before touching that code:
+
+- **It is the only move legal off turn.** `legalMoves` used to return `[]` for any
+  seat that is not `currentSeat`; that early return is now conditional, and an
+  off-turn seat gets call-outs and nothing else. `applyMove`'s turn check exempts
+  `callOut` and nothing else.
+- **The window is bounded to the end of the accused seat's next turn**, and closes
+  in `passTurn` — the one place a turn ends. Without a bound a player could be
+  accused ten minutes later, which is a trap rather than a game. It is a field on
+  the seat and not a timer, because the engine has no clock and `Room` is
+  timer-free.
+- **A wrong accusation cannot be made**, since the move is only offered while the
+  target is genuinely vulnerable. Penalising a bad guess was rejected: it punishes
+  paying attention badly instead of rewarding paying attention well.
+
+`sameMove` compares the target as well as the type. Without that, a legal call-out
+against one seat would authorise one against any seat — the sort of gap the single
+`legalMoves` gate exists to prevent.
 
 ## Scoring a match
 

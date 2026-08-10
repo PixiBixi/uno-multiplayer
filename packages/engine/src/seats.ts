@@ -25,7 +25,12 @@ export function markSeatLeft(state: GameState, seatIndex: number): GameState {
     drawPile: reshuffled.items,
     rngState: reshuffled.state,
     seats: state.seats.map((s) =>
-      s.index === seatIndex ? { ...s, hand: [], status: 'left' as const } : s,
+      s.index === seatIndex
+        ? /* Any Liar window goes with the hand. Nobody could accuse a seat that has
+             left — legalMoves only offers active targets — but leaving the flag set
+             on an empty hand is a lie about the state. */
+          { ...s, hand: [], status: 'left' as const, vulnerable: false }
+        : s,
     ),
   }
 

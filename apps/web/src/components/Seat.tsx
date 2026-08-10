@@ -17,9 +17,16 @@ type SeatProps = {
   status: SeatStatus
   isTurn: boolean
   orientation: 'horizontal' | 'vertical'
+  /**
+   * Null unless the server offered a call-out against this seat. Null rather than
+   * an optional prop so the caller has to say which it means: the whole point is
+   * that the button exists only because a move arrived, never because the client
+   * counted cards.
+   */
+  onCallOut: (() => void) | null
 }
 
-export function Seat({ name, handCount, status, isTurn, orientation }: SeatProps) {
+export function Seat({ name, handCount, status, isTurn, orientation, onCallOut }: SeatProps) {
   const t = useMessages()
   const shown = Math.min(handCount, MAX_FANNED)
   const statusText = STATUS_TEXT[status]
@@ -41,6 +48,18 @@ export function Seat({ name, handCount, status, isTurn, orientation }: SeatProps
         {isTurn && <span className="plate-note">{t.table.theirTurn}</span>}
         {statusText !== null && <span className="plate-note">{statusText}</span>}
       </p>
+      {onCallOut !== null && (
+        // Labelled with the name too: "Liar!" three times over is ambiguous to
+        // anyone who cannot see which seat it sits under.
+        <button
+          type="button"
+          className="btn btn-liar"
+          aria-label={t.table.callOutOn(name)}
+          onClick={onCallOut}
+        >
+          {t.table.callOut}
+        </button>
+      )}
     </div>
   )
 }

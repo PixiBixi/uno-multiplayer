@@ -88,16 +88,16 @@ player keep their place.
 
 Official rules plus draw stacking, with these points pinned down explicitly:
 
-| Point                         | Decision                                                                                                                                      |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Draw stacking                 | **Strictly same type**: +2 answers +2, +4 answers +4, no crossover. Colour is irrelevant when raising.                                        |
-| Reverse with 2 active players | Acts as a skip (official rule).                                                                                                               |
-| Starting card                 | The first number card from the top of the shuffled deck. Deterministic, no unbounded loop.                                                    |
-| Drawing voluntarily           | Ends your turn. No "you may now play the card you drew" sub-state.                                                                            |
-| Calling UNO                   | Legal only during your own turn, before playing. Going down to one card without it costs two cards.                                           |
-| Empty draw pile               | The discard pile minus its top card is reshuffled into a new draw pile. If that is still not enough, the draw is capped at what is available. |
-| Victory                       | First empty hand wins the round; the round ends immediately.                                                                                  |
-| Card conservation             | Hands + draw pile + discard pile always total 108 cards with distinct ids. Enforced by a property test.                                       |
+| Point                         | Decision                                                                                                                                                                 |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Draw stacking                 | **Strictly same type**: +2 answers +2, +4 answers +4, no crossover. Colour is irrelevant when raising.                                                                   |
+| Reverse with 2 active players | Acts as a skip (official rule).                                                                                                                                          |
+| Starting card                 | The first number card from the top of the shuffled deck. Deterministic, no unbounded loop.                                                                               |
+| Drawing voluntarily           | Ends your turn. No "you may now play the card you drew" sub-state.                                                                                                       |
+| Calling UNO                   | Legal only during your own turn, before playing. Going down to one card without it costs two cards — automatically, unless the table plays with the Liar call-out below. |
+| Empty draw pile               | The discard pile minus its top card is reshuffled into a new draw pile. If that is still not enough, the draw is capped at what is available.                            |
+| Victory                       | First empty hand wins the round; the round ends immediately.                                                                                                             |
+| Card conservation             | Hands + draw pile + discard pile always total 108 cards with distinct ids. Enforced by a property test.                                                                  |
 
 ### Scoring a match
 
@@ -120,6 +120,26 @@ at 20, both wilds at 50.
 
 Not implemented, deliberately: the strict Mattel +4 challenge (it needs a bluff
 UI and hand inspection), the 7-0 variant, and jump-in.
+
+### The Liar call-out
+
+An optional house rule, chosen by the host when creating the table and off by
+default: **forgetting to call UNO costs nothing unless somebody says so.** The
+automatic penalty removes the part of UNO people actually enjoy — watching each
+other — so this hands it back.
+
+A seat becomes open to an accusation the moment it drops to one card without having
+called UNO. Any other player may then press **Liar!** beside that seat, and the
+accused draws the same two cards the automatic rule charged.
+
+| Point                       | Decision                                                                                                                                                |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| How long the window is open | Until the end of the accused seat's **next** turn. Unbounded, a player could be accused ten minutes later, which is not a game but a trap.              |
+| Whose turn may accuse       | Anybody's. This is the only move in the game that is legal **off turn** — an accusation you could make only on your own turn would be useless.          |
+| A wrong accusation          | Cannot happen: the move is only offered while the target really is open to one. Penalising a bad guess punishes paying attention badly, which is worse. |
+| The turn order              | Untouched. A call-out is a side effect on one hand and never ends a round, which keeps it out of the turn-advance logic entirely.                       |
+| Escaping it                 | Call UNO on your own next turn, before playing. A late call still counts.                                                                               |
+| How it is tracked           | A `vulnerable` flag on the seat, not a timer. The window is measured in turns, which the engine already counts, and the engine has no clock.            |
 
 ## Language
 
@@ -221,6 +241,7 @@ emit-only solution and excludes tests.
 - [x] Match scoring: points target or fixed rounds, official card values
 - [x] Sound: synthesised cues for play, draws, action cards, UNO, turn and endings
 - [x] Blazing: an optional per-turn clock, with rounds that deal themselves
+- [x] The Liar call-out: an optional table rule for a manual UNO penalty
 - [x] End-of-match awards, counted from the event feed
 - [x] English and French, with each language owning its own grammar
 - [x] An error boundary, so a bad render explains itself instead of blanking

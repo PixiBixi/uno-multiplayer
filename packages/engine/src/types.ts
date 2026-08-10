@@ -33,7 +33,34 @@ export type Seat = {
   hand: Card[]
   /** Reset to false at the start of each of this seat's turns. */
   unoCalled: boolean
+  /**
+   * Set when this seat reached one card without calling UNO, on a table that
+   * opted into `liar`. Cleared when it calls UNO, when somebody calls it out, or
+   * when its next turn ends.
+   *
+   * A field rather than a timer because the engine has no clock and `Room` is
+   * deliberately timer-free. The window is measured in turns, which the engine
+   * already counts.
+   */
+  vulnerable: boolean
 }
+
+/**
+ * House rules a table may switch on, chosen by the host at creation. Off by
+ * default: a group that wants plain UNO gets plain UNO.
+ *
+ * Lives here rather than beside `MatchPace` in the protocol, unlike the clock: a
+ * time limit is a house setting the engine never sees, while these change what
+ * the rules ARE, so the reducer has to read them — and the engine cannot import
+ * the protocol.
+ */
+export type TableRules = {
+  /** Forgetting UNO costs nothing unless somebody calls it out. */
+  liar: boolean
+}
+
+/** Plain UNO, which is what a host who picks nothing gets. */
+export const DEFAULT_TABLE_RULES: TableRules = { liar: false }
 
 /**
  * Outstanding draw debt. `kind` mirrors the card's own `kind`, which turns the
@@ -57,6 +84,9 @@ export type GameState = {
   rngState: number
   phase: GamePhase
   winner: number | null
+  /** Which optional rules this table plays. Part of the state, so a game stays
+   *  replayable from `(seed, rules, moves[])` alone. */
+  rules: TableRules
 }
 
 /**
@@ -84,6 +114,12 @@ export type Move =
   | { type: 'draw' }
   | { type: 'acceptDraw' }
   | { type: 'callUno' }
+  /**
+   * Accusing another seat of holding one card without having called UNO. The one
+   * move that is legal off turn: an accusation you could only make on your own
+   * turn would be useless.
+   */
+  | { type: 'callOut'; target: number }
 
 export type RuleViolation = 'game_finished' | 'not_your_turn' | 'illegal_move' | 'seat_not_active'
 

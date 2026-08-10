@@ -88,6 +88,16 @@ describe('grammar each language owns', () => {
 
     expect(CATALOGUES.fr.event.cardsDrawn('Toi', true, 2)).toContain('Tu as pioché')
     expect(CATALOGUES.fr.event.cardsDrawn('Ana', false, 2)).toContain('Ana a pioché')
+
+    /* A call-out has two people in it, so both persons have to be handled: the
+       accuser and the accused each change the verb in French. */
+    expect(CATALOGUES.fr.event.calledOut('Toi', true, 'Ana', false)).toContain('Tu as pris')
+    expect(CATALOGUES.fr.event.calledOut('Ana', false, 'Toi', true)).toContain('t’a pris')
+  })
+
+  it('names the call-out button in each language', () => {
+    expect(CATALOGUES.en.table.callOut).toBe('Liar!')
+    expect(CATALOGUES.fr.table.callOut).toBe('Menteur !')
   })
 
   it('covers every error code in both languages', () => {

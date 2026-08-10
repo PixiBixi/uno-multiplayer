@@ -26,7 +26,19 @@ describe('Home', () => {
     const { onCreate } = setup()
     await userEvent.type(screen.getByLabelText(/your name/i), '  Ana  ')
     await userEvent.click(screen.getByRole('button', { name: /create/i }))
-    expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null)
+    expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
+      liar: false,
+    })
+  })
+
+  it('switches the Liar call-out on', async () => {
+    const { onCreate } = setup()
+    await userEvent.type(screen.getByLabelText(/your name/i), 'Ana')
+    await userEvent.click(screen.getByLabelText(/call out/i))
+    await userEvent.click(screen.getByRole('button', { name: /create/i }))
+    expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
+      liar: true,
+    })
   })
 
   it('caps the name at the protocol limit', async () => {

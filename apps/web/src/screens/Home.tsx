@@ -1,4 +1,4 @@
-import type { MatchGoal } from '@uno/engine'
+import type { MatchGoal, TableRules } from '@uno/engine'
 import type { MatchPace } from '@uno/protocol'
 import {
   DEFAULT_MATCH_GOAL,
@@ -24,7 +24,7 @@ const ROUND_PRESETS = [1, 3, 5] as const
 const TURN_PRESETS = [5, 10, 15, 30] as const
 
 type HomeProps = {
-  onCreate: (name: string, goal: MatchGoal, pace: MatchPace) => void
+  onCreate: (name: string, goal: MatchGoal, pace: MatchPace, rules: TableRules) => void
   onJoin: (roomCode: string, name: string) => void
   error: string | null
   prefilledCode: string | null
@@ -44,6 +44,9 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
   const [rounds, setRounds] = useState(3)
   const [blazing, setBlazing] = useState(false)
   const [turnSeconds, setTurnSeconds] = useState(DEFAULT_TURN_SECONDS)
+  const [liar, setLiar] = useState(false)
+
+  const rules: TableRules = { liar }
 
   const pace: MatchPace = blazing
     ? { turnSeconds: clamp(turnSeconds, MIN_TURN_SECONDS, MAX_TURN_SECONDS) }
@@ -65,7 +68,7 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
      only authority — this just spares a round trip to learn the obvious. */
   const submitCreate = (event: FormEvent) => {
     event.preventDefault()
-    if (canCreate) onCreate(trimmedName, goal, pace)
+    if (canCreate) onCreate(trimmedName, goal, pace, rules)
   }
   const submitJoin = (event: FormEvent) => {
     event.preventDefault()
@@ -226,6 +229,23 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
                 <p className="hint">{t.home.blazingHint}</p>
               </>
             )}
+          </fieldset>
+
+          <fieldset className="goal-picker">
+            <legend>{t.home.tableRules}</legend>
+            <label className="switch-row">
+              <input
+                type="checkbox"
+                checked={liar}
+                onChange={(event) => {
+                  setLiar(event.target.checked)
+                }}
+              />
+              <span>{t.home.liar}</span>
+            </label>
+            {/* Shown whether it is on or off: the interesting question is what the
+                option does, which you need answered before deciding. */}
+            <p className="hint">{t.home.liarHint}</p>
           </fieldset>
 
           <button type="submit" className="btn btn-primary" disabled={!canCreate}>

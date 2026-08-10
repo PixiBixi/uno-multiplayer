@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import {
+  DEFAULT_TABLE_RULES,
   applyMove,
   applyRound,
   err,
@@ -18,6 +19,7 @@ import {
   type Move,
   type Result,
   type SeatStatus,
+  type TableRules,
 } from '@uno/engine'
 import {
   MAX_SEATS,
@@ -57,6 +59,9 @@ export class Room {
   private game: GameState | null = null
   private readonly goal: MatchGoal
   private readonly pace: MatchPace
+  /** Chosen once at creation: changing the rules mid-match would rewrite a game
+   *  that has already been played under the old ones. */
+  private readonly rules: TableRules
   /* Held, never computed. Room owns no clock — RoomManager hands these in, the
      same way it hands in a seed, so the whole lifecycle stays testable without
      time passing. */
@@ -66,11 +71,18 @@ export class Room {
   /** Null until the first round is dealt; the goal is known from creation. */
   private match: MatchState | null = null
 
-  constructor(code: string, seed: number, goal: MatchGoal, pace: MatchPace = null) {
+  constructor(
+    code: string,
+    seed: number,
+    goal: MatchGoal,
+    pace: MatchPace = null,
+    rules: TableRules = DEFAULT_TABLE_RULES,
+  ) {
     this.code = code
     this.seed = seed
     this.goal = goal
     this.pace = pace
+    this.rules = rules
   }
 
   /**
@@ -229,7 +241,7 @@ export class Room {
     const active = this.members.filter((m) => m.status === 'active')
     if (active.length < MIN_SEATS) return err('too_few_players')
 
-    const init = initGame({ names: this.members.map((m) => m.name), seed })
+    const init = initGame({ names: this.members.map((m) => m.name), seed, rules: this.rules })
     if (!init.okay) return err('too_few_players')
 
     let game = init.value
@@ -446,6 +458,20 @@ function diffEvents(before: GameState, after: GameState, seat: number, move: Mov
   const events: GameEvent[] = []
 
   if (move.type === 'callUno') return [{ type: 'unoCalled', seat }]
+
+  /* Named explicitly rather than left to the hand-size loop below, which would
+     read the two cards as an ordinary draw by the target. The penalty keeps its
+     own `unoPenalty` event so the statistics and the sound for a forgotten UNO do
+     not have to learn about a second way of charging it. */
+  if (move.type === 'callOut') {
+    const gained =
+      (after.seats[move.target]?.hand.length ?? 0) - (before.seats[move.target]?.hand.length ?? 0)
+    const events: GameEvent[] = [{ type: 'calledOut', by: seat, target: move.target }]
+    // Zero only if the pile could not pay it, which the engine allows rather than
+    // inventing cards.
+    if (gained > 0) events.push({ type: 'unoPenalty', seat: move.target, count: gained })
+    return events
+  }
 
   const played = after.discardPile[after.discardPile.length - 1]
   if (played !== undefined && after.discardPile.length > before.discardPile.length) {
