@@ -1,6 +1,6 @@
 import { takeFromTop } from './deck.js'
 import { shuffle } from './rng.js'
-import { activeCount, advance, legalMoves } from './rules.js'
+import { activeCount, advance, isPlayable, legalMoves } from './rules.js'
 import {
   err,
   ok,
@@ -69,11 +69,33 @@ function drawInto(state: GameState, seatIndex: number, count: number): GameState
   }
 }
 
-/** Hands the turn to a seat and clears its UNO flag. */
+/**
+ * The card a one-card draw actually added, or null when the pile could not pay it.
+ *
+ * Read by comparing hand sizes rather than by trusting the pile: `drawInto` caps a draw at
+ * what is available instead of inventing cards, and taking the last card of the hand
+ * unconditionally would name a card the seat was already holding.
+ */
+function justDrawn(before: GameState, after: GameState, seatIndex: number): Card | null {
+  const hand = after.seats[seatIndex]?.hand
+  const held = before.seats[seatIndex]?.hand.length ?? 0
+  if (hand === undefined || hand.length <= held) return null
+  return hand[hand.length - 1] ?? null
+}
+
+/**
+ * Hands the turn to a seat and clears its UNO flag.
+ *
+ * The single place a turn begins, which is what makes it the single place the drawn-card
+ * offer is cleared. Every turn change in the game funnels through here — a pass, a play, a
+ * jump-in, a seat being skipped for being absent — so no caller has to remember, and a
+ * stale offer cannot survive one.
+ */
 function beginTurn(state: GameState, seatIndex: number): GameState {
   return {
     ...state,
     currentSeat: seatIndex,
+    drawnCard: null,
     seats: state.seats.map((s) => (s.index === seatIndex ? { ...s, unoCalled: false } : s)),
   }
 }
@@ -211,7 +233,11 @@ function applyPlay(
      effect below, so the first empty hand wins unconditionally. A 7 that could swap
      the win away would make the card unplayable as a last card, which is a trap
      rather than a rule. */
-  if (hand.length === 0) return ok({ ...next, phase: 'finished', winner: seatIndex })
+  if (hand.length === 0) {
+    // No beginTurn on this path, so the drawn-card offer is cleared by hand: a round that
+    // has ended must not describe a card anybody may still lay down.
+    return ok({ ...next, drawnCard: null, phase: 'finished', winner: seatIndex })
+  }
 
   /* Seven-Zero. The seats whose hands moved, empty when none did: a 7 with no
      target offered because nobody else is active, or a 0 at a table with a single
@@ -322,8 +348,20 @@ export function applyMove(
       })
     case 'draw': {
       const drawn = drawInto(state, seatIndex, 1)
+      const card = justDrawn(state, drawn, seatIndex)
+      /* The official rule: a playable drawn card may be laid down, so the turn is not
+         over. Only when there is genuinely a choice — an unplayable card, or a pile that
+         could not pay the draw at all, ends the turn exactly as it always did, with no
+         sub-state and nothing for the player to dismiss. */
+      if (state.rules.playDrawnCard && card !== null && isPlayable(card, drawn)) {
+        return ok({ ...drawn, drawnCard: card.id })
+      }
       return ok(passTurn(drawn, seatIndex, 1))
     }
+    /* Declining the card just drawn. Nothing but the turn changes, and `passTurn` clears
+       the offer along with the Liar window, since this is a turn ending like any other. */
+    case 'pass':
+      return ok(passTurn(state, seatIndex, 1))
     case 'acceptDraw': {
       const debt = state.pendingDraw
       if (debt === null) return err('illegal_move')
@@ -370,8 +408,10 @@ export function skipDisconnectedTurn(state: GameState): GameState {
         ? drawInto({ ...next, pendingDraw: null }, from, debt.amount)
         : drawInto(next, from, 1)
 
-    // Their turn happened, however absently, so their window closes with it.
-    next = closeWindow(next, from)
+    /* Their turn happened, however absently, so their window closes with it — and any
+       drawn-card offer goes too, cleared here rather than left to `beginTurn` below
+       because the loop can break without reaching it when nobody else is active. */
+    next = closeWindow({ ...next, drawnCard: null }, from)
     const gaining = advance(next, from, 1)
     if (gaining === from) break
     next = beginTurn(next, gaining)

@@ -74,7 +74,9 @@ somebody who pressed Leave is not coming back to that seat.
 Two clocks, both armed from one place in `handlers.ts` (`retime`), called after
 anything that can change whose turn it is:
 
-- **The turn clock**, on a Blazing table, forcing a draw when it expires.
+- **The turn clock**, on a Blazing table, forcing a draw when it expires — or a `pass`,
+  for a seat already deciding what to do with a card it drew. `armTurn` also leaves that
+  countdown alone rather than restarting it, since a voluntary draw did not end the turn.
 - **The between-rounds clock**, dealing the next round five seconds after the last
   one ended.
 

@@ -89,6 +89,10 @@ export const en: Messages = {
         : 'A 0 sent every hand one seat anticlockwise',
     jumpedIn: (name, isYou) =>
       isYou ? 'You jumped in, out of turn' : `${name} jumped in, out of turn`,
+    turnPassed: (name, isYou) =>
+      isYou
+        ? 'You kept the card you drew and ended your turn'
+        : `${name} kept the card drawn and ended their turn`,
     seatDisconnected: (name) => `${name} lost connection`,
     // The only verb in the log that changes person: everything else is past tense.
     seatReconnected: (name, isYou) => (isYou ? 'You are back' : `${name} is back`),
@@ -131,7 +135,10 @@ export const en: Messages = {
     secondsPerTurn: 'Seconds per turn',
     blazingHint:
       'Run out and you draw a card, even if you had one to play. Rounds deal themselves five seconds after the last one ends.',
-    tableRules: 'House rules',
+    /* "Table rules" rather than "House rules" now the set holds one that is not a house
+       rule at all: playing the card you drew is in the rulebook, and filing it under house
+       rules would tell the host the opposite of what its own hint says. */
+    tableRules: 'Table rules',
     liar: 'Let players call out a forgotten UNO',
     liarHint:
       'Forgetting to call UNO costs nothing unless somebody says so before the end of your next turn. Watch each other.',
@@ -141,6 +148,9 @@ export const en: Messages = {
     jumpIn: 'Allow jump-in',
     jumpInHint:
       'Holding the exact same card as the one just played — same colour, same value — you may lay it down out of turn, and play carries on from you. Never a wild, and never while a draw is pending.',
+    playDrawnCard: 'Let a drawn card be played straight away',
+    playDrawnCardHint:
+      'The official rule, so it is on unless you turn it off: draw a card you can play and you may lay it down there and then, or keep it and end your turn. Nothing changes when the card is unplayable — the turn simply ends, as it always did.',
     language: 'Language',
   },
 
@@ -187,6 +197,8 @@ export const en: Messages = {
     callOut: 'Liar!',
     callOutOn: (name) => `Call ${name} a liar`,
     jumpIn: 'Jump in!',
+    endTurn: 'End turn',
+    playDrawnCard: 'Play the card you drew, or end your turn',
     chooseSwapTarget: 'Whose hand do you want?',
     swapTarget: (name, count) => `${name}, ${cards(count)}`,
     clockwise: 'Clockwise',

@@ -93,7 +93,7 @@ Official rules plus draw stacking, with these points pinned down explicitly:
 | Draw stacking                 | **Strictly same type**: +2 answers +2, +4 answers +4, no crossover. Colour is irrelevant when raising.                                                                   |
 | Reverse with 2 active players | Acts as a skip (official rule).                                                                                                                                          |
 | Starting card                 | The first number card from the top of the shuffled deck. Deterministic, no unbounded loop.                                                                               |
-| Drawing voluntarily           | Ends your turn. No "you may now play the card you drew" sub-state.                                                                                                       |
+| Drawing voluntarily           | Does **not** end your turn if the card drawn can be played: you may lay it down there and then, or keep it and end your turn. See below.                                 |
 | Calling UNO                   | Legal only during your own turn, before playing. Going down to one card without it costs two cards — automatically, unless the table plays with the Liar call-out below. |
 | Playing out of turn           | Not possible, unless the table plays with jump-in below.                                                                                                                 |
 | Empty draw pile               | The discard pile minus its top card is reshuffled into a new draw pile. If that is still not enough, the draw is capped at what is available.                            |
@@ -187,6 +187,39 @@ other reason.
 | A 0                     | Can never be jumped, and not by rule: a UNO deck holds one 0 per colour, so a 0 has no twin. Every other card has exactly one.                                                                                                                                                 |
 | Races                   | The server is the only authority and applies whichever move it reads first; the loser gets `illegal_move`, which the client already reports. Two seats can never hold a jump-in against the same card, since its twin is in one place only.                                    |
 | Termination             | Every jump-in spends a card, and no jump-in can be answered by another on the same card, so play always progresses. Asserted by the property tests under a policy that takes every jump-in on offer — the unfavourable one, since jumping down to one card cannot be declared. |
+
+### Playing the card you drew
+
+Not a house rule — the official one, and the only option here that is **on by default**:
+**a drawn card that can be played may be laid down straight away.** The table used to end
+your turn on any voluntary draw, which was a deliberate simplification and also slightly
+wrong, so this reverses that decision rather than adding a variant.
+
+It stays a switch for the groups who learned it the other way, and because the sub-state
+it introduces is worth being able to turn off. `DEFAULT_TABLE_RULES` therefore gains its
+first `true`; the three `false`s beside it are the house rules, not a pattern.
+
+The sub-state is the whole cost of the rule, and keeping it small is the design:
+
+| Point                    | Decision                                                                                                                                                                                                                                          |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| What is offered          | That one card, plus a pass. **Not the rest of the hand** — offering it would make drawing a free extra turn, which is a different game.                                                                                                           |
+| An unplayable draw       | The turn ends at once, exactly as it did before. No sub-state, no extra click, nothing to dismiss: a choice appears only when there is one.                                                                                                       |
+| Taking a stacked +2 / +4 | Grants nothing. That is a penalty, not a draw, and the official rules do not let you play your way out of one.                                                                                                                                    |
+| Ending the turn          | A move of its own, `{ type: 'pass' }`. Drawing no longer ends a turn, so something has to, and it must be explicit rather than inferred from a timeout.                                                                                           |
+| A drawn wild             | Playable, and asks for its colour like any other wild. A drawn 7 on a Seven-Zero table asks for its target the same way.                                                                                                                          |
+| Calling UNO              | Still legal: the seat is on turn and has not played. Drawing to two cards and then playing to one is an ordinary way to reach one card.                                                                                                           |
+| Jump-in                  | **Refused** while the decision stands. The turn is still theirs and unresolved, which is the same reasoning that forbids jumping a pending draw.                                                                                                  |
+| A Blazing clock          | Keeps running through the decision rather than restarting for the draw, and forces a **pass** when it expires — never a second draw. `draw` is not even on offer in the sub-state, so anything else would leave the clock unable to end the turn. |
+| Clearing it              | On every turn change from any cause: a pass, playing the card, a timeout, a disconnection, a seat leaving, a round ending. A stale value would let a seat play a card it no longer holds.                                                         |
+| Termination              | Holds, and it was the invariant at risk. Re-entering the sub-state needs a second voluntary draw, and `draw` is not offered inside it — so every move available either spends a card or ends the turn. Asserted by the property tests.            |
+
+On the client the drawn card is the only playable card, which needed no new idea — a card
+is rendered playable when a `play` references it. What is new is the **End turn** control,
+which takes the draw button's place rather than sitting beside a dead one: a player who
+draws, sees Draw go grey and nothing else change will conclude the table has hung. It is
+labelled for what it does rather than "pass", which in a card game reads as declining to
+draw — the opposite of what has just happened.
 
 ## Language
 
@@ -388,6 +421,7 @@ emit-only solution and excludes tests.
 - [x] The Liar call-out: an optional table rule for a manual UNO penalty
 - [x] Seven-Zero: an optional table rule where a 7 swaps hands and a 0 rotates them
 - [x] Jump-in: an optional table rule for playing an identical card out of turn
+- [x] Playing the card you drew — the official rule, on by default
 - [x] End-of-match awards, counted from the event feed
 - [x] English and French, with each language owning its own grammar
 - [x] An error boundary, so a bad render explains itself instead of blanking
@@ -406,13 +440,14 @@ It is opt-in rather than a rule on every table, because a clock changes the game
 rather than protecting it — thinking time is part of UNO, and a group playing over
 dinner does not want one.
 
-| Point                            | Decision                                                                                                                                                                                                      |
-| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| When time runs out               | The server plays **draw**, even for a seat holding something playable. Choosing a card for someone is choosing their move; drawing is always legal, always neutral, and never spends a card they were saving. |
-| With a draw stacked against them | `acceptDraw` instead, since `draw` is not legal in that state.                                                                                                                                                |
-| When they could only call UNO    | Nothing is forced. That penalty belongs to the player who forgot, not to the clock.                                                                                                                           |
-| Between rounds                   | Five seconds, then the next round deals itself. Fixed rather than exposed: a second dial for it would be a setting nobody has an opinion about.                                                               |
-| Where the timer lives            | `RoomManager`, never `Room` — `Room` stays synchronous and timer-free, which is what keeps the whole lifecycle testable without a clock.                                                                      |
+| Point                             | Decision                                                                                                                                                                                                      |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| When time runs out                | The server plays **draw**, even for a seat holding something playable. Choosing a card for someone is choosing their move; drawing is always legal, always neutral, and never spends a card they were saving. |
+| With a draw stacked against them  | `acceptDraw` instead, since `draw` is not legal in that state.                                                                                                                                                |
+| When they could only call UNO     | Nothing is forced. That penalty belongs to the player who forgot, not to the clock.                                                                                                                           |
+| While they decide on a drawn card | A **pass**, never a second draw — they have already drawn. The countdown also keeps running rather than restarting for the draw, since the turn never ended.                                                  |
+| Between rounds                    | Five seconds, then the next round deals itself. Fixed rather than exposed: a second dial for it would be a setting nobody has an opinion about.                                                               |
+| Where the timer lives             | `RoomManager`, never `Room` — `Room` stays synchronous and timer-free, which is what keeps the whole lifecycle testable without a clock.                                                                      |
 
 The countdown is driven by a **deadline** in the view, not a duration the client
 counts down from. A client that drops frames, sleeps a tab or reconnects mid-turn

@@ -16,11 +16,11 @@ import type { GameState, Move, TableRules } from './types.js'
  * seat.
  */
 
-const PLAIN: TableRules = { liar: false, sevenZero: false, jumpIn: false }
-const JUMP: TableRules = { liar: false, sevenZero: false, jumpIn: true }
+const PLAIN: TableRules = { liar: false, sevenZero: false, jumpIn: false, playDrawnCard: false }
+const JUMP: TableRules = { liar: false, sevenZero: false, jumpIn: true, playDrawnCard: false }
 /** Both, since a jumper landing on one card is exactly the Liar window's business. */
-const WATCHED: TableRules = { liar: true, sevenZero: false, jumpIn: true }
-const SEVEN_ZERO_JUMP: TableRules = { liar: false, sevenZero: true, jumpIn: true }
+const WATCHED: TableRules = { liar: true, sevenZero: false, jumpIn: true, playDrawnCard: false }
+const SEVEN_ZERO_JUMP: TableRules = { liar: false, sevenZero: true, jumpIn: true, playDrawnCard: false }
 
 const apply = (state: GameState, seat: number, move: Move): GameState => {
   const result = applyMove(state, seat, move)

@@ -5,7 +5,7 @@ npm run verify   # lint + typecheck + unit tests, the gate CI runs
 npm run e2e      # Playwright against a real build
 ```
 
-Around 650 unit tests and 13 end-to-end specs. CI runs lint/format/types, the unit
+Around 990 unit tests and 22 end-to-end specs. CI runs lint/format/types, the unit
 suite on Node 22/24/26, coverage, e2e, and a Docker build-and-probe.
 
 ## Which tool for which claim
@@ -38,13 +38,20 @@ bugs shipped through exactly this gap:
 `apps/server/src/sockets/handlers-match.test.ts` and `handlers-leave.test.ts` close
 both by driving real connections. When adding a client action, write the socket
 test, not only the `Room` test. `handlers-liar.test.ts`,
-`handlers-sevenzero.test.ts` and `handlers-jumpin.test.ts` do the same for the three
-optional table rules — each drives a real round until the server offers the move, then
-plays it over the wire. All three carry an explicit 20s timeout and raise
+`handlers-sevenzero.test.ts`, `handlers-jumpin.test.ts` and `handlers-drawncard.test.ts`
+do the same for the four table rules — each drives a real round until the server offers
+the move, then plays it over the wire. All four carry an explicit 20s timeout and raise
 `MOVE_BURST`, because a scripted round outruns both vitest's 5s default and a rate
 limit sized for a person.
 
-The jump-in drive differs in two ways worth copying if you add a fourth option. It
+The drawn-card drive is the fourth, and it hunts its moment by DRAWING on every turn
+rather than playing: the sub-state exists only after a voluntary draw whose card happens to
+be playable, so a drive that played its cards would almost never reach it. Like the jump-in
+drive it deals further rounds rather than giving up at the end of one, for the same reason —
+the seed is random per test and a test that fails on an unlucky shuffle is a test nobody can
+read.
+
+The jump-in drive differs in two ways worth copying if you add a fifth option. It
 cannot play "around" the move it is hunting the way the Seven-Zero drive does — the
 chance to jump exists only while one particular card is on top, so the check happens
 after every single move. And it deals further rounds rather than giving up at the end
@@ -90,6 +97,27 @@ is the difference between a guard and a decoration:
   originally by no property test at all, because the harness rarely reaches a stacked
   draw with the right twin in the right hand; the property that asserts it directly
   over every intermediate state was added for that reason and catches it.
+
+- Twelve mutations were re-run against playing the drawn card. The instructive ones:
+  offering the whole hand instead of the drawn card fails 6, leaving `drawnCard` set across
+  a turn change fails 33, dropping the `pass` from `forceTurnMove` fails 2, granting the
+  decision after `acceptDraw` fails 3, granting it on an unplayable card fails 5, removing
+  the Zod `pass` branch fails 3 and takes the socket drive with it, deriving no
+  `turnPassed` fails 2, never rendering the End turn control fails 2, and defaulting the
+  option off — treating the official rule as a house rule — fails 14.
+
+  Three of them are worth dwelling on, because two of the guards were decorations until the
+  mutant said so. Reordering `forceTurnMove` to prefer `acceptDraw` and `draw` ahead of
+  `pass` fails **nothing**, and correctly: neither is on offer in the sub-state, so the
+  reordering cannot change what is chosen — the mutation that bites is deleting `pass`
+  from the list altogether. Removing the guard that stops `armTurn` restarting the clock
+  also failed nothing at first, because with a frozen fake clock `now() + turnSeconds`
+  recomputes to the number it replaced; the drive now burns a second of fake time per turn,
+  and the mutant fails. And allowing a jump-in mid-decision failed only a unit test at
+  first, even at 600 property runs, because the harness took every jump-in on offer — so no
+  twin was ever still in a hand by the time somebody drew, and the property asserting none
+  is offered was vacuously true. Declining one jump-in in three fixed it, and the property
+  now catches the mutant at 300 runs.
 
 Equally worth knowing: some things **cannot** drift and so cannot be tested for. The
 help panel reads `cardPoints` from the engine, and so do its tests — change the

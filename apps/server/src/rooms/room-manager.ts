@@ -114,6 +114,17 @@ export class RoomManager {
    * a reconnection wants anyway.
    */
   armTurn(room: Room, onExpire: (events: GameEvent[]) => void): void {
+    /* One exception to the idempotence above: a voluntary draw on a table that plays the
+       drawn card does not end the turn, so restarting the clock for it would hand the seat
+       a fresh allowance for having drawn. The countdown keeps running through the
+       decision, which is what the player watching it expects.
+
+       Only while a timer is really live. After one has fired the map no longer holds it,
+       so a forced draw that lands in the sub-state still arms a fresh clock — and has to,
+       or the deadline would sit in the past and nothing would ever fire against that seat
+       again. */
+    if (room.decidingOnDrawnCard && this.turnTimers.has(room.code)) return
+
     this.cancelTurn(room)
 
     const seconds = room.turnSeconds

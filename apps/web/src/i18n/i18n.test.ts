@@ -231,6 +231,31 @@ describe('grammar each language owns', () => {
     expect(CATALOGUES.fr.event.jumpedIn('Ana', false)).toContain('Ana a sauté')
   })
 
+  it('names the drawn-card option and its control in each language', () => {
+    /* No jargon to preserve in either language, unlike jump-in: the rule is described by
+       what it lets you do. And the control says it ends the turn rather than "pass", which
+       in a card game reads as declining to draw — precisely backwards here. */
+    expect(CATALOGUES.en.home.playDrawnCard).toContain('drawn card')
+    expect(CATALOGUES.fr.home.playDrawnCard).toContain('piocher')
+    expect(CATALOGUES.en.home.playDrawnCardHint).toContain('official rule')
+    expect(CATALOGUES.fr.home.playDrawnCardHint).toContain('règle officielle')
+    expect(CATALOGUES.en.table.endTurn).toBe('End turn')
+    expect(CATALOGUES.fr.table.endTurn).toBe('Terminer mon tour')
+    for (const locale of LOCALES) {
+      // Neither label may be the word "pass", in either language.
+      expect(CATALOGUES[locale].table.endTurn.toLowerCase()).not.toMatch(/^pass/)
+    }
+    expect(CATALOGUES.en.table.playDrawnCard).toContain('end your turn')
+    expect(CATALOGUES.fr.table.playDrawnCard).toContain('termine ton tour')
+  })
+
+  it('conjugates a kept card and an ended turn for the person who did it', () => {
+    expect(CATALOGUES.en.event.turnPassed('Ana', true)).toContain('You kept')
+    expect(CATALOGUES.en.event.turnPassed('Ana', false)).toContain('Ana kept')
+    expect(CATALOGUES.fr.event.turnPassed('Toi', true)).toContain('Tu as gardé')
+    expect(CATALOGUES.fr.event.turnPassed('Ana', false)).toContain('Ana a gardé')
+  })
+
   it('conjugates a swap for both people in it, and counts the hand each way', () => {
     expect(CATALOGUES.fr.event.handsSwapped('Toi', true, 'Ana', false)).toContain('Tu as posé')
     expect(CATALOGUES.fr.event.handsSwapped('Ana', false, 'Toi', true)).toContain('pris ta main')

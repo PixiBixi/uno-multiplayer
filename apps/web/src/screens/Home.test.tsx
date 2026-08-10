@@ -33,6 +33,9 @@ describe('Home', () => {
       liar: false,
       sevenZero: false,
       jumpIn: false,
+      // On without anybody touching it: the official rule is what a host who picks nothing
+      // gets, which is what makes this option different from the three above.
+      playDrawnCard: true,
     })
   })
 
@@ -45,6 +48,7 @@ describe('Home', () => {
       liar: true,
       sevenZero: false,
       jumpIn: false,
+      playDrawnCard: true,
     })
   })
 
@@ -59,6 +63,7 @@ describe('Home', () => {
       liar: false,
       sevenZero: true,
       jumpIn: false,
+      playDrawnCard: true,
     })
   })
 
@@ -71,6 +76,25 @@ describe('Home', () => {
       liar: false,
       sevenZero: false,
       jumpIn: true,
+      playDrawnCard: true,
+    })
+  })
+
+  it('switches the drawn-card rule off, which is the only one that starts on', async () => {
+    /* The opposite direction from the three above, and the whole point of the switch: it
+       exists for a group that learned the game without the rule, so the interesting
+       assertion is that turning it OFF reaches the server. */
+    const { onCreate } = setup()
+    await userEvent.type(screen.getByLabelText(/your name/i), 'Ana')
+    const toggle = screen.getByLabelText<HTMLInputElement>(/drawn card/i)
+    expect(toggle.checked).toBe(true)
+    await userEvent.click(toggle)
+    await userEvent.click(screen.getByRole('button', { name: /create/i }))
+    expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
+      liar: false,
+      sevenZero: false,
+      jumpIn: false,
+      playDrawnCard: false,
     })
   })
 

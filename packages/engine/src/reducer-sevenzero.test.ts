@@ -15,10 +15,10 @@ import type { GameState, Move, TableRules } from './types.js'
  * rule of its own.
  */
 
-const PLAIN: TableRules = { liar: false, sevenZero: false, jumpIn: false }
-const SEVEN_ZERO: TableRules = { liar: false, sevenZero: true, jumpIn: false }
+const PLAIN: TableRules = { liar: false, sevenZero: false, jumpIn: false, playDrawnCard: false }
+const SEVEN_ZERO: TableRules = { liar: false, sevenZero: true, jumpIn: false, playDrawnCard: false }
 /** Both options at once, which is the only way a swap can open an UNO window. */
-const WATCHED: TableRules = { liar: true, sevenZero: true, jumpIn: false }
+const WATCHED: TableRules = { liar: true, sevenZero: true, jumpIn: false, playDrawnCard: false }
 
 const apply = (state: GameState, seat: number, move: Move): GameState => {
   const result = applyMove(state, seat, move)

@@ -53,6 +53,7 @@ export const stateOf = (over: Partial<GameState> = {}): GameState => ({
   discardPile: [num('top-1', 'R', 7)],
   currentColor: 'R',
   pendingDraw: null,
+  drawnCard: null,
   rngState: 1,
   phase: 'playing',
   winner: null,

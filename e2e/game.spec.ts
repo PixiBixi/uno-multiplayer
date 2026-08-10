@@ -339,6 +339,50 @@ test('the draw pile is still a card once the draw ghost has finished', async ({ 
   expect(measured.opacityAtStart[0]).toBeGreaterThan(0)
 })
 
+test('the End turn control is on screen once a drawn card can be played', async ({ browser }) => {
+  /* The one part of the drawn-card rule a jsdom test cannot settle: a player who draws and
+     sees the Draw button go dead needs something in its place, on the felt, in a real
+     browser. Driven by drawing on every turn, because the sub-state exists only after a
+     voluntary draw whose card happens to be playable. */
+  const host = await openPlayer(browser)
+  const guest = await openPlayer(browser)
+  const code = await createGame(host, 'Ana')
+  await joinGame(guest, code, 'Ben')
+  await host.getByRole('button', { name: 'Start game' }).click()
+  for (const page of [host, guest]) await expect(page.locator('.hand-card')).toHaveCount(7)
+
+  let deciding: Page | null = null
+  for (let turn = 0; turn < 60 && deciding === null; turn += 1) {
+    for (const page of [host, guest]) {
+      const draw = page.getByRole('button', { name: 'Draw card' })
+      if (await draw.isEnabled().catch(() => false)) {
+        await draw.click()
+        await page.waitForTimeout(100)
+      }
+      if (await page.getByRole('button', { name: 'End turn' }).isVisible().catch(() => false)) {
+        deciding = page
+        break
+      }
+    }
+  }
+  if (deciding === null) throw new Error('never reached the drawn-card decision')
+
+  // The prompt is beside the control, which is the whole reason it exists.
+  await expect(deciding.locator('.drawn-prompt')).toBeVisible()
+  // And exactly one card is offered: the one just drawn, never the rest of the hand.
+  await expect(deciding.locator('.hand-card button:not([disabled])')).toHaveCount(1)
+
+  const held = await deciding.locator('.hand-card').count()
+  await deciding.getByRole('button', { name: 'End turn' }).click()
+
+  // The control goes with the turn, and the card stays: passing declines to play it.
+  await expect(deciding.getByRole('button', { name: 'End turn' })).toHaveCount(0)
+  await expect(deciding.locator('.hand-card')).toHaveCount(held)
+  await expect(
+    deciding.locator('.sys-line').filter({ hasText: /ended (your|their) turn/ }).first(),
+  ).toBeVisible()
+})
+
 test('a long log scrolls inside its panel instead of growing the page', async ({ browser }) => {
   /* Needs more chat than a person would ever send in a second, which the webServer
      block grants by raising CHAT_BURST. Against an already-running instance that

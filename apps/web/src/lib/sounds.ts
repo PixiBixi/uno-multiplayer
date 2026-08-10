@@ -82,6 +82,11 @@ export function soundForEvent(event: GameEvent, mySeat: number): SoundName | nul
        round that ends a match. */
     case 'jumpedIn':
       return null
+    /* Silent for a reason of its own as well: the seat has just heard its own draw, and a
+       cue for declining to play would be a noise made for an absence of one. That the turn
+       moved on is announced by whatever the next seat does. */
+    case 'turnPassed':
+      return null
     // Deliberately silent: a seat connecting, leaving, or a new deal are changes
     // the log already reports, and a noise for each would be chatter.
     case 'seatDisconnected':

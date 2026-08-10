@@ -34,8 +34,13 @@ export function markSeatLeft(state: GameState, seatIndex: number): GameState {
     ),
   }
 
+  /* A round that is over describes nothing anybody may still lay down, so the drawn-card
+     offer goes with it. Cleared on both paths below and on neither of the ones above: a
+     seat leaving while somebody ELSE is deciding what to do with a card they drew must not
+     cancel their decision — that turn is still theirs, and taking the offer away would put
+     their whole hand back in front of them. */
   if (next.phase === 'playing' && activeCount(next) < 2) {
-    return { ...next, phase: 'finished', winner: null }
+    return { ...next, drawnCard: null, phase: 'finished', winner: null }
   }
 
   if (next.phase === 'playing' && next.currentSeat === seatIndex) {
@@ -43,6 +48,8 @@ export function markSeatLeft(state: GameState, seatIndex: number): GameState {
     next = {
       ...next,
       currentSeat: gaining,
+      // Their hand has gone back to the pile, so whatever they drew is not theirs to play.
+      drawnCard: null,
       seats: next.seats.map((s) => (s.index === gaining ? { ...s, unoCalled: false } : s)),
     }
   }

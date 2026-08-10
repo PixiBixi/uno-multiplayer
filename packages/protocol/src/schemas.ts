@@ -79,24 +79,34 @@ export const moveSchema: z.ZodType<Move> = z.discriminatedUnion('type', [
     })),
   z.object({ type: z.literal('draw') }),
   z.object({ type: z.literal('acceptDraw') }),
+  /** Declining the card just drawn, which is what ends a turn once drawing does not. */
+  z.object({ type: z.literal('pass') }),
   z.object({ type: z.literal('callUno') }),
   z.object({ type: z.literal('callOut'), target: seatNumber }),
 ])
 
 /**
- * The optional rules a host switches on at creation. Booleans have no interesting
- * bounds, but the field still goes through Zod like every other payload: a client
- * can send whatever it likes.
+ * The rules a host chooses at creation. Booleans have no interesting bounds, but the field
+ * still goes through Zod like every other payload: a client can send whatever it likes.
  *
- * Each flag defaults on its own rather than only the object as a whole. A client
- * built when `liar` was the only option sends `{ liar }` and nothing else, and
- * rejecting that outright would break a client that is perfectly able to play —
- * it simply asks for a table without the newer rule, which is what it wants.
+ * Each flag defaults on its own rather than only the object as a whole. A client built
+ * when `liar` was the only option sends `{ liar }` and nothing else, and rejecting that
+ * outright would break a client that is perfectly able to play — it simply asks for a
+ * table without the newer rule, which is what it wants.
+ *
+ * Every default matches `DEFAULT_TABLE_RULES` field for field, which is why
+ * `playDrawnCard` defaults to TRUE where the three house rules default to false. The
+ * alternative — defaulting it off at the boundary to spare a client that predates it —
+ * was rejected on two counts: omitting the whole object already yields the engine's
+ * defaults, so the two spellings of "I said nothing" would disagree, and a client that
+ * does not know about the sub-state is not stranded by it anyway. It is offered the drawn
+ * card as a playable card, which is the one thing every client already renders.
  */
 export const tableRulesSchema: z.ZodType<TableRules> = z.object({
   liar: z.boolean().default(false),
   sevenZero: z.boolean().default(false),
   jumpIn: z.boolean().default(false),
+  playDrawnCard: z.boolean().default(true),
 })
 
 /**

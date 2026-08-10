@@ -54,6 +54,10 @@ export function Table({
   const canDraw = view.you.legalMoves.some((move) => move.type === 'draw')
   const acceptDraw = view.you.legalMoves.find((move) => move.type === 'acceptDraw')
   const canCallUno = view.you.legalMoves.some((move) => move.type === 'callUno')
+  /* A pass is offered only while this seat is holding a card it has just drawn and may
+     still lay down, which is the one moment a turn does not end by itself. Read from
+     `legalMoves` like everything else here: the client is told, never works it out. */
+  const canPass = view.you.legalMoves.some((move) => move.type === 'pass')
   /* A play offered while it is somebody else's turn can only be a jump-in — the
      server offers an off-turn seat call-outs and jump-ins and nothing else. Purely a
      label: the card is clickable because the move is in the view, not because of this
@@ -210,6 +214,21 @@ export function Table({
                 >
                   {t.table.take(view.pendingDraw?.amount ?? 0)}
                 </button>
+              ) : canPass ? (
+                /* In the place the draw button occupies the rest of the time, because it is
+                   the same thing at this moment: the action that gets you out of your turn.
+                   A disabled Draw beside it would be the only control on screen and would
+                   read as a table that has stopped responding. Primary, since it is one of
+                   exactly two things this seat may now do. */
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    onPlay({ type: 'pass' })
+                  }}
+                >
+                  {t.table.endTurn}
+                </button>
               ) : (
                 <button
                   type="button"
@@ -235,6 +254,16 @@ export function Table({
                 </button>
               )}
             </div>
+
+            {/* Says which two things are on offer, because neither is obvious from the
+                felt: the drawn card lights up among cards that no longer do, and the only
+                other control has just changed what it says. A player who reads nothing and
+                sees no move concludes the table has hung. */}
+            {canPass && (
+              <p className="drawn-prompt" role="status">
+                {t.table.playDrawnCard}
+              </p>
+            )}
 
             {/* `opponents` is exactly what the swap picker needs to name a seat, so
                 it is passed through rather than rebuilt. */}

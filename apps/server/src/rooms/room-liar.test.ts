@@ -17,6 +17,7 @@ const liarRoom = (): Room => {
     liar: true,
     sevenZero: false,
     jumpIn: false,
+    playDrawnCard: false,
   })
   room.join('Ana', 'socket-0')
   room.join('Ben', 'socket-1')

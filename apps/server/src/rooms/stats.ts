@@ -87,6 +87,11 @@ export function tally(stats: SeatStats[], events: GameEvent[]): SeatStats[] {
          happening — a "cards played" column that disagrees with the hands. */
       case 'jumpedIn':
         break
+      /* Nor this one. Declining the card you drew is a choice, not an achievement or a
+         mistake, and the card itself was already counted by the `cardsDrawn` that preceded
+         it. A "turns passed" column would measure caution. */
+      case 'turnPassed':
+        break
       // Nothing to count: presence changes and deals are not anybody's doing.
       case 'seatDisconnected':
       case 'seatReconnected':

@@ -1,3 +1,4 @@
+import { DEFAULT_TABLE_RULES } from '@uno/engine'
 import { DEFAULT_MATCH_GOAL } from './views.js'
 import { describe, expect, it } from 'vitest'
 import {
@@ -48,19 +49,41 @@ describe('roomCreateSchema', () => {
       playerName: 'Jeremy',
       goal: DEFAULT_MATCH_GOAL,
       pace: null,
-      rules: { liar: true, sevenZero: true, jumpIn: false },
+      rules: { liar: true, sevenZero: true, jumpIn: false, playDrawnCard: false },
     })
-    expect(parsed.rules).toEqual({ liar: true, sevenZero: true, jumpIn: false })
+    expect(parsed.rules).toEqual({
+      liar: true,
+      sevenZero: true,
+      jumpIn: false,
+      playDrawnCard: false,
+    })
   })
 
-  it('falls back to plain UNO when the field is absent', () => {
-    // A client that predates table options still gets a table it understands.
+  it('falls back to the engine defaults when the field is absent', () => {
+    /* A client that predates table options still gets a table it understands: no house
+       rules, and the official drawn-card rule the engine plays by default. Asserted
+       against DEFAULT_TABLE_RULES rather than a copy of it, so the boundary and the engine
+       cannot drift into disagreeing about what saying nothing means. */
     const parsed = roomCreateSchema.parse({
       playerName: 'Jeremy',
       goal: DEFAULT_MATCH_GOAL,
       pace: null,
     })
-    expect(parsed.rules).toEqual({ liar: false, sevenZero: false, jumpIn: false })
+    expect(parsed.rules).toEqual(DEFAULT_TABLE_RULES)
+  })
+
+  it('defaults every flag on its own exactly as the engine does', () => {
+    /* Each flag is defaulted separately, so this is where the two could diverge one field
+       at a time. `playDrawnCard` is the one that defaults to true, and a copy of that
+       decision living in Zod is precisely what this asserts against. */
+    const parsed = roomCreateSchema.parse({
+      playerName: 'Jeremy',
+      goal: DEFAULT_MATCH_GOAL,
+      pace: null,
+      rules: {},
+    })
+    expect(parsed.rules).toEqual(DEFAULT_TABLE_RULES)
+    expect(parsed.rules.playDrawnCard).toBe(true)
   })
 
   it('fills in an option a client has never heard of', () => {
@@ -73,7 +96,12 @@ describe('roomCreateSchema', () => {
       pace: null,
       rules: { liar: true },
     })
-    expect(parsed.rules).toEqual({ liar: true, sevenZero: false, jumpIn: false })
+    expect(parsed.rules).toEqual({
+      liar: true,
+      sevenZero: false,
+      jumpIn: false,
+      playDrawnCard: true,
+    })
   })
 
   it('carries jump-in across on its own', () => {
@@ -83,7 +111,12 @@ describe('roomCreateSchema', () => {
       pace: null,
       rules: { jumpIn: true },
     })
-    expect(parsed.rules).toEqual({ liar: false, sevenZero: false, jumpIn: true })
+    expect(parsed.rules).toEqual({
+      liar: false,
+      sevenZero: false,
+      jumpIn: true,
+      playDrawnCard: true,
+    })
   })
 
   it('rejects rules that are not booleans', () => {
@@ -109,6 +142,14 @@ describe('roomCreateSchema', () => {
         goal: DEFAULT_MATCH_GOAL,
         pace: null,
         rules: { jumpIn: 'sure' },
+      }).success,
+    ).toBe(false)
+    expect(
+      roomCreateSchema.safeParse({
+        playerName: 'Jeremy',
+        goal: DEFAULT_MATCH_GOAL,
+        pace: null,
+        rules: { playDrawnCard: 'obviously' },
       }).success,
     ).toBe(false)
   })
@@ -180,6 +221,11 @@ describe('moveSchema', () => {
     expect(moveSchema.safeParse({ type: 'draw' }).success).toBe(true)
     expect(moveSchema.safeParse({ type: 'acceptDraw' }).success).toBe(true)
     expect(moveSchema.safeParse({ type: 'callUno' }).success).toBe(true)
+    /* Without this one the pass button reaches a server that answers `invalid_payload` and
+       the turn never ends — the schema being exactly the piece of a new action that has
+       been forgotten here before. */
+    expect(moveSchema.safeParse({ type: 'pass' }).success).toBe(true)
+    expect(moveSchema.parse({ type: 'pass' })).toEqual({ type: 'pass' })
   })
 
   it('rejects an unknown move type', () => {

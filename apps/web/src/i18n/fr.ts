@@ -109,6 +109,10 @@ export const fr: Messages = {
         : 'Un 0 a fait tourner toutes les mains d’un siège dans le sens antihoraire',
     jumpedIn: (name, isYou) =>
       isYou ? 'Tu as sauté sur la carte, hors tour' : `${name} a sauté sur la carte, hors tour`,
+    turnPassed: (name, isYou) =>
+      isYou
+        ? 'Tu as gardé la carte piochée et terminé ton tour'
+        : `${name} a gardé la carte piochée et terminé son tour`,
     seatDisconnected: (name) => `${name} a perdu la connexion`,
     seatReconnected: (name, isYou) => (isYou ? 'Te revoilà' : `${name} est de retour`),
     seatLeft: (name) => `${name} a quitté la partie`,
@@ -160,6 +164,9 @@ export const fr: Messages = {
     jumpIn: 'Autoriser le Jump-in',
     jumpInHint:
       'Si tu as exactement la même carte que celle qui vient d’être posée — même couleur, même valeur — tu peux la poser hors de ton tour, et le jeu reprend depuis toi. Jamais un joker, et jamais pendant une pioche en attente.',
+    playDrawnCard: 'Laisser poser la carte que l’on vient de piocher',
+    playDrawnCardHint:
+      'La règle officielle, donc active sauf si tu la désactives : si la carte piochée est jouable, tu peux la poser aussitôt, ou la garder et terminer ton tour. Rien ne change quand elle est injouable — le tour se termine, comme avant.',
     language: 'Langue',
   },
 
@@ -206,6 +213,8 @@ export const fr: Messages = {
     callOut: 'Menteur !',
     callOutOn: (name) => `Accuser ${name} : menteur`,
     jumpIn: 'Jump-in !',
+    endTurn: 'Terminer mon tour',
+    playDrawnCard: 'Pose la carte piochée, ou termine ton tour',
     chooseSwapTarget: 'Quelle main veux-tu ?',
     swapTarget: (name, count) => `${name}, ${cartes(count)}`,
     clockwise: 'Sens horaire',

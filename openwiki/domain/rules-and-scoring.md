@@ -14,8 +14,10 @@ likely to surprise you are:
   never across. Colour is irrelevant when raising. `PendingDraw.kind` mirrors the
   card's own `kind`, which turns that rule into a plain equality check.
 - **Reverse with two active players acts as a skip**, per the official rule.
-- **Drawing voluntarily ends your turn.** There is no "you may now play the card
-  you drew" sub-state, which removes a whole class of UI and protocol complexity.
+- **Drawing voluntarily does not end your turn when the card can be played.** That is
+  the official rule and it is on by default; the table used to end the turn on any
+  voluntary draw, which was a deliberate simplification and also slightly wrong. See
+  "Playing the card you drew" below.
 - **Calling UNO is legal only during your own turn, before playing.** Going down to
   one card without it costs two cards, applied automatically — unless the table
   opted into the Liar call-out below, which makes the penalty manual.
@@ -29,10 +31,12 @@ and hand inspection.
 
 ## Table rules
 
-`TableRules` in `packages/engine/src/types.ts`, chosen by the host at creation and
-every flag off by default. It lives in the engine rather than beside `MatchPace` in
-the protocol, unlike the clock: a time limit is a house setting the engine never
-sees, while these change what the rules ARE and the reducer has to read them.
+`TableRules` in `packages/engine/src/types.ts`, chosen by the host at creation. The three
+house rules are off by default; `playDrawnCard` is on, because it is not a house rule but
+the rulebook — the `false`s beside it are not a pattern to copy. It lives in the engine
+rather than beside `MatchPace` in the protocol, unlike the clock: a time limit is a house
+setting the engine never sees, while these change what the rules ARE and the reducer has
+to read them.
 
 Each flag is Zod-defaulted at the socket boundary on its own, not only the object as
 a whole. A client built when `liar` was the only option sends `{ liar }`; rejecting
@@ -164,6 +168,72 @@ twice, and a jump-in arriving beside the play of the seat whose turn it was — 
 driven over a real socket, and both come down to the server applying whichever it
 reads first.
 
+### Playing the card you drew
+
+The one option here that is **on by default**, and the only one that is not a house rule:
+with `playDrawnCard` on, a voluntary draw whose card can be played does not end the turn.
+The seat may lay that card down, or `{ type: 'pass' }`.
+
+It reverses a documented decision rather than adding a variant, which is why the default
+differs. The flag survives for the groups who learned the game the other way, and because
+the sub-state is worth being able to switch off.
+
+`GameState.drawnCard` is the whole of that sub-state: the id of the card just drawn, and
+null the rest of the time. Seven things about it are worth knowing before touching that
+code:
+
+- **Only that card is offered.** `legalMoves` emits the plays for `drawnCard` alone, plus
+  a `pass`. Offering the rest of the hand would make drawing a free extra turn, which is a
+  different game — and it is guarded by a property over every intermediate state, not only
+  by unit tests, because whether a seat ever draws into a hand holding three other
+  playable cards is a question about the deal.
+- **There is no sub-state when the drawn card is unplayable.** The turn ends immediately,
+  as it always did, and the same when the pile could not pay the draw at all. A choice
+  appears only when there is one, so the option costs no click on an ordinary draw.
+- **`acceptDraw` grants nothing.** Taking a stacked +2 or +4 is a penalty and the official
+  rules do not let you play out of one. The cards arriving almost always include something
+  playable, which is exactly why it needs saying.
+- **`pass` is a move.** Drawing no longer ends a turn, so something must, and it is
+  explicit rather than inferred from a timeout — an idle player and a deliberate one are
+  not the same thing. It reuses `passTurn`, so the Liar window closes with it like any
+  other turn ending.
+- **`beginTurn` clears it, which is why every path does.** Every turn change in the game
+  funnels through `beginTurn`, so no caller has to remember. The three paths that do not
+  reach it clear the field by hand: the win check in `applyPlay`, `markSeatLeft`, and
+  `skipDisconnectedTurn` — which can break out of its loop when nobody else is active. A
+  stale value would let a seat play a card it no longer holds.
+- **No jump-in while the decision stands**, and `callUno` stays legal. The turn is
+  unresolved, the same reasoning that forbids jumping a pending draw; but the seat is on
+  turn and has not played, and drawing to two cards then playing to one is an ordinary way
+  to reach one card.
+- **Termination holds, and it was the invariant at risk.** Re-entering the sub-state needs
+  a second voluntary draw, and `draw` is not offered inside it, so every available move
+  either spends a card or ends the turn. The property tests assert it under a policy that
+  draws far more often than a sensible player would and lays down everything it draws.
+
+The event is `turnPassed { seat }`, read from the move in `diffEvents` for the same reason
+a call-out is: nothing else about the state changed, so the hand-size diff has nothing to
+find. It counts towards nothing — declining to play is not a statistic — and it is silent,
+because the draw it follows has already sounded.
+
+On the client the drawn card needed no new idea, since `Hand` renders a card as playable
+when a `play` references it. The **End turn** control did: it takes the draw button's place
+rather than sitting beside a dead one, because a player who draws and sees nothing change
+concludes the table has hung. It is named for what it does rather than "pass", which in a
+card game reads as declining to draw.
+
+Two interactions with Blazing, both in `RoomManager`:
+
+- `armTurn` **does not restart the clock** while `Room.decidingOnDrawnCard`, so the seat
+  keeps the time it had left to play rather than gaining a fresh allowance for drawing.
+  Only while a timer is really live, though: after one has fired the map no longer holds
+  it, so a forced draw landing in the sub-state still arms a new clock — a preserved
+  deadline already in the past would never fire again and the table would sit there.
+- `forceTurnMove` prefers `pass` over everything else. Forcing a second draw would punish
+  the clock twice, and `draw` is not on offer in the sub-state anyway, so without `pass`
+  first the clock would expire against the same seat for ever. That failure was caught by
+  an existing absentee test rather than by a new one.
+
 ## Scoring a match
 
 `packages/engine/src/match.ts`. A table plays a **match** of **rounds**. The host
@@ -212,6 +282,10 @@ the one action that is always legal, always neutral, and never spends a card the
 were saving. A stacked draw against them makes `draw` illegal, so `acceptDraw` is
 the same decision taken on their behalf. Nothing is forced when the seat could only
 have called UNO: that penalty belongs to the player who forgot, not to the clock.
+
+A seat already deciding what to do with a card it drew is **passed** rather than made to
+draw again, and its countdown is not restarted for having drawn. Both are covered under
+"Playing the card you drew" above.
 
 ## Changing a rule
 

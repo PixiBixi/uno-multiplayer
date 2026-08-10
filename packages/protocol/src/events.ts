@@ -39,6 +39,13 @@ export type GameEvent =
      between never got their turn. The card still arrives as `cardPlayed` right
      after, so the statistics and the sound cue need to learn nothing. */
   | { type: 'jumpedIn'; seat: number }
+  /* A seat declining the card it just drew, on a table that plays the official
+     drawn-card rule. Named rather than left silent, because the feed would otherwise have
+     nothing at all to say about a turn that ended: a draw no longer implies the turn is
+     over, so "Ana drew a card" followed by somebody else playing is genuinely ambiguous —
+     she may have been still deciding. Counts towards nothing; declining to play is not a
+     statistic. */
+  | { type: 'turnPassed'; seat: number }
   | { type: 'seatDisconnected'; seat: number }
   | { type: 'seatReconnected'; seat: number }
   | { type: 'seatLeft'; seat: number }

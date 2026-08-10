@@ -488,6 +488,20 @@ h3 {
   justify-content: center;
 }
 
+/* The line telling a seat what to do with the card it has just drawn.
+
+   Between the controls and the hand, the only spot on the felt that is on the way from one
+   to the other, and in the accent colour for the same reason the jump-in note is: it
+   describes a moment that passes. Deliberately not `.hint`, which is background — a player
+   who reads past this one concludes the table has stopped responding. */
+.drawn-prompt {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent);
+  text-align: center;
+}
+
 /* ---------- Seats ---------- */
 
 .seat {

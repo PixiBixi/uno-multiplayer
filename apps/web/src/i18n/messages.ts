@@ -104,6 +104,10 @@ export type Messages = {
     /* One person, and the same reason as the rest: French conjugates the jumper.
        The card itself is named by the `cardPlayed` line that follows. */
     jumpedIn: (name: string, isYou: boolean) => string
+    /* One person again. It has to say the card was kept as well as that the turn ended:
+       "Ana drew a card" no longer means her turn is over, so a line saying only that it
+       ended would leave the log unable to explain what happened to the card. */
+    turnPassed: (name: string, isYou: boolean) => string
     seatDisconnected: (name: string) => string
     seatReconnected: (name: string, isYou: boolean) => string
     seatLeft: (name: string) => string
@@ -146,6 +150,9 @@ export type Messages = {
     sevenZeroHint: string
     jumpIn: string
     jumpInHint: string
+    /** The one option here that is on by default, and the only one that is a real rule. */
+    playDrawnCard: string
+    playDrawnCardHint: string
     language: string
   }
 
@@ -195,6 +202,16 @@ export type Messages = {
     callOutOn: (name: string) => string
     /** Shown when the server has offered a play off turn, which is a jump-in. */
     jumpIn: string
+    /**
+     * The control that ends a turn after drawing, and the line telling you it is there.
+     *
+     * Named for what it does rather than "pass", which in a card game reads as declining to
+     * draw — the opposite of what has just happened. And the note is not decoration: a
+     * player who draws a card that looks unplayable to them, sees the draw button go dead
+     * and nothing else change, will conclude the game has hung.
+     */
+    endTurn: string
+    playDrawnCard: string
     /** Title of the Seven-Zero target picker, the 7's answer to choosing a colour. */
     chooseSwapTarget: string
     /** One target button: whose hand it is, and how many cards you would take. */

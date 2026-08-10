@@ -70,6 +70,7 @@ export function initGame(options: {
     discardPile: [startingCard],
     currentColor: startingCard.color,
     pendingDraw: null,
+    drawnCard: null,
     rngState: shuffled.state,
     phase: 'playing',
     winner: null,

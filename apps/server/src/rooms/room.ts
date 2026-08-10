@@ -112,6 +112,17 @@ export class Room {
     return this.game?.currentSeat ?? null
   }
 
+  /**
+   * True while the seat on turn is deciding what to do with a card it has just drawn.
+   *
+   * Read by RoomManager and nothing else: a voluntary draw does not end the turn on a table
+   * that plays the drawn card, so the turn clock must not restart for it. The seat gets the
+   * time it had left to play, not a fresh allowance for having drawn.
+   */
+  get decidingOnDrawnCard(): boolean {
+    return this.game?.drawnCard != null
+  }
+
   /** A round has ended, the match has not, so another deal is due. */
   get betweenRounds(): boolean {
     return this.game !== null && this.game.phase === 'finished' && !this.matchOver
@@ -369,6 +380,11 @@ export class Room {
    * decision taken on their behalf. If neither is available — the seat could only
    * have called UNO — nothing is forced: that penalty belongs to the player who
    * forgot, not to the clock.
+   *
+   * A seat already holding a drawn card is passed rather than made to draw again. They
+   * have drawn; forcing a second card would punish the clock twice, and it is also the
+   * only move that ends that turn — `draw` is not on offer in the sub-state, so without
+   * `pass` first the clock would expire against the same seat for ever.
    */
   forceTurnMove(): GameEvent[] {
     const before = this.game
@@ -377,7 +393,9 @@ export class Room {
     const seat = before.currentSeat
     const moves = legalMoves(before, seat)
     const forced =
-      moves.find((move) => move.type === 'acceptDraw') ?? moves.find((move) => move.type === 'draw')
+      moves.find((move) => move.type === 'pass') ??
+      moves.find((move) => move.type === 'acceptDraw') ??
+      moves.find((move) => move.type === 'draw')
     if (forced === undefined) return []
 
     const result = applyMove(before, seat, forced)
@@ -491,6 +509,11 @@ function diffEvents(before: GameState, after: GameState, seat: number, move: Mov
   const events: GameEvent[] = []
 
   if (move.type === 'callUno') return [{ type: 'unoCalled', seat }]
+
+  /* Read from the move for the same reason a call-out is: nothing else about the state
+     changed. A pass moves the turn and touches no hand and no pile, so the diff below has
+     nothing to find and would report a turn that ended as though nothing had. */
+  if (move.type === 'pass') return [{ type: 'turnPassed', seat }]
 
   /* Named explicitly rather than left to the hand-size loop below, which would
      read the two cards as an ordinary draw by the target. The penalty keeps its

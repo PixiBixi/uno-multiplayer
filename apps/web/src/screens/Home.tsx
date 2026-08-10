@@ -64,8 +64,12 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
   const [liar, setLiar] = useState(false)
   const [sevenZero, setSevenZero] = useState(false)
   const [jumpIn, setJumpIn] = useState(false)
+  /* The one that starts on. It is the official rule, not a house rule, so a host who
+     touches nothing gets it — and the switch is here for the groups who learned the game
+     the other way. */
+  const [playDrawnCard, setPlayDrawnCard] = useState(true)
 
-  const rules: TableRules = { liar, sevenZero, jumpIn }
+  const rules: TableRules = { liar, sevenZero, jumpIn, playDrawnCard }
 
   const pace: MatchPace = blazing
     ? { turnSeconds: clamp(turnSeconds, MIN_TURN_SECONDS, MAX_TURN_SECONDS) }
@@ -289,6 +293,18 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
               <span>{t.home.jumpIn}</span>
             </label>
             <p className="hint">{t.home.jumpInHint}</p>
+
+            <label className="switch-row">
+              <input
+                type="checkbox"
+                checked={playDrawnCard}
+                onChange={(event) => {
+                  setPlayDrawnCard(event.target.checked)
+                }}
+              />
+              <span>{t.home.playDrawnCard}</span>
+            </label>
+            <p className="hint">{t.home.playDrawnCardHint}</p>
           </fieldset>
 
           <button type="submit" className="btn btn-primary" disabled={!canCreate}>

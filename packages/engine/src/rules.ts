@@ -1,4 +1,4 @@
-import { COLORS, isWild, type Card, type GameState, type Move } from './types.js'
+import { COLORS, isWild, type Card, type GameState, type Move, type Seat } from './types.js'
 
 export function isPlayable(card: Card, state: GameState): boolean {
   // An outstanding debt closes everything down: only the same type can raise,
@@ -139,6 +139,11 @@ function playMoves(state: GameState, seatIndex: number, card: Card, handSize: nu
  */
 function jumpInMoves(state: GameState, seatIndex: number): Move[] {
   if (!state.rules.jumpIn || state.pendingDraw !== null) return []
+  /* Nor while the seat on turn is deciding what to do with a card it has just drawn. The
+     turn is still theirs and still unresolved, which is the same reason a pending draw
+     closes jumping down — and a card laid on top mid-decision would leave them holding an
+     offer against a top that has moved. */
+  if (state.drawnCard !== null) return []
   const seat = state.seats[seatIndex]
   const top = state.discardPile[state.discardPile.length - 1]
   if (seat === undefined || top === undefined) return []
@@ -149,6 +154,21 @@ function jumpInMoves(state: GameState, seatIndex: number): Move[] {
     moves.push(...playMoves(state, seatIndex, card, seat.hand.length))
   }
   return moves
+}
+
+/**
+ * What the seat on turn may do with the card it has just drawn: lay that one card down,
+ * and nothing else from its hand.
+ *
+ * Both conditions are restated rather than trusted. `drawnCard` is only ever set on a card
+ * the seat holds and can play, so neither can fail — but this is the one field in the state
+ * whose staleness would hand somebody a card they no longer own, and a gate that reads the
+ * hand it is offering from cannot be wrong about that.
+ */
+function drawnCardMoves(state: GameState, seat: Seat): Move[] {
+  const card = seat.hand.find((c) => c.id === state.drawnCard)
+  if (card === undefined || !isPlayable(card, state)) return []
+  return playMoves(state, seat.index, card, seat.hand.length)
 }
 
 export function legalMoves(state: GameState, seatIndex: number): Move[] {
@@ -163,12 +183,20 @@ export function legalMoves(state: GameState, seatIndex: number): Move[] {
   if (state.currentSeat !== seatIndex) return [...callOuts, ...jumpInMoves(state, seatIndex)]
 
   const moves: Move[] = []
-  for (const card of seat.hand) {
-    if (!isPlayable(card, state)) continue
-    moves.push(...playMoves(state, seatIndex, card, seat.hand.length))
+  if (state.drawnCard !== null) {
+    /* The sub-state: this seat drew a playable card and the turn is not over. Exactly that
+       card, and a pass — not the rest of the hand, which would make drawing a free extra
+       turn rather than the official rule. `playMoves` is reused, so a drawn wild asks for
+       its colour and a drawn 7 for its target like any other. */
+    moves.push(...drawnCardMoves(state, seat))
+    moves.push({ type: 'pass' })
+  } else {
+    for (const card of seat.hand) {
+      if (!isPlayable(card, state)) continue
+      moves.push(...playMoves(state, seatIndex, card, seat.hand.length))
+    }
+    moves.push(state.pendingDraw !== null ? { type: 'acceptDraw' } : { type: 'draw' })
   }
-
-  moves.push(state.pendingDraw !== null ? { type: 'acceptDraw' } : { type: 'draw' })
   /* Two cards is the ordinary moment to call it, before playing down to one. A
      vulnerable seat gets the offer too: closing its own window on its next turn,
      before playing, is how it escapes an accusation. */

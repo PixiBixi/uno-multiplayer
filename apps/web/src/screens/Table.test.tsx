@@ -164,6 +164,72 @@ describe('Table', () => {
     expect(screen.queryByText(/jump in/i)).toBeNull()
   })
 
+  it('offers an End turn control, not a dead Draw button, once a card has been drawn', async () => {
+    /* The whole client-side risk of the sub-state: a seat that has drawn sees Draw go dead,
+       and without something in its place concludes the table has hung. The control exists
+       because the server put a `pass` in this view and for no other reason. */
+    const { onPlay } = setup(
+      viewWith({
+        you: {
+          seat: 0,
+          hand: [mine],
+          legalMoves: [{ type: 'play', cardId: mine.id }, { type: 'pass' }],
+        },
+      }),
+    )
+    expect(screen.queryByRole('button', { name: /draw card/i })).toBeNull()
+    await userEvent.click(screen.getByRole('button', { name: /end turn/i }))
+    expect(onPlay).toHaveBeenCalledWith({ type: 'pass' })
+  })
+
+  it('says which two things are on offer while a drawn card is being decided', () => {
+    setup(
+      viewWith({
+        you: {
+          seat: 0,
+          hand: [mine],
+          legalMoves: [{ type: 'play', cardId: mine.id }, { type: 'pass' }],
+        },
+      }),
+    )
+    expect(screen.getByText(/play the card you drew/i)).toBeTruthy()
+  })
+
+  it('says nothing about a drawn card when no pass was offered', () => {
+    setup(viewWith())
+    expect(screen.queryByText(/play the card you drew/i)).toBeNull()
+    expect(screen.queryByRole('button', { name: /end turn/i })).toBeNull()
+    expect(screen.getByRole('button', { name: /draw card/i })).toBeTruthy()
+  })
+
+  it('keeps the debt button ahead of the pass, since accepting a draw grants neither', () => {
+    /* Belt and braces on an impossible view: `acceptDraw` and `pass` can never both be
+       offered, since taking a penalty is not a draw and grants no decision. If they ever
+       were, the debt is the thing that has to be settled. */
+    setup(
+      viewWith({
+        pendingDraw: { amount: 4, kind: 'wild4' },
+        you: { seat: 0, hand: [mine], legalMoves: [{ type: 'acceptDraw' }, { type: 'pass' }] },
+      }),
+    )
+    expect(screen.getByRole('button', { name: /take 4/i })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /end turn/i })).toBeNull()
+  })
+
+  it('still offers UNO beside the End turn control, which stays legal after a draw', () => {
+    setup(
+      viewWith({
+        you: {
+          seat: 0,
+          hand: [mine, top],
+          legalMoves: [{ type: 'play', cardId: mine.id }, { type: 'pass' }, { type: 'callUno' }],
+        },
+      }),
+    )
+    expect(screen.getByRole('button', { name: /uno/i })).toBeTruthy()
+    expect(screen.getByRole('button', { name: /end turn/i })).toBeTruthy()
+  })
+
   it('renders a swap picker from the moves the server offered, naming the seats', async () => {
     /* Straight through from the view: the client neither knows that a 7 swaps nor who
        a legal target is, only that two moves reference the same card. */

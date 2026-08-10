@@ -62,6 +62,21 @@ describe('soundForEvent', () => {
     ])
   })
 
+  it('stays silent when a seat keeps the card it drew and ends its turn', () => {
+    /* The draw it follows has already sounded, and a cue for declining to play would be a
+       noise made for an absence of one. */
+    expect(soundForEvent({ type: 'turnPassed', seat: 1 }, 0)).toBeNull()
+    expect(
+      soundsForEvents(
+        [
+          { type: 'cardsDrawn', seat: 1, count: 1 },
+          { type: 'turnPassed', seat: 1 },
+        ],
+        0,
+      ),
+    ).toEqual(['draw'])
+  })
+
   it('tells winning a round apart from watching one be won', () => {
     const ended: GameEvent = { type: 'roundEnded', winner: 0, awarded: [30, 0], scores: [30, 0] }
     expect(soundForEvent(ended, 0)).toBe('roundWon')

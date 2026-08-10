@@ -87,7 +87,7 @@ const heldBy = (room: Room, seat: number): string[] =>
 
 describe('a room playing with Seven-Zero', () => {
   it('offers the seat on turn one swap per other active seat', () => {
-    const room = roomWith({ liar: false, sevenZero: true, jumpIn: false })
+    const room = roomWith({ liar: false, sevenZero: true, jumpIn: false, playDrawnCard: false })
     const { seat, move } = playUntil(room, swapOffered)
 
     const swaps = (room.viewFor(seat)?.you.legalMoves ?? []).filter(
@@ -103,7 +103,7 @@ describe('a room playing with Seven-Zero', () => {
     /* The mistake this guards: the hand-size diff below `cardPlayed` reading a
        permutation as a draw, which would report cards nobody took and count them in
        the statistics. */
-    const room = roomWith({ liar: false, sevenZero: true, jumpIn: false })
+    const room = roomWith({ liar: false, sevenZero: true, jumpIn: false, playDrawnCard: false })
     const { seat, move } = playUntil(room, swapOffered)
     const target = move.swapWith ?? -1
 
@@ -124,7 +124,7 @@ describe('a room playing with Seven-Zero', () => {
   })
 
   it('reports a rotation with the direction the hands went', () => {
-    const room = roomWith({ liar: false, sevenZero: true, jumpIn: false })
+    const room = roomWith({ liar: false, sevenZero: true, jumpIn: false, playDrawnCard: false })
     const { seat, move } = playUntil(room, zeroOffered)
     const before = SEATS.map((index) => heldBy(room, index))
     // A 0 does not change the direction, so the one in play is where hands go. Read
@@ -146,7 +146,7 @@ describe('a room playing with Seven-Zero', () => {
   })
 
   it('counts hands moving as nothing, through the same funnel as everything else', () => {
-    const room = roomWith({ liar: false, sevenZero: true, jumpIn: false })
+    const room = roomWith({ liar: false, sevenZero: true, jumpIn: false, playDrawnCard: false })
     const { seat, move, events } = playUntil(room, swapOffered)
     const result = room.move(seat, move)
     if (!result.okay) throw new Error(result.error)
@@ -160,7 +160,7 @@ describe('a room playing with Seven-Zero', () => {
     /* The two options meeting: the seat handed a single card never had a turn on
        which it could call UNO, so a window — escapable on its own next turn — is
        what it gets, rather than two cards it could not have avoided. */
-    const room = roomWith({ liar: true, sevenZero: true, jumpIn: false })
+    const room = roomWith({ liar: true, sevenZero: true, jumpIn: false, playDrawnCard: false })
     for (let turn = 0; turn < 400; turn += 1) {
       const seat = room.currentSeat
       if (seat === null || room.viewFor(seat)?.phase !== 'playing') break
@@ -194,7 +194,7 @@ describe('a room playing with Seven-Zero', () => {
 
 describe('a room playing plain UNO', () => {
   it('never offers a swap, so the option is genuinely opt-in', () => {
-    const room = roomWith({ liar: false, sevenZero: false, jumpIn: false })
+    const room = roomWith({ liar: false, sevenZero: false, jumpIn: false, playDrawnCard: false })
     for (let turn = 0; turn < 400; turn += 1) {
       const seat = room.currentSeat
       if (seat === null || room.viewFor(seat)?.phase !== 'playing') break

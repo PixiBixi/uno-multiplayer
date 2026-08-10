@@ -77,7 +77,7 @@ const heldBy = (room: Room, seat: number): string[] =>
 
 describe('a room playing with jump-in', () => {
   it('offers a card identical to the top to a seat whose turn it is not', () => {
-    const room = roomWith({ liar: false, sevenZero: false, jumpIn: true })
+    const room = roomWith({ liar: false, sevenZero: false, jumpIn: true, playDrawnCard: false })
     const { seat, move } = playUntilJumpable(room)
     const view = room.viewFor(seat)
 
@@ -94,7 +94,7 @@ describe('a room playing with jump-in', () => {
   })
 
   it('reports the jump-in beside the card, and moves the turn to the jumper', () => {
-    const room = roomWith({ liar: false, sevenZero: false, jumpIn: true })
+    const room = roomWith({ liar: false, sevenZero: false, jumpIn: true, playDrawnCard: false })
     const { seat, move } = playUntilJumpable(room)
     const held = heldBy(room, seat)
     const card = room.viewFor(seat)?.you.hand.find((held) => held.id === move.cardId)
@@ -122,7 +122,7 @@ describe('a room playing with jump-in', () => {
   })
 
   it('counts the jump as nothing and the card once, through the one funnel', () => {
-    const room = roomWith({ liar: false, sevenZero: false, jumpIn: true })
+    const room = roomWith({ liar: false, sevenZero: false, jumpIn: true, playDrawnCard: false })
     const { seat, move, events } = playUntilJumpable(room)
     const result = room.move(seat, move)
     if (!result.okay) throw new Error(result.error)
@@ -138,14 +138,14 @@ describe('a room playing with jump-in', () => {
   })
 
   it('refuses the same jump-in twice, which is what the loser of a race gets', () => {
-    const room = roomWith({ liar: false, sevenZero: false, jumpIn: true })
+    const room = roomWith({ liar: false, sevenZero: false, jumpIn: true, playDrawnCard: false })
     const { seat, move } = playUntilJumpable(room)
     expect(room.move(seat, move).okay).toBe(true)
     expect(room.move(seat, move)).toEqual({ okay: false, error: 'illegal_move' })
   })
 
   it('still refuses an off-turn play of a card that is not identical', () => {
-    const room = roomWith({ liar: false, sevenZero: false, jumpIn: true })
+    const room = roomWith({ liar: false, sevenZero: false, jumpIn: true, playDrawnCard: false })
     const { seat } = playUntilJumpable(room)
     const other = (room.viewFor(seat)?.you.hand ?? []).find(
       (card) => card.id !== jumpOffered(room)?.move.cardId,
@@ -160,7 +160,7 @@ describe('a room playing with jump-in', () => {
 
 describe('a room playing plain UNO', () => {
   it('never offers an off-turn play, so the option is genuinely opt-in', () => {
-    const room = roomWith({ liar: false, sevenZero: false, jumpIn: false })
+    const room = roomWith({ liar: false, sevenZero: false, jumpIn: false, playDrawnCard: false })
     for (let turn = 0; turn < 400; turn += 1) {
       const onTurn = room.currentSeat
       if (onTurn === null || room.viewFor(onTurn)?.phase !== 'playing') break
@@ -175,7 +175,7 @@ describe('a room playing plain UNO', () => {
   })
 
   it('refuses an off-turn play as not that seat’s turn', () => {
-    const room = roomWith({ liar: false, sevenZero: false, jumpIn: false })
+    const room = roomWith({ liar: false, sevenZero: false, jumpIn: false, playDrawnCard: false })
     const onTurn = room.currentSeat ?? 0
     const other = SEATS.find((seat) => seat !== onTurn) ?? 0
     const card = room.viewFor(other)?.you.hand[0]

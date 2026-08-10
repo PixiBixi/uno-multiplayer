@@ -46,8 +46,9 @@ export type Seat = {
 }
 
 /**
- * House rules a table may switch on, chosen by the host at creation. Off by
- * default: a group that wants plain UNO gets plain UNO.
+ * Rules a table may switch, chosen by the host at creation. The house rules are off by
+ * default: a group that wants plain UNO gets plain UNO. `playDrawnCard` is the exception,
+ * and it is not a house rule — see its own comment below.
  *
  * Lives here rather than beside `MatchPace` in the protocol, unlike the clock: a
  * time limit is a house setting the engine never sees, while these change what
@@ -70,13 +71,31 @@ export type TableRules = {
    * that only `currentSeat` can act, and the only one that MOVES `currentSeat`.
    */
   jumpIn: boolean
+  /**
+   * The official rule: a drawn card that can be played may be laid down, so a voluntary
+   * draw does not end the turn on its own.
+   *
+   * On by default, and the only flag here that is. The three above are house rules a
+   * group either plays or does not; this one is in the rulebook, and a table with it off
+   * is playing the simplification this project shipped first rather than playing UNO. It
+   * stays a flag for the groups who learned it the other way, and because the sub-state
+   * it introduces is worth being able to switch off.
+   */
+  playDrawnCard: boolean
 }
 
-/** Plain UNO, which is what a host who picks nothing gets. */
+/**
+ * What a host who picks nothing gets: plain UNO with no house rules, and the official
+ * drawn-card rule in force.
+ *
+ * `playDrawnCard: true` is deliberately the odd one out. The `false`s are not a pattern
+ * to follow — they mark the three optional house rules, while this one is the rulebook.
+ */
 export const DEFAULT_TABLE_RULES: TableRules = {
   liar: false,
   sevenZero: false,
   jumpIn: false,
+  playDrawnCard: true,
 }
 
 /**
@@ -98,6 +117,16 @@ export type GameState = {
   /** Distinct from the top card's colour: after a wild the two diverge. */
   currentColor: Color
   pendingDraw: PendingDraw | null
+  /**
+   * The card the seat on turn has just drawn voluntarily and may still lay down. Null the
+   * rest of the time, which is nearly always.
+   *
+   * The one sub-state in the game: while it is set the turn is not over, and the seat may
+   * play exactly this card or pass. Set only when the card is genuinely playable, so a
+   * choice appears only when there is one, and cleared on every turn change from any
+   * cause — a stale value would let a seat play a card it no longer holds.
+   */
+  drawnCard: CardId | null
   rngState: number
   phase: GamePhase
   winner: number | null
@@ -141,6 +170,14 @@ export type Move =
   | { type: 'play'; cardId: CardId; chosenColor?: Color; swapWith?: number }
   | { type: 'draw' }
   | { type: 'acceptDraw' }
+  /**
+   * Declining to play the card just drawn, which ends the turn.
+   *
+   * A move of its own because drawing no longer ends a turn on a table that plays the
+   * drawn card, so something has to — and it must be explicit rather than inferred from a
+   * timeout, which would make an idle player and a deliberate one look alike.
+   */
+  | { type: 'pass' }
   | { type: 'callUno' }
   /**
    * Accusing another seat of holding one card without having called UNO. The one

@@ -199,7 +199,7 @@ const playUntilJumpable = async (
   throw new Error('nobody was ever offered a jump-in')
 }
 
-const JUMP: TableRules = { liar: false, sevenZero: false, jumpIn: true }
+const JUMP: TableRules = { liar: false, sevenZero: false, jumpIn: true, playDrawnCard: false }
 
 describe('jump-in on the wire', () => {
   it(
@@ -420,7 +420,7 @@ describe('jump-in on the wire', () => {
     'never offers an off-turn play on a table that did not ask for the option',
     async () => {
       const { players, host } = await table(
-        { liar: false, sevenZero: false, jumpIn: false },
+        { liar: false, sevenZero: false, jumpIn: false, playDrawnCard: false },
         {
           kind: 'rounds',
           count: 2,
@@ -439,7 +439,7 @@ describe('jump-in on the wire', () => {
   it(
     'refuses an off-turn play as not that seat’s turn without the option',
     async () => {
-      const { players } = await table({ liar: false, sevenZero: false, jumpIn: false })
+      const { players } = await table({ liar: false, sevenZero: false, jumpIn: false, playDrawnCard: false })
       const waiting = players.find((p) => p !== onTurn(players))
       const cardId = waiting?.view()?.you.hand[0]?.id
       if (waiting === undefined || cardId === undefined) throw new Error('no waiting seat')

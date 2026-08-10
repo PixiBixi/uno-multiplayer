@@ -44,6 +44,8 @@ export function describeEvent(
       )
     case 'jumpedIn':
       return m.jumpedIn(nameOf(event.seat), event.seat === mySeat)
+    case 'turnPassed':
+      return m.turnPassed(nameOf(event.seat), event.seat === mySeat)
     case 'handsRotated':
       // A direction, not a 1 or a -1: the sentence has to name which way, and each
       // language spells that out for itself.

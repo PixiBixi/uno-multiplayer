@@ -79,6 +79,19 @@ describe('describeEvent', () => {
     )
   })
 
+  it('says a turn ended on a card that was kept, from either side of it', () => {
+    /* The line has to name the card as well as the ending: "Ben drew a card" no longer
+       means his turn is over, so a log that only said it ended would leave a reader
+       wondering what became of the card. */
+    const asYou = (seat: number) => (seat === 0 ? 'You' : nameOf(seat))
+    expect(describeEvent({ type: 'turnPassed', seat: 1 }, nameOf, NOT_ME, en)).toBe(
+      'Ben kept the card drawn and ended their turn',
+    )
+    expect(describeEvent({ type: 'turnPassed', seat: 0 }, asYou, 0, en)).toBe(
+      'You kept the card you drew and ended your turn',
+    )
+  })
+
   it('names the direction a rotation sent the hands', () => {
     // A reverse earlier in the round changes it, so the log has to say which way.
     expect(describeEvent({ type: 'handsRotated', direction: 1 }, nameOf, NOT_ME, en)).toContain(
