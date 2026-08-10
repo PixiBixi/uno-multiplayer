@@ -86,10 +86,43 @@ behaviour, which needs a raised `CHAT_BURST` that only the suite-managed server
 gets — against a deployed instance the limiter correctly stops it at five messages.
 The skip states its reason rather than weakening the assertion.
 
-## Building the image
+## The published image
 
-CI builds and probes the image on every push, but does **not** publish it to a
-registry, so deploying means building on the server. Note `.dockerignore` needs
+CI publishes to **GHCR** on every green push to `main`:
+
+```
+ghcr.io/pixibixi/uno-multiplayer:latest
+ghcr.io/pixibixi/uno-multiplayer:<commit-sha>
+```
+
+So a deployment is a pull rather than a build on the server:
+
+```bash
+docker compose -f compose.traefik.yaml pull
+docker compose -f compose.traefik.yaml up -d
+```
+
+Two properties worth knowing, because they were the point of doing it this way:
+
+- **The published image is the one that was probed.** The publish step retags the
+  image the job just booted and curl-checked — health endpoint, app shell,
+  Socket.IO handshake, non-root — rather than building a second time. A rebuild
+  would publish something nothing had proved runs.
+- **A red build cannot move `latest`.** The job is gated on the lint, unit and e2e
+  suites, so `pull` can never fetch an image whose tests failed. The cost is that a
+  Dockerfile break is reported after the suites rather than beside them.
+
+Rolling back is the SHA tag: set `image:` to
+`ghcr.io/pixibixi/uno-multiplayer:<sha>` and `up -d`. No archaeology, no rebuild
+from an old commit.
+
+Publishing needs no secret — `GITHUB_TOKEN` covers GHCR for the repository's own
+owner — and it only ever happens from a push to `main`, never from a pull request,
+so a fork cannot publish.
+
+## Building the image locally
+
+Note `.dockerignore` needs
 `**/`-prefixed patterns: a bare `*.tsbuildinfo` matches only the context root, so
 nested build info once reached the image while `dist/` was excluded, and
 `tsc --build` then reported every project "up to date" against output that was not

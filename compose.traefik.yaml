@@ -1,13 +1,20 @@
 # Deployment behind an existing Traefik. Replace the three placeholders and run:
 #
-#   docker compose -f compose.traefik.yaml up -d --build
+#   docker compose -f compose.traefik.yaml pull
+#   docker compose -f compose.traefik.yaml up -d
+#
+# Add --build to the second line instead of pulling when you are changing code
+# locally and want your own build rather than the published one.
 #
 # Verified end to end: the full Playwright suite plays complete games through
 # Traefik with exactly these labels and no WebSocket configuration of any kind.
 services:
   uno:
+    # Both on purpose. `docker compose pull` fetches the image CI published, which
+    # is the one it booted and probed; `up --build` still builds locally when you
+    # are changing something. Pin the tag to a commit SHA to roll back.
+    image: ghcr.io/pixibixi/uno-multiplayer:latest
     build: .
-    image: uno-multiplayer:local
     environment:
       # Traefik terminates TLS, so players reach this over HTTPS even though the
       # container itself speaks plain HTTP. Without this the app drops HSTS.
