@@ -1,6 +1,21 @@
 # Changelog
 
 - - -
+## [v1.2.0](https://github.com/PixiBixi/uno-multiplayer/compare/8cca3395400dfaf55a73c95aaff9f43d07b84d73..v1.2.0) - 2026-08-10
+#### Features
+- (**protocol**) put the table rules on the wire and add room:configure - ([a9a8d8d](https://github.com/PixiBixi/uno-multiplayer/commit/a9a8d8d02a32b7aa04cc0d24f58ee76109b7afdb)) - Jeremy Delgado
+- (**server**) let the host configure the table from the lobby - ([ccce6d6](https://github.com/PixiBixi/uno-multiplayer/commit/ccce6d6b806b9e4ae26b55066c16d44d283f2c58)) - Jeremy Delgado
+- (**web**) move the table configuration into the lobby - ([d3f744d](https://github.com/PixiBixi/uno-multiplayer/commit/d3f744de4250ddf27c32fd636b457d9b9b52d57d)) - Jeremy Delgado
+#### Documentation
+- (**spec**) the lobby owns the table configuration - ([3f1e0fd](https://github.com/PixiBixi/uno-multiplayer/commit/3f1e0fdcf08dd055edba9e6114c7b61ea3830ca1)) - Jeremy Delgado
+- the lobby configures the table, not the home screen - ([5690891](https://github.com/PixiBixi/uno-multiplayer/commit/56908911f5454f31ef2ce68c8a6e3dae5a7b2b20)) - Jeremy Delgado
+#### Tests
+- (**e2e**) the guest watches the host toggle a rule, and the lobby is measured - ([913cfa5](https://github.com/PixiBixi/uno-multiplayer/commit/913cfa5c5cc2ccd11fa9067b86bad06fbc8fcbbd)) - Jeremy Delgado
+#### Style
+- format the drawn-card tests with Prettier - ([8cca339](https://github.com/PixiBixi/uno-multiplayer/commit/8cca3395400dfaf55a73c95aaff9f43d07b84d73)) - Jeremy Delgado
+
+- - -
+
 ## [v1.1.0](https://github.com/PixiBixi/uno-multiplayer/compare/7e7a3ee5b507c5f803edfe96c8ed0fc4e3b9fc54..v1.1.0) - 2026-08-10
 #### Features
 - (**rules**) play the card you just drew, on by default - ([efc7440](https://github.com/PixiBixi/uno-multiplayer/commit/efc7440e48e124d776538e2c0f7197c04fc087c9)) - Jeremy Delgado
