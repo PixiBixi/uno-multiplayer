@@ -1,10 +1,19 @@
 import { DEFAULT_TABLE_RULES } from '@uno/engine'
-import { DEFAULT_MATCH_GOAL } from './views.js'
+import {
+  DEFAULT_MATCH_GOAL,
+  MAX_POINTS_TARGET,
+  MAX_ROUNDS,
+  MAX_TURN_SECONDS,
+  MIN_POINTS_TARGET,
+  MIN_ROUNDS,
+  MIN_TURN_SECONDS,
+} from './views.js'
 import { describe, expect, it } from 'vitest'
 import {
   chatSendSchema,
   gameMoveSchema,
   moveSchema,
+  roomConfigureSchema,
   roomCreateSchema,
   roomJoinSchema,
   roomRejoinSchema,
@@ -152,6 +161,82 @@ describe('roomCreateSchema', () => {
         rules: { playDrawnCard: 'obviously' },
       }).success,
     ).toBe(false)
+  })
+})
+
+describe('roomConfigureSchema', () => {
+  it('accepts an empty payload, which asks for nothing to change', () => {
+    /* Partial on purpose: a host toggling one rule must not have to echo back a goal
+       and a pace it read a moment earlier, because echoing back a stale one is how a
+       second control gets silently reverted. */
+    const parsed = roomConfigureSchema.parse({})
+    expect('goal' in parsed).toBe(false)
+    expect('pace' in parsed).toBe(false)
+    expect('rules' in parsed).toBe(false)
+  })
+
+  it('carries one field without inventing the other two', () => {
+    const parsed = roomConfigureSchema.parse({ rules: { sevenZero: true } })
+    expect(parsed.rules).toEqual({
+      liar: false,
+      sevenZero: true,
+      jumpIn: false,
+      playDrawnCard: true,
+    })
+    expect(parsed.goal).toBeUndefined()
+    expect(parsed.pace).toBeUndefined()
+  })
+
+  it('tells a pace of null apart from a pace nobody mentioned', () => {
+    /* The one field where absent and null are different requests: null means "take the
+       clock off this table", absent means "leave the clock alone". Collapsing them
+       would make it impossible to turn Blazing off. */
+    expect(roomConfigureSchema.parse({ pace: null }).pace).toBeNull()
+    expect('pace' in roomConfigureSchema.parse({ goal: DEFAULT_MATCH_GOAL })).toBe(false)
+  })
+
+  it('enforces exactly the bounds room:create does, because it shares them', () => {
+    /* Table-driven against both schemas rather than restating the numbers: a second
+       copy of MIN_POINTS_TARGET and friends is the failure this guards, and a copy
+       drifts by one field at a time. */
+    const goals = [
+      { kind: 'points', target: MIN_POINTS_TARGET },
+      { kind: 'points', target: MIN_POINTS_TARGET - 1 },
+      { kind: 'points', target: MAX_POINTS_TARGET },
+      { kind: 'points', target: MAX_POINTS_TARGET + 1 },
+      { kind: 'points', target: 500.5 },
+      { kind: 'rounds', count: MIN_ROUNDS },
+      { kind: 'rounds', count: MIN_ROUNDS - 1 },
+      { kind: 'rounds', count: MAX_ROUNDS },
+      { kind: 'rounds', count: MAX_ROUNDS + 1 },
+    ]
+    for (const goal of goals) {
+      expect(roomConfigureSchema.safeParse({ goal }).success, `goal ${JSON.stringify(goal)}`).toBe(
+        roomCreateSchema.safeParse({ playerName: 'Ana', goal, pace: null }).success,
+      )
+    }
+
+    const paces = [
+      null,
+      { turnSeconds: MIN_TURN_SECONDS },
+      { turnSeconds: MIN_TURN_SECONDS - 1 },
+      { turnSeconds: MAX_TURN_SECONDS },
+      { turnSeconds: MAX_TURN_SECONDS + 1 },
+      { turnSeconds: 15.5 },
+    ]
+    for (const pace of paces) {
+      expect(roomConfigureSchema.safeParse({ pace }).success, `pace ${JSON.stringify(pace)}`).toBe(
+        roomCreateSchema.safeParse({ playerName: 'Ana', goal: DEFAULT_MATCH_GOAL, pace }).success,
+      )
+    }
+  })
+
+  it('refuses a rule flag that is not a boolean', () => {
+    expect(roomConfigureSchema.safeParse({ rules: { jumpIn: 'sure' } }).success).toBe(false)
+  })
+
+  it('refuses a goal of a kind that does not exist', () => {
+    expect(roomConfigureSchema.safeParse({ goal: { kind: 'forever' } }).success).toBe(false)
   })
 })
 

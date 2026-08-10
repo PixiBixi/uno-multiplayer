@@ -1,4 +1,4 @@
-import type { Card, Color, GamePhase, MatchGoal, Move, SeatStatus } from '@uno/engine'
+import type { Card, Color, GamePhase, MatchGoal, Move, SeatStatus, TableRules } from '@uno/engine'
 
 export const ROOM_CODE_LENGTH = 6
 export const MAX_SEATS = 4
@@ -41,10 +41,11 @@ export const BETWEEN_ROUNDS_SECONDS = 5
  */
 export type MatchPace = { turnSeconds: number } | null
 
-/* The optional table rules — the Liar call-out and whatever joins it — are NOT
-   here beside MatchPace, deliberately: a clock is a house setting the engine never
-   sees, while those change what the rules are and the reducer has to read them.
-   See `TableRules` in @uno/engine. */
+/* `TableRules` is declared in @uno/engine rather than here beside MatchPace, and that
+   split is the point: a clock is a house setting the engine never sees, while those
+   flags change what the rules are and the reducer has to read them. The protocol
+   re-exports the type and carries it on the wire — see `LobbyView.rules` — but it does
+   not own it, so there is exactly one definition of what a rule is. */
 
 /** Alphabet without ambiguous characters: no O/0, no I/1. */
 export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -116,11 +117,34 @@ export type MatchProgress = {
   stats: SeatStats[]
 }
 
+/**
+ * Everything a player in the lobby receives, host and guest alike.
+ *
+ * It carries the whole table configuration because a guest who cannot see the rules
+ * finds out about Seven-Zero when their hand changes owner. Rules used to be kept off
+ * the wire on the grounds that the client evaluates none of them, which is still true
+ * — it renders them and never reasons about them.
+ */
 export type LobbyView = {
   roomCode: string
   hostSeat: number
   seats: { seat: number; name: string; status: SeatStatus }[]
+  /** Whether enough seats are filled to deal. NOT whether the table may be configured. */
   canStart: boolean
   goal: MatchGoal
   pace: MatchPace
+  rules: TableRules
+  /**
+   * Whether the host may still change the three fields above.
+   *
+   * False from the first deal of the **match** onward, not of each round: a match
+   * spans rounds and carries a score, so flipping Seven-Zero at round three would
+   * rewrite the rules of a contest already in progress.
+   *
+   * Deliberately not derivable from `canStart`, which reports seat count and nothing
+   * else — a room can be un-startable and already dealt, because somebody left
+   * mid-match. Sent so the host's controls can disappear; the server checks the same
+   * thing again when `room:configure` arrives, which is where the guard actually is.
+   */
+  configurable: boolean
 }

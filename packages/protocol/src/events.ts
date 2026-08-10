@@ -69,6 +69,23 @@ export type Empty = Record<never, never>
 
 export type Ack<T = Empty> = (result: ({ ok: true } & T) | { ok: false; error: ErrorCode }) => void
 
+/**
+ * What `room:configure` asks to change. Every field optional and every absent field
+ * left as it is, so toggling one rule cannot write back a goal the client read a
+ * moment earlier. `pace` is the one where absent and `null` differ: null takes the
+ * clock off the table, absent leaves whatever clock it has.
+ *
+ * The keys admit an explicit `undefined` as well as being absent, which under
+ * `exactOptionalPropertyTypes` are different types. Zod's `.optional()` produces the
+ * former and reads it as "not mentioned", so both spellings mean the same thing here
+ * and neither side has to strip keys to satisfy the other.
+ */
+export type TableConfiguration = {
+  goal?: MatchGoal | undefined
+  pace?: MatchPace | undefined
+  rules?: TableRules | undefined
+}
+
 export type ClientToServer = {
   'room:create': (
     payload: { playerName: string; goal: MatchGoal; pace: MatchPace; rules: TableRules },
@@ -84,6 +101,15 @@ export type ClientToServer = {
   ) => void
   /** Gives up the seat. Without it the server never learns the player is gone. */
   'room:leave': (payload: Empty, ack: Ack) => void
+  /**
+   * Changes the table from the lobby. Host only, and only before the first deal of the
+   * match; anyone else gets `not_host` and a late one gets `game_already_started`.
+   *
+   * Partial on purpose — see `roomConfigureSchema`. Every accepted change re-emits
+   * `room:state` to every member, not to the sender: the whole reason configuration
+   * moved into the lobby is that a guest watches the host toggle Jump-in.
+   */
+  'room:configure': (payload: TableConfiguration, ack: Ack) => void
   'game:start': (payload: Empty, ack: Ack) => void
   /** Deals the next round of the current match, keeping the scores. */
   'game:nextRound': (payload: Empty, ack: Ack) => void

@@ -141,6 +141,24 @@ export const roomCreateSchema = z.object({
      which is exactly what it wants. */
   rules: tableRulesSchema.default(DEFAULT_TABLE_RULES),
 })
+/**
+ * Changing the table from the lobby. Every field optional, and that is the design:
+ * a host toggling one rule must not have to echo the goal and the pace back, because
+ * echoing a value read a moment earlier is how a second control gets silently
+ * reverted. An absent field means "leave this alone".
+ *
+ * `pace` is the one where absent and `null` differ, and both are legal: `null` takes
+ * the clock off the table, absent leaves whatever clock it has.
+ *
+ * The three schemas are the same objects `roomCreateSchema` composes, so a goal or a
+ * pace this accepts is exactly one that could have been asked for at creation. A
+ * second copy of MIN_POINTS_TARGET and friends would drift a field at a time.
+ */
+export const roomConfigureSchema = z.object({
+  goal: matchGoalSchema.optional(),
+  pace: matchPaceSchema.optional(),
+  rules: tableRulesSchema.optional(),
+})
 export const roomJoinSchema = z.object({ roomCode, playerName })
 export const roomRejoinSchema = z.object({ roomCode, sessionToken: z.uuid() })
 export const roomLeaveSchema = z.object({})
