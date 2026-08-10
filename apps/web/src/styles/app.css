@@ -251,6 +251,21 @@ h3 {
   gap: 1.25rem;
 }
 
+/* The right-hand column: the card-values panel, then the two display preferences.
+   Laid out like the left column, so the grid still has exactly two children —
+   which is the constraint the comment above exists to protect. Below 900px the
+   whole thing is one flex column and this simply stacks after the join form,
+   which is where the preferences already were. */
+.home-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  /* min-width, not width: the grid track is minmax(0, 1fr), and four card previews
+     beside a label have to be free to wrap rather than to widen the track and push
+     the page sideways. */
+  min-width: 0;
+}
+
 .home h1 {
   font-size: var(--step-3);
   letter-spacing: -0.02em;

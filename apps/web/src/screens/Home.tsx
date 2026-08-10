@@ -316,6 +316,20 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
             {t.home.joinGame}
           </button>
         </form>
+      </div>
+
+      {/* The second column of the desktop grid, and the tail of the single column
+          on a phone.
+
+          Both preferences live here rather than under the join form because that
+          column had grown to a name field, a match format, Blazing, three house
+          rules, a create button and a join form — 1272px of it, measured — which
+          put these two 372px below the fold on a 900px-tall window. Players
+          reported never finding them at all. This column held the help panel and
+          then a screen-high void, so nothing had to shrink to make room. */}
+      <div className="home-aside">
+        <CardValues />
+
         {/* Four real cards rather than four named options: you pick by looking. Each
             preview renders the same `Card` component the table does, with the theme
             forced, so a preview cannot drift from the face it is offering. */}
@@ -361,8 +375,6 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
           ))}
         </div>
       </div>
-
-      <CardValues />
     </main>
   )
 }
