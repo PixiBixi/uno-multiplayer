@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.3.0](https://github.com/PixiBixi/uno-multiplayer/compare/3273fba2d08486db5711a38538087893e86f83d6..v1.3.0) - 2026-08-10
+#### Features
+- (**web**) give the game a favicon - ([3273fba](https://github.com/PixiBixi/uno-multiplayer/commit/3273fba2d08486db5711a38538087893e86f83d6)) - Jeremy Delgado
+
+- - -
+
 ## [v1.2.0](https://github.com/PixiBixi/uno-multiplayer/compare/8cca3395400dfaf55a73c95aaff9f43d07b84d73..v1.2.0) - 2026-08-10
 #### Features
 - (**protocol**) put the table rules on the wire and add room:configure - ([a9a8d8d](https://github.com/PixiBixi/uno-multiplayer/commit/a9a8d8d02a32b7aa04cc0d24f58ee76109b7afdb)) - Jeremy Delgado
