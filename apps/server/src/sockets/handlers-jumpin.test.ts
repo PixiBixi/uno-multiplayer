@@ -232,7 +232,23 @@ describe('jump-in on the wire', () => {
          cannot work out for itself. */
       const current = player.view()?.currentSeat
       for (const each of players) expect(each.view()?.currentSeat).toBe(current)
-      expect(current).not.toBe(seat === undefined ? -1 : seat)
+
+      /* Deliberately NOT asserting the turn left the jumper. That held on almost
+         every seed and then failed on Node 24 with "expected 2 not to be 2",
+         because it was never a rule: the jumped card's own effect applies from the
+         jumper's seat, so a skip — or a reverse at two players, which acts as one —
+         legitimately hands the turn straight back to them.
+
+         What IS always true is that the jumper's turn happened and was spent, which
+         the discard top and the changed hand above already prove. So the claim
+         checked here is the one a client depends on and cannot derive: the whole
+         table agrees on who plays next. */
+      // Whoever it is must be able to play: an active seat at this table.
+      const active = [
+        ...(player.view()?.opponents ?? []).filter((o) => o.status === 'active').map((o) => o.seat),
+        seat,
+      ]
+      expect(active).toContain(current)
     },
     SOCKET_ROUND_TIMEOUT_MS,
   )
