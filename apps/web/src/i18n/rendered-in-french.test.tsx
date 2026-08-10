@@ -1,4 +1,4 @@
-import type { Card as CardData, CardId } from '@uno/engine'
+import { DEFAULT_TABLE_RULES, type Card as CardData, type CardId } from '@uno/engine'
 import { DEFAULT_MATCH_GOAL, type LobbyView, type PlayerView } from '@uno/protocol'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
@@ -176,11 +176,15 @@ describe('the lobby, in French', () => {
     seats: [{ seat: 0, name: 'Ana', status: 'active' }],
     goal: DEFAULT_MATCH_GOAL,
     pace: null,
+    rules: DEFAULT_TABLE_RULES,
+    configurable: true,
   }
 
   it('falls back to a French noun when the host is not in the roster', () => {
     // `hostSeat` 9 is nobody, which is the branch that used to read "the host".
-    inFrench(<Lobby lobby={lobby} mySeat={0} onStart={vi.fn()} onLeave={vi.fn()} />)
+    inFrench(
+      <Lobby lobby={lobby} mySeat={0} onStart={vi.fn()} onLeave={vi.fn()} onConfigure={vi.fn()} />,
+    )
     expect(screen.getByText('En attente que l’hôte lance la partie.')).toBeTruthy()
   })
 })

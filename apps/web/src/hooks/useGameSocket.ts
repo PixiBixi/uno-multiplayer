@@ -1,5 +1,6 @@
-import type { ClientToServer, ErrorCode, MatchPace, ServerToClient } from '@uno/protocol'
-import type { MatchGoal, Move, TableRules } from '@uno/engine'
+import type { ClientToServer, ErrorCode, ServerToClient, TableConfiguration } from '@uno/protocol'
+import { DEFAULT_MATCH_GOAL } from '@uno/protocol'
+import { DEFAULT_TABLE_RULES, type Move } from '@uno/engine'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
 import { io, type Socket } from 'socket.io-client'
 import { readRoomCodeFromUrl, writeRoomCodeToUrl } from '../lib/room-url.js'
@@ -80,16 +81,44 @@ export function useGameSocket() {
     dispatch({ type: 'error', message: messagesRef.current.error[code] })
   }, [])
 
+  /**
+   * Creates a table on the defaults, which is all the home screen collects now.
+   *
+   * The payload keeps its `goal`, `pace` and `rules` fields even though this always sends
+   * the defaults: they are already validated and already tested, and dropping them would
+   * break a client mid-deploy for no gain. The host changes any of them from the lobby.
+   */
   const createRoom = useCallback(
-    (playerName: string, goal: MatchGoal, pace: MatchPace, rules: TableRules) => {
-      socketRef.current?.emit('room:create', { playerName, goal, pace, rules }, (result) => {
-        if (!result.ok) {
-          fail(result.error)
-          return
-        }
-        writeSession(result.roomCode, result.sessionToken)
-        writeRoomCodeToUrl(result.roomCode)
-        dispatch({ type: 'joined', roomCode: result.roomCode, seat: result.seat })
+    (playerName: string) => {
+      socketRef.current?.emit(
+        'room:create',
+        { playerName, goal: DEFAULT_MATCH_GOAL, pace: null, rules: DEFAULT_TABLE_RULES },
+        (result) => {
+          if (!result.ok) {
+            fail(result.error)
+            return
+          }
+          writeSession(result.roomCode, result.sessionToken)
+          writeRoomCodeToUrl(result.roomCode)
+          dispatch({ type: 'joined', roomCode: result.roomCode, seat: result.seat })
+        },
+      )
+    },
+    [fail],
+  )
+
+  /**
+   * The host changing the table from the lobby.
+   *
+   * Nothing is dispatched on success. The server answers by broadcasting `room:state` to
+   * every member — which is the only way a guest sees the change at all — so writing the
+   * new value into local state here would be a second source of truth for something the
+   * server is still free to refuse.
+   */
+  const configureRoom = useCallback(
+    (changes: TableConfiguration) => {
+      socketRef.current?.emit('room:configure', changes, (result) => {
+        if (!result.ok) fail(result.error)
       })
     },
     [fail],
@@ -163,6 +192,7 @@ export function useGameSocket() {
     state,
     actions: {
       createRoom,
+      configureRoom,
       joinRoom,
       startGame,
       nextRound,

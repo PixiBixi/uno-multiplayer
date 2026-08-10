@@ -123,6 +123,10 @@ export const en: Messages = {
     gameCode: 'Game code',
     codePlaceholder: 'K7QM2X',
     joinGame: 'Join game',
+    language: 'Language',
+  },
+
+  config: {
     matchEnds: 'How the match ends',
     matchFormat: 'Match format',
     firstToScore: 'First to a score',
@@ -151,7 +155,14 @@ export const en: Messages = {
     playDrawnCard: 'Let a drawn card be played straight away',
     playDrawnCardHint:
       'The official rule, so it is on unless you turn it off: draw a card you can play and you may lay it down there and then, or keep it and end your turn. Nothing changes when the card is unplayable — the turn simply ends, as it always did.',
-    language: 'Language',
+    whatThisDoes: 'What it does',
+    explainRule: (rule) => `What it does: ${rule}`,
+    ruleOn: 'on',
+    ruleOff: 'off',
+    noClock: 'No clock',
+    paceSummary: (seconds) => `${String(seconds)} seconds per turn`,
+    setByHost: (hostName) => `${hostName} sets these for the table.`,
+    lockedByDeal: 'The cards are dealt, so the table is set for the rest of the match.',
   },
 
   help: {

@@ -1,3 +1,4 @@
+import { DEFAULT_TABLE_RULES } from '@uno/engine'
 import { DEFAULT_MATCH_GOAL, type LobbyView, type PlayerView } from '@uno/protocol'
 import { describe, expect, it } from 'vitest'
 import { CATALOGUES, type Messages } from '../i18n/index.js'
@@ -25,6 +26,8 @@ const lobby: LobbyView = {
   canStart: false,
   goal: DEFAULT_MATCH_GOAL,
   pace: null,
+  rules: DEFAULT_TABLE_RULES,
+  configurable: true,
 }
 
 const view = { phase: 'playing', winner: null } as PlayerView

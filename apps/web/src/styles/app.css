@@ -326,6 +326,91 @@ h3 {
   gap: 1.5rem;
 }
 
+/* The table configuration moved in here and roughly doubled the screen. Past this width
+   it goes into the empty half of the page rather than anything being made smaller — the
+   same fix and the same reasoning as the card-theme controls on the home screen. Two
+   children only, wrapped deliberately, for the reason `.home` states above. */
+@media (min-width: 900px) {
+  .lobby {
+    max-width: 58rem;
+    display: grid;
+    grid-template-columns: 26rem minmax(0, 1fr);
+    align-items: start;
+    column-gap: 2.5rem;
+  }
+}
+
+.lobby-column,
+.lobby-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  /* min-width, not width: the grid track is minmax(0, 1fr), and a row of presets has to
+     be free to wrap rather than to widen the track and push the page sideways. */
+  min-width: 0;
+}
+
+/* One rule: its switch or its state, then the disclosure holding what it does. */
+.rule {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+/* How a rule reads to somebody who may not change it. A dotted leader like the card
+   values, because it is the same shape of information — a name and its value — and not a
+   control that has been greyed out. */
+.rule-state {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  margin: 0;
+  min-height: 32px;
+  font-size: var(--step--1);
+}
+
+.rule-state::before {
+  content: '';
+  order: 1;
+  flex: 1;
+  border-bottom: 1px dotted color-mix(in oklab, var(--text-dim) 55%, transparent);
+  transform: translateY(-0.2em);
+}
+
+.rule-state strong {
+  order: 2;
+  font-weight: 600;
+}
+
+.rule-why > summary {
+  min-height: 32px;
+  display: flex;
+  align-items: center;
+  font-size: var(--step--1);
+  color: var(--text-dim);
+  cursor: pointer;
+}
+
+.rule-why > summary:hover {
+  color: var(--accent);
+}
+
+/* Pure reference, and the tallest panel on the screen. On a narrow viewport it takes the
+   scroll rather than pushing the seats and Start down the page: the seats are what a
+   lobby is for, so they are never what gets capped. */
+.lobby-values {
+  max-height: 40vh;
+  overflow-y: auto;
+  border-radius: var(--r-md);
+}
+
+@media (min-width: 900px) {
+  .lobby-values {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
 .roster {
   list-style: none;
   margin: 0;

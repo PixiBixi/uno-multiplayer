@@ -1,17 +1,5 @@
-import type { Card as CardData, CardId, MatchGoal, TableRules } from '@uno/engine'
-import type { MatchPace } from '@uno/protocol'
-import {
-  DEFAULT_MATCH_GOAL,
-  MAX_POINTS_TARGET,
-  MAX_ROUNDS,
-  MAX_NAME_LENGTH,
-  MIN_POINTS_TARGET,
-  MIN_ROUNDS,
-  DEFAULT_TURN_SECONDS,
-  MAX_TURN_SECONDS,
-  MIN_TURN_SECONDS,
-  ROOM_CODE_LENGTH,
-} from '@uno/protocol'
+import type { Card as CardData, CardId } from '@uno/engine'
+import { MAX_NAME_LENGTH, ROOM_CODE_LENGTH } from '@uno/protocol'
 import { useState, type FormEvent } from 'react'
 import { Card } from '../components/Card.js'
 import { CardValues } from '../components/CardValues.js'
@@ -19,12 +7,21 @@ import { useCardTheme, useSetCardTheme } from '../components/CardThemeProvider.j
 import { CARD_THEMES } from '../lib/card-themes.js'
 import { LOCALES, LOCALE_NAME, useLocale, useMessages, useSetLocale } from '../i18n/index.js'
 
-/* Offered as presets rather than a bare number field, because the interesting
-   choice is the format, not the arithmetic. The field stays editable underneath
-   for anyone who wants 250. */
-const POINT_PRESETS = [250, 500, 1000] as const
-const ROUND_PRESETS = [1, 3, 5] as const
-const TURN_PRESETS = [5, 10, 15, 30] as const
+/**
+ * Getting to a table, and nothing else.
+ *
+ * It used to configure one as well: measured on v1.1.0 the screen carried 21 controls,
+ * ran 2.42 screens tall on a phone, and put the game-code field last — below a match
+ * format, a clock and four rules that a joining player has no use for at all. On three
+ * players, two of them are joining, and their job is two fields.
+ *
+ * Every table setting now lives in the lobby, where the host adjusts it while waiting for
+ * players and where everybody about to play can read it. What stays here is what is not
+ * table configuration: a name, a code, and the two per-player display preferences. A card
+ * theme and a language change what one person sees — two people at the same table can run
+ * different ones and the game is identical — so they cross no wire and belong to nothing
+ * the server broadcasts.
+ */
 
 /**
  * The card every preview shows. The same card in all four, because the question a
@@ -39,14 +36,11 @@ const PREVIEW_CARD: CardData = {
 }
 
 type HomeProps = {
-  onCreate: (name: string, goal: MatchGoal, pace: MatchPace, rules: TableRules) => void
+  onCreate: (name: string) => void
   onJoin: (roomCode: string, name: string) => void
   error: string | null
   prefilledCode: string | null
 }
-
-const clamp = (value: number, low: number, high: number): number =>
-  Number.isFinite(value) ? Math.min(high, Math.max(low, Math.round(value))) : low
 
 export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
   const t = useMessages()
@@ -56,42 +50,15 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
   const setCardTheme = useSetCardTheme()
   const [name, setName] = useState('')
   const [code, setCode] = useState(prefilledCode ?? '')
-  const [goalKind, setGoalKind] = useState<MatchGoal['kind']>(DEFAULT_MATCH_GOAL.kind)
-  const [target, setTarget] = useState(500)
-  const [rounds, setRounds] = useState(3)
-  const [blazing, setBlazing] = useState(false)
-  const [turnSeconds, setTurnSeconds] = useState(DEFAULT_TURN_SECONDS)
-  const [liar, setLiar] = useState(false)
-  const [sevenZero, setSevenZero] = useState(false)
-  const [jumpIn, setJumpIn] = useState(false)
-  /* The one that starts on. It is the official rule, not a house rule, so a host who
-     touches nothing gets it — and the switch is here for the groups who learned the game
-     the other way. */
-  const [playDrawnCard, setPlayDrawnCard] = useState(true)
-
-  const rules: TableRules = { liar, sevenZero, jumpIn, playDrawnCard }
-
-  const pace: MatchPace = blazing
-    ? { turnSeconds: clamp(turnSeconds, MIN_TURN_SECONDS, MAX_TURN_SECONDS) }
-    : null
-
-  /* Clamped here as well as on the server. The server is still the authority; this
-     only spares the player a round trip to learn that 0 rounds is not a match. */
-  const goal: MatchGoal =
-    goalKind === 'points'
-      ? { kind: 'points', target: clamp(target, MIN_POINTS_TARGET, MAX_POINTS_TARGET) }
-      : { kind: 'rounds', count: clamp(rounds, MIN_ROUNDS, MAX_ROUNDS) }
 
   const trimmedName = name.trim()
   const normalisedCode = code.trim().toUpperCase()
   const canCreate = trimmedName.length > 0
   const canJoin = canCreate && normalisedCode.length === ROOM_CODE_LENGTH
 
-  /* Mirrors the protocol schemas so feedback is immediate. The server remains the
-     only authority — this just spares a round trip to learn the obvious. */
   const submitCreate = (event: FormEvent) => {
     event.preventDefault()
-    if (canCreate) onCreate(trimmedName, goal, pace, rules)
+    if (canCreate) onCreate(trimmedName)
   }
   const submitJoin = (event: FormEvent) => {
     event.preventDefault()
@@ -120,193 +87,6 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
             autoComplete="nickname"
             placeholder={t.home.namePlaceholder}
           />
-          <fieldset className="goal-picker">
-            <legend>{t.home.matchEnds}</legend>
-            <div className="segmented" role="group" aria-label={t.home.matchFormat}>
-              <button
-                type="button"
-                className={goalKind === 'points' ? 'seg seg-on' : 'seg'}
-                aria-pressed={goalKind === 'points'}
-                onClick={() => {
-                  setGoalKind('points')
-                }}
-              >
-                {t.home.firstToScore}
-              </button>
-              <button
-                type="button"
-                className={goalKind === 'rounds' ? 'seg seg-on' : 'seg'}
-                aria-pressed={goalKind === 'rounds'}
-                onClick={() => {
-                  setGoalKind('rounds')
-                }}
-              >
-                {t.home.setRounds}
-              </button>
-            </div>
-
-            {goalKind === 'points' ? (
-              <div className="goal-row">
-                <label htmlFor="goal-target">{t.home.winningScore}</label>
-                <input
-                  id="goal-target"
-                  type="number"
-                  inputMode="numeric"
-                  value={target}
-                  min={MIN_POINTS_TARGET}
-                  max={MAX_POINTS_TARGET}
-                  onChange={(event) => {
-                    setTarget(Number(event.target.value))
-                  }}
-                />
-                <span className="preset-row">
-                  {POINT_PRESETS.map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      className="chip"
-                      onClick={() => {
-                        setTarget(preset)
-                      }}
-                    >
-                      {preset}
-                    </button>
-                  ))}
-                </span>
-              </div>
-            ) : (
-              <div className="goal-row">
-                <label htmlFor="goal-rounds">{t.home.rounds}</label>
-                <input
-                  id="goal-rounds"
-                  type="number"
-                  inputMode="numeric"
-                  value={rounds}
-                  min={MIN_ROUNDS}
-                  max={MAX_ROUNDS}
-                  onChange={(event) => {
-                    setRounds(Number(event.target.value))
-                  }}
-                />
-                <span className="preset-row">
-                  {ROUND_PRESETS.map((preset) => (
-                    <button
-                      key={preset}
-                      type="button"
-                      className="chip"
-                      onClick={() => {
-                        setRounds(preset)
-                      }}
-                    >
-                      {preset === 1 ? t.home.singleGame : preset}
-                    </button>
-                  ))}
-                </span>
-              </div>
-            )}
-          </fieldset>
-
-          <fieldset className="goal-picker">
-            <legend>{t.home.blazing}</legend>
-            <label className="switch-row">
-              <input
-                type="checkbox"
-                checked={blazing}
-                onChange={(event) => {
-                  setBlazing(event.target.checked)
-                }}
-              />
-              <span>{t.home.clockOnEveryTurn}</span>
-            </label>
-
-            {blazing && (
-              <>
-                <div className="goal-row">
-                  <label htmlFor="turn-seconds">{t.home.secondsPerTurn}</label>
-                  <input
-                    id="turn-seconds"
-                    type="number"
-                    inputMode="numeric"
-                    value={turnSeconds}
-                    min={MIN_TURN_SECONDS}
-                    max={MAX_TURN_SECONDS}
-                    onChange={(event) => {
-                      setTurnSeconds(Number(event.target.value))
-                    }}
-                  />
-                  <span className="preset-row">
-                    {TURN_PRESETS.map((preset) => (
-                      <button
-                        key={preset}
-                        type="button"
-                        className="chip"
-                        onClick={() => {
-                          setTurnSeconds(preset)
-                        }}
-                      >
-                        {preset}
-                      </button>
-                    ))}
-                  </span>
-                </div>
-                <p className="hint">{t.home.blazingHint}</p>
-              </>
-            )}
-          </fieldset>
-
-          <fieldset className="goal-picker">
-            <legend>{t.home.tableRules}</legend>
-            <label className="switch-row">
-              <input
-                type="checkbox"
-                checked={liar}
-                onChange={(event) => {
-                  setLiar(event.target.checked)
-                }}
-              />
-              <span>{t.home.liar}</span>
-            </label>
-            {/* Shown whether it is on or off: the interesting question is what the
-                option does, which you need answered before deciding. */}
-            <p className="hint">{t.home.liarHint}</p>
-
-            <label className="switch-row">
-              <input
-                type="checkbox"
-                checked={sevenZero}
-                onChange={(event) => {
-                  setSevenZero(event.target.checked)
-                }}
-              />
-              <span>{t.home.sevenZero}</span>
-            </label>
-            <p className="hint">{t.home.sevenZeroHint}</p>
-
-            <label className="switch-row">
-              <input
-                type="checkbox"
-                checked={jumpIn}
-                onChange={(event) => {
-                  setJumpIn(event.target.checked)
-                }}
-              />
-              <span>{t.home.jumpIn}</span>
-            </label>
-            <p className="hint">{t.home.jumpInHint}</p>
-
-            <label className="switch-row">
-              <input
-                type="checkbox"
-                checked={playDrawnCard}
-                onChange={(event) => {
-                  setPlayDrawnCard(event.target.checked)
-                }}
-              />
-              <span>{t.home.playDrawnCard}</span>
-            </label>
-            <p className="hint">{t.home.playDrawnCardHint}</p>
-          </fieldset>
-
           <button type="submit" className="btn btn-primary" disabled={!canCreate}>
             {t.home.createGame}
           </button>
@@ -338,11 +118,11 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
           on a phone.
 
           Both preferences live here rather than under the join form because that
-          column had grown to a name field, a match format, Blazing, three house
-          rules, a create button and a join form — 1272px of it, measured — which
-          put these two 372px below the fold on a 900px-tall window. Players
-          reported never finding them at all. This column held the help panel and
-          then a screen-high void, so nothing had to shrink to make room. */}
+          column used to run to 1272px of name field, match format, Blazing, four
+          rules, a create button and a join form, which put these two 372px below a
+          900px fold. Players reported never finding them. The column is far shorter
+          now that the settings have moved to the lobby, but the preferences stay
+          beside the card values: this is where they were found. */}
       <div className="home-aside">
         <CardValues />
 

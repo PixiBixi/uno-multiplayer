@@ -25,77 +25,41 @@ describe('Home', () => {
     expect(onCreate).not.toHaveBeenCalled()
   })
 
-  it('creates a game with a trimmed name', async () => {
+  it('creates a game with a trimmed name and nothing else to say', async () => {
+    /* A name is all this screen collects now. The table is configured in the lobby, where
+       the host adjusts it while waiting and everybody about to play can read it. */
     const { onCreate } = setup()
     await userEvent.type(screen.getByLabelText(/your name/i), '  Ana  ')
     await userEvent.click(screen.getByRole('button', { name: /create/i }))
-    expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
-      liar: false,
-      sevenZero: false,
-      jumpIn: false,
-      // On without anybody touching it: the official rule is what a host who picks nothing
-      // gets, which is what makes this option different from the three above.
-      playDrawnCard: true,
-    })
+    expect(onCreate).toHaveBeenCalledWith('Ana')
   })
 
-  it('switches the Liar call-out on', async () => {
-    const { onCreate } = setup()
-    await userEvent.type(screen.getByLabelText(/your name/i), 'Ana')
-    await userEvent.click(screen.getByLabelText(/call out/i))
-    await userEvent.click(screen.getByRole('button', { name: /create/i }))
-    expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
-      liar: true,
-      sevenZero: false,
-      jumpIn: false,
-      playDrawnCard: true,
-    })
+  it('configures nothing about the table', () => {
+    /* Measured on v1.1.0 this screen carried 21 controls and put the game-code field
+       last, under everything a joining player has no use for — and on three players, two
+       are joining. Each of these was a control here and is one in the lobby now. */
+    setup()
+    for (const gone of [
+      /seven-zero/i,
+      /jump-in/i,
+      /call out/i,
+      /drawn card/i,
+      /clock on every turn/i,
+      /winning score/i,
+    ]) {
+      expect(screen.queryByLabelText(gone), String(gone)).toBeNull()
+    }
+    expect(screen.queryByText(/how the match ends/i)).toBeNull()
+    expect(screen.queryByText(/table rules/i)).toBeNull()
   })
 
-  it('switches Seven-Zero on independently of the Liar call-out', async () => {
-    // Two separate house rules, not one switch with two effects: a group may want
-    // either, both, or neither.
-    const { onCreate } = setup()
-    await userEvent.type(screen.getByLabelText(/your name/i), 'Ana')
-    await userEvent.click(screen.getByLabelText(/seven-zero/i))
-    await userEvent.click(screen.getByRole('button', { name: /create/i }))
-    expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
-      liar: false,
-      sevenZero: true,
-      jumpIn: false,
-      playDrawnCard: true,
-    })
-  })
-
-  it('switches jump-in on independently of the other two', async () => {
-    const { onCreate } = setup()
-    await userEvent.type(screen.getByLabelText(/your name/i), 'Ana')
-    await userEvent.click(screen.getByLabelText(/jump-in/i))
-    await userEvent.click(screen.getByRole('button', { name: /create/i }))
-    expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
-      liar: false,
-      sevenZero: false,
-      jumpIn: true,
-      playDrawnCard: true,
-    })
-  })
-
-  it('switches the drawn-card rule off, which is the only one that starts on', async () => {
-    /* The opposite direction from the three above, and the whole point of the switch: it
-       exists for a group that learned the game without the rule, so the interesting
-       assertion is that turning it OFF reaches the server. */
-    const { onCreate } = setup()
-    await userEvent.type(screen.getByLabelText(/your name/i), 'Ana')
-    const toggle = screen.getByLabelText<HTMLInputElement>(/drawn card/i)
-    expect(toggle.checked).toBe(true)
-    await userEvent.click(toggle)
-    await userEvent.click(screen.getByRole('button', { name: /create/i }))
-    expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
-      liar: false,
-      sevenZero: false,
-      jumpIn: false,
-      playDrawnCard: false,
-    })
+  it('keeps the two per-player preferences, which are not table configuration', () => {
+    /* Card theme and language change what one person sees; two people at the same table
+       can run different ones and the game is identical. Nothing about them crosses the
+       wire, so they have no business in a lobby the server broadcasts to everybody. */
+    setup()
+    expect(screen.getByText(/language/i)).toBeTruthy()
+    expect(screen.getByRole('group', { name: /card theme/i })).toBeTruthy()
   })
 
   it('caps the name at the protocol limit', async () => {

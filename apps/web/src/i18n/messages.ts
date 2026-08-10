@@ -130,6 +130,17 @@ export type Messages = {
      *  label, so it belongs here beside `namePlaceholder` rather than in the JSX. */
     codePlaceholder: string
     joinGame: string
+    language: string
+  }
+
+  /**
+   * The table configuration, which the lobby owns and the home screen no longer offers.
+   *
+   * Its own section rather than left under `home`, because both the host's controls and
+   * the guest's read-only list are rendered from these keys — a lobby component reading
+   * `t.home.*` would be a name that lies about where the words are used.
+   */
+  config: {
     matchEnds: string
     /** Accessible name for the pair of buttons inside the "how the match ends" set —
      *  the legend names the question, this names the control. */
@@ -153,7 +164,27 @@ export type Messages = {
     /** The one option here that is on by default, and the only one that is a real rule. */
     playDrawnCard: string
     playDrawnCardHint: string
-    language: string
+    /**
+     * The disclosure holding one rule's explanation.
+     *
+     * Four paragraphs on permanent display is what made the home screen a wall of text.
+     * In the lobby the reader has already chosen to look, so the label is short and the
+     * accessible name says which rule it belongs to — four identical summaries would
+     * otherwise be four identical announcements.
+     */
+    whatThisDoes: string
+    explainRule: (rule: string) => string
+    /** What a rule's state reads as when nobody at this seat may change it. */
+    ruleOn: string
+    ruleOff: string
+    /** How the pace reads when the table has no clock at all. */
+    noClock: string
+    /** The pace, said in one line rather than as a control. */
+    paceSummary: (seconds: number) => string
+    /** Said to a guest: the settings above are somebody else's to change. */
+    setByHost: (hostName: string) => string
+    /** Said to the host once the deal has frozen the configuration. */
+    lockedByDeal: string
   }
 
   help: {

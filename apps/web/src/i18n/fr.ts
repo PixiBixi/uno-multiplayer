@@ -142,6 +142,10 @@ export const fr: Messages = {
     gameCode: 'Code de la partie',
     codePlaceholder: 'K7QM2X',
     joinGame: 'Rejoindre',
+    language: 'Langue',
+  },
+
+  config: {
     matchEnds: 'Comment la partie se termine',
     matchFormat: 'Format de la partie',
     firstToScore: 'Premier à un score',
@@ -167,7 +171,14 @@ export const fr: Messages = {
     playDrawnCard: 'Laisser poser la carte que l’on vient de piocher',
     playDrawnCardHint:
       'La règle officielle, donc active sauf si tu la désactives : si la carte piochée est jouable, tu peux la poser aussitôt, ou la garder et terminer ton tour. Rien ne change quand elle est injouable — le tour se termine, comme avant.',
-    language: 'Langue',
+    whatThisDoes: 'Ce que ça change',
+    explainRule: (rule) => `Ce que ça change : ${rule}`,
+    ruleOn: 'activée',
+    ruleOff: 'désactivée',
+    noClock: 'Pas de chrono',
+    paceSummary: (seconds) => `${String(seconds)} secondes par tour`,
+    setByHost: (hostName) => `C’est ${hostName} qui règle tout ça pour la table.`,
+    lockedByDeal: 'Les cartes sont distribuées : la table est réglée pour toute la partie.',
   },
 
   help: {

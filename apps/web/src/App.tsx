@@ -52,6 +52,7 @@ export function App() {
           mySeat={state.seat}
           onStart={actions.startGame}
           onLeave={actions.leave}
+          onConfigure={actions.configureRoom}
         />
         <Toaster toasts={state.toasts} onDismiss={actions.dismissToast} />
       </>

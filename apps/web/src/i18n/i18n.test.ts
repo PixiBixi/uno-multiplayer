@@ -156,7 +156,7 @@ describe('grammar each language owns', () => {
     for (const locale of LOCALES) {
       const t = CATALOGUES[locale]
       for (const label of [
-        t.home.matchFormat,
+        t.config.matchFormat,
         t.home.codePlaceholder,
         t.table.messageTable,
         t.table.chooseColour,
@@ -168,7 +168,7 @@ describe('grammar each language owns', () => {
         expect(label.length).toBeGreaterThan(0)
       }
     }
-    expect(CATALOGUES.fr.home.matchFormat).toBe('Format de la partie')
+    expect(CATALOGUES.fr.config.matchFormat).toBe('Format de la partie')
     expect(CATALOGUES.fr.table.chooseColour).toBe('Choisis une couleur')
     expect(CATALOGUES.fr.table.cancel).toBe('Annuler')
   })
@@ -209,17 +209,17 @@ describe('grammar each language owns', () => {
   it('names the Seven-Zero option in each language', () => {
     // The variant has a French name of its own; leaving it in English would be the
     // one untranslated word on the screen.
-    expect(CATALOGUES.en.home.sevenZero).toContain('Seven-Zero')
-    expect(CATALOGUES.fr.home.sevenZero).toContain('Sept-Zéro')
+    expect(CATALOGUES.en.config.sevenZero).toContain('Seven-Zero')
+    expect(CATALOGUES.fr.config.sevenZero).toContain('Sept-Zéro')
   })
 
   it('names the jump-in option in each language', () => {
     /* Unlike Seven-Zero, this variant has no French name in circulation — players
        say "jump-in" — so the label keeps it rather than inventing one. The sentence
        around it is still French. */
-    expect(CATALOGUES.en.home.jumpIn).toContain('jump-in')
-    expect(CATALOGUES.fr.home.jumpIn).toContain('Jump-in')
-    expect(CATALOGUES.fr.home.jumpInHint).toContain('hors de ton tour')
+    expect(CATALOGUES.en.config.jumpIn).toContain('jump-in')
+    expect(CATALOGUES.fr.config.jumpIn).toContain('Jump-in')
+    expect(CATALOGUES.fr.config.jumpInHint).toContain('hors de ton tour')
     expect(CATALOGUES.en.table.jumpIn).toBe('Jump in!')
     expect(CATALOGUES.fr.table.jumpIn).toBe('Jump-in !')
   })
@@ -235,10 +235,10 @@ describe('grammar each language owns', () => {
     /* No jargon to preserve in either language, unlike jump-in: the rule is described by
        what it lets you do. And the control says it ends the turn rather than "pass", which
        in a card game reads as declining to draw — precisely backwards here. */
-    expect(CATALOGUES.en.home.playDrawnCard).toContain('drawn card')
-    expect(CATALOGUES.fr.home.playDrawnCard).toContain('piocher')
-    expect(CATALOGUES.en.home.playDrawnCardHint).toContain('official rule')
-    expect(CATALOGUES.fr.home.playDrawnCardHint).toContain('règle officielle')
+    expect(CATALOGUES.en.config.playDrawnCard).toContain('drawn card')
+    expect(CATALOGUES.fr.config.playDrawnCard).toContain('piocher')
+    expect(CATALOGUES.en.config.playDrawnCardHint).toContain('official rule')
+    expect(CATALOGUES.fr.config.playDrawnCardHint).toContain('règle officielle')
     expect(CATALOGUES.en.table.endTurn).toBe('End turn')
     expect(CATALOGUES.fr.table.endTurn).toBe('Terminer mon tour')
     for (const locale of LOCALES) {
