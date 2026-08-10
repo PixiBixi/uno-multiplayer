@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="UNO">
+  <!-- Four quadrants: the wild card. Deliberately four flat shapes and no detail,
+       because a favicon is decided at 16px and detail is the first thing to go.
+       Colours are the deck's own, from apps/web/src/lib/palette.ts. -->
+  <rect width="64" height="64" rx="14" fill="#14100e"/>
+  <path d="M32 32 L32 6 A26 26 0 0 1 58 32 Z" fill="#d2321e"/>
+  <path d="M32 32 L58 32 A26 26 0 0 1 32 58 Z" fill="#f0b310"/>
+  <path d="M32 32 L32 58 A26 26 0 0 1 6 32 Z" fill="#1e9e4a"/>
+  <path d="M32 32 L6 32 A26 26 0 0 1 32 6 Z" fill="#1565b8"/>
+</svg>

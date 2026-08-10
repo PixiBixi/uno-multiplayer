@@ -4,6 +4,15 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
+    <!-- Four quadrants: the wild card, and the only mark that survives 16px, which is
+         the size that actually decides a favicon. SVG for the tab; iOS ignores an SVG
+         icon entirely and falls back to a screenshot of the page, hence the PNG too. -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Two values, one per scheme: a single theme-color tints the browser chrome wrongly
+         in the other. Both are the app's own --bone / dark --bone from tokens.css. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f5f1e8" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#16130f" />
     <title>UNO Multiplayer</title>
   </head>
   <body>
