@@ -1,7 +1,13 @@
 # syntax=docker/dockerfile:1
 
+# Both stages track .nvmrc, not the `engines` floor in package.json. The floor is what
+# this code still runs on; .nvmrc is the Active LTS that CI actually lints, covers and
+# runs the browser suite against, so it is the one thing production should match. They
+# drifted apart once — the image shipped 22 while everything else validated 24 — and a CI
+# step now fails if these two lines and .nvmrc disagree.
+
 # ---- build ----
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 WORKDIR /app
 
 # Manifests first: the dependency layer then survives source-only changes.
@@ -27,7 +33,7 @@ RUN find . -name '*.tsbuildinfo' -not -path './node_modules/*' -delete \
 RUN npm prune --omit=dev
 
 # ---- runtime ----
-FROM node:22-alpine AS runtime
+FROM node:24-alpine AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production \

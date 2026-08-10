@@ -30,6 +30,21 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
 
+      # The image once shipped Node 22 while every other job validated the 24 in .nvmrc:
+      # supported, but not the runtime anything was tested on, and nothing failed to say
+      # so. This is the only place the two can be compared, so it is asserted here.
+      - name: The image runs the Node version CI validates
+        run: |
+          PINNED=$(tr -d '[:space:]' < .nvmrc)
+          STAGES=$(grep -c '^FROM node:' Dockerfile)
+          MATCHING=$(grep -c "^FROM node:${PINNED}-alpine" Dockerfile)
+          if [ "$STAGES" -ne "$MATCHING" ]; then
+            echo "::error::.nvmrc pins Node ${PINNED}, the Dockerfile disagrees:"
+            grep -n '^FROM node:' Dockerfile
+            exit 1
+          fi
+          echo "All ${STAGES} Dockerfile stages track Node ${PINNED}."
+
   test:
     name: Test on Node ${{ matrix.node }}
     runs-on: ubuntu-latest

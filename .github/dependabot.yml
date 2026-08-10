@@ -16,3 +16,12 @@ updates:
     directory: /
     schedule:
       interval: monthly
+
+  # Nothing watched the base image, which is how it sat on Node 22 unnoticed while the
+  # rest of the repo moved to 24. Monthly: a base image moves on the runtime's schedule,
+  # not on a library's, and the CI step in the quality job fails the PR if a bump here
+  # ever lands without .nvmrc following it.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: monthly
