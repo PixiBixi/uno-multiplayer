@@ -97,8 +97,16 @@ Keyed on the Socket.IO connection, **not** on the client IP. That is what keeps 
 correct behind a reverse proxy where every request arrives from the same address.
 Buckets are forgotten on disconnect, so the map does not grow.
 
-`trustProxy` is deliberately off: nothing keys on IP, so enabling it would only let
-a client spoof `X-Forwarded-For` into the logs.
+`trustProxy` follows `BEHIND_TLS`, and trusts exactly **one** hop when it is set.
+Behind a proxy every request arrives from the proxy's own address, so without it the
+log records the same container IP for every visitor. One hop rather than `true`
+means the address is the peer the proxy itself saw; anything further left in
+`X-Forwarded-For` came from the client and stays untrusted. Off by default, because
+a directly-exposed server would otherwise believe whatever a client claimed.
+
+Note this is safe _in addition_ because the deployed container publishes no ports
+and sits only on the proxy network, so nothing but the proxy can reach it to forge
+the header in the first place.
 
 ## Where to be careful
 

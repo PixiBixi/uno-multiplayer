@@ -21,7 +21,24 @@ export async function buildApp(config: Config) {
   // rather than Fastify's `disableRequestLogging`, deprecated in v5.
   logger.level = config.logLevel
 
-  const app = Fastify({ loggerInstance: logger })
+  /*
+   * One hop, and only when a proxy is declared. Behind Traefik every request
+   * arrives from the proxy's address on the docker network, so without this the
+   * log records the same 172.19.x.x for every visitor.
+   *
+   * `1` rather than `true`: it trusts the single closest hop, so the address is
+   * the peer the proxy itself saw. Anything further left in X-Forwarded-For came
+   * from the client and stays untrusted.
+   *
+   * Tied to BEHIND_TLS because that flag already asserts exactly this shape — a
+   * proxy terminating TLS in front of this process. Without it the header is
+   * ignored, which is what a directly-exposed server needs: it would otherwise
+   * believe whatever a client claimed.
+   */
+  const app = Fastify({
+    loggerInstance: logger,
+    trustProxy: config.behindTls ? 1 : false,
+  })
 
   await app.register(helmet, {
     // The client is served from the same origin and ships no inline scripts.

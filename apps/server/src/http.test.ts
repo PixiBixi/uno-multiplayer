@@ -13,8 +13,16 @@ afterEach(async () => {
   app = null
 })
 
+let seenIp: string | null = null
+
 const appWith = async (env: NodeJS.ProcessEnv = {}): Promise<App> => {
   const instance = await buildApp(loadConfig({ NODE_ENV: 'test', LOG_LEVEL: 'silent', ...env }))
+  seenIp = null
+  // request.ip is what the logger records, so observe the same value.
+  instance.addHook('onRequest', (request, _reply, done) => {
+    seenIp = request.ip
+    done()
+  })
   app = instance
   return instance
 }
@@ -71,6 +79,48 @@ describe('security headers', () => {
       // Reading `TRUE` as false would silently drop both protections.
       expect(() => loadConfig({ NODE_ENV: 'test', BEHIND_TLS: 'TRUE' })).toThrow()
     })
+  })
+})
+
+describe('the client IP behind a proxy', () => {
+  /* Deployed behind Traefik, every request arrives from the proxy's address on the
+     docker network, so the log said 172.19.0.10 for everybody. Trusting one hop
+     recovers the real client — and one hop is exactly what BEHIND_TLS already
+     asserts, since it means a proxy terminates TLS in front of this process.
+
+     Safe here because the container publishes no ports and sits only on the proxy
+     network, so nothing but the proxy can reach it to forge a header. Off without
+     the flag, where a forged X-Forwarded-For would otherwise be believed. */
+  it('reports the forwarded client when a proxy is declared', async () => {
+    const instance = await appWith({ BEHIND_TLS: 'true' })
+    const response = await instance.inject({
+      method: 'GET',
+      url: '/healthz',
+      headers: { 'x-forwarded-for': '203.0.113.7' },
+    })
+    expect(response.statusCode).toBe(200)
+    expect(seenIp).toBe('203.0.113.7')
+  })
+
+  it('ignores the header when no proxy is declared', async () => {
+    const instance = await appWith()
+    await instance.inject({
+      method: 'GET',
+      url: '/healthz',
+      headers: { 'x-forwarded-for': '203.0.113.7' },
+    })
+    expect(seenIp).not.toBe('203.0.113.7')
+  })
+
+  it('trusts exactly one hop, so a forged entry behind the proxy is not believed', async () => {
+    // Traefik appends the peer it saw; anything to its left came from the client.
+    const instance = await appWith({ BEHIND_TLS: 'true' })
+    await instance.inject({
+      method: 'GET',
+      url: '/healthz',
+      headers: { 'x-forwarded-for': '198.51.100.1, 203.0.113.7' },
+    })
+    expect(seenIp).toBe('203.0.113.7')
   })
 })
 
