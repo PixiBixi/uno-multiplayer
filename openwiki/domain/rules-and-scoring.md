@@ -6,14 +6,21 @@ whole rule set is testable without a clock, a socket or a browser.
 
 ## Rules decided explicitly
 
-Official UNO plus draw stacking. The points the official rules leave ambiguous were
-pinned down deliberately; the README carries the full table, and the ones most
-likely to surprise you are:
+Official UNO plus draw stacking. The points the official rules leave ambiguous are
+pinned down deliberately, and this is the full list:
 
 - **Draw stacking is strictly same-type.** A +2 answers a +2 and a +4 answers a +4,
   never across. Colour is irrelevant when raising. `PendingDraw.kind` mirrors the
   card's own `kind`, which turns that rule into a plain equality check.
 - **Reverse with two active players acts as a skip**, per the official rule.
+- **The starting card is the first number card from the top** of the shuffled deck
+  (`packages/engine/src/init.ts`). Deterministic, with no unbounded loop and no extra
+  draw: action cards encountered above it stay where they are in the pile.
+- **An empty draw pile is refilled from the discard pile minus its top card**, which
+  is reshuffled in place of the exhausted one. If that is still not enough, the draw
+  is capped at what is actually available rather than failing — `takeFromTop` takes
+  `Math.min(count, pile.length)`, so a draw can come up short but never invents cards.
+- **First empty hand wins the round**, which ends immediately.
 - **Drawing voluntarily does not end your turn when the card can be played.** That is
   the official rule and it is on by default; the table used to end the turn on any
   voluntary draw, which was a deliberate simplification and also slightly wrong. See
@@ -46,6 +53,12 @@ table without the newer rule.
 
 ### The Liar call-out
 
+`liar` is what the flag is called in the engine and on the wire. It is not what the
+player reads: the button says **Caught!** in English and **Contre-UNO !** in French,
+because forgetting to say UNO is an omission and a button that calls a friend a liar
+reads badly at a table of four. Expect the two names for the same thing, and keep the
+player-facing one out of the code.
+
 With `liar` on, a seat that reaches one card without calling UNO becomes
 `vulnerable` instead of drawing two, and any other **active** seat may play
 `{ type: 'callOut', target }` to charge it the same `UNO_PENALTY`.
@@ -64,6 +77,9 @@ Three things about it are worth knowing before touching that code:
 - **A wrong accusation cannot be made**, since the move is only offered while the
   target is genuinely vulnerable. Penalising a bad guess was rejected: it punishes
   paying attention badly instead of rewarding paying attention well.
+- **The turn order is untouched.** A call-out is a side effect on one hand and never
+  ends a round, which keeps it out of the turn-advance logic entirely. The escape is
+  to call UNO on your own next turn, before playing — a late call still counts.
 
 `sameMove` compares the target as well as the type. Without that, a legal call-out
 against one seat would authorise one against any seat — the sort of gap the single
@@ -97,7 +113,9 @@ Four things about it are worth knowing before touching that code:
 - **The rotation reads `direction`**, which is why a reverse played earlier in the
   round changes where hands go, and why rotating at two players is a swap. `advance`
   is a rotation of exactly the active seats, so the mapping is a bijection and
-  conservation holds by construction.
+  conservation holds by construction. At two players a 7 likewise has exactly one
+  legal target, so it always swaps rather than being quietly made a no-op — that
+  would silently change what the card is worth.
 - **No automatic UNO penalty is ever charged on a play that permutes hands.** With
   `liar` on, every seat whose hand moved has its window recomputed from what it now
   holds — one card uncalled opens one, anything else shuts one, because being accused
@@ -127,7 +145,12 @@ worth knowing before touching that code:
   the client needed no new idea — `Hand` renders a card as playable when a `play`
   references it, and that was already true off turn. The alternative, a `jumpIn`
   variant, would have duplicated every branch of `applyPlay` in the type system for
-  no behavioural difference.
+  no behavioural difference. So the card's own effect applies from the jumper's seat
+  exactly as it would have on their own turn: a jumped skip skips the seat after
+  them, a jumped reverse turns the table round from them, and a jumped 7 on a
+  Seven-Zero table offers its swap targets. Play continues in the current direction
+  from the jumper, and the seats in between simply lose their turn — that is the
+  point of the rule.
 - **`applyMove`'s turn check now exempts two moves**, not one: a `callOut` always,
   and a `play` on a table that opted in. Which of the off-turn plays are real
   jump-ins is left entirely to the single `legalMoves` gate, so a bad one comes back
@@ -255,12 +278,13 @@ describes.
 
 Edges the official rules leave open, decided here:
 
-| Point                | Decision                                                                                                                              |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Round with no winner | Awards nothing and ends the match. Scoring a round nobody finished would mean inventing a rule.                                       |
-| Tie on totals        | Possible in rounds mode. Every seat on the winning total shares the win; sudden death would turn "best of 3" into an unbounded match. |
-| Tie on points        | Impossible — only the round winner scores, so only one seat can cross the target.                                                     |
-| A player who leaves  | Keeps what they earned, and their remaining cards still count for whoever went out.                                                   |
+| Point                   | Decision                                                                                                                              |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Round with no winner    | Awards nothing and ends the match. Scoring a round nobody finished would mean inventing a rule.                                       |
+| Tie on totals           | Possible in rounds mode. Every seat on the winning total shares the win; sudden death would turn "best of 3" into an unbounded match. |
+| Tie on points           | Impossible — only the round winner scores, so only one seat can cross the target.                                                     |
+| A player who leaves     | Keeps what they earned, and their remaining cards still count for whoever went out.                                                   |
+| Next round vs new match | Two distinct host actions. Letting one mean both depending on hidden state is how a player loses a scoreboard by accident.            |
 
 `MatchState` deliberately lives **outside** `GameState`. A round has no business
 knowing it belongs to a match, and the property tests that guard the round rules
@@ -291,9 +315,12 @@ draw again, and its countdown is not restarted for having drawn. Both are covere
 ## Changing a rule
 
 - The rules are guarded by property tests (`packages/engine/src/invariants.test.ts`)
-  asserting card conservation — 108 cards with distinct ids across hands, draw pile
-  and discard — plus termination and the legality of every move `legalMoves` offers.
-  Run them before believing a rule change is safe.
+  playing hundreds of randomised games and asserting that the 108 cards are conserved
+  at every step with distinct ids across hands, draw pile and discard; that no move
+  `legalMoves` offers is ever rejected by `applyMove`; that `currentSeat` always
+  points at an active seat while a game is in progress; and that under greedy play
+  every game terminates with a winner holding no cards. Run them before believing a
+  rule change is safe.
 - Property tests found a real freeze in `advance` that hand-written tests missed,
   and equally they _missed_ a bug where a single active seat froze the turn, because
   they never disconnect anyone. They are strong evidence, not proof.

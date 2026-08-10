@@ -35,19 +35,32 @@ Anything that breaks one of those is worth a second look.
 
 ## Running it
 
+Node 22 or later; the repo pins the Active LTS in `.nvmrc`.
+
 ```bash
 npm install
 npm run verify      # lint + typecheck + unit tests, the same gate CI runs
 npm run e2e         # Playwright against a real build
 ```
 
-To play locally you need both halves up. The client is served by Vite and proxies
-the socket handshake to the API:
+To play locally you need both halves up. The client is served by Vite on its own
+port and proxies the socket handshake to the API, so both have to be running:
 
 ```bash
 npm run build                 # once, so the server has dist/ to run
 npm start -w @uno/server      # API and WebSockets on http://localhost:5050
 npm run dev -w @uno/web       # client with hot reload on http://localhost:5173
+```
+
+Open <http://localhost:5173>. Vite forwards `/socket.io` and `/healthz` to 5050.
+Port 5050 rather than 5000, because macOS Control Center binds 5000 for the AirPlay
+receiver and a 5000 default fails on any Mac with AirPlay enabled.
+
+If you are editing **server** code, add a third terminal so the compiled output
+keeps up — nothing writes to `dist/` on its own:
+
+```bash
+npm run watch                 # tsc --build --watch
 ```
 
 A stale `dist/` is the most common way to lose an hour here: the server runs the
@@ -56,6 +69,29 @@ talking to an older server. That failure has already happened once in this
 project — a view arrived without a field the client expected and the table went
 blank. See [Testing](operations/testing.md) for what now catches it.
 
+| Script                     | Purpose                                            |
+| -------------------------- | -------------------------------------------------- |
+| `npm run verify`           | Lint, typecheck and test — run this before pushing |
+| `npm test`                 | Vitest once                                        |
+| `npm run test:watch`       | Vitest in watch mode                               |
+| `npm run test:coverage`    | Coverage report into `coverage/`                   |
+| `npm run lint`             | ESLint with type-aware rules                       |
+| `npm run typecheck`        | Types across the whole repo, tests included        |
+| `npm run build`            | Emit `dist/` for the publishable packages          |
+| `npm run format`           | Prettier write                                     |
+| `npm start -w @uno/server` | Run the built server (build first)                 |
+
+## Toolchain
+
+TypeScript is pinned to 6.x rather than 7.x on purpose: `typescript-eslint` declares
+a peer range of `<6.1.0`, and a type-aware linter running against an unsupported
+compiler fails silently rather than loudly. A slightly older compiler with working
+typed lint rules beats the reverse.
+
+`tsconfig.json` covers the whole repo including tests and config files — it is what
+the editor, ESLint and `typecheck` read. `tsconfig.build.json` is the emit-only
+solution and excludes tests.
+
 ## What the project is not
 
 - **Not scalable, on purpose.** State lives in memory and there is no Redis
@@ -63,8 +99,9 @@ blank. See [Testing](operations/testing.md) for what now catches it.
   about the other, so never scale past one. See [Deploying](operations/deploying.md).
 - **Not persistent.** A restart drops games in progress. That is a deliberate trade
   for having no datastore to run, back up, or pay for.
-- **Not finished.** The known open items live in the README's roadmap, including a
-  measured defect where a player's own hand falls below the fold on a phone.
+- **Not finished.** The known open items live in [`docs/ROADMAP.md`](../docs/ROADMAP.md),
+  including a measured defect where a player's own hand falls below the fold on a
+  phone.
 
 ## Where the reasoning lives
 

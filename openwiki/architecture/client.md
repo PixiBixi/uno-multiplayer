@@ -41,7 +41,15 @@ asymmetry is intentional; do not "fix" it.
 pace, the four rules, and the points table in full — is in `Lobby.tsx`, where the host
 adjusts it while waiting and everybody about to play can read it. `Home` used to carry 21
 controls and 2.42 phone screens with the game-code field last, which is the wrong order
-for a screen most people arrive at in order to join.
+for a screen most people arrive at in order to join — on three players, two are joining.
+It is now 10 controls and 1.25 screens at 390 × 844, with the code field at y=391
+instead of below the fold.
+
+The rule explanations sit behind a per-rule disclosure, because four paragraphs on
+permanent display is what made the home screen a wall of text, and in the lobby the
+reader has already chosen to look. The points table is the exception and is shown in
+full: the host is choosing a points target two panels up, and "how many rounds does
+500 take" is what those numbers answer.
 
 Three constraints hold that in place:
 
@@ -75,10 +83,15 @@ configuration — see below.
 ## Card themes
 
 Four faces — classic, flat, letterpress, neon — chosen by **each player**, in
-`localStorage` beside the hand-sort mode and the mute flag. It is a display
+`localStorage` beside the hand-sort mode and the mute flag. An unrecognised stored
+value falls back to classic rather than to a hand of blank cards. It is a display
 preference, not a table option: two people at the same table can run different ones
 and the game is identical, so nothing about it crosses the wire. No protocol type, no
 `room:create` field, no server code, no socket test.
+
+A player picks one from the four miniature previews on the home screen — in the
+right-hand column beneath the card values, beside the language chips — or cycles
+through them from the button next to the mute toggle on the table.
 
 Each theme's decisions are data in `lib/card-themes.ts` and `Card.tsx` reads them —
 the same reason `palette.ts` exists. Only what needs a different _structure_ is a
@@ -102,10 +115,32 @@ Three rules constrain any fifth theme somebody adds:
 
 The numbers were also verified against rendered pixels in Chromium — hide the glyph,
 re-screenshot, and diff, so a glowing theme is measured against its own halo rather
-than against the card behind it. That is what turned neon from the least legible of
-the four into the second most: the glow became a blurred copy _behind_ the glyph
-instead of a shadow through it. See the card themes section of the README for the
-four figures.
+than against the card behind it:
+
+| Theme       | Worst numeral contrast | Where                                 |
+| ----------- | ---------------------- | ------------------------------------- |
+| classic     | 1.67:1                 | yellow numeral on the bone oval       |
+| flat        | 4.98:1                 | white numeral on red                  |
+| letterpress | 15.6:1                 | ink numeral on paper stock            |
+| neon        | 5.3:1                  | cream numeral against the yellow glow |
+
+The figures are the 5th percentile of fully-covered glyph pixels; the single worst
+pixel sits around 2% lower, which is screenshot encode rounding rather than anything
+a player can see. Antialiased edge pixels are excluded on purpose — their ratio is a
+fact about antialiasing, not about legibility.
+
+That measurement is what turned neon from the least legible of the four into the
+second most. It was first drawn as the boldest with an explicit caveat that the glow
+cost contrast, and offering an option already known to be the weakest is not a choice
+but a trap. Two changes inverted it: the numeral became cream on a near-black ground,
+and the glow became a blurred copy _behind_ the glyph at half opacity rather than a
+shadow bleeding through it, so the colour the eye receives inside the numeral is the
+numeral's own. Flat's light ink is pure white rather than the printed cream for the
+same measured reason — on the fixed red pigment cream reaches only 4.42:1, while
+white reaches 4.98:1.
+
+`palette.test.ts` fails if any of those declared colours ever drift from
+`tokens.css`, so the floor cannot rot behind a passing suite.
 
 The preference reaches every card through a context in
 `components/CardThemeProvider.tsx` rather than a read inside `Card`, because the
@@ -132,10 +167,19 @@ Nothing in `audio-engine.ts` is unit-testable, since jsdom has no Web Audio. It 
 checked in a real browser by wrapping `AudioContext` and asserting oscillators
 actually start.
 
+Sound is on by default, with a mute toggle on the felt persisted in `localStorage`.
+Nothing can play before the click that creates or joins a table, so opening the page
+is never a surprise.
+
 ## Internationalisation
 
-`i18n/` holds English and French. **Every catalogue entry that varies is a
-function, not a template with holes in it.** That is the whole design.
+`i18n/` holds English and French. A browser asking for French gets it; a chip on the
+home screen — right-hand column, under the card-values panel — switches instantly and
+the choice is remembered. Like the card theme it is a per-player display preference
+that crosses no wire.
+
+**Every catalogue entry that varies is a function, not a template with holes in it.**
+That is the whole design.
 
 English builds "Ana wins" from a name and an `s`; French builds "Ana gagne" from a
 different stem, and "You win" becomes "Tu gagnes" where the verb changes rather

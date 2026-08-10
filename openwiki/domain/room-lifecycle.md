@@ -120,7 +120,8 @@ anything that can change whose turn it is:
   for a seat already deciding what to do with a card it drew. `armTurn` also leaves that
   countdown alone rather than restarting it, since a voluntary draw did not end the turn.
 - **The between-rounds clock**, dealing the next round five seconds after the last
-  one ended.
+  one ended. Five is fixed rather than exposed as a setting: a second dial for it
+  would be one nobody has an opinion about.
 
 Both arms are safe to call unconditionally: each clears itself when the room is not
 in its state, so a table with no pace ends up with no timers and null deadlines.

@@ -24,6 +24,13 @@ Two projects are configured in `vitest.config.ts` — `node` and `web` (jsdom) �
 because the server and the client resolve modules differently and need different
 globals.
 
+The engine is pure functions over immutable state, so each rule is a short unit test
+with no network and no React, and the property tests sit on top of that suite rather
+than replacing it. The conservation invariant alone would have caught the worst bug in
+the predecessor project, where an in-place shuffle of a module-level array stripped 15
+cards from the deck on every game — which is the argument for asserting it on every
+intermediate state rather than only at the end.
+
 ## The blind spot to keep in mind
 
 **Testing both ends of a chain proves nothing about the wire between them.** Two
@@ -73,7 +80,7 @@ is the difference between a guard and a decoration:
 - Bypassing the statistics funnel on the move path fails two tally tests.
 - Dropping the chosen table rules on the `room:create` path fails two Liar socket
   tests; making a call-out legal against a seat that is not vulnerable fails twelve
-  across the engine, the room and the wire; and hiding the Liar button while the
+  across the engine, the room and the wire; and hiding the call-out button while the
   move is offered fails four in the browser suite.
 - Ten mutations were re-run against Seven-Zero. The instructive ones: ignoring
   `swapWith` in `sameMove` fails seven, rotating against `direction` fails five,

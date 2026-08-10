@@ -7,6 +7,15 @@ both the API and the built client from one process.
 docker compose up --build      # then open http://localhost:5050
 ```
 
+Create a game and the lobby offers two ways to share it: **Copy code** for a
+six-character code to read out loud, and **Copy link** for
+`http://localhost:5050/?room=K7QM2X`, which prefills the field for whoever opens it.
+
+Copying works over plain HTTP as well as HTTPS. `navigator.clipboard` does not exist
+outside a secure context, so `apps/web/src/lib/clipboard.ts` falls back to a
+selection-based copy — without it the buttons would work on localhost and silently do
+nothing on a self-hosted instance reached by IP.
+
 ## Behind Traefik
 
 `compose.traefik.yaml` is ready to use — replace the hostname, the cert resolver
@@ -41,7 +50,12 @@ It defaults to `false` because those headers do not merely add nothing without T
 they **break the app**. `upgrade-insecure-requests` rewrites every asset request to
 `https://`, so a server reached at `http://192.168.1.20:5050` answers with CSS and
 JS URLs that have no TLS behind them: `ERR_SSL_PROTOCOL_ERROR`, and a blank page.
-Both are helmet defaults, switched off unless the flag says otherwise.
+HSTS is merely dishonest by comparison — browsers ignore it over plain HTTP. Both are
+helmet defaults, which `apps/server/src/http.ts` switches off unless the flag says
+otherwise.
+
+`BEHIND_TLS` also decides `trustProxy`, which is covered under
+[rate limiting](../domain/room-lifecycle.md#rate-limiting).
 
 ## Configuration
 
