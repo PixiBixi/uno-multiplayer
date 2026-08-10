@@ -52,19 +52,19 @@ describe('Seat', () => {
 
   it('offers no call-out when it was not given one', () => {
     render(<Seat {...base} handCount={1} />)
-    expect(screen.queryByRole('button', { name: /liar/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /catch/i })).toBeNull()
   })
 
   it('calls out the seat when the button it was given is pressed', async () => {
     const onCallOut = vi.fn()
     render(<Seat {...base} handCount={1} onCallOut={onCallOut} />)
-    await userEvent.click(screen.getByRole('button', { name: /liar/i }))
+    await userEvent.click(screen.getByRole('button', { name: /catch/i }))
     expect(onCallOut).toHaveBeenCalledTimes(1)
   })
 
-  it('names who is being accused, so the button is unambiguous to a screen reader', () => {
+  it('names who is being called out, so the button is unambiguous to a screen reader', () => {
     render(<Seat {...base} handCount={1} onCallOut={vi.fn()} />)
-    expect(screen.getByRole('button', { name: /liar/i }).getAttribute('aria-label')).toContain(
+    expect(screen.getByRole('button', { name: /catch/i }).getAttribute('aria-label')).toContain(
       'Ben',
     )
   })

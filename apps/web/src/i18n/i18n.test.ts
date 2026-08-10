@@ -201,9 +201,16 @@ describe('grammar each language owns', () => {
     expect(CATALOGUES.fr.event.calledOut('Ana', false, 'Toi', true)).toContain('t’a pris')
   })
 
-  it('names the call-out button in each language', () => {
-    expect(CATALOGUES.en.table.callOut).toBe('Liar!')
-    expect(CATALOGUES.fr.table.callOut).toBe('Menteur !')
+  /* Pinned rather than merely non-empty, because the wording is the point: neither
+     language accuses anybody of lying. Forgetting to say UNO is an omission, and a
+     button that calls a friend a liar reads badly at a table of four. */
+  it('names the call-out button in each language, without alleging bad faith', () => {
+    expect(CATALOGUES.en.table.callOut).toBe('Caught!')
+    expect(CATALOGUES.fr.table.callOut).toBe('Contre-UNO !')
+    for (const catalogue of Object.values(CATALOGUES)) {
+      expect(catalogue.table.callOut.toLowerCase()).not.toMatch(/liar|menteur/)
+      expect(catalogue.table.callOutOn('Ana').toLowerCase()).not.toMatch(/liar|menteur/)
+    }
   })
 
   it('names the Seven-Zero option in each language', () => {

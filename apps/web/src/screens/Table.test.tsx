@@ -99,16 +99,16 @@ describe('Table', () => {
     // The client evaluates no rule: a hand of one card next door means nothing to
     // it until the move arrives.
     setup(viewWith({ opponents: [{ seat: 1, name: 'Ben', handCount: 1, status: 'active' }] }))
-    expect(screen.queryByRole('button', { name: /liar/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /catch/i })).toBeNull()
   })
 
-  it('puts a Liar button beside the opponent the server named, and only them', async () => {
+  it('puts a call-out button beside the opponent the server named, and only them', async () => {
     const { onPlay } = setup(
       viewWith({
         you: { seat: 0, hand: [mine], legalMoves: [{ type: 'callOut', target: 2 }] },
       }),
     )
-    const buttons = screen.getAllByRole('button', { name: /liar/i })
+    const buttons = screen.getAllByRole('button', { name: /catch/i })
     expect(buttons).toHaveLength(1)
 
     /* Beside Cleo, seat 2 — the second opponent in the view, which the layout puts
@@ -134,7 +134,7 @@ describe('Table', () => {
         },
       }),
     )
-    expect(screen.getAllByRole('button', { name: /liar/i })).toHaveLength(2)
+    expect(screen.getAllByRole('button', { name: /catch/i })).toHaveLength(2)
   })
 
   it('says a jump-in is on offer only when the server offered a play off turn', async () => {

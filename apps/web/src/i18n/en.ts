@@ -205,8 +205,10 @@ export const en: Messages = {
     drawCard: 'Draw card',
     take: (n) => `Take ${String(n)}`,
     callUno: 'UNO!',
-    callOut: 'Liar!',
-    callOutOn: (name) => `Call ${name} a liar`,
+    /* "Caught", the word the published rules use, rather than "Liar": forgetting is not
+       lying, and the button's job is to catch an omission, not to allege bad faith. */
+    callOut: 'Caught!',
+    callOutOn: (name) => `Catch ${name} without an UNO`,
     jumpIn: 'Jump in!',
     endTurn: 'End turn',
     playDrawnCard: 'Play the card you drew, or end your turn',

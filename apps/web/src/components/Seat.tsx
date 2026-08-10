@@ -66,7 +66,7 @@ export function Seat({ name, handCount, status, isTurn, orientation, onCallOut }
         {statusText !== null && <span className="plate-note">{statusText}</span>}
       </p>
       {onCallOut !== null && (
-        // Labelled with the name too: "Liar!" three times over is ambiguous to
+        // Labelled with the name too: "Caught!" three times over is ambiguous to
         // anyone who cannot see which seat it sits under.
         <button
           type="button"

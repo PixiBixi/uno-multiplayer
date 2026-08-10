@@ -66,8 +66,8 @@ export function Table({
   const canJumpIn = !myTurn && view.you.legalMoves.some((move) => move.type === 'play')
 
   /* The one move that is legal off turn, and the client still evaluates nothing:
-     an opponent gets a Liar button only because the server put a call-out against
-     that exact seat in this view. */
+     an opponent gets a call-out button only because the server put a call-out
+     against that exact seat in this view. */
   const callOutAgainst = (seat: number): Move | undefined =>
     view.you.legalMoves.find((move) => move.type === 'callOut' && move.target === seat)
 

@@ -221,8 +221,10 @@ export const fr: Messages = {
     drawCard: 'Piocher',
     take: (n) => `Prendre ${String(n)}`,
     callUno: 'UNO !',
-    callOut: 'Menteur !',
-    callOutOn: (name) => `Accuser ${name} : menteur`,
+    /* « Contre-UNO » et non « Menteur » : oublier n'est pas mentir, et le terme courant
+       dit ce que le bouton fait plutôt que d'accuser quelqu'un de mauvaise foi. */
+    callOut: 'Contre-UNO !',
+    callOutOn: (name) => `Contre-UNO sur ${name}`,
     jumpIn: 'Jump-in !',
     endTurn: 'Terminer mon tour',
     playDrawnCard: 'Pose la carte piochée, ou termine ton tour',

@@ -129,9 +129,9 @@ An optional house rule, set by the host in the lobby and off by default:
 automatic penalty removes the part of UNO people actually enjoy — watching each
 other — so this hands it back.
 
-A seat becomes open to an accusation the moment it drops to one card without having
-called UNO. Any other player may then press **Liar!** beside that seat, and the
-accused draws the same two cards the automatic rule charged.
+A seat becomes open to a call-out the moment it drops to one card without having
+called UNO. Any other player may then press **Caught!** beside that seat, and the
+caught player draws the same two cards the automatic rule charged.
 
 | Point                       | Decision                                                                                                                                                |
 | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
