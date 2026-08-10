@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.4.0](https://github.com/PixiBixi/uno-multiplayer/compare/db398070890ac82ff3e3848aa940b8835e60d4c1..v1.4.0) - 2026-08-10
+#### Features
+- (**web**) let toasts close themselves - ([db39807](https://github.com/PixiBixi/uno-multiplayer/commit/db398070890ac82ff3e3848aa940b8835e60d4c1)) - Jeremy Delgado
+
+- - -
+
 ## [v1.3.0](https://github.com/PixiBixi/uno-multiplayer/compare/3273fba2d08486db5711a38538087893e86f83d6..v1.3.0) - 2026-08-10
 #### Features
 - (**web**) give the game a favicon - ([3273fba](https://github.com/PixiBixi/uno-multiplayer/commit/3273fba2d08486db5711a38538087893e86f83d6)) - Jeremy Delgado
