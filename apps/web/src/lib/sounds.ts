@@ -76,6 +76,12 @@ export function soundForEvent(event: GameEvent, mySeat: number): SoundName | nul
     case 'matchEnded':
       // A shared win still counts as yours.
       return event.winners.includes(mySeat) ? 'matchWon' : 'matchOver'
+    /* Silent, and for a reason of its own: a jump-in is immediately followed by the
+       `cardPlayed` for the very same card, which already sounds. A cue here would
+       stack two on one instant — the mistake soundsForEvents exists to stop for a
+       round that ends a match. */
+    case 'jumpedIn':
+      return null
     // Deliberately silent: a seat connecting, leaving, or a new deal are changes
     // the log already reports, and a noise for each would be chatter.
     case 'seatDisconnected':

@@ -62,6 +62,8 @@ export const en: Messages = {
       clockwise
         ? 'A 0 sent every hand one seat clockwise'
         : 'A 0 sent every hand one seat anticlockwise',
+    jumpedIn: (name, isYou) =>
+      isYou ? 'You jumped in, out of turn' : `${name} jumped in, out of turn`,
     seatDisconnected: (name) => `${name} lost connection`,
     // The only verb in the log that changes person: everything else is past tense.
     seatReconnected: (name, isYou) => (isYou ? 'You are back' : `${name} is back`),
@@ -109,6 +111,9 @@ export const en: Messages = {
     sevenZero: 'Play the Seven-Zero variant',
     sevenZeroHint:
       'A 7 swaps your hand with a player you choose; a 0 sends every hand one seat along, in the direction of play.',
+    jumpIn: 'Allow jump-in',
+    jumpInHint:
+      'Holding the exact same card as the one just played — same colour, same value — you may lay it down out of turn, and play carries on from you. Never a wild, and never while a draw is pending.',
     language: 'Language',
   },
 
@@ -153,6 +158,7 @@ export const en: Messages = {
     callUno: 'UNO!',
     callOut: 'Liar!',
     callOutOn: (name) => `Call ${name} a liar`,
+    jumpIn: 'Jump in!',
     chooseSwapTarget: 'Whose hand do you want?',
     swapTarget: (name, count) => `${name}, ${cards(count)}`,
     clockwise: 'Clockwise',

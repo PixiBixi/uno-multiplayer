@@ -21,9 +21,11 @@ likely to surprise you are:
   opted into the Liar call-out below, which makes the penalty manual.
 - **A 7 and a 0 are ordinary number cards** unless the table opted into Seven-Zero,
   also below.
+- **Only the seat on turn may lay a card down**, unless the table opted into jump-in
+  — which is the one option that changes that, and the one that also moves the turn.
 
-Deliberately not implemented: the strict Mattel +4 challenge (it needs a bluff UI
-and hand inspection) and jump-in.
+Deliberately not implemented: the strict Mattel +4 challenge, which needs a bluff UI
+and hand inspection.
 
 ## Table rules
 
@@ -103,6 +105,64 @@ Four things about it are worth knowing before touching that code:
 Events are `handsSwapped { seat, with }` and `handsRotated { direction }`, derived in
 `diffEvents` from the card and the table's rules rather than from hand sizes — a swap
 between two seats holding four cards each changes no count at all.
+
+### Jump-in
+
+With `jumpIn` on, a card **identical** to the discard top — same colour and same
+value, or same colour and same kind — may be played out of turn, and `currentSeat`
+becomes the jumper.
+
+It is the riskiest of the three because it inverts the assumption the rest of the
+engine rests on and also rewrites the thing every other move reads. Six things are
+worth knowing before touching that code:
+
+- **It reuses `play` rather than adding a move type.** A jump-in is the same card
+  resolving the same way from a different seat, so `applyPlay` needed nothing: it
+  already advances from the seat that moved, not from `currentSeat`. It also means
+  the client needed no new idea — `Hand` renders a card as playable when a `play`
+  references it, and that was already true off turn. The alternative, a `jumpIn`
+  variant, would have duplicated every branch of `applyPlay` in the type system for
+  no behavioural difference.
+- **`applyMove`'s turn check now exempts two moves**, not one: a `callOut` always,
+  and a `play` on a table that opted in. Which of the off-turn plays are real
+  jump-ins is left entirely to the single `legalMoves` gate, so a bad one comes back
+  as `illegal_move` and not `not_your_turn` — on a jump-in table an off-turn play is
+  a category of legal move, and refusing it for being off turn would name the wrong
+  reason.
+- **A jump-in begins the jumper's turn before the card resolves**, which clears
+  `unoCalled`. That is deliberate and it is the rule: an off-turn seat is offered
+  call-outs and jump-ins and nothing else, so a jumper has no moment at which to
+  declare, and a declaration made on an earlier turn must not quietly cover a card
+  laid down on this one. Landing on one card by jumping in is an uncalled UNO — two
+  cards, or an open window on a Liar table. It also closes the jumper's own window,
+  since its turn has just ended, which is the same escape calling UNO gives.
+- **Nothing at all is offered while a draw is pending.** Not even a same-kind card,
+  which `isPlayable` would allow: the stacking rule is "strictly the same type", and
+  a jump-in interleaved with it would make that mean nothing. Guarded by a property
+  test rather than only a unit test, because whether a stacked draw ever coincides
+  with somebody holding the twin of the card that stacked it is a question about the
+  deal.
+- **Wilds are never jumpable, in either position.** They have no colour, so matching
+  on kind alone would make every wild identical to every other one.
+- **Termination holds, and that was the thing at risk.** Every jump-in spends a card,
+  and a UNO deck holds exactly two copies of any jumpable card — one 0 per colour, so
+  a 0 has no twin at all. So at most one seat can ever hold a jump-in against a given
+  top, no jump-in can be answered by another on the same card, and no chain is longer
+  than one. The property tests assert it under a policy that takes every jump-in
+  offered, which is the unfavourable policy: on a table without `liar`, jumping down
+  to one card costs the two cards it just saved.
+
+The event is `jumpedIn { seat }`, derived in `diffEvents` from `before.currentSeat`
+rather than after — the turn has moved to the jumper by then, that being the whole
+effect of the rule. It counts towards nothing: the card is already counted by the
+`cardPlayed` that follows it.
+
+A consequence worth recording, because the spec assumed otherwise: **the race between
+two players jumping the same card cannot happen.** The twin of a card is in exactly
+one place, so only one seat is ever holding one. What can race is the same seat asking
+twice, and a jump-in arriving beside the play of the seat whose turn it was — both are
+driven over a real socket, and both come down to the server applying whichever it
+reads first.
 
 ## Scoring a match
 

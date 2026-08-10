@@ -96,6 +96,7 @@ export const moveSchema: z.ZodType<Move> = z.discriminatedUnion('type', [
 export const tableRulesSchema: z.ZodType<TableRules> = z.object({
   liar: z.boolean().default(false),
   sevenZero: z.boolean().default(false),
+  jumpIn: z.boolean().default(false),
 })
 
 /**

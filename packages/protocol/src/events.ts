@@ -33,6 +33,12 @@ export type GameEvent =
      otherwise be reported as a draw that never happened. */
   | { type: 'handsSwapped'; seat: number; with: number }
   | { type: 'handsRotated'; direction: 1 | -1 }
+  /* Jump-in: a card laid down by a seat whose turn it was not. Named rather than
+     left to `cardPlayed` alone, because the surprising part is not the card — it is
+     that play has just moved somewhere nobody was expecting, and the seats in
+     between never got their turn. The card still arrives as `cardPlayed` right
+     after, so the statistics and the sound cue need to learn nothing. */
+  | { type: 'jumpedIn'; seat: number }
   | { type: 'seatDisconnected'; seat: number }
   | { type: 'seatReconnected'; seat: number }
   | { type: 'seatLeft'; seat: number }

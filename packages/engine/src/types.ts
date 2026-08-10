@@ -62,10 +62,22 @@ export type TableRules = {
    * the current direction of play.
    */
   sevenZero: boolean
+  /**
+   * A card identical to the discard top — same colour AND same value or kind — may
+   * be laid down out of turn, and play then continues from whoever laid it.
+   *
+   * The one option that inverts the assumption the rest of the engine rests on,
+   * that only `currentSeat` can act, and the only one that MOVES `currentSeat`.
+   */
+  jumpIn: boolean
 }
 
 /** Plain UNO, which is what a host who picks nothing gets. */
-export const DEFAULT_TABLE_RULES: TableRules = { liar: false, sevenZero: false }
+export const DEFAULT_TABLE_RULES: TableRules = {
+  liar: false,
+  sevenZero: false,
+  jumpIn: false,
+}
 
 /**
  * Outstanding draw debt. `kind` mirrors the card's own `kind`, which turns the
@@ -120,6 +132,11 @@ export type Move =
    * same idea: a second decision the card demands, carried by the move rather than
    * asked for afterwards. `legalMoves` enumerates them, so neither is ever a
    * free-form value the reducer has to validate on its own.
+   *
+   * A jump-in is this same move played by a seat whose turn it is not, rather than
+   * a variant of its own: the card resolves exactly as it would have on their turn,
+   * and a client that renders whatever `play` it was offered needs no new idea to
+   * show one.
    */
   | { type: 'play'; cardId: CardId; chosenColor?: Color; swapWith?: number }
   | { type: 'draw' }

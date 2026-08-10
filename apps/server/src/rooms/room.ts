@@ -508,6 +508,13 @@ function diffEvents(before: GameState, after: GameState, seat: number, move: Mov
 
   const played = after.discardPile[after.discardPile.length - 1]
   if (played !== undefined && after.discardPile.length > before.discardPile.length) {
+    /* A play by a seat whose turn it was not is a jump-in, and there is nothing else
+       it could be: the reducer exempts exactly two moves from the turn check, and the
+       other one is a call-out, which returned above. Read from `before`, since `after`
+       has the turn on the jumper by then — that being the whole effect of the rule. */
+    if (before.rules.jumpIn && before.currentSeat !== seat) {
+      events.push({ type: 'jumpedIn', seat })
+    }
     events.push({ type: 'cardPlayed', seat, card: played })
 
     /* Seven-Zero moved hands, so every difference in size below is that permutation

@@ -277,16 +277,30 @@ function applyCallOut(
   return ok(closeWindow(drawInto(state, move.target, UNO_PENALTY), move.target))
 }
 
+/**
+ * Which moves an off-turn seat is even allowed to attempt.
+ *
+ * A call-out always, and a play only on a table that opted into `jumpIn`. Whether
+ * that play really is a jump-in is left to the single `legalMoves` gate below,
+ * which is why a bad one comes back as `illegal_move` rather than `not_your_turn`:
+ * on a jump-in table an off-turn play is a category of legal move, so refusing it
+ * for being off turn would name the wrong reason.
+ */
+function mayActOffTurn(state: GameState, move: Move): boolean {
+  if (move.type === 'callOut') return true
+  return move.type === 'play' && state.rules.jumpIn
+}
+
 export function applyMove(
   state: GameState,
   seatIndex: number,
   move: Move,
 ): Result<GameState, RuleViolation> {
   if (state.phase !== 'playing') return err('game_finished')
-  /* A call-out is exempt, and is the only move that is. Everything else still
-     answers to whose turn it is, and is refused as such rather than as an
+  /* A call-out and a jump-in are the two exemptions, and the only two. Everything
+     else still answers to whose turn it is, and is refused as such rather than as an
      illegal move, so the client can say which of the two went wrong. */
-  if (state.currentSeat !== seatIndex && move.type !== 'callOut') return err('not_your_turn')
+  if (state.currentSeat !== seatIndex && !mayActOffTurn(state, move)) return err('not_your_turn')
   const seat = state.seats[seatIndex]
   if (seat === undefined) return err('not_your_turn')
   if (seat.status !== 'active') return err('seat_not_active')
@@ -317,7 +331,19 @@ export function applyMove(
       return ok(passTurn(drawn, seatIndex, 1))
     }
     case 'play':
-      return applyPlay(state, seatIndex, move)
+      /* A jump-in IS the jumper's turn, so it begins here — after the gate, which
+         has to read the state as it really was, or an off-turn seat would be offered
+         every move the seat on turn had.
+
+         Beginning it clears `unoCalled`, which is the whole point: a jumper cannot
+         call UNO (an off-turn seat is offered call-outs and jump-ins, nothing else),
+         so a declaration made on an earlier turn must not quietly cover a card laid
+         down on this one. Landing on one card by jumping in is an uncalled UNO. */
+      return applyPlay(
+        state.currentSeat === seatIndex ? state : beginTurn(state, seatIndex),
+        seatIndex,
+        move,
+      )
     case 'callOut':
       return applyCallOut(state, move)
   }

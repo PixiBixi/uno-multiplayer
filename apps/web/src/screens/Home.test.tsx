@@ -29,6 +29,7 @@ describe('Home', () => {
     expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
       liar: false,
       sevenZero: false,
+      jumpIn: false,
     })
   })
 
@@ -40,6 +41,7 @@ describe('Home', () => {
     expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
       liar: true,
       sevenZero: false,
+      jumpIn: false,
     })
   })
 
@@ -53,6 +55,19 @@ describe('Home', () => {
     expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
       liar: false,
       sevenZero: true,
+      jumpIn: false,
+    })
+  })
+
+  it('switches jump-in on independently of the other two', async () => {
+    const { onCreate } = setup()
+    await userEvent.type(screen.getByLabelText(/your name/i), 'Ana')
+    await userEvent.click(screen.getByLabelText(/jump-in/i))
+    await userEvent.click(screen.getByRole('button', { name: /create/i }))
+    expect(onCreate).toHaveBeenCalledWith('Ana', { kind: 'points', target: 500 }, null, {
+      liar: false,
+      sevenZero: false,
+      jumpIn: true,
     })
   })
 

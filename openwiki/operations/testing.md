@@ -37,11 +37,23 @@ bugs shipped through exactly this gap:
 
 `apps/server/src/sockets/handlers-match.test.ts` and `handlers-leave.test.ts` close
 both by driving real connections. When adding a client action, write the socket
-test, not only the `Room` test. `handlers-liar.test.ts` and
-`handlers-sevenzero.test.ts` do the same for the two optional table rules — each
-drives a real round until the server offers the move, then plays it over the wire.
-Both carry an explicit 20s timeout and raise `MOVE_BURST`, because a scripted round
-outruns both vitest's 5s default and a rate limit sized for a person.
+test, not only the `Room` test. `handlers-liar.test.ts`,
+`handlers-sevenzero.test.ts` and `handlers-jumpin.test.ts` do the same for the three
+optional table rules — each drives a real round until the server offers the move, then
+plays it over the wire. All three carry an explicit 20s timeout and raise
+`MOVE_BURST`, because a scripted round outruns both vitest's 5s default and a rate
+limit sized for a person.
+
+The jump-in drive differs in two ways worth copying if you add a fourth option. It
+cannot play "around" the move it is hunting the way the Seven-Zero drive does — the
+chance to jump exists only while one particular card is on top, so the check happens
+after every single move. And it deals further rounds rather than giving up at the end
+of one: the room's seed is random per test, whether the twin of a card ever reaches a
+hand at a usable moment is a property of the deal, and a test that fails on an unlucky
+shuffle is a test nobody can read. Two flakes of exactly that shape were found by
+running the file fourteen times, not once — the other being a jumper landing on one
+card, where the automatic UNO penalty legitimately makes the hand grow rather than
+shrink.
 
 ## Test your tests
 
@@ -63,6 +75,21 @@ is the difference between a guard and a decoration:
   fails five, and never rendering the target picker fails three in the browser suite.
   Worth noting what the property tests did **not** catch: swapping with a seat that
   has left conserves the deck perfectly well, so only the unit tests refuse it.
+- Eleven mutations were re-run against jump-in. The instructive ones: making a wild
+  jumpable fails three, matching on value while ignoring colour fails six, allowing a
+  jump-in while a draw is pending fails three, leaving `currentSeat` where it was
+  fails nine, not beginning the jumper's turn — so a stale UNO call covers the jump —
+  fails two, dropping the `rules.jumpIn` check in either `legalMoves` or the off-turn
+  exemption fails three and four, deriving no `jumpedIn` in the room fails two,
+  removing the Zod flag fails nine and the typecheck with it, offering jump-ins to the
+  seat on turn as well fails one, and never rendering the client's note fails one.
+  Two of those are worth dwelling on. Leaving `currentSeat` unchanged after a jump-in
+  fails nine unit tests and **not one property test** — play still terminates and the
+  deck still conserves, so only tests that say where the turn should be will refuse
+  it. And allowing a jump-in during a pending draw was caught by two unit tests but
+  originally by no property test at all, because the harness rarely reaches a stacked
+  draw with the right twin in the right hand; the property that asserts it directly
+  over every intermediate state was added for that reason and catches it.
 
 Equally worth knowing: some things **cannot** drift and so cannot be tested for. The
 help panel reads `cardPoints` from the engine, and so do its tests — change the

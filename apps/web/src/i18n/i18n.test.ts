@@ -107,6 +107,24 @@ describe('grammar each language owns', () => {
     expect(CATALOGUES.fr.home.sevenZero).toContain('Sept-Zéro')
   })
 
+  it('names the jump-in option in each language', () => {
+    /* Unlike Seven-Zero, this variant has no French name in circulation — players
+       say "jump-in" — so the label keeps it rather than inventing one. The sentence
+       around it is still French. */
+    expect(CATALOGUES.en.home.jumpIn).toContain('jump-in')
+    expect(CATALOGUES.fr.home.jumpIn).toContain('Jump-in')
+    expect(CATALOGUES.fr.home.jumpInHint).toContain('hors de ton tour')
+    expect(CATALOGUES.en.table.jumpIn).toBe('Jump in!')
+    expect(CATALOGUES.fr.table.jumpIn).toBe('Jump-in !')
+  })
+
+  it('conjugates a jump-in for the person who made it', () => {
+    expect(CATALOGUES.en.event.jumpedIn('Ana', true)).toContain('You jumped in')
+    expect(CATALOGUES.en.event.jumpedIn('Ana', false)).toContain('Ana jumped in')
+    expect(CATALOGUES.fr.event.jumpedIn('Toi', true)).toContain('Tu as sauté')
+    expect(CATALOGUES.fr.event.jumpedIn('Ana', false)).toContain('Ana a sauté')
+  })
+
   it('conjugates a swap for both people in it, and counts the hand each way', () => {
     expect(CATALOGUES.fr.event.handsSwapped('Toi', true, 'Ana', false)).toContain('Tu as posé')
     expect(CATALOGUES.fr.event.handsSwapped('Ana', false, 'Toi', true)).toContain('pris ta main')

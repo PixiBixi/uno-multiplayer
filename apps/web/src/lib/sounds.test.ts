@@ -53,6 +53,15 @@ describe('soundForEvent', () => {
     expect(soundForEvent({ type: 'handsRotated', direction: -1 }, 0)).toBe('swap')
   })
 
+  it('stays silent for a jump-in, whose card sounds a beat later', () => {
+    /* The cardPlayed for the very same card follows immediately and already sounds.
+       Two cues on one instant is the mistake soundsForEvents exists to prevent. */
+    expect(soundForEvent({ type: 'jumpedIn', seat: 1 }, 0)).toBeNull()
+    expect(soundsForEvents([{ type: 'jumpedIn', seat: 1 }, played(act('skip'))], 0)).toEqual([
+      'skip',
+    ])
+  })
+
   it('tells winning a round apart from watching one be won', () => {
     const ended: GameEvent = { type: 'roundEnded', winner: 0, awarded: [30, 0], scores: [30, 0] }
     expect(soundForEvent(ended, 0)).toBe('roundWon')

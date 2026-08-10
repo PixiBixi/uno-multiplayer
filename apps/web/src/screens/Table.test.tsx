@@ -134,6 +134,33 @@ describe('Table', () => {
     expect(screen.getAllByRole('button', { name: /liar/i })).toHaveLength(2)
   })
 
+  it('says a jump-in is on offer only when the server offered a play off turn', async () => {
+    /* The client evaluates nothing here either: it does not know what makes a card
+       jumpable, only that a play arrived in a view where the turn belongs to somebody
+       else. */
+    const { onPlay } = setup(
+      viewWith({
+        currentSeat: 1,
+        you: { seat: 0, hand: [mine], legalMoves: [{ type: 'play', cardId: mine.id }] },
+      }),
+    )
+    expect(screen.getByText(/jump in/i)).toBeTruthy()
+
+    // And the card is playable, which is the part that actually matters.
+    await userEvent.click(screen.getByRole('button', { name: /red 5/i }))
+    expect(onPlay).toHaveBeenCalledWith({ type: 'play', cardId: mine.id })
+  })
+
+  it('says nothing about jumping in on your own turn', () => {
+    setup(viewWith({ currentSeat: 0 }))
+    expect(screen.queryByText(/jump in/i)).toBeNull()
+  })
+
+  it('says nothing about jumping in when no play was offered off turn', () => {
+    setup(viewWith({ currentSeat: 1, you: { seat: 0, hand: [mine], legalMoves: [] } }))
+    expect(screen.queryByText(/jump in/i)).toBeNull()
+  })
+
   it('renders a swap picker from the moves the server offered, naming the seats', async () => {
     /* Straight through from the view: the client neither knows that a 7 swaps nor who
        a legal target is, only that two moves reference the same card. */

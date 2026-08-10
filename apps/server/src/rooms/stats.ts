@@ -82,6 +82,11 @@ export function tally(stats: SeatStats[], events: GameEvent[]): SeatStats[] {
       case 'handsSwapped':
       case 'handsRotated':
         break
+      /* Nor this one. The card itself is counted by the `cardPlayed` that follows it,
+         and counting the jump as well would make one card look like two things
+         happening — a "cards played" column that disagrees with the hands. */
+      case 'jumpedIn':
+        break
       // Nothing to count: presence changes and deals are not anybody's doing.
       case 'seatDisconnected':
       case 'seatReconnected':

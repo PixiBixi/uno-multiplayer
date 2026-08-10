@@ -11,7 +11,7 @@ import type { GameState, Move, TableRules } from './types.js'
  * when it is not your turn.
  */
 
-const LIAR: TableRules = { liar: true, sevenZero: false }
+const LIAR: TableRules = { liar: true, sevenZero: false, jumpIn: false }
 
 const apply = (state: GameState, seat: number, move: Move): GameState => {
   const result = applyMove(state, seat, move)

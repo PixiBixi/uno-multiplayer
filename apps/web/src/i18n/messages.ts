@@ -51,6 +51,9 @@ export type Messages = {
     handsSwapped: (by: string, byIsYou: boolean, target: string, targetIsYou: boolean) => string
     /** `clockwise` rather than the raw 1 / -1: the sentence names a direction. */
     handsRotated: (clockwise: boolean) => string
+    /* One person, and the same reason as the rest: French conjugates the jumper.
+       The card itself is named by the `cardPlayed` line that follows. */
+    jumpedIn: (name: string, isYou: boolean) => string
     seatDisconnected: (name: string) => string
     seatReconnected: (name: string, isYou: boolean) => string
     seatLeft: (name: string) => string
@@ -85,6 +88,8 @@ export type Messages = {
     liarHint: string
     sevenZero: string
     sevenZeroHint: string
+    jumpIn: string
+    jumpInHint: string
     language: string
   }
 
@@ -129,6 +134,8 @@ export type Messages = {
     callOut: string
     /** Its accessible name, which has to say who is being accused. */
     callOutOn: (name: string) => string
+    /** Shown when the server has offered a play off turn, which is a jump-in. */
+    jumpIn: string
     /** Title of the Seven-Zero target picker, the 7's answer to choosing a colour. */
     chooseSwapTarget: string
     /** One target button: whose hand it is, and how many cards you would take. */

@@ -73,6 +73,8 @@ export const fr: Messages = {
       clockwise
         ? 'Un 0 a fait tourner toutes les mains d’un siège dans le sens horaire'
         : 'Un 0 a fait tourner toutes les mains d’un siège dans le sens antihoraire',
+    jumpedIn: (name, isYou) =>
+      isYou ? 'Tu as sauté sur la carte, hors tour' : `${name} a sauté sur la carte, hors tour`,
     seatDisconnected: (name) => `${name} a perdu la connexion`,
     seatReconnected: (name, isYou) => (isYou ? 'Te revoilà' : `${name} est de retour`),
     seatLeft: (name) => `${name} a quitté la partie`,
@@ -119,6 +121,9 @@ export const fr: Messages = {
     sevenZero: 'Jouer la variante Sept-Zéro',
     sevenZeroHint:
       'Un 7 échange ta main avec celle d’un joueur de ton choix ; un 0 fait tourner toutes les mains d’un siège, dans le sens du jeu.',
+    jumpIn: 'Autoriser le Jump-in',
+    jumpInHint:
+      'Si tu as exactement la même carte que celle qui vient d’être posée — même couleur, même valeur — tu peux la poser hors de ton tour, et le jeu reprend depuis toi. Jamais un joker, et jamais pendant une pioche en attente.',
     language: 'Langue',
   },
 
@@ -163,6 +168,7 @@ export const fr: Messages = {
     callUno: 'UNO !',
     callOut: 'Menteur !',
     callOutOn: (name) => `Accuser ${name} : menteur`,
+    jumpIn: 'Jump-in !',
     chooseSwapTarget: 'Quelle main veux-tu ?',
     swapTarget: (name, count) => `${name}, ${cartes(count)}`,
     clockwise: 'Sens horaire',

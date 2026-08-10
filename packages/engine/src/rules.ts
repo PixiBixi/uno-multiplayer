@@ -83,6 +83,21 @@ function swapTargets(state: GameState, seatIndex: number): number[] {
 }
 
 /**
+ * Two cards a jump-in treats as the same card: same colour AND same value for
+ * numbers, same colour and same kind for the action cards.
+ *
+ * Neither may be a wild. A wild has no colour, so every wild would match every
+ * other one — which is not the rule, and would let a wild4 be answered by a wild4
+ * from anywhere round the table.
+ */
+export function isIdentical(card: Card, top: Card): boolean {
+  if (isWild(card) || isWild(top)) return false
+  if (card.color !== top.color) return false
+  if (card.kind === 'number') return top.kind === 'number' && card.value === top.value
+  return card.kind === top.kind
+}
+
+/**
  * The moves for laying one card down: one per colour for a wild, one per swap
  * target for a 7 on a Seven-Zero table, and otherwise the single plain play.
  *
@@ -105,16 +120,47 @@ function playMoves(state: GameState, seatIndex: number, card: Card, handSize: nu
   return targets.map((swapWith) => ({ type: 'play', cardId: card.id, swapWith }))
 }
 
+/**
+ * What an off-turn seat may jump in with, on a table that opted into `jumpIn`.
+ *
+ * Nothing at all while a draw is pending. A stacked +2/+4 has its own strict
+ * same-type answer rules, and letting a jump-in interleave would make "strictly
+ * same type" mean nothing — so the seat on turn is left with its pending-draw
+ * moves and nobody else has anything to say.
+ *
+ * Offered only off turn. On turn a card identical to the top is already playable
+ * the ordinary way: a non-wild play always sets `currentColor` to its own colour,
+ * so an identical card always matches the colour in play, and emitting it twice
+ * would put two indistinguishable moves in front of the client.
+ *
+ * `playMoves` is reused rather than duplicated, which is what makes a jumped 7 on a
+ * Seven-Zero table offer its targets exactly as it would have on the jumper's own
+ * turn: the card's effect is the card's effect, whoever's turn it was.
+ */
+function jumpInMoves(state: GameState, seatIndex: number): Move[] {
+  if (!state.rules.jumpIn || state.pendingDraw !== null) return []
+  const seat = state.seats[seatIndex]
+  const top = state.discardPile[state.discardPile.length - 1]
+  if (seat === undefined || top === undefined) return []
+
+  const moves: Move[] = []
+  for (const card of seat.hand) {
+    if (!isIdentical(card, top)) continue
+    moves.push(...playMoves(state, seatIndex, card, seat.hand.length))
+  }
+  return moves
+}
+
 export function legalMoves(state: GameState, seatIndex: number): Move[] {
   if (state.phase !== 'playing') return []
   const seat = state.seats[seatIndex]
   if (seat === undefined || seat.status !== 'active') return []
 
   /* This early return used to be unconditional: nobody but the seat on turn had
-     anything to do. A call-out is the single exception, so an off-turn seat now
-     gets exactly those and nothing else. */
+     anything to do. A call-out was the first exception and a jump-in is the second,
+     so an off-turn seat gets exactly those two and nothing else. */
   const callOuts = callOutMoves(state, seatIndex)
-  if (state.currentSeat !== seatIndex) return callOuts
+  if (state.currentSeat !== seatIndex) return [...callOuts, ...jumpInMoves(state, seatIndex)]
 
   const moves: Move[] = []
   for (const card of seat.hand) {

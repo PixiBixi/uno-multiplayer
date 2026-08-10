@@ -50,6 +50,12 @@ export function Table({
   const canDraw = view.you.legalMoves.some((move) => move.type === 'draw')
   const acceptDraw = view.you.legalMoves.find((move) => move.type === 'acceptDraw')
   const canCallUno = view.you.legalMoves.some((move) => move.type === 'callUno')
+  /* A play offered while it is somebody else's turn can only be a jump-in — the
+     server offers an off-turn seat call-outs and jump-ins and nothing else. Purely a
+     label: the card is clickable because the move is in the view, not because of this
+     line, and without it the chance is invisible unless you notice a card light up
+     during another player's turn. */
+  const canJumpIn = !myTurn && view.you.legalMoves.some((move) => move.type === 'play')
 
   /* The one move that is legal off turn, and the client still evaluates nothing:
      an opponent gets a Liar button only because the server put a call-out against
@@ -211,6 +217,7 @@ export function Table({
               <span>{t.table.you}</span>
               <span className="plate-count">{view.you.hand.length}</span>
               {myTurn && <span className="plate-note">{t.table.yourTurn}</span>}
+              {canJumpIn && <span className="plate-note plate-note-jump">{t.table.jumpIn}</span>}
             </p>
           </div>
         </div>

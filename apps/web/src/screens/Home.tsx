@@ -46,8 +46,9 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
   const [turnSeconds, setTurnSeconds] = useState(DEFAULT_TURN_SECONDS)
   const [liar, setLiar] = useState(false)
   const [sevenZero, setSevenZero] = useState(false)
+  const [jumpIn, setJumpIn] = useState(false)
 
-  const rules: TableRules = { liar, sevenZero }
+  const rules: TableRules = { liar, sevenZero, jumpIn }
 
   const pace: MatchPace = blazing
     ? { turnSeconds: clamp(turnSeconds, MIN_TURN_SECONDS, MAX_TURN_SECONDS) }
@@ -259,6 +260,18 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
               <span>{t.home.sevenZero}</span>
             </label>
             <p className="hint">{t.home.sevenZeroHint}</p>
+
+            <label className="switch-row">
+              <input
+                type="checkbox"
+                checked={jumpIn}
+                onChange={(event) => {
+                  setJumpIn(event.target.checked)
+                }}
+              />
+              <span>{t.home.jumpIn}</span>
+            </label>
+            <p className="hint">{t.home.jumpInHint}</p>
           </fieldset>
 
           <button type="submit" className="btn btn-primary" disabled={!canCreate}>

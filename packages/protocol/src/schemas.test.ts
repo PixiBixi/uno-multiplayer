@@ -48,9 +48,9 @@ describe('roomCreateSchema', () => {
       playerName: 'Jeremy',
       goal: DEFAULT_MATCH_GOAL,
       pace: null,
-      rules: { liar: true, sevenZero: true },
+      rules: { liar: true, sevenZero: true, jumpIn: false },
     })
-    expect(parsed.rules).toEqual({ liar: true, sevenZero: true })
+    expect(parsed.rules).toEqual({ liar: true, sevenZero: true, jumpIn: false })
   })
 
   it('falls back to plain UNO when the field is absent', () => {
@@ -60,7 +60,7 @@ describe('roomCreateSchema', () => {
       goal: DEFAULT_MATCH_GOAL,
       pace: null,
     })
-    expect(parsed.rules).toEqual({ liar: false, sevenZero: false })
+    expect(parsed.rules).toEqual({ liar: false, sevenZero: false, jumpIn: false })
   })
 
   it('fills in an option a client has never heard of', () => {
@@ -73,7 +73,17 @@ describe('roomCreateSchema', () => {
       pace: null,
       rules: { liar: true },
     })
-    expect(parsed.rules).toEqual({ liar: true, sevenZero: false })
+    expect(parsed.rules).toEqual({ liar: true, sevenZero: false, jumpIn: false })
+  })
+
+  it('carries jump-in across on its own', () => {
+    const parsed = roomCreateSchema.parse({
+      playerName: 'Jeremy',
+      goal: DEFAULT_MATCH_GOAL,
+      pace: null,
+      rules: { jumpIn: true },
+    })
+    expect(parsed.rules).toEqual({ liar: false, sevenZero: false, jumpIn: true })
   })
 
   it('rejects rules that are not booleans', () => {
@@ -90,7 +100,15 @@ describe('roomCreateSchema', () => {
         playerName: 'Jeremy',
         goal: DEFAULT_MATCH_GOAL,
         pace: null,
-        rules: { liar: false, sevenZero: 1 },
+        rules: { liar: false, sevenZero: 1, jumpIn: false },
+      }).success,
+    ).toBe(false)
+    expect(
+      roomCreateSchema.safeParse({
+        playerName: 'Jeremy',
+        goal: DEFAULT_MATCH_GOAL,
+        pace: null,
+        rules: { jumpIn: 'sure' },
       }).success,
     ).toBe(false)
   })

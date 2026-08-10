@@ -550,6 +550,14 @@ h3 {
   opacity: 0.8;
 }
 
+/* Full opacity and the accent colour: a jump-in is a chance that disappears with the
+   next card, so it has to read at a glance rather than sit quietly beside the name. */
+.plate-note-jump {
+  opacity: 1;
+  font-weight: 700;
+  color: var(--accent);
+}
+
 .presence {
   width: 7px;
   height: 7px;

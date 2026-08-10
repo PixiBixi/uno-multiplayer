@@ -69,6 +69,16 @@ describe('describeEvent', () => {
     )
   })
 
+  it('says who jumped in, from either side of it', () => {
+    const asYou = (seat: number) => (seat === 0 ? 'You' : nameOf(seat))
+    expect(describeEvent({ type: 'jumpedIn', seat: 1 }, nameOf, NOT_ME, en)).toBe(
+      'Ben jumped in, out of turn',
+    )
+    expect(describeEvent({ type: 'jumpedIn', seat: 0 }, asYou, 0, en)).toBe(
+      'You jumped in, out of turn',
+    )
+  })
+
   it('names the direction a rotation sent the hands', () => {
     // A reverse earlier in the round changes it, so the log has to say which way.
     expect(describeEvent({ type: 'handsRotated', direction: 1 }, nameOf, NOT_ME, en)).toContain(

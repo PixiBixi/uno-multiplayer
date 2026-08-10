@@ -95,6 +95,7 @@ Official rules plus draw stacking, with these points pinned down explicitly:
 | Starting card                 | The first number card from the top of the shuffled deck. Deterministic, no unbounded loop.                                                                               |
 | Drawing voluntarily           | Ends your turn. No "you may now play the card you drew" sub-state.                                                                                                       |
 | Calling UNO                   | Legal only during your own turn, before playing. Going down to one card without it costs two cards — automatically, unless the table plays with the Liar call-out below. |
+| Playing out of turn           | Not possible, unless the table plays with jump-in below.                                                                                                                 |
 | Empty draw pile               | The discard pile minus its top card is reshuffled into a new draw pile. If that is still not enough, the draw is capped at what is available.                            |
 | Victory                       | First empty hand wins the round; the round ends immediately.                                                                                                             |
 | Card conservation             | Hands + draw pile + discard pile always total 108 cards with distinct ids. Enforced by a property test.                                                                  |
@@ -118,8 +119,8 @@ at 20, both wilds at 50.
 | A player who leaves     | Keeps the points they earned, and their remaining cards still count for whoever went out.                                  |
 | Next round vs new match | Two distinct host actions. Letting one mean both depending on hidden state is how a player loses a scoreboard by accident. |
 
-Not implemented, deliberately: the strict Mattel +4 challenge (it needs a bluff
-UI and hand inspection) and jump-in.
+Not implemented, deliberately: the strict Mattel +4 challenge, which needs a bluff
+UI and hand inspection.
 
 ### The Liar call-out
 
@@ -162,6 +163,30 @@ offered — it neither knows that a 7 swaps nor who a legal target is.
 | UNO after hands move       | Whoever is left holding one card uncalled becomes open to a call-out, if the table also plays the Liar rule. Nobody draws the automatic penalty for it: you cannot fail to declare a hand you were handed, and a window is escapable on your own next turn. |
 | Card conservation          | Untouched. Hands are permuted and nothing is created, which the property tests assert across generated games with the option on.                                                                                                                            |
 | Nobody else active         | A 7 falls back to an ordinary card rather than becoming unplayable, and a 0 rotates nothing.                                                                                                                                                                |
+
+### Jump-in
+
+The third optional house rule, also off by default: **holding a card identical to
+the one just played, you may lay it down out of turn** — and play then carries on
+from you. Identical means same colour _and_ same value, or same colour and the same
+kind of action card.
+
+It is the only rule here that touches the assumption the rest of the engine rests
+on, that only the seat on turn can act, and the only one that MOVES the turn. A
+jump-in is a `play` like any other, submitted by a seat whose turn it is not; the
+client renders it because the server put it in that seat's `legalMoves` and for no
+other reason.
+
+| Point                   | Decision                                                                                                                                                                                                                                                                       |
+| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Wilds                   | Never jumpable, in either position. A wild has no colour, so matching on kind alone would make every wild identical to every other one.                                                                                                                                        |
+| Whose turn afterwards   | The jumper's — a jump-in **is** their turn. Play continues in the current direction from their seat, and the seats in between simply lose their turn. That is the point of the rule.                                                                                           |
+| The card's own effect   | Applies from the jumper's seat, exactly as it would have on their own turn: a jumped skip skips the seat after them, a jumped reverse turns the table round from them, a jumped 7 on a Seven-Zero table offers its swap targets.                                               |
+| While a draw is pending | **Refused.** A stacked +2/+4 has strict same-type answer rules of its own, and a jump-in interleaved with them would make "strictly same type" mean nothing. The seat on turn keeps its pending-draw moves and nobody else is offered anything.                                |
+| Calling UNO             | You cannot. An off-turn seat is offered call-outs and jump-ins and nothing else, so a jump-in that lands you on one card is always an uncalled UNO — two cards, or an open window on a Liar table. A declaration made on an earlier turn does not cover it.                    |
+| A 0                     | Can never be jumped, and not by rule: a UNO deck holds one 0 per colour, so a 0 has no twin. Every other card has exactly one.                                                                                                                                                 |
+| Races                   | The server is the only authority and applies whichever move it reads first; the loser gets `illegal_move`, which the client already reports. Two seats can never hold a jump-in against the same card, since its twin is in one place only.                                    |
+| Termination             | Every jump-in spends a card, and no jump-in can be answered by another on the same card, so play always progresses. Asserted by the property tests under a policy that takes every jump-in on offer — the unfavourable one, since jumping down to one card cannot be declared. |
 
 ## Language
 
@@ -265,6 +290,7 @@ emit-only solution and excludes tests.
 - [x] Blazing: an optional per-turn clock, with rounds that deal themselves
 - [x] The Liar call-out: an optional table rule for a manual UNO penalty
 - [x] Seven-Zero: an optional table rule where a 7 swaps hands and a 0 rotates them
+- [x] Jump-in: an optional table rule for playing an identical card out of turn
 - [x] End-of-match awards, counted from the event feed
 - [x] English and French, with each language owning its own grammar
 - [x] An error boundary, so a bad render explains itself instead of blanking
