@@ -88,12 +88,30 @@ The skip states its reason rather than weakening the assertion.
 
 ## The published image
 
-CI publishes to **GHCR** on every green push to `main`:
+Two workflows publish, and they own different tags on purpose so they cannot race
+each other:
+
+| Tag                   | Written by    | When                       |
+| --------------------- | ------------- | -------------------------- |
+| `latest`, `sha-<sha>` | `ci.yml`      | every green push to `main` |
+| `X.Y.Z`, `X.Y`        | `release.yml` | every version bump         |
 
 ```
 ghcr.io/pixibixi/uno-multiplayer:latest
-ghcr.io/pixibixi/uno-multiplayer:<commit-sha>
+ghcr.io/pixibixi/uno-multiplayer:1.0.0
 ```
+
+Publishing on every green push — not only on a release — is deliberate. Gating the
+image on a version bump means a fix that has not been released yet is not
+deployable, and a `docs:` or `test:` commit produces no image at all, so `latest`
+lags behind `main`. That was learned in a sibling repo and is recorded in
+`cog.toml`.
+
+Versions come from **cocogitto**, which reads the Conventional Commit history: a
+`fix:` bumps the patch, a `feat:` the minor, a `!` or `BREAKING CHANGE` the major.
+`perf:` is configured to bump a patch, because out of the box it bumps nothing and
+a release made only of performance work would produce no tag. `cog check` runs in
+CI, so a malformed commit message fails before it can reach a changelog.
 
 So a deployment is a pull rather than a build on the server:
 

@@ -1,0 +1,17 @@
+ignore_merge_commits = true
+tag_prefix = "v"
+
+[commit_types]
+desloppify = { changelog_title = "Code Health" }
+# Out of the box cog only bumps on feat and fix, so a release made only of perf
+# work produced no tag — and, in the sibling repo where this was learned, therefore
+# no image: the improvement sat on the branch until an unrelated fix carried it out.
+perf = { changelog_title = "Performance Improvements", bump_patch = true }
+
+[changelog]
+path = "CHANGELOG.md"
+template = "remote"
+remote = "github.com"
+repository = "uno-multiplayer"
+owner = "PixiBixi"
+authors = []

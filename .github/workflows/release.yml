@@ -1,0 +1,108 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      bumped: ${{ steps.bump.outputs.bumped }}
+      tag_name: ${{ steps.bump.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # cog needs the whole history to work out what changed since the tag.
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: cocogitto/cocogitto-action@v4
+        with:
+          git-user: github-actions[bot]
+          git-user-email: github-actions[bot]@users.noreply.github.com
+          # v4 replaced the check/check-latest-tag-only inputs with command/args,
+          # and a missing `command` fails the job silently.
+          command: check
+          args: --from-latest-tag
+
+      # `cog bump` is a no-op when nothing since the tag warrants one — a release
+      # of only docs or tests, say — so its exit code cannot be the signal.
+      # Comparing the described tag before and after can.
+      - name: Bump version
+        id: bump
+        run: |
+          BEFORE=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          cog bump --auto || true
+          AFTER=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ "$BEFORE" != "$AFTER" ]; then
+            git push
+            git push origin "$AFTER"
+            echo "bumped=true" >> "$GITHUB_OUTPUT"
+            echo "tag_name=$AFTER" >> "$GITHUB_OUTPUT"
+          else
+            echo "bumped=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub release
+        if: steps.bump.outputs.bumped == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${{ steps.bump.outputs.tag_name }}"
+          # The section cog just wrote, between this version's heading and the next
+          # separator, so the release notes are the changelog rather than a rewrite.
+          NOTES=$(awk "/^## .*${TAG#v}/{found=1; next} found && /^- - -/{exit} found{print}" CHANGELOG.md)
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --notes "${NOTES:-Release $TAG}" \
+            --verify-tag
+
+  # Semver tags only. `latest` and `sha-<sha>` belong to the Docker job in ci.yml,
+  # which publishes on every green push — so a fix that has not been released is
+  # still deployable. Splitting ownership this way keeps two workflows from racing
+  # each other over the same tag.
+  tag-release-image:
+    needs: release
+    if: needs.release.outputs.bumped == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.release.outputs.tag_name }}
+
+      - uses: docker/setup-buildx-action@v4
+
+      - uses: docker/login-action@v4
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/metadata-action@v6
+        id: meta
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=semver,pattern={{version}},value=${{ needs.release.outputs.tag_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release.outputs.tag_name }}
+
+      - uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
