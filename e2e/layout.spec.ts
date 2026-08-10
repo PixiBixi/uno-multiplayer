@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Browser, type Page } from '@playwright/test'
 
 /**
  * Layout, measured rather than looked at.
@@ -11,6 +11,8 @@ import { expect, test, type Page } from '@playwright/test'
 
 const DESKTOP = { width: 1440, height: 900 }
 const PHONE = { width: 430, height: 940 }
+/** An iPhone 13, the viewport the hand-below-the-fold defect was measured on. */
+const SMALL_PHONE = { width: 390, height: 844 }
 
 /** Nothing is measured while it is still moving. */
 async function settle(page: Page): Promise<void> {
@@ -108,4 +110,133 @@ test('the phone layout keeps both controls on the page and never scrolls sideway
   // A tap target is a tap target on a phone especially.
   const swatch = await page.locator('.theme-swatch').first().boundingBox()
   expect(swatch?.height ?? 0).toBeGreaterThanOrEqual(44)
+})
+
+/**
+ * The lobby, which took the whole table configuration on and roughly doubled.
+ *
+ * Measured rather than assumed, on the viewport this project has already been bitten on.
+ * Two separate claims: nothing is pushed sideways, and the panels that grew have not
+ * pushed the seats and the Start button down the page — those are what a lobby is for,
+ * and the points table is pure reference, so it is the one that gets capped.
+ */
+async function openLobby(page: Page, browser: Browser): Promise<Page> {
+  await page.goto('/')
+  await page.getByLabel('Your name').fill('Ana')
+  await page.getByRole('button', { name: 'Create a game' }).click()
+  const code = (await page.locator('.code-display').textContent())?.trim() ?? ''
+
+  // A second seat, so the roster is the height it is in a real game rather than one row.
+  const guest = await (await browser.newContext()).newPage()
+  await guest.goto('/')
+  await guest.getByLabel('Your name').fill('Ben')
+  await guest.getByLabel('Game code').fill(code)
+  await guest.getByRole('button', { name: 'Join game' }).click()
+  await expect(page.locator('.roster').getByText('Ben')).toBeVisible()
+  return guest
+}
+
+test('the lobby fits a 390px phone sideways and keeps the seats above the fold', async ({
+  page,
+  browser,
+}) => {
+  await page.setViewportSize(SMALL_PHONE)
+  const guest = await openLobby(page, browser)
+  await expect(page.getByRole('checkbox', { name: /Seven-Zero/ })).toBeVisible()
+  await settle(page)
+
+  const measured = await page.evaluate(() => {
+    const values = document.querySelector('.lobby-values')
+    return {
+      scrollWidth: document.documentElement.scrollWidth,
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      pageHeight: document.querySelector('.lobby')?.getBoundingClientRect().height ?? 0,
+      overflowing: [...document.querySelectorAll<HTMLElement>('.lobby *')]
+        .filter((node) => node.getBoundingClientRect().right > window.innerWidth + 1)
+        .map((node) => node.className),
+      // The points table is the panel that takes the scroll, and it must really do so
+      // rather than merely declare an overflow it never uses.
+      valuesHeight: values?.getBoundingClientRect().height ?? 0,
+      valuesScrolls: values === null ? false : values.scrollHeight > values.clientHeight + 1,
+    }
+  })
+
+  expect(measured.scrollWidth).toBeLessThanOrEqual(measured.innerWidth + 1)
+  expect(measured.overflowing).toEqual([])
+
+  /* The seats and the control that ends the waiting, both inside the fold with the page
+     unscrolled. The configuration below them is allowed to need a scroll; these are not,
+     which is the whole reason Start stays above the settings rather than under them. */
+  const roster = await boxOf(page, '.roster')
+  const start = await boxOf(page, '.btn-primary')
+  expect(roster.top).toBeGreaterThanOrEqual(0)
+  expect(start.bottom).toBeLessThanOrEqual(measured.innerHeight)
+
+  // Capped, so the panel that is pure reference cannot own the page.
+  expect(measured.valuesHeight).toBeLessThanOrEqual(measured.innerHeight * 0.45)
+  expect(measured.valuesScrolls).toBe(true)
+
+  // Reported so the numbers are in the run output, not only in a passing assertion.
+  console.log('lobby at 390x844:', JSON.stringify(measured))
+  await guest.context().close()
+})
+
+test('the lobby uses the second column on a desktop instead of one tall stack', async ({
+  page,
+  browser,
+}) => {
+  /* The same fix the card-theme controls got, for the same reason: the cheapest answer to
+     "it does not fit" is the empty half of the page. */
+  await page.setViewportSize(DESKTOP)
+  const guest = await openLobby(page, browser)
+  await expect(page.getByRole('checkbox', { name: /Seven-Zero/ })).toBeVisible()
+  await settle(page)
+
+  const roster = await boxOf(page, '.roster')
+  const rules = await boxOf(page, '.rule')
+  // Beside the seats, not under them.
+  expect(rules.left).toBeGreaterThan(roster.right)
+
+  const viewport = await page.evaluate(() => ({
+    height: window.innerHeight,
+    scrollY: window.scrollY,
+  }))
+  expect(viewport.scrollY).toBe(0)
+  const start = await boxOf(page, '.btn-primary')
+  expect(start.bottom).toBeLessThanOrEqual(viewport.height)
+  await guest.context().close()
+})
+
+test('the home screen no longer runs two and a half phone screens tall', async ({ page }) => {
+  /* The ergonomic half of the defect, measured on the same viewport as the rest: 21
+     controls, 2.42 screens of them, with the game-code field last — below a match format,
+     a clock and four rules that a joining player has no use for. Two of three arrivals are
+     joining.
+  
+     Asserted as a ratio rather than a pixel count, because the claim is about screens
+     rather than about a font metric, and asserted at all so the screen cannot quietly grow
+     back the next time something looks like it belongs here. */
+  await page.setViewportSize(SMALL_PHONE)
+  await page.goto('/')
+  await expect(page.locator('.theme-swatch').first()).toBeVisible()
+  await settle(page)
+
+  const measured = await page.evaluate(() => ({
+    innerHeight: window.innerHeight,
+    pageHeight: document.querySelector('.home')?.getBoundingClientRect().height ?? 0,
+    // Every control a person can operate, which is the figure the defect was reported as.
+    controls: document.querySelectorAll('.home button, .home input, .home select').length,
+    // The code field is what most arrivals came for, so where it sits is the whole point.
+    codeFieldTop: document.querySelector('#room-code')?.getBoundingClientRect().top ?? 0,
+  }))
+
+  console.log('home at 390x844:', JSON.stringify(measured))
+  /* Measured at 1056px, 1.25 screens, down from 2043px and 2.42. The bound is 1.4 rather
+     than 1.25 so a font metric cannot fail the build, and well under 2 so a drift back
+     towards the old shape does. */
+  expect(measured.pageHeight / measured.innerHeight).toBeLessThan(1.4)
+  expect(measured.controls).toBeLessThan(12)
+  // Reachable without scrolling, which it was not.
+  expect(measured.codeFieldTop).toBeLessThan(measured.innerHeight)
 })
