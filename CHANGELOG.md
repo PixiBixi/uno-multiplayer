@@ -1,6 +1,13 @@
 # Changelog
 
 - - -
+## [v1.4.1](https://github.com/PixiBixi/uno-multiplayer/compare/cb7fa6ebf587ebd0fbc2724cba60b686a0e95678..v1.4.1) - 2026-08-10
+#### Bug Fixes
+- (**docker**) run the Node version CI actually validates - ([2e960c1](https://github.com/PixiBixi/uno-multiplayer/commit/2e960c10cff8067d7e1f4d9bf42e3cbfd64dfdd1)) - Jeremy Delgado
+- (**i18n**) call it a call-out, not a lie - ([cb7fa6e](https://github.com/PixiBixi/uno-multiplayer/commit/cb7fa6ebf587ebd0fbc2724cba60b686a0e95678)) - Jeremy Delgado
+
+- - -
+
 ## [v1.4.0](https://github.com/PixiBixi/uno-multiplayer/compare/db398070890ac82ff3e3848aa940b8835e60d4c1..v1.4.0) - 2026-08-10
 #### Features
 - (**web**) let toasts close themselves - ([db39807](https://github.com/PixiBixi/uno-multiplayer/commit/db398070890ac82ff3e3848aa940b8835e60d4c1)) - Jeremy Delgado
