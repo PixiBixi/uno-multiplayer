@@ -3,6 +3,16 @@ name: Release
 on:
   push:
     branches: [main]
+  # Re-tag an image for a release that already exists. Needed the first time a
+  # version is seeded by hand — cog finds nothing to bump, so the push path never
+  # reaches the image job — and useful whenever a publish failed and wants a retry
+  # without inventing a commit to carry it.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to publish the image for, e.g. v1.0.0
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -14,6 +24,7 @@ env:
 
 jobs:
   release:
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     outputs:
       bumped: ${{ steps.bump.outputs.bumped }}
@@ -66,21 +77,32 @@ jobs:
             --notes "${NOTES:-Release $TAG}" \
             --verify-tag
 
-  # Semver tags only. `latest` and `sha-<sha>` belong to the Docker job in ci.yml,
+  # Semver tags only. `latest` and the full commit sha belong to ci.yml's Docker job,
   # which publishes on every green push — so a fix that has not been released is
   # still deployable. Splitting ownership this way keeps two workflows from racing
   # each other over the same tag.
   tag-release-image:
     needs: release
-    if: needs.release.outputs.bumped == 'true'
+    # Either a bump just happened, or somebody asked for a specific existing tag.
+    # `always()` is required because the release job is skipped entirely on a
+    # manual run, and a skipped dependency would otherwise skip this too.
+    if: |
+      always() && (
+        needs.release.outputs.bumped == 'true' ||
+        inputs.tag != ''
+      )
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
     steps:
+      - name: Resolve which tag to publish
+        id: which
+        run: echo "tag=${{ inputs.tag || needs.release.outputs.tag_name }}" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v7
         with:
-          ref: ${{ needs.release.outputs.tag_name }}
+          ref: ${{ steps.which.outputs.tag }}
 
       - uses: docker/setup-buildx-action@v4
 
@@ -95,8 +117,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=semver,pattern={{version}},value=${{ needs.release.outputs.tag_name }}
-            type=semver,pattern={{major}}.{{minor}},value=${{ needs.release.outputs.tag_name }}
+            type=semver,pattern={{version}},value=${{ steps.which.outputs.tag }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ steps.which.outputs.tag }}
 
       - uses: docker/build-push-action@v7
         with:
