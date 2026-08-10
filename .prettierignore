@@ -8,3 +8,8 @@ coverage/
 docs/
 playwright-report/
 test-results/
+
+# Cocogitto owns this file and needs the literal `- - -` separator to find where to
+# insert a release. Prettier normalises it to `---`, after which `cog bump` fails
+# with "cannot find default separator" — which is exactly how this line came to be.
+CHANGELOG.md
