@@ -2,6 +2,7 @@ import type { Card as CardData, CardId, Move } from '@uno/engine'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { CATALOGUES, LocaleContext } from '../i18n/index.js'
 import { Hand, movesForCard } from './Hand.js'
 import type { SwapTarget } from './TargetPicker.js'
 
@@ -205,6 +206,25 @@ describe('Hand sorting', () => {
 
   it('offers no sort control for a single card', () => {
     render(<Hand cards={[red7]} legalMoves={[]} targets={seats} onPlay={vi.fn()} />)
-    expect(screen.queryByRole('group', { name: /sort/i })).toBeNull()
+    expect(screen.queryByRole('group', { name: /sort|trier/i })).toBeNull()
+  })
+
+  it('names the three modes in the player’s language, not in English', () => {
+    /* The catalogue already carried these three; the control had its own hardcoded
+       table beside them, so a French player was offered "By colour". A label that
+       does not follow the chosen language is the same defect wherever it lives —
+       `lib/` is not exempt because it has no JSX in it. */
+    render(
+      <LocaleContext.Provider
+        value={{ locale: 'fr', messages: CATALOGUES.fr, setLocale: () => undefined }}
+      >
+        <Hand cards={mixed} legalMoves={[]} targets={seats} onPlay={vi.fn()} />
+      </LocaleContext.Provider>,
+    )
+    const control = screen.getByRole('group', { name: CATALOGUES.fr.table.sortHand })
+    expect(control.textContent).toContain('Distribuées')
+    expect(control.textContent).toContain('Par couleur')
+    expect(control.textContent).toContain('Par valeur')
+    expect(control.textContent).not.toMatch(/by colour|as dealt/i)
   })
 })

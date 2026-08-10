@@ -175,6 +175,7 @@ export const en: Messages = {
     anticlockwise: 'Anticlockwise',
     inPlay: (colour) => `${colour} in play`,
     left: (n) => `${String(n)} left`,
+    sortHand: 'Sort your hand',
     sortDealt: 'As dealt',
     sortColour: 'By colour',
     sortValue: 'By value',
@@ -212,6 +213,20 @@ export const en: Messages = {
       ranOutOfTime: 'Ran out of time most',
       mostPlayed: 'Most cards played',
     },
+  },
+
+  toast: {
+    unoMissed: { title: 'UNO was not called', detail: (count) => `${cards(count)} added.` },
+    lostConnection: {
+      title: 'A player lost connection',
+      detail: 'Their turns are skipped until they return.',
+    },
+    playerLeft: { title: 'A player left', detail: 'Their cards went back to the pile.' },
+    roundAbandoned: { title: 'Round abandoned', detail: 'Not enough players remain.' },
+    roundOver: { title: 'Round over', detail: 'Points go to whoever went out.' },
+    matchOver: { title: 'Match over', detail: 'The standings are final.' },
+    nextRound: { title: 'Next round', detail: 'The host dealt again.' },
+    newMatch: { title: 'New match', detail: 'The standings were reset.' },
   },
 
   error: {

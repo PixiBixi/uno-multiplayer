@@ -189,6 +189,7 @@ export const fr: Messages = {
     anticlockwise: 'Sens antihoraire',
     inPlay: (colour) => `${colour} en jeu`,
     left: (n) => `${String(n)} restantes`,
+    sortHand: 'Trier ta main',
     sortDealt: 'Distribuées',
     sortColour: 'Par couleur',
     sortValue: 'Par valeur',
@@ -226,6 +227,23 @@ export const fr: Messages = {
       ranOutOfTime: 'Le plus souvent hors délai',
       mostPlayed: 'Le plus de cartes posées',
     },
+  },
+
+  /* Les titres restent courts — un bandeau qui passe — et le détail dit la
+     conséquence. « Manche » et « partie » sont distingués partout : une partie est
+     une suite de manches, et confondre les deux rend le score incompréhensible. */
+  toast: {
+    unoMissed: { title: 'UNO n’a pas été crié', detail: (count) => `${cartes(count)} en plus.` },
+    lostConnection: {
+      title: 'Un joueur a perdu la connexion',
+      detail: 'Ses tours sont passés jusqu’à son retour.',
+    },
+    playerLeft: { title: 'Un joueur est parti', detail: 'Ses cartes sont retournées à la pioche.' },
+    roundAbandoned: { title: 'Manche abandonnée', detail: 'Il ne reste pas assez de joueurs.' },
+    roundOver: { title: 'Manche terminée', detail: 'Les points vont à qui s’est débarrassé.' },
+    matchOver: { title: 'Partie terminée', detail: 'Le classement est définitif.' },
+    nextRound: { title: 'Manche suivante', detail: 'L’hôte a redistribué.' },
+    newMatch: { title: 'Nouvelle partie', detail: 'Les scores sont remis à zéro.' },
   },
 
   error: {

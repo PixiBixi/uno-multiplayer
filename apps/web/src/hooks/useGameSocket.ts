@@ -5,12 +5,21 @@ import { io, type Socket } from 'socket.io-client'
 import { readRoomCodeFromUrl, writeRoomCodeToUrl } from '../lib/room-url.js'
 import { clearSession, readSession, writeSession } from '../lib/session.js'
 import { useMessages } from '../i18n/index.js'
-import { gameReducer, initialState } from './game-reducer.js'
+import { gameReducer, initialState, type Action, type ClientState } from './game-reducer.js'
 
 type TypedSocket = Socket<ServerToClient, ClientToServer>
 
 export function useGameSocket() {
-  const [state, dispatch] = useReducer(gameReducer, initialState)
+  const messages = useMessages()
+
+  /* The catalogue reaches the reducer as an argument rather than through a context
+     the reducer cannot see. Rebuilding this closure when the language changes is
+     the point: the next toast is written in the language chosen a moment ago. */
+  const reduce = useCallback(
+    (state: ClientState, action: Action): ClientState => gameReducer(state, action, messages),
+    [messages],
+  )
+  const [state, dispatch] = useReducer(reduce, initialState)
   /* One socket for the app's lifetime, in a ref — never a module-level variable,
      which would leak between mounts and across two tabs of the same bundle. */
   const socketRef = useRef<TypedSocket | null>(null)
@@ -64,7 +73,6 @@ export function useGameSocket() {
 
   /* Read through a ref rather than closed over, so switching language does not
      rebuild every action callback and re-register the socket listeners. */
-  const messages = useMessages()
   const messagesRef = useRef(messages)
   messagesRef.current = messages
 

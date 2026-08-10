@@ -158,6 +158,8 @@ export type Messages = {
     anticlockwise: string
     inPlay: (colour: string) => string
     left: (n: number) => string
+    /** Accessible name for the group of three sort buttons. */
+    sortHand: string
     sortDealt: string
     sortColour: string
     sortValue: string
@@ -195,6 +197,27 @@ export type Messages = {
       ranOutOfTime: string
       mostPlayed: string
     }
+  }
+
+  /**
+   * The events worth interrupting a player for, as the two lines a toast shows.
+   *
+   * A toast is a sentence a player reads, so it belongs here rather than in the
+   * reducer that decides *whether* to raise one. The reducer takes a `Messages`
+   * argument the way `describeEvent` does — it is pure, knows no React, and cannot
+   * reach a context; a module that imported one catalogue directly could never be
+   * switched at runtime.
+   */
+  toast: {
+    /** The count is a whole clause, because French keeps the singular at one and zero. */
+    unoMissed: { title: string; detail: (count: number) => string }
+    lostConnection: { title: string; detail: string }
+    playerLeft: { title: string; detail: string }
+    roundAbandoned: { title: string; detail: string }
+    roundOver: { title: string; detail: string }
+    matchOver: { title: string; detail: string }
+    nextRound: { title: string; detail: string }
+    newMatch: { title: string; detail: string }
   }
 
   error: Record<ErrorCode, string>

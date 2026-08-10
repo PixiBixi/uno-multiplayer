@@ -1,5 +1,5 @@
 import type { GameEvent, LobbyView, PlayerView } from '@uno/protocol'
-import { cardCount } from '../lib/phrase.js'
+import type { Messages } from '../i18n/messages.js'
 
 /** A long game produces hundreds of events. The feed is a view, not a log. */
 export const FEED_LIMIT = 120
@@ -58,33 +58,36 @@ export const initialState: ClientState = {
 /**
  * Only events worth interrupting a player for. A toast per drawn card is noise,
  * and noise trains people to ignore the channel.
+ *
+ * The tone is this module's decision — how loudly to interrupt is behaviour. The
+ * words are not: they are two sentences a player reads, so they come from the
+ * catalogue it was handed, exactly as `describeEvent` takes one. Importing a
+ * catalogue here instead would pick a language at build time and no chip on the
+ * home screen could change it.
  */
-function toastFor(event: GameEvent): Omit<Toast, 'id'> | null {
+function toastFor(event: GameEvent, t: Messages): Omit<Toast, 'id'> | null {
+  const toast = t.toast
   switch (event.type) {
     case 'unoPenalty':
       return {
         tone: 'warn',
-        title: 'UNO was not called',
-        detail: `${cardCount(event.count)} added.`,
+        title: toast.unoMissed.title,
+        detail: toast.unoMissed.detail(event.count),
       }
     case 'seatDisconnected':
-      return {
-        tone: 'bad',
-        title: 'A player lost connection',
-        detail: 'Their turns are skipped until they return.',
-      }
+      return { tone: 'bad', ...toast.lostConnection }
     case 'seatLeft':
-      return { tone: 'bad', title: 'A player left', detail: 'Their cards went back to the pile.' }
+      return { tone: 'bad', ...toast.playerLeft }
     case 'roundEnded':
       return event.winner === null
-        ? { tone: 'bad', title: 'Round abandoned', detail: 'Not enough players remain.' }
-        : { tone: 'info', title: 'Round over', detail: 'Points go to whoever went out.' }
+        ? { tone: 'bad', ...toast.roundAbandoned }
+        : { tone: 'info', ...toast.roundOver }
     case 'matchEnded':
-      return { tone: 'info', title: 'Match over', detail: 'The standings are final.' }
+      return { tone: 'info', ...toast.matchOver }
     case 'roundStarted':
-      return { tone: 'info', title: 'Next round', detail: 'The host dealt again.' }
+      return { tone: 'info', ...toast.nextRound }
     case 'gameRestarted':
-      return { tone: 'info', title: 'New match', detail: 'The standings were reset.' }
+      return { tone: 'info', ...toast.newMatch }
     default:
       return null
   }
@@ -104,7 +107,7 @@ const withFeed = (state: ClientState, entry: OmitEach<FeedEntry, 'id'>): ClientS
   }
 }
 
-export function gameReducer(state: ClientState, action: Action): ClientState {
+export function gameReducer(state: ClientState, action: Action, messages: Messages): ClientState {
   switch (action.type) {
     case 'connection':
       return { ...state, connection: action.connection }
@@ -131,7 +134,7 @@ export function gameReducer(state: ClientState, action: Action): ClientState {
 
     case 'event': {
       const withEvent = withFeed(state, { kind: 'event', event: action.event })
-      const toast = toastFor(action.event)
+      const toast = toastFor(action.event, messages)
       if (toast === null) return withEvent
       const toasts = [...withEvent.toasts, { ...toast, id: withEvent.nextId }]
       return {

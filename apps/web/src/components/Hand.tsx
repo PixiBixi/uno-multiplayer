@@ -1,12 +1,24 @@
 import type { Card as CardData, CardId, Move } from '@uno/engine'
 import { useState } from 'react'
+import { useMessages, type Messages } from '../i18n/index.js'
 import { readHandSort, writeHandSort } from '../lib/preferences.js'
-import { HAND_SORTS, SORT_LABEL, sortHand, type HandSort } from '../lib/sort-hand.js'
+import { HAND_SORTS, sortHand, type HandSort } from '../lib/sort-hand.js'
 import { Card } from './Card.js'
 import { ColourPicker } from './ColourPicker.js'
 import { TargetPicker, type SwapTarget } from './TargetPicker.js'
 
 type PlayMove = Extract<Move, { type: 'play' }>
+
+/**
+ * One sort mode to one catalogue entry. `Record` rather than a switch so a fifth
+ * mode fails the typecheck here as well as in both catalogues, instead of quietly
+ * rendering a button with nothing on it.
+ */
+const sortLabel = (t: Messages): Record<HandSort, string> => ({
+  dealt: t.table.sortDealt,
+  colour: t.table.sortColour,
+  value: t.table.sortValue,
+})
 
 /**
  * A card is playable if and only if a legal move references it. The client never
@@ -31,6 +43,8 @@ type HandProps = {
 }
 
 export function Hand({ cards, legalMoves, onPlay, targets }: HandProps) {
+  const t = useMessages()
+  const label = sortLabel(t)
   const [pending, setPending] = useState<PlayMove[] | null>(null)
   const [sort, setSort] = useState<HandSort>(() => readHandSort())
 
@@ -56,7 +70,7 @@ export function Hand({ cards, legalMoves, onPlay, targets }: HandProps) {
   return (
     <>
       {cards.length > 1 && (
-        <div className="sort-control" role="group" aria-label="Sort your hand">
+        <div className="sort-control" role="group" aria-label={t.table.sortHand}>
           {HAND_SORTS.map((mode) => (
             <button
               key={mode}
@@ -67,7 +81,7 @@ export function Hand({ cards, legalMoves, onPlay, targets }: HandProps) {
                 pick(mode)
               }}
             >
-              {SORT_LABEL[mode]}
+              {label[mode]}
             </button>
           ))}
         </div>

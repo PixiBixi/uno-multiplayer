@@ -4,11 +4,11 @@ export type HandSort = 'dealt' | 'colour' | 'value'
 
 export const HAND_SORTS: readonly HandSort[] = ['dealt', 'colour', 'value'] as const
 
-export const SORT_LABEL: Record<HandSort, string> = {
-  dealt: 'As dealt',
-  colour: 'By colour',
-  value: 'By value',
-}
+/* No label table here. `lib/` is pure and knows no language: a `Record<HandSort,
+   string>` beside these three modes was a second catalogue that only ever spoke
+   English, and it is what the control rendered. The words live in `i18n/`, and
+   `Hand` maps a mode to one of them — so adding a fourth mode is a compile error
+   in every catalogue rather than a blank on the table. */
 
 /** Colour order matches the deck and the colour picker, so the eye learns one order. */
 const COLOUR_RANK: Record<Color, number> = { R: 0, G: 1, B: 2, Y: 3 }
