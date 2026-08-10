@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.0.1](https://github.com/PixiBixi/uno-multiplayer/compare/ee3a189a38f2d1aa205e132b7fcabc081c636a30..v1.0.1) - 2026-08-10
+#### Bug Fixes
+- (**server**) log the client, not the proxy - ([647b52c](https://github.com/PixiBixi/uno-multiplayer/commit/647b52c0c823ddf96be5e7096c4063d4ac163c64)) - Jeremy Delgado
+#### Continuous Integration
+- (**cog**) let the release image be published for an existing tag - ([ee3a189](https://github.com/PixiBixi/uno-multiplayer/commit/ee3a189a38f2d1aa205e132b7fcabc081c636a30)) - Jeremy Delgado
+
+- - -
+
 ## [v1.0.0](https://github.com/PixiBixi/uno-multiplayer/compare/65dd7104aaa6c5e07346e420d9dacac147b35f89..v1.0.0) - 2026-08-10
 #### Features
 - (**engine**) score a match of rounds, official rules - ([c13e139](https://github.com/PixiBixi/uno-multiplayer/commit/c13e1390374596d818b0debb9e93e77225a24bea)) - Jeremy Delgado
