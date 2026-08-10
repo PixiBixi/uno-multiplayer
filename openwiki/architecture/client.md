@@ -115,6 +115,17 @@ Adding a language means adding a file that satisfies `Messages`. The tests asser
 that every catalogue covers exactly the same keys and leaves nothing empty, which
 is the part that rots.
 
+**`lib/` and `hooks/` are where a sweep for leftover English forgets to look.** A
+pure module has no JSX in it, which makes it easy to read past — and two of them
+kept their own English: `sort-hand.ts` had a `Record<HandSort, string>` of labels
+beside the three keys `table.sortDealt`/`sortColour`/`sortValue` already covered, and
+`game-reducer.ts` wrote every toast as a literal. Both are fixed, and the shape of
+the fix is the rule for the next one: a pure module cannot read a context, so it
+**takes `Messages` as a parameter** — `gameReducer(state, action, messages)`, exactly
+as `describeEvent` does. Importing a catalogue into `lib/` or `hooks/` would pin the
+language at build time and no control could change it. `useGameSocket` closes the
+current catalogue over the reducer it hands `useReducer`.
+
 ## Accessibility, briefly
 
 Colour is never the only signal — cards carry shape tokens in every one of the four
@@ -136,3 +147,19 @@ removes the pulse but not the number, because the number carries information.
   styles or DOM geometry in a real browser — and one "bug" turned out to be a
   screenshot taken mid-transition. Sample after animations settle, or deliberately
   mid-flight at a timestamp computed from the keyframes.
+- **An animation with no resting state.** `.pile-draw::after` is the ghost card that
+  peels off the draw pile. It set `background: var(--bone)` and an animation running
+  0.55 → 0 opacity, but no `opacity` of its own and no `animation-fill-mode` — so
+  when the 420ms animation ended the element snapped back to the initial value, 1,
+  and covered the pile with an opaque cream rectangle for the rest of the game (the
+  class is never removed; `drawNonce > 0` forever). It was reported as the pile
+  "rendering blank and pale". **Any decorative overlay states its own resting value
+  in the base rule**, the way `.fx-flash` does; a keyframe's 100% is not a resting
+  state unless the fill mode says so. Measured after the animation settles in
+  `e2e/game.spec.ts`.
+- **Controls at the bottom of a growing column.** The language and card-theme
+  preferences ended 372px below a 900px fold once the home screen's left column had
+  grown to seven blocks, while the right column held one panel and a screen-high
+  void. Nobody found them. `e2e/layout.spec.ts` now measures both viewports; the
+  cheapest fix for "it does not fit" is usually the empty half of the page, not
+  making something smaller.

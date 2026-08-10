@@ -191,7 +191,8 @@ other reason.
 ## Language
 
 The interface is available in English and French. A browser asking for French gets
-it; a chip on the home screen switches instantly and the choice is remembered.
+it; a chip on the home screen switches instantly and the choice is remembered. The
+chips sit in the right-hand column, under the card-values panel.
 
 Every catalogue entry that varies is a function rather than a template, because a
 template can only express the grammar of whichever language was written first.
@@ -201,11 +202,26 @@ than the pronoun. English pluralises at zero and French does not. Adding a langu
 means adding one file that satisfies `Messages`; the tests check that no catalogue
 has drifted from another.
 
+**`lib/` and `hooks/` are not exempt, and that is where the first sweep stopped.**
+Two sets of strings survived it because the search covered `components/` and
+`screens/` only: the hand-sort labels, which `lib/sort-hand.ts` kept in a
+`Record<HandSort, string>` of its own right beside the three keys the catalogues
+already had, and every toast title and detail, which `hooks/game-reducer.ts` held as
+English literals. Both now come from the catalogue.
+
+A pure module cannot read a React context, so the catalogue arrives as an argument:
+`gameReducer(state, action, messages)`, the same shape
+`describeEvent(event, nameOf, mySeat, messages)` already had. Importing one
+catalogue into a reducer instead would pick a language at build time and no chip
+could change it. `useGameSocket` closes the current catalogue over the reducer it
+hands to `useReducer`, so switching language switches the language of the next toast.
+
 ## Card themes
 
 Four card faces, chosen per player: **Classic**, **Flat**, **Letterpress** and
-**Neon**. Pick one from the four miniature previews on the home screen, or cycle
-through them from the button beside the mute toggle on the table.
+**Neon**. Pick one from the four miniature previews on the home screen — in the
+right-hand column beneath the card values, beside the language chips — or cycle
+through them from the button next to the mute toggle on the table.
 
 It is a display preference, not a table option, and that is the whole reason it is
 cheap. A theme changes what one player sees, so two people at the same table can run
@@ -419,6 +435,44 @@ Two details that are easy to get wrong:
 Sound is on by default with a mute toggle on the felt, persisted in
 `localStorage`. Nothing can play before the click that creates or joins a table,
 so opening the page is never a surprise.
+
+### Two defects a screenshot could not have settled
+
+Both came in as player reports and both were resolved by reading numbers out of a
+real browser, after its animations had finished. `e2e/layout.spec.ts` and one spec
+in `e2e/game.spec.ts` now hold the numbers.
+
+**The language and card-theme controls were below the fold.** They sat at the
+bottom of the home screen's left column, behind the name field, the match format,
+Blazing, three house rules, the create button and the join form. Measured at
+1440 × 900, that column ran to 1202 px and the theme previews ended at **1272 px** —
+372 px past a 900 px-tall window, with the page loaded and unscrolled. Players
+reported never finding them. Meanwhile the right column held the card-values panel
+and then nothing: 330 px of content and roughly 490 px of void beneath it.
+
+Both controls moved into that void. Measured again, same viewport: the previews now
+run 428 → 478 px and the language chips 498 → 542 px, both fully inside the fold
+without scrolling. At 430 × 940 the layout is one column, the two controls follow
+the help panel, `scrollWidth` equals `innerWidth` at 430 px, and the previews keep a
+44 px tap target. Nothing was shrunk or hidden to make room.
+
+**The draw pile turned into a blank pale rectangle.** Reported with the fanned
+opponent backs beside it drawing correctly, which pointed away from the card and
+towards the pile. It was `.pile-draw::after` — the ghost card that peels off the top
+on a draw. It declared `background: var(--bone)`, `inset: 0` and an animation from
+0.55 opacity to 0, but no `opacity` of its own and no `animation-fill-mode`. With
+the default `none`, the element reverts to its un-animated opacity the moment the
+420 ms animation ends: the initial value, **1**. And `.pile-draw` is deliberately
+never removed, since `drawNonce > 0` for the rest of the game — so an opaque cream
+rectangle covered the pile permanently after the first draw.
+
+That explains every part of the report. The `UNO` text was still in the DOM, so
+inspecting the markup found nothing; the fanned backs have no `::after`; and on
+Letterpress the stock is `#efe9db` against the overlay's `#f5f1e8`, near enough that
+the veil is invisible — which is why a check on that theme came back clean. Under
+`prefers-reduced-motion` the animation is 0.01 ms, so the pile went pale
+immediately. One line fixes it: `opacity: 0` in the base rule, as `.fx-flash` above
+it already states for the same reason.
 
 ### Known issue: the hand is off-screen on a phone
 
