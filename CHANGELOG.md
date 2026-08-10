@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.1.0](https://github.com/PixiBixi/uno-multiplayer/compare/7e7a3ee5b507c5f803edfe96c8ed0fc4e3b9fc54..v1.1.0) - 2026-08-10
+#### Features
+- (**rules**) play the card you just drew, on by default - ([efc7440](https://github.com/PixiBixi/uno-multiplayer/commit/efc7440e48e124d776538e2c0f7197c04fc087c9)) - Jeremy Delgado
+#### Documentation
+- settle playing the card you just drew - ([7e7a3ee](https://github.com/PixiBixi/uno-multiplayer/commit/7e7a3ee5b507c5f803edfe96c8ed0fc4e3b9fc54)) - Jeremy Delgado
+
+- - -
+
 ## [v1.0.1](https://github.com/PixiBixi/uno-multiplayer/compare/ee3a189a38f2d1aa205e132b7fcabc081c636a30..v1.0.1) - 2026-08-10
 #### Bug Fixes
 - (**server**) log the client, not the proxy - ([647b52c](https://github.com/PixiBixi/uno-multiplayer/commit/647b52c0c823ddf96be5e7096c4063d4ac163c64)) - Jeremy Delgado
