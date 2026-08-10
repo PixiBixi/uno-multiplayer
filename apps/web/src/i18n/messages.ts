@@ -1,6 +1,7 @@
 import type { Card, MatchGoal } from '@uno/engine'
 import type { ErrorCode } from '@uno/protocol'
 import type { CardTheme } from '../lib/card-themes.js'
+import type { ActiveEffect } from '../lib/play-effects.js'
 
 export const LOCALES = ['en', 'fr'] as const
 export type Locale = (typeof LOCALES)[number]
@@ -25,6 +26,25 @@ export const LOCALE_NAME: Record<Locale, string> = { en: 'English', fr: 'França
 export type Messages = {
   /** Card names, which appear inside sentences and so must be a language's own. */
   card: (card: Card) => string
+
+  /**
+   * The same card, said of one a player cannot play this turn.
+   *
+   * A whole sentence rather than the name plus a translated suffix, for the reason
+   * the rest of this file gives: English appends a dash and a clause, and French
+   * turns the whole thing into an adjective agreeing with the card. It is also the
+   * accessible label of every greyed card in a hand, which is why it is here and not
+   * assembled at the call site.
+   */
+  cardUnplayable: (card: Card) => string
+
+  /**
+   * What a card with its back to you is. Game state, not decoration: it is on the
+   * draw pile and in every opponent's fan, and it must not change with the card
+   * theme — `CardBack.test.tsx` asserts that for all four faces.
+   */
+  cardFaceDown: string
+
   colour: (colour: 'R' | 'G' | 'B' | 'Y') => string
 
   /**
@@ -46,6 +66,22 @@ export type Messages = {
     /** "Ana", "Ana and Ben", "Ana, Ben and Cleo". */
     list: (names: string[]) => string
   }
+
+  /**
+   * The word each burst shouts across the table.
+   *
+   * `aria-hidden` decoration — every fact `PlayEffects` dramatises is also in the log
+   * underneath — and translated regardless, because a French player watching a French
+   * table should not be shouted at in English. Being invisible to a screen reader is
+   * not the same as being invisible.
+   *
+   * `Record<ActiveEffect['kind'], string>` so a sixth flourish is a compile error in
+   * both catalogues rather than a blank flash in one of them.
+   */
+  effect: Record<ActiveEffect['kind'], string>
+
+  /** The banner shown while the socket is down and everything else is unreachable. */
+  connection: { lost: string }
 
   /** One entry per GameEvent the log can describe. */
   event: {
@@ -86,8 +122,14 @@ export type Messages = {
     createGame: string
     orJoin: string
     gameCode: string
+    /** An example code, shown in the field. A placeholder is read out like any other
+     *  label, so it belongs here beside `namePlaceholder` rather than in the JSX. */
+    codePlaceholder: string
     joinGame: string
     matchEnds: string
+    /** Accessible name for the pair of buttons inside the "how the match ends" set —
+     *  the legend names the question, this names the control. */
+    matchFormat: string
     firstToScore: string
     setRounds: string
     winningScore: string
@@ -130,6 +172,9 @@ export type Messages = {
     copyFailed: string
     waitingForPlayer: string
     host: string
+    /** Stands in for the host's name when the roster has not arrived yet, so it has to
+     *  read as a noun inside `waitingForHost` — "the host", not "Host". */
+    theHost: string
     reconnecting: string
     left: string
     startGame: string
@@ -158,7 +203,25 @@ export type Messages = {
     anticlockwise: string
     inPlay: (colour: string) => string
     left: (n: number) => string
+    /**
+     * The draw debt a chain of +2s has piled up.
+     *
+     * One sentence including the number, not a badge with the count in its own span:
+     * French puts the figure where French wants it, and a component that renders
+     * "+6" and then the word beside it has already decided the word order for every
+     * language. The digits keep their tabular font from `.debt-badge` instead.
+     */
+    stacked: (n: number) => string
     /** Accessible name for the group of three sort buttons. */
+    /**
+     * The note under a seat whose player has gone.
+     *
+     * Says more than the lobby's `left` on purpose. In the roster it is one column of
+     * a vertical list and reads as a status; on the felt it sits a few centimetres
+     * from a badge that says "Anticlockwise", where a bare English "left" is a
+     * direction. The extra two words cost nothing and remove the ambiguity.
+     */
+    hasLeft: string
     sortHand: string
     sortDealt: string
     sortColour: string
@@ -173,6 +236,8 @@ export type Messages = {
     send: string
     messageTable: string
     chatPanel: string
+    /** The panel's own heading, and the label on the tab that reopens it. */
+    panelTitle: string
     collapsePanel: string
     you: string
     seat: (n: number) => string
@@ -219,6 +284,17 @@ export type Messages = {
     nextRound: { title: string; detail: string }
     newMatch: { title: string; detail: string }
   }
+
+  /**
+   * Accessible name for a toast's close button, which has to say which toast it
+   * closes because several can stand at once.
+   *
+   * Outside the `toast` group on purpose: every entry in there is one interruption,
+   * as a title and a detail, and `game-reducer.test.ts` walks the group asserting
+   * exactly that shape. A control label sitting among them would be a fourth kind of
+   * thing in a list of three.
+   */
+  dismissToast: (title: string) => string
 
   error: Record<ErrorCode, string>
 

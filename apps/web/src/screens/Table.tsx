@@ -231,7 +231,7 @@ export function Table({
                     onPlay({ type: 'callUno' })
                   }}
                 >
-                  UNO!
+                  {t.table.callUno}
                 </button>
               )}
             </div>

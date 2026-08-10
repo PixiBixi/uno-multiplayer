@@ -14,7 +14,10 @@ type LobbyProps = {
 export function Lobby({ lobby, mySeat, onStart, onLeave }: LobbyProps) {
   const t = useMessages()
   const isHost = mySeat === lobby.hostSeat
-  const hostName = lobby.seats.find((seat) => seat.seat === lobby.hostSeat)?.name ?? 'the host'
+  /* The fallback is only reachable if the roster arrives without the host in it, which
+     the server does not do — but it is still a noun dropped into a sentence, and it has
+     to be the right noun in the right language. */
+  const hostName = lobby.seats.find((seat) => seat.seat === lobby.hostSeat)?.name ?? t.lobby.theHost
   const emptySeats = Math.max(0, MAX_SEATS - lobby.seats.length)
 
   return (

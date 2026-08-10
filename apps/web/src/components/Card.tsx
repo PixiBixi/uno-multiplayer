@@ -8,7 +8,8 @@ import {
   type CardTheme,
   type CardThemeSpec,
 } from '../lib/card-themes.js'
-import { COLOR_NAME, COLOR_VALUE } from '../lib/palette.js'
+import { useMessages, type Messages } from '../i18n/index.js'
+import { COLOR_VALUE } from '../lib/palette.js'
 import { useCardTheme } from './CardThemeProvider.js'
 
 /**
@@ -32,21 +33,22 @@ const BASE_NUMERAL = 66
 /** The classic "+2" against that numeral. Kept as a ratio so a theme scales both. */
 const SMALL_RATIO = 46 / BASE_NUMERAL
 
-export function cardLabel(card: CardData): string {
-  switch (card.kind) {
-    case 'number':
-      return `${COLOR_NAME[card.color]} ${card.value}`
-    case 'skip':
-      return `${COLOR_NAME[card.color]} skip`
-    case 'reverse':
-      return `${COLOR_NAME[card.color]} reverse`
-    case 'draw2':
-      return `${COLOR_NAME[card.color]} draw two`
-    case 'wild':
-      return 'Wild'
-    case 'wild4':
-      return 'Wild draw four'
-  }
+/**
+ * What a screen reader says about a card.
+ *
+ * The catalogue is a parameter, in the shape `describeEvent(event, nameOf, mySeat,
+ * messages)` already uses: this is exported so it can be tested on its own, and an
+ * exported function cannot read a context. Importing a catalogue here instead would
+ * pin the language at build time and no control could change it.
+ *
+ * Two things this label is not. It is not the card *face*, so it does not change with
+ * the card theme — that is a display preference and this is game state, asserted for
+ * all four faces in `Card.test.tsx`. And it is not assembled here from a colour and a
+ * noun: `messages.card` owns the whole name, because "Red 7" and "Rouge 7" agree only
+ * by luck and "Wild draw four" and "+4" do not agree at all.
+ */
+export function cardLabel(card: CardData, disabled: boolean, messages: Messages): string {
+  return disabled ? messages.cardUnplayable(card) : messages.card(card)
 }
 
 function cornerLabel(card: CardData): string {
@@ -327,6 +329,7 @@ type CardProps = {
 
 export function Card({ card, onPlay, disabled = false, theme }: CardProps) {
   const chosen = useCardTheme()
+  const messages = useMessages()
   /* React ids carry colons, which are legal in a fragment but a poor bet inside a
      url() reference. The glow filter needs a document-unique id because a hand is a
      dozen of these. */
@@ -337,7 +340,7 @@ export function Card({ card, onPlay, disabled = false, theme }: CardProps) {
   const pigment = wild ? spec.wildPigment : pigmentPaint(card.color)
   const paints = cardPaints(spec, pigment)
   const tokenColor: Color = wild ? 'R' : card.color
-  const label = disabled ? `${cardLabel(card)} — not playable this turn` : cardLabel(card)
+  const label = cardLabel(card, disabled, messages)
   const corner = cornerLabel(card)
 
   const inset = spec.panel === 'stroke' ? spec.panelStroke / 2 : 0

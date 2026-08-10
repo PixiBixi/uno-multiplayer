@@ -1,4 +1,5 @@
 import type { Toast } from '../hooks/game-reducer.js'
+import { useMessages } from '../i18n/index.js'
 
 type ToasterProps = {
   toasts: Toast[]
@@ -8,6 +9,7 @@ type ToasterProps = {
 /** A live region, not a modal: a message must never block the game thread the
  *  way the prototype's `alert()` did. */
 export function Toaster({ toasts, onDismiss }: ToasterProps) {
+  const t = useMessages()
   return (
     <div className="toaster" role="status" aria-live="polite">
       {toasts.map((toast) => (
@@ -22,7 +24,10 @@ export function Toaster({ toasts, onDismiss }: ToasterProps) {
             onClick={() => {
               onDismiss(toast.id)
             }}
-            aria-label={`Dismiss: ${toast.title}`}
+            /* The toast's own title is already translated by the reducer that raised
+               it; the verb in front of it was not. Several close buttons can be on
+               screen at once, so the name has to say which toast this one closes. */
+            aria-label={t.dismissToast(toast.title)}
           >
             <svg
               width={14}

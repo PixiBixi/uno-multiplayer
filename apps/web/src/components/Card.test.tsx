@@ -2,23 +2,51 @@ import type { Card as CardData, CardId } from '@uno/engine'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { en } from '../i18n/en.js'
+import { fr } from '../i18n/fr.js'
+import { LocaleProvider } from '../i18n/LocaleProvider.js'
 import { CARD_THEMES } from '../lib/card-themes.js'
 import { Card, cardLabel } from './Card.js'
 
 const id = (value: string) => value as CardId
 const num = (value: 0 | 5 | 7): CardData => ({ id: id('c1'), kind: 'number', color: 'R', value })
 
+/** Renders in French through the real provider, the way a French browser would. */
+const inFrench = (node: React.ReactElement) => {
+  window.localStorage.setItem('uno.pref.locale', 'fr')
+  const result = render(<LocaleProvider>{node}</LocaleProvider>)
+  window.localStorage.clear()
+  return result
+}
+
 describe('cardLabel', () => {
   it('names a number card by colour and value', () => {
-    expect(cardLabel(num(7))).toBe('Red 7')
+    expect(cardLabel(num(7), false, en)).toBe('Red 7')
   })
 
   it('names each action card', () => {
-    expect(cardLabel({ id: id('a'), kind: 'skip', color: 'G' })).toBe('Green skip')
-    expect(cardLabel({ id: id('b'), kind: 'reverse', color: 'B' })).toBe('Blue reverse')
-    expect(cardLabel({ id: id('c'), kind: 'draw2', color: 'Y' })).toBe('Yellow draw two')
-    expect(cardLabel({ id: id('d'), kind: 'wild' })).toBe('Wild')
-    expect(cardLabel({ id: id('e'), kind: 'wild4' })).toBe('Wild draw four')
+    expect(cardLabel({ id: id('a'), kind: 'skip', color: 'G' }, false, en)).toBe('Green skip')
+    expect(cardLabel({ id: id('b'), kind: 'reverse', color: 'B' }, false, en)).toBe('Blue reverse')
+    expect(cardLabel({ id: id('c'), kind: 'draw2', color: 'Y' }, false, en)).toBe('Yellow draw two')
+    expect(cardLabel({ id: id('d'), kind: 'wild' }, false, en)).toBe('Wild')
+    expect(cardLabel({ id: id('e'), kind: 'wild4' }, false, en)).toBe('Wild draw four')
+  })
+
+  it('names the card in the catalogue it is handed, not in the one it was written in', () => {
+    /* The defect this replaced: `cardLabel` built the label from an English table in
+       `lib/palette.ts`, so every card on a French table announced itself as "Red 7".
+       It is on every card in a hand, on the discard pile and on both previews — the
+       most-repeated string in the client, and the one that survived two sweeps. */
+    expect(cardLabel(num(7), false, fr)).toBe('Rouge 7')
+    expect(cardLabel({ id: id('a'), kind: 'skip', color: 'G' }, false, fr)).toBe('Passe vert')
+    expect(cardLabel({ id: id('e'), kind: 'wild4' }, false, fr)).toBe('+4')
+  })
+
+  it('says a card is unplayable in each language’s own grammar', () => {
+    // English appends a clause after a dash; French turns it into an adjective. A
+    // shared suffix would have forced one of them to borrow the other's shape.
+    expect(cardLabel(num(7), true, en)).toBe('Red 7 — not playable this turn')
+    expect(cardLabel(num(7), true, fr)).toBe('Rouge 7, injouable ce tour-ci')
   })
 })
 
@@ -105,6 +133,17 @@ describe('Card under each theme', () => {
     }
   })
 
+  it('still says one thing per theme once the language is the other axis', () => {
+    /* The label now depends on the language and must still not depend on the face.
+       Two knobs, one of which is allowed to change this string and one of which is
+       not — worth asserting together, since making the label translatable is exactly
+       the change that could have coupled it to the theme by accident. */
+    for (const theme of CARD_THEMES) {
+      const { container } = inFrench(<Card card={num(7)} theme={theme} />)
+      expect(container.querySelector('svg')?.getAttribute('aria-label'), theme).toBe('Rouge 7')
+    }
+  })
+
   it('keeps the unplayable note out of the theme’s reach too', () => {
     for (const theme of CARD_THEMES) {
       render(<Card card={wild4} theme={theme} onPlay={() => undefined} disabled />)
@@ -113,6 +152,17 @@ describe('Card under each theme', () => {
     expect(buttons).toHaveLength(CARD_THEMES.length)
     for (const button of buttons) {
       expect(button.getAttribute('aria-label')).toBe('Wild draw four — not playable this turn')
+    }
+  })
+
+  it('keeps it out of the theme’s reach in French too', () => {
+    for (const theme of CARD_THEMES) {
+      const { container } = inFrench(
+        <Card card={wild4} theme={theme} onPlay={() => undefined} disabled />,
+      )
+      expect(container.querySelector('button')?.getAttribute('aria-label'), theme).toBe(
+        '+4, injouable ce tour-ci',
+      )
     }
   })
 

@@ -1,4 +1,5 @@
 import { useId } from 'react'
+import { useMessages } from '../i18n/index.js'
 import { CARD_THEME_SPEC, legibleInkOn, pigmentPaint, type CardTheme } from '../lib/card-themes.js'
 import { INK } from '../lib/palette.js'
 import { useCardTheme } from './CardThemeProvider.js'
@@ -14,6 +15,7 @@ import { useCardTheme } from './CardThemeProvider.js'
  */
 export function CardBack({ theme }: { theme?: CardTheme } = {}) {
   const chosen = useCardTheme()
+  const messages = useMessages()
   const glowId = `back-glow-${useId().replace(/[^a-zA-Z0-9]/g, '')}`
   const spec = CARD_THEME_SPEC[theme ?? chosen]
   const badge = pigmentPaint('R')
@@ -37,7 +39,12 @@ export function CardBack({ theme }: { theme?: CardTheme } = {}) {
     <svg
       viewBox="0 0 120 168"
       role="img"
-      aria-label="Face-down card"
+      aria-label={messages.cardFaceDown}
+      /* Marked as well as labelled. "How many cards are face up in this document" is
+         a leak test, and expressing it as "whose label is not the English for
+         face-down" made a security assertion depend on the interface language — it
+         would have passed vacuously the moment the page rendered in French. */
+      data-face-down=""
       style={{ width: '100%', height: 'auto', display: 'block' }}
       fontFamily={spec.font}
     >

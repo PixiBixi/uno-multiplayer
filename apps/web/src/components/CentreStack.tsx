@@ -2,7 +2,7 @@ import type { Color } from '@uno/engine'
 import type { PlayerView } from '@uno/protocol'
 import { Card } from './Card.js'
 import { CardBack } from './CardBack.js'
-import { COLOR_NAME, COLOR_VALUE } from '../lib/palette.js'
+import { COLOR_VALUE } from '../lib/palette.js'
 import { useMessages } from '../i18n/index.js'
 
 /** The same shape tokens the cards use, so the colour in play is readable
@@ -52,6 +52,7 @@ type CentreStackProps = {
 }
 
 export function CentreStack({ view, drawNonce = 0 }: CentreStackProps) {
+  const t = useMessages()
   return (
     <div className="centre-stack">
       <div className="pile-group">
@@ -64,7 +65,7 @@ export function CentreStack({ view, drawNonce = 0 }: CentreStackProps) {
         >
           <CardBack />
         </div>
-        <p className="pile-label">{view.drawPileCount} left</p>
+        <p className="pile-label">{t.table.left(view.drawPileCount)}</p>
       </div>
 
       {/* Keyed by card id, not just present for its own sake: it forces React to
@@ -86,16 +87,20 @@ export function CentreStack({ view, drawNonce = 0 }: CentreStackProps) {
           <ColourGlyph color={view.currentColor} />
         </span>
         {/* Named because a wild makes the colour in play diverge from the card
-            everyone can see on the pile. */}
-        <p className="pile-label">{COLOR_NAME[view.currentColor]} in play</p>
+            everyone can see on the pile. The colour's name comes from the catalogue,
+            not from a table in `lib/`: it is a word in a sentence. */}
+        <p className="pile-label">{t.table.inPlay(t.colour(view.currentColor))}</p>
       </div>
 
       <DirectionBadge direction={view.direction} />
 
+      {/* One string, not a styled figure with a word beside it. Splitting the badge
+          into a span and a trailing noun fixed the word order at English's: French
+          would still have read "+6 en attente", but only because the number happens
+          to come first there too, and the next language would have found out the hard
+          way. The tabular figures now come from `.debt-badge` itself. */}
       {view.pendingDraw !== null && (
-        <p className="debt-badge">
-          <span className="debt-amount">+{view.pendingDraw.amount}</span> stacked
-        </p>
+        <p className="debt-badge">{t.table.stacked(view.pendingDraw.amount)}</p>
       )}
     </div>
   )

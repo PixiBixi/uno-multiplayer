@@ -655,10 +655,9 @@ h3 {
 .debt-badge {
   background: var(--red);
   border: 1px solid transparent;
-}
-
-.debt-amount {
-  font-family: var(--data);
+  /* The figure used to sit in its own span so it could take the data face. That span
+     was also a hole punched in an English sentence, so the whole badge is now one
+     string from the catalogue and the digits keep their alignment from here. */
   font-variant-numeric: tabular-nums;
   font-weight: 700;
 }

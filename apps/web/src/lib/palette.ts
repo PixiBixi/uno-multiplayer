@@ -1,21 +1,19 @@
 import type { Color } from '@uno/engine'
 
 /**
- * The one place a colour becomes a word or a swatch.
+ * The one place a colour becomes a swatch.
  *
- * These tables existed in four files each. Nothing guarded them, so renaming a
- * colour or reordering the seat pigments meant editing four places and getting a
- * self-contradicting interface — the picker saying "Blue" while the discard pile
- * said something else — if one was missed, with no test to notice. It is the same
- * failure the card-scoring table caused before it moved into the engine.
+ * This table existed in four files. Nothing guarded them, so reordering the seat
+ * pigments meant editing four places and getting a self-contradicting interface if one
+ * was missed, with no test to notice. It is the same failure the card-scoring table
+ * caused before it moved into the engine.
+ *
+ * A colour's *name* used to live here too, as `COLOR_NAME`, and that was the same
+ * category error `sort-hand.ts` made with its labels: this module is pure and knows no
+ * language, so an English word table inside it can only ever be English. Naming is
+ * `messages.colour()` in each catalogue. What is left here is values — the thing that
+ * genuinely is the same in every language.
  */
-export const COLOR_NAME: Record<Color, string> = {
-  R: 'Red',
-  G: 'Green',
-  B: 'Blue',
-  Y: 'Yellow',
-}
-
 export const COLOR_VALUE: Record<Color, string> = {
   R: 'var(--red)',
   G: 'var(--green)',

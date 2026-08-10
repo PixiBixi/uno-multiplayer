@@ -118,7 +118,7 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
           />
           <fieldset className="goal-picker">
             <legend>{t.home.matchEnds}</legend>
-            <div className="segmented" role="group" aria-label="Match format">
+            <div className="segmented" role="group" aria-label={t.home.matchFormat}>
               <button
                 type="button"
                 className={goalKind === 'points' ? 'seg seg-on' : 'seg'}
@@ -310,7 +310,7 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
             maxLength={ROOM_CODE_LENGTH}
             autoComplete="off"
             spellCheck={false}
-            placeholder="K7QM2X"
+            placeholder={t.home.codePlaceholder}
           />
           <button type="submit" className="btn" disabled={!canJoin}>
             {t.home.joinGame}

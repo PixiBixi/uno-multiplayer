@@ -35,6 +35,8 @@ const list = (names: string[]): string => {
 
 export const en: Messages = {
   card: cardName,
+  cardUnplayable: (card) => `${cardName(card)} — not playable this turn`,
+  cardFaceDown: 'Face-down card',
   colour: (colour) => COLOUR[colour],
   cardTheme: {
     label: 'Card theme',
@@ -47,6 +49,19 @@ export const en: Messages = {
     },
   },
   count: { cards, points, list },
+
+  /* The +2 and +4 bursts shout a figure, which needs no translating; the other four
+     shout a word, which does. */
+  effect: {
+    wild4: '+4',
+    wild: 'WILD',
+    draw2: '+2',
+    skip: 'SKIP',
+    reverse: 'REVERSE',
+    uno: 'UNO!',
+  },
+
+  connection: { lost: 'Connection lost. Trying to reconnect…' },
 
   /* English keeps one form for both persons in these, so the `isYou` argument
      goes unused here. It exists because French cannot: "Toi a posé" is wrong and
@@ -102,8 +117,10 @@ export const en: Messages = {
     createGame: 'Create a game',
     orJoin: 'or join one',
     gameCode: 'Game code',
+    codePlaceholder: 'K7QM2X',
     joinGame: 'Join game',
     matchEnds: 'How the match ends',
+    matchFormat: 'Match format',
     firstToScore: 'First to a score',
     setRounds: 'A set number of rounds',
     winningScore: 'Winning score',
@@ -152,6 +169,7 @@ export const en: Messages = {
     copyFailed: 'Couldn’t copy — select it by hand',
     waitingForPlayer: 'Waiting for a player…',
     host: 'Host',
+    theHost: 'the host',
     reconnecting: 'reconnecting…',
     left: 'left',
     startGame: 'Start game',
@@ -175,6 +193,8 @@ export const en: Messages = {
     anticlockwise: 'Anticlockwise',
     inPlay: (colour) => `${colour} in play`,
     left: (n) => `${String(n)} left`,
+    stacked: (n) => `+${String(n)} stacked`,
+    hasLeft: 'left the game',
     sortHand: 'Sort your hand',
     sortDealt: 'As dealt',
     sortColour: 'By colour',
@@ -189,6 +209,7 @@ export const en: Messages = {
     send: 'Send',
     messageTable: 'Message the table',
     chatPanel: 'Table chat and log',
+    panelTitle: 'Table',
     collapsePanel: 'Collapse the table panel',
     you: 'You',
     seat: (n) => `Seat ${String(n)}`,
@@ -228,6 +249,8 @@ export const en: Messages = {
     nextRound: { title: 'Next round', detail: 'The host dealt again.' },
     newMatch: { title: 'New match', detail: 'The standings were reset.' },
   },
+
+  dismissToast: (title) => `Dismiss: ${title}`,
 
   error: {
     room_not_found: 'No game with that code.',

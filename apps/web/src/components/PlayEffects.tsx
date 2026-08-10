@@ -1,14 +1,6 @@
+import { useMessages } from '../i18n/index.js'
 import { EFFECT_DURATION_MS, type ActiveEffect } from '../lib/play-effects.js'
 import { COLOR_VALUE } from '../lib/palette.js'
-
-const LABEL: Record<ActiveEffect['kind'], string> = {
-  wild4: '+4',
-  wild: 'WILD',
-  draw2: '+2',
-  skip: 'SKIP',
-  reverse: 'REVERSE',
-  uno: 'UNO!',
-}
 
 const tint = (effect: ActiveEffect): string =>
   effect.color === undefined ? 'var(--red)' : COLOR_VALUE[effect.color]
@@ -29,8 +21,13 @@ function flashBackground(effect: ActiveEffect): string {
  * Every fact it dramatises already appears in the accessible log this sits on
  * top of, so the whole layer is aria-hidden: nothing here is the only place a
  * piece of information exists.
+ *
+ * Translated all the same. `aria-hidden` means a screen reader skips it, not that
+ * nobody reads it — SKIP is set in capitals across the middle of the table, at the
+ * largest type on the screen, and in French it says PASSE.
  */
 export function PlayEffects({ effects }: { effects: ActiveEffect[] }) {
+  const t = useMessages()
   return (
     <div className="fx-layer" aria-hidden="true">
       {effects.map((effect) => (
@@ -52,7 +49,7 @@ export function PlayEffects({ effects }: { effects: ActiveEffect[] }) {
             animationDuration: `${String(EFFECT_DURATION_MS[effect.kind])}ms`,
           }}
         >
-          {LABEL[effect.kind]}
+          {t.effect[effect.kind]}
         </span>
       ))}
     </div>

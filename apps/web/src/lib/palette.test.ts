@@ -2,27 +2,18 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { COLORS } from '@uno/engine'
 import { describe, expect, it } from 'vitest'
-import {
-  BONE,
-  COLOR_HEX,
-  COLOR_NAME,
-  COLOR_VALUE,
-  INK,
-  SEAT_PIGMENT,
-  pigmentForSeat,
-} from './palette.js'
+import { BONE, COLOR_HEX, COLOR_VALUE, INK, SEAT_PIGMENT, pigmentForSeat } from './palette.js'
 
 describe('the palette', () => {
-  it('names every colour the engine has', () => {
-    // Adding a colour to the engine must not leave the interface with a blank.
+  it('paints every colour the engine has', () => {
+    // Adding a colour to the engine must not leave the interface with a blank. Its
+    // *name* is asserted per language in `i18n.test.ts`; this file holds no words.
     for (const color of COLORS) {
-      expect(COLOR_NAME[color]).toBeTruthy()
       expect(COLOR_VALUE[color]).toMatch(/^var\(--/)
     }
   })
 
-  it('has a distinct name and swatch per colour', () => {
-    expect(new Set(Object.values(COLOR_NAME)).size).toBe(COLORS.length)
+  it('has a distinct swatch per colour', () => {
     expect(new Set(Object.values(COLOR_VALUE)).size).toBe(COLORS.length)
   })
 

@@ -44,6 +44,12 @@ const liste = (noms: string[]): string => {
 /** "Tu" throughout: this is a game between friends, not a bank. */
 export const fr: Messages = {
   card: nomCarte,
+  /* « injouable » plutôt qu’un calque de « not playable this turn » : un adjectif là
+     où l’anglais met une proposition. Pas de tiret cadratin non plus — la phrase se
+     construit autrement, ce qui est précisément pourquoi c’est une entrée entière et
+     pas un suffixe collé au nom de la carte. */
+  cardUnplayable: (card) => `${nomCarte(card)}, injouable ce tour-ci`,
+  cardFaceDown: 'Carte face cachée',
   colour: (colour) => COULEUR[colour],
   /* Les noms de thèmes sont traduits plutôt que laissés en anglais : ce sont des
      mots courants en français, contrairement à « jump-in ». « Typographié » dit ce
@@ -60,6 +66,20 @@ export const fr: Messages = {
     },
   },
   count: { cards: cartes, points, list: liste },
+
+  /* Les mêmes mots que sur les cartes : PASSE, INVERSION, JOKER. Laisser « SKIP » en
+     travers d’une table française serait le seul mot anglais de l’écran, et il est
+     écrit en capitales de 4 rem. */
+  effect: {
+    wild4: '+4',
+    wild: 'JOKER',
+    draw2: '+2',
+    skip: 'PASSE',
+    reverse: 'INVERSION',
+    uno: 'UNO !',
+  },
+
+  connection: { lost: 'Connexion perdue. Tentative de reconnexion…' },
 
   event: {
     cardPlayed: (name, isYou, card) =>
@@ -116,8 +136,10 @@ export const fr: Messages = {
     createGame: 'Créer une partie',
     orJoin: 'ou rejoins-en une',
     gameCode: 'Code de la partie',
+    codePlaceholder: 'K7QM2X',
     joinGame: 'Rejoindre',
     matchEnds: 'Comment la partie se termine',
+    matchFormat: 'Format de la partie',
     firstToScore: 'Premier à un score',
     setRounds: 'Un nombre de manches',
     winningScore: 'Score gagnant',
@@ -166,6 +188,7 @@ export const fr: Messages = {
     copyFailed: 'Copie impossible — sélectionne-le à la main',
     waitingForPlayer: 'En attente d’un joueur…',
     host: 'Hôte',
+    theHost: 'l’hôte',
     reconnecting: 'reconnexion…',
     left: 'parti',
     startGame: 'Lancer la partie',
@@ -189,6 +212,11 @@ export const fr: Messages = {
     anticlockwise: 'Sens antihoraire',
     inPlay: (colour) => `${colour} en jeu`,
     left: (n) => `${String(n)} restantes`,
+    /* « en attente » et non « empilées » : ce qui compte est que la dette n’est pas
+       encore payée, pas la façon dont elle s’est constituée. Locution invariable, donc
+       aucun accord à faire ici — contrairement à `left`, juste au-dessus. */
+    stacked: (n) => `+${String(n)} en attente`,
+    hasLeft: 'a quitté la partie',
     sortHand: 'Trier ta main',
     sortDealt: 'Distribuées',
     sortColour: 'Par couleur',
@@ -203,6 +231,7 @@ export const fr: Messages = {
     send: 'Envoyer',
     messageTable: 'Écrire à la table',
     chatPanel: 'Discussion et journal de la table',
+    panelTitle: 'Table',
     collapsePanel: 'Replier le panneau',
     you: 'Toi',
     seat: (n) => `Siège ${String(n)}`,
@@ -245,6 +274,8 @@ export const fr: Messages = {
     nextRound: { title: 'Manche suivante', detail: 'L’hôte a redistribué.' },
     newMatch: { title: 'Nouvelle partie', detail: 'Les scores sont remis à zéro.' },
   },
+
+  dismissToast: (title) => `Fermer : ${title}`,
 
   error: {
     room_not_found: 'Aucune partie avec ce code.',

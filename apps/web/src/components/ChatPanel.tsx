@@ -56,7 +56,7 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
           setOpen(true)
         }}
       >
-        Table
+        {messages.table.panelTitle}
         {unread > 0 && <span className="unread">{unread}</span>}
       </button>
     )
@@ -65,7 +65,7 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
   return (
     <section className="chat-panel" aria-label={messages.table.chatPanel}>
       <header className="chat-head">
-        <span>Table</span>
+        <span>{messages.table.panelTitle}</span>
         <button
           type="button"
           className="icon-btn"
@@ -119,7 +119,7 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
           keyboard. */}
       <form className="chat-foot" onSubmit={submit}>
         <label className="visually-hidden" htmlFor="chat-input">
-          Message the table
+          {messages.table.messageTable}
         </label>
         <input
           id="chat-input"

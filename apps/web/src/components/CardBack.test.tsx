@@ -99,10 +99,21 @@ describe('CardBack under every theme', () => {
   })
 
   it('says the same thing to a screen reader whatever the face', () => {
-    // The face is a preference; "face-down" is game state.
+    // The face is a preference; "face-down" is game state. The language is the other
+    // axis and is asserted in `i18n/rendered-in-french.test.tsx`.
     for (const theme of CARD_THEMES) {
       const label = backFor(theme).querySelector('svg')?.getAttribute('aria-label')
       expect(label, theme).toBe('Face-down card')
+    }
+  })
+
+  it('marks itself face-down in a way no language can change', () => {
+    /* The leak test in `e2e/game.spec.ts` counts how many cards in a document are face
+       *up*, and it used to do that by comparing the label to the English. A translated
+       label would have made every card look face-up and the assertion pass for nothing,
+       so the fact is carried by an attribute as well as by a word. */
+    for (const theme of CARD_THEMES) {
+      expect(backFor(theme).querySelector('svg[data-face-down]'), theme).not.toBeNull()
     }
   })
 })

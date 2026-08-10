@@ -81,22 +81,19 @@ test('nobody can see anybody else’s cards', async ({ browser }) => {
      players legitimately having a "Red 1" is not a leak. What would be a leak is
      an extra face-up card: the host's document may show exactly their own seven
      plus the one on the discard pile, and nothing more. Identity-level redaction
-     is asserted by id in the server's views.test.ts. */
-  const faceUpOnHost = await host
-    .locator('[role="img"]')
-    .evaluateAll(
-      (nodes) =>
-        nodes.filter((node) => node.getAttribute('aria-label') !== 'Face-down card').length,
-    )
-  expect(faceUpOnHost).toBe(8)
+     is asserted by id in the server's views.test.ts.
 
-  const faceUpOnGuest = await guest
-    .locator('[role="img"]')
-    .evaluateAll(
-      (nodes) =>
-        nodes.filter((node) => node.getAttribute('aria-label') !== 'Face-down card').length,
-    )
-  expect(faceUpOnGuest).toBe(8)
+     Counted by `data-face-down`, not by comparing the label to the English for
+     "face-down". That label is translated now, so the old form would have counted
+     every card as face-up on a French page and passed this test vacuously — a leak
+     assertion that quietly stops asserting is worse than one that fails. */
+  const faceUp = (page: Page) =>
+    page
+      .locator('[role="img"]')
+      .evaluateAll((nodes) => nodes.filter((node) => !node.hasAttribute('data-face-down')).length)
+
+  expect(await faceUp(host)).toBe(8)
+  expect(await faceUp(guest)).toBe(8)
 })
 
 test('a card can be played and the turn moves on', async ({ browser }) => {

@@ -1,6 +1,6 @@
 import type { Color, Move } from '@uno/engine'
 import { useEffect } from 'react'
-import { COLOR_NAME, COLOR_VALUE } from '../lib/palette.js'
+import { COLOR_VALUE } from '../lib/palette.js'
 import { useMessages } from '../i18n/index.js'
 
 type PlayMove = Extract<Move, { type: 'play' }>
@@ -40,8 +40,13 @@ export function ColourPicker({ options, onChoose, onCancel }: ColourPickerProps)
 
   return (
     <div className="picker-veil">
-      <div className="picker" role="dialog" aria-modal="true" aria-label="Choose the new colour">
-        <h2 className="picker-title">{t.table.chooseColour}</h2>
+      {/* Named by its own heading rather than by a second string saying the same
+          thing. One less phrase to translate, and one less way for the two to drift
+          apart into a dialog that is called one thing and titled another. */}
+      <div className="picker" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+        <h2 className="picker-title" id="picker-title">
+          {t.table.chooseColour}
+        </h2>
         <div className="picker-grid">
           {options.map((move) => {
             const color = move.chosenColor
@@ -55,13 +60,13 @@ export function ColourPicker({ options, onChoose, onCancel }: ColourPickerProps)
                 onClick={() => onChoose(move)}
               >
                 <Glyph color={color} />
-                {COLOR_NAME[color]}
+                {t.colour(color)}
               </button>
             )
           })}
         </div>
         <button type="button" className="btn" onClick={onCancel}>
-          Cancel
+          {t.table.cancel}
         </button>
       </div>
     </div>

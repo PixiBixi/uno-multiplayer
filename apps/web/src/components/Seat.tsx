@@ -1,14 +1,31 @@
 import type { SeatStatus } from '@uno/engine'
 import { CardBack } from './CardBack.js'
-import { useMessages } from '../i18n/index.js'
+import { useMessages, type Messages } from '../i18n/index.js'
 
 /** A fan wider than this stops communicating and starts costing layout. */
 const MAX_FANNED = 6
 
-const STATUS_TEXT: Record<SeatStatus, string | null> = {
-  active: null,
-  disconnected: 'reconnecting…',
-  left: 'left the game',
+/**
+ * The note under a seat that is not playing. Built from the catalogue rather than
+ * held as a `Record<SeatStatus, string>` of literals — which is exactly how these two
+ * phrases survived a sweep for English: no JSX, no attribute, just a table read
+ * through a variable.
+ *
+ * A switch rather than a lookup so a fifth `SeatStatus` fails the typecheck here
+ * instead of rendering an empty note.
+ */
+const statusNote = (status: SeatStatus, t: Messages): string | null => {
+  switch (status) {
+    case 'active':
+      return null
+    /* Shared with the lobby roster: the same word for the same fact. */
+    case 'disconnected':
+      return t.lobby.reconnecting
+    /* Not shared, unlike the line above. See `table.hasLeft` — a bare "left" is a
+       direction when it sits next to a badge reading "Anticlockwise". */
+    case 'left':
+      return t.table.hasLeft
+  }
 }
 
 type SeatProps = {
@@ -29,7 +46,7 @@ type SeatProps = {
 export function Seat({ name, handCount, status, isTurn, orientation, onCallOut }: SeatProps) {
   const t = useMessages()
   const shown = Math.min(handCount, MAX_FANNED)
-  const statusText = STATUS_TEXT[status]
+  const statusText = statusNote(status, t)
 
   return (
     <div className="seat">

@@ -1,5 +1,6 @@
 import { Toaster } from './components/Toaster.js'
 import { useGameSocket } from './hooks/useGameSocket.js'
+import { useMessages } from './i18n/index.js'
 import { readRoomCodeFromUrl } from './lib/room-url.js'
 import { Home } from './screens/Home.js'
 import { Lobby } from './screens/Lobby.js'
@@ -11,13 +12,16 @@ import { Table } from './screens/Table.js'
  */
 export function App() {
   const { state, actions } = useGameSocket()
+  const t = useMessages()
 
   if (state.connection === 'lost') {
     return (
       <main className="home">
+        {/* The brand, not a sentence: the name printed on the box, the same in every
+            language. Everything else on this screen comes from the catalogue. */}
         <h1>UNO</h1>
         <p className="banner banner-bad" role="alert">
-          Connection lost. Trying to reconnect…
+          {t.connection.lost}
         </p>
       </main>
     )
