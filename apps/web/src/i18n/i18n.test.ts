@@ -68,6 +68,111 @@ describe('grammar each language owns', () => {
     expect(CATALOGUES.fr.card(wild4)).toBe('+4')
   })
 
+  it('says a card is unplayable as a whole sentence, not a translated suffix', () => {
+    /* The accessible label of every greyed card in a hand. English hangs a clause off
+       a dash; French makes it an adjective and drops the dash entirely. A shared
+       "{card} {suffix}" would have made French borrow the dash. */
+    expect(CATALOGUES.en.cardUnplayable(num(7))).toBe('Red 7 — not playable this turn')
+    expect(CATALOGUES.fr.cardUnplayable(num(7))).toBe('Rouge 7, injouable ce tour-ci')
+    // And it still contains the card's own name in that language, not the English one.
+    for (const locale of LOCALES) {
+      const catalogue = CATALOGUES[locale]
+      expect(catalogue.cardUnplayable(num(7))).toContain(catalogue.card(num(7)))
+    }
+  })
+
+  it('names a face-down card in both languages', () => {
+    // On the draw pile and in every opponent's fan, so it is on screen constantly.
+    expect(CATALOGUES.en.cardFaceDown).toBe('Face-down card')
+    expect(CATALOGUES.fr.cardFaceDown).toBe('Carte face cachée')
+  })
+
+  it('shouts each burst in the language, figures excepted', () => {
+    /* `aria-hidden` decoration, translated anyway: it is the largest type on the
+       screen. "+2" and "+4" are figures and stay put; the four words do not. */
+    expect(CATALOGUES.en.effect.skip).toBe('SKIP')
+    expect(CATALOGUES.fr.effect.skip).toBe('PASSE')
+    expect(CATALOGUES.fr.effect.reverse).toBe('INVERSION')
+    expect(CATALOGUES.fr.effect.wild).toBe('JOKER')
+    for (const locale of LOCALES) {
+      expect(CATALOGUES[locale].effect.wild4).toBe('+4')
+      expect(CATALOGUES[locale].effect.draw2).toBe('+2')
+      // French spaces its exclamation mark and English does not.
+      expect(CATALOGUES[locale].effect.uno).toBe(CATALOGUES[locale].table.callUno)
+    }
+  })
+
+  it('names the colour in play through the catalogue rather than a table in lib/', () => {
+    /* `lib/palette.ts` used to hold `COLOR_NAME`, an English table three components
+       read, which is why a French table said "Green in play". `lib/` is pure and knows
+       no language; naming is the catalogue's job. */
+    expect(CATALOGUES.en.table.inPlay(CATALOGUES.en.colour('G'))).toBe('Green in play')
+    expect(CATALOGUES.fr.table.inPlay(CATALOGUES.fr.colour('G'))).toBe('Vert en jeu')
+  })
+
+  it('counts the draw pile and the stacked debt by each language’s own rule', () => {
+    expect(CATALOGUES.en.table.left(34)).toBe('34 left')
+    expect(CATALOGUES.fr.table.left(34)).toBe('34 restantes')
+    expect(CATALOGUES.en.table.stacked(6)).toBe('+6 stacked')
+    expect(CATALOGUES.fr.table.stacked(6)).toBe('+6 en attente')
+  })
+
+  it('says a seat has gone in each language, and more plainly than the lobby does', () => {
+    /* Deliberately not the lobby's one-word badge: on the felt this sits beside
+       "Anticlockwise", where an English "left" reads as a direction. */
+    expect(CATALOGUES.en.table.hasLeft).toBe('left the game')
+    expect(CATALOGUES.fr.table.hasLeft).toBe('a quitté la partie')
+    expect(CATALOGUES.en.table.hasLeft).not.toBe(CATALOGUES.en.lobby.left)
+  })
+
+  it('names the host in a sentence when the roster has not named them yet', () => {
+    // A noun dropped into `waitingForHost`, so it has to read as one — and French
+    // needs its elision.
+    expect(CATALOGUES.en.lobby.waitingForHost(CATALOGUES.en.lobby.theHost)).toBe(
+      'Waiting for the host to start the game.',
+    )
+    expect(CATALOGUES.fr.lobby.waitingForHost(CATALOGUES.fr.lobby.theHost)).toBe(
+      'En attente que l’hôte lance la partie.',
+    )
+  })
+
+  it('translates the two banners a player only sees when something is wrong', () => {
+    expect(CATALOGUES.en.connection.lost).toContain('Connection lost')
+    expect(CATALOGUES.fr.connection.lost).toContain('Connexion perdue')
+    for (const locale of LOCALES)
+      expect(CATALOGUES[locale].crash.heading.length).toBeGreaterThan(10)
+  })
+
+  it('names a toast’s close button, in each language’s own punctuation', () => {
+    // Several toasts can stand at once, so the name has to carry the title. French
+    // spaces its colon.
+    expect(CATALOGUES.en.dismissToast('Round over')).toBe('Dismiss: Round over')
+    expect(CATALOGUES.fr.dismissToast('Manche terminée')).toBe('Fermer : Manche terminée')
+  })
+
+  it('translates every label a control is only reachable by, not just the visible ones', () => {
+    /* Accessible names are the class of string a sighted reviewer never sees, and the
+       class the last two sweeps missed almost entirely. */
+    for (const locale of LOCALES) {
+      const t = CATALOGUES[locale]
+      for (const label of [
+        t.home.matchFormat,
+        t.home.codePlaceholder,
+        t.table.messageTable,
+        t.table.chooseColour,
+        t.table.cancel,
+        t.table.panelTitle,
+        t.table.collapsePanel,
+        t.cardFaceDown,
+      ]) {
+        expect(label.length).toBeGreaterThan(0)
+      }
+    }
+    expect(CATALOGUES.fr.home.matchFormat).toBe('Format de la partie')
+    expect(CATALOGUES.fr.table.chooseColour).toBe('Choisis une couleur')
+    expect(CATALOGUES.fr.table.cancel).toBe('Annuler')
+  })
+
   it('describes a played card as a whole sentence per language', () => {
     // Not "{name} played a {card}" with the card slotted in: French puts the verb
     // in the perfect and needs no article here.
