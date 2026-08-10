@@ -16,6 +16,48 @@ clock source is injectable too, so tests drive time by hand and never wait.
 If you find yourself wanting a timer inside `Room`, that is the signal to put it in
 `RoomManager` and pass the result in.
 
+## Configuring the table
+
+The goal, the pace and the rules are the host's, set from the **lobby** rather than at
+creation, and frozen by the first deal. `room:create` still accepts all three and the
+home screen sends the defaults; the payload stays because it is already validated and
+already tested, and removing it would break a client mid-deploy for no gain.
+
+`Room.configure(bySeat, changes)` holds the whole rule:
+
+- **Host only.** Anybody else gets `not_host` and the table does not move.
+- **Only before the match has begun**, which is `match === null`. Not before each
+  round: a match spans rounds and carries a score, so flipping Seven-Zero at round
+  three would rewrite a contest already partly played. A late change gets
+  `game_already_started`.
+- **Explicitly not `canStart`.** That counts filled seats and is a different question.
+  A room can be un-startable and already dealt, because somebody left mid-match — there
+  is a test built on exactly that room, and gating on `canStart` would reopen the rules
+  at the one moment they must not move. Equally, a table with one player cannot deal and
+  is precisely a table whose host has time to set the rules.
+- **Partial**, `{ goal?, pace?, rules? }`. A field absent from the payload is left as it
+  is, so toggling one rule cannot write back a goal the client read a moment earlier.
+  `pace` is the one field where absent and `null` differ: null takes the clock off the
+  table, absent leaves whatever clock it has. `rules` is replaced wholesale, so a client
+  sending one flag would reset the other three — the client sends the whole object.
+- **Reports no event**, and therefore takes no `record()` path. There is no narrative
+  feed in a lobby and nothing here belongs in the match statistics.
+
+Two things the handler gets right and a naive one would not. It broadcasts `room:state`
+to **every** member rather than answering the sender — a guest watching the host toggle
+Jump-in is the entire point, and a sender-only refresh passes a careless test and fails
+the feature. And it does not `retime`: nothing in a lobby can move a turn, and a pace set
+there is a number the deal will read, not a running clock. A lobby that armed one would
+be counting down against a seat holding no cards.
+
+Since `room:state` carries the whole view, a reconnecting player gets the current
+configuration with no extra path — which is asserted rather than assumed, because a
+client rejoining into stale rules is a client playing a different game.
+
+`game:restart` unlocks nothing. It requires a finished round and deals immediately, so it
+never returns anybody to a lobby and there is no moment after it at which the table is
+unconfigured.
+
 ## Members and seats
 
 A **member** is a person in the room (socket, session token, status). A **seat** is

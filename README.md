@@ -102,7 +102,7 @@ Official rules plus draw stacking, with these points pinned down explicitly:
 
 ### Scoring a match
 
-A table plays a match of rounds, and the host sets how it ends when creating it:
+A table plays a match of rounds, and the host sets how it ends **from the lobby**:
 first to a points target, or a fixed number of rounds. **A one-round match is a
 single game** — there is no separate mode for it, because a mode meaning "stop
 after one round" is what a one-round match already is.
@@ -124,8 +124,8 @@ UI and hand inspection.
 
 ### The Liar call-out
 
-An optional house rule, chosen by the host when creating the table and off by
-default: **forgetting to call UNO costs nothing unless somebody says so.** The
+An optional house rule, set by the host in the lobby and off by default:
+**forgetting to call UNO costs nothing unless somebody says so.** The
 automatic penalty removes the part of UNO people actually enjoy — watching each
 other — so this hands it back.
 
@@ -220,6 +220,67 @@ which takes the draw button's place rather than sitting beside a dead one: a pla
 draws, sees Draw go grey and nothing else change will conclude the table has hung. It is
 labelled for what it does rather than "pass", which in a card game reads as declining to
 draw — the opposite of what has just happened.
+
+## Where a table is configured
+
+**The lobby, not the home screen.** The host adjusts the match goal, the pace and the
+four table rules while waiting for players, and every accepted change is broadcast to
+everybody sitting there. The home screen collects a name and a game code.
+
+That split fixes two things. The ergonomic one: measured on v1.1.0 the home screen
+carried **21 controls**, ran **2.42** phone screens tall, and put the game-code field
+**last** — under a match format, a clock and four rules that a joining player has no use
+for at all. On three players, two are joining. It is now 10 controls and 1.25 screens at
+390 × 844, with the code field at y=391 instead of below the fold.
+
+The functional one matters more: **a guest could not see which rules they were about to
+play by.** `LobbyView` withheld `TableRules` on the grounds that the client evaluates no
+rules — still true, it renders them and never reasons about them — and `Lobby.tsx` did not
+even render the `goal` and `pace` it already received. A player found out about Seven-Zero
+when their hand changed owner.
+
+| Point           | Decision                                                                                                                                                                                            |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Who             | The host seat only. Anybody else gets `not_host` and the table does not move.                                                                                                                       |
+| When            | Until the first deal of the **match**, not of each round. A match spans rounds and carries a score, so flipping Seven-Zero at round three would rewrite a contest already partly played.            |
+| Not `canStart`  | That counts filled seats. A room can be un-startable and already dealt, because somebody left mid-match — and a table with one player is exactly a table whose host has time to set the rules.      |
+| Where the guard | In the handler, never at render. A host can press Start and toggle a rule in the same breath, and whichever arrives second has to lose. Hiding a control client-side is presentation, never a lock. |
+| Broadcast       | Every accepted change re-emits `room:state` to **every** member. A change that only refreshed the sender would satisfy a naive test and fail the feature.                                           |
+| Rejoining       | Covered by the above: `room:state` carries the whole view, so a reconnecting player receives the current rules with no extra path.                                                                  |
+| `game:restart`  | Unlocks nothing. It requires a finished round and deals immediately, so it never returns anybody to a lobby and there is no moment after it at which the table is unconfigured.                     |
+| Blazing         | Setting a pace in the lobby records a number. The clock is armed by `RoomManager` at the deal, as it always was — a lobby that could start one would be timing out a seat holding no cards.         |
+
+`room:configure` is partial on purpose — `{ goal?, pace?, rules? }` — so toggling one rule
+cannot write back a goal the client read a moment earlier. `pace` is the one field where
+absent and `null` differ: null takes the clock off the table, absent leaves it alone. The
+bounds are the same Zod objects `room:create` composes, asserted table-driven against both,
+because a second copy of `MIN_POINTS_TARGET` drifts one field at a time.
+
+On the client the rule list, its labels and its explanations live in **one** component
+rendered in both modes. A second read-only copy would pass every test the day it was
+written and then go stale, so a test asserts the two modes agree on the rules, the labels
+and the order — that is the property a drifted copy breaks. Read-only is the _absence_ of a
+control rather than a disabled one: a greyed checkbox tells a guest "you could change this,
+but not now", which is not true, and it drops out of the tab order on the one surface where
+reading is the entire point.
+
+Every control is rendered from the lobby view the server pushed rather than from local
+state, so a change the server refuses reverts itself instead of leaving the screen
+disagreeing with the table. The visible cost is one round trip before a switch moves, which
+is the same 30–100 ms this project already accepts per card played. Playwright's `.check()`
+will not tolerate it and the specs use `.click()` — the shorthand failing is the design
+showing through, not a bug.
+
+The explanations sit behind a per-rule disclosure, because four paragraphs on permanent
+display is what made the home screen a wall of text and in the lobby the reader has already
+chosen to look. The points table is the exception and is shown in full: the host is choosing
+a points target two panels up, and "how many rounds does 500 take" is what those numbers
+answer.
+
+Card theme and language stayed on the home screen. They are per-player display preferences
+rather than table configuration — two people at the same table can run different ones and
+the game is identical — so they cross no wire and have no business in a view the server
+broadcasts to everybody.
 
 ## Language
 
@@ -425,13 +486,14 @@ emit-only solution and excludes tests.
 - [x] End-of-match awards, counted from the event feed
 - [x] English and French, with each language owning its own grammar
 - [x] An error boundary, so a bad render explains itself instead of blanking
+- [x] The lobby owns the table configuration, so a guest can see the rules first
 - [ ] **Your own hand falls below the fold on a phone** — see below
 - [ ] Deploy it somewhere real and play a game with actual people
 - [ ] A bot, so a table can be tried alone or filled to three
 
 ### Blazing
 
-An optional per-turn clock, chosen by the host when creating the table. It exists
+An optional per-turn clock, set by the host in the lobby. It exists
 because an idle player used to freeze the game forever: the only timer in the
 server was the disconnect grace period, so somebody who stayed connected and simply
 stopped playing blocked everyone, including the host, with no way out.
@@ -500,6 +562,21 @@ run 428 → 478 px and the language chips 498 → 542 px, both fully inside the 
 without scrolling. At 430 × 940 the layout is one column, the two controls follow
 the help panel, `scrollWidth` equals `innerWidth` at 430 px, and the previews keep a
 44 px tap target. Nothing was shrunk or hidden to make room.
+
+The column that crowded them out is gone: the match format, Blazing and the four
+rules all live in the lobby now. The measurements above still hold — the controls
+stayed in the second column, which is where players found them.
+
+**The lobby then inherited the problem, and the same answer.** It took the whole
+configuration on and roughly doubled. Measured at 390 × 844: the page runs 1732 px, so
+it scrolls, and what matters is what does not need the scroll. The roster starts inside
+the fold and **Start** ends inside it, because the settings went in below rather than
+above; `scrollWidth` equals `innerWidth` at 390 px and nothing overflows sideways; and
+the points table is capped at 338 px with its own scroll container, asserted to really
+scroll rather than merely to declare an overflow it never uses. The seats are what a
+lobby is for, so they are never what gets capped. Past 900 px it is two columns, the
+rules sit to the right of the roster rather than under it, and **Start** is inside a
+900 px fold with the page unscrolled.
 
 **The draw pile turned into a blank pale rectangle.** Reported with the fanned
 opponent backs beside it drawing correctly, which pointed away from the card and

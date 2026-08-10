@@ -78,7 +78,12 @@ See [Room lifecycle](../domain/room-lifecycle.md).
 Every client-to-server payload is validated with Zod at the socket boundary
 (`packages/protocol/src/schemas.ts`), including the bounds on table options — a
 points target, a rounds count, seconds per turn. Enforcing those only in the lobby
-would be enforcing them nowhere.
+would be enforcing them nowhere, and that is doubly true now the lobby is where those
+options are chosen: `roomConfigureSchema` composes the same `matchGoalSchema`,
+`matchPaceSchema` and `tableRulesSchema` objects `roomCreateSchema` does, rather than
+restating the numbers. A second copy of `MIN_POINTS_TARGET` drifts one field at a time,
+so a test compares the two schemas' verdicts on the same values instead of trusting
+them to agree.
 
 Server-to-client payloads are **not** validated. That is a deliberate asymmetry:
 the server is trusted, and a schema kept in step with every view field would be a
@@ -87,6 +92,12 @@ view degrades to an explanation rather than a blank page.
 
 ## Changing things here
 
+- `LobbyView` carries the whole table configuration — `goal`, `pace`, `rules` and
+  `configurable` — because a guest who cannot see the rules discovers Seven-Zero when
+  their hand changes owner. That is not a hole in "the client knows no rules": it renders
+  them and never reasons about them. `configurable` is derived by the server and is
+  presentation only; the guard is re-checked when `room:configure` is handled, since a
+  host can press Start and toggle a rule in the same breath.
 - Adding a field to `PlayerView` means touching `packages/protocol/src/views.ts`,
   `apps/server/src/views.ts`, and every test fixture that builds a view. The
   typechecker will find them all.

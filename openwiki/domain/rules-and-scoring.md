@@ -31,7 +31,8 @@ and hand inspection.
 
 ## Table rules
 
-`TableRules` in `packages/engine/src/types.ts`, chosen by the host at creation. The three
+`TableRules` in `packages/engine/src/types.ts`, set by the host in the lobby — see
+[Room lifecycle](room-lifecycle.md#configuring-the-table). The three
 house rules are off by default; `playDrawnCard` is on, because it is not a house rule but
 the rulebook — the `false`s beside it are not a pattern to copy. It lives in the engine
 rather than beside `MatchPace` in the protocol, unlike the clock: a time limit is a house
@@ -237,7 +238,7 @@ Two interactions with Blazing, both in `RoomManager`:
 ## Scoring a match
 
 `packages/engine/src/match.ts`. A table plays a **match** of **rounds**. The host
-picks how it ends when creating the table:
+picks how it ends in the lobby, up until the first deal:
 
 ```ts
 type MatchGoal = { kind: 'points'; target: number } | { kind: 'rounds'; count: number }

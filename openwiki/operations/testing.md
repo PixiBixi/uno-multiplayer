@@ -119,6 +119,25 @@ is the difference between a guard and a decoration:
   is offered was vacuously true. Declining one jump-in in three fixed it, and the property
   now catches the mutant at 300 runs.
 
+- Six mutations were re-run against the lobby owning the configuration. Letting a
+  non-host configure fails 2, one of them over a real socket; configuring after the deal
+  fails 3; broadcasting to the sender only fails 6; gating on `canStart` instead of on the
+  match having begun fails 4; and replacing the shared Zod schemas with `z.any()` fails 6,
+  four in the protocol and two on the wire.
+
+  The sixth is the interesting one. Rendering a guest's rule list from a second hardcoded
+  copy fails 4 — but only because the copy was written the way a stale copy really goes
+  wrong, omitting jump-in. A duplicate that is still character-identical to the original
+  cannot be caught behaviourally at all, and the test says so in its own comment rather
+  than implying more reach than it has. What it does catch is the two modes disagreeing on
+  the rules, the labels or their order, which is the moment a copy stops being harmless.
+
+  Also worth noting what a Room-level test cannot reach. `room:configure` with a protocol
+  type, a schema and a client emit but no `socket.on` behind it is a control that silently
+  does nothing, and socket.io answers an unknown event by never calling the ack — so the
+  first assertion in the socket file is that an answer arrives at all. That is the failure
+  this repository has already shipped once.
+
 Equally worth knowing: some things **cannot** drift and so cannot be tested for. The
 help panel reads `cardPoints` from the engine, and so do its tests — change the
 engine and both move together. There is nothing to catch, which is the point.

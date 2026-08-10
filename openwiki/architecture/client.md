@@ -35,6 +35,43 @@ because a wild's burst needs the colour that was chosen and the feed may not hav
 caught up. Sound reads the **feed**, because a cue only needs the card's kind. That
 asymmetry is intentional; do not "fix" it.
 
+## The lobby owns the table configuration
+
+`Home.tsx` collects a name and a game code. Everything about the table — the goal, the
+pace, the four rules, and the points table in full — is in `Lobby.tsx`, where the host
+adjusts it while waiting and everybody about to play can read it. `Home` used to carry 21
+controls and 2.42 phone screens with the game-code field last, which is the wrong order
+for a screen most people arrive at in order to join.
+
+Three constraints hold that in place:
+
+- **One component for both modes.** `TableRulesPanel` holds the rule list, its labels and
+  its explanations, and is rendered for the host and for a guest. A second read-only copy
+  passes every test the day it is written and then goes stale — a fifth rule added to the
+  host's switches and forgotten in the guest's would leave half the table reading a game
+  nobody is playing, and no type checker can see it. Its own test asserts the two modes
+  agree on the rules, the labels and the order, which is the property a drifted copy
+  breaks; a copy still character-identical to the original is behaviourally undetectable
+  and the test says so rather than pretending otherwise.
+- **Read-only is the absence of a control, not a disabled one.** `onChange` being absent
+  is what decides, so a guest's panel renders no input at all and there is nothing for a
+  stray event to reach. A greyed checkbox would also tell a guest "you could change this,
+  but not now", which is false, and it drops out of the tab order on the one surface where
+  reading is the whole point.
+- **Every control renders from the lobby view**, never from local state, so a change the
+  server refuses reverts itself instead of leaving the screen disagreeing with the table.
+  The only state held locally is what the wire cannot carry: the inactive goal variant's
+  number, and the seconds to restore when Blazing is switched back on. The visible cost is
+  one round trip before a switch moves. Playwright's `.check()` will not tolerate that and
+  the specs use `.click()` — the shorthand failing is this design showing through.
+
+Whether the host's controls appear at all is `lobby.configurable`, which the server derives
+from the match having begun. It is presentation; the server checks the same condition again
+when the event arrives.
+
+Card theme and language stayed on the home screen, because they are not table
+configuration — see below.
+
 ## Card themes
 
 Four faces — classic, flat, letterpress, neon — chosen by **each player**, in
@@ -212,4 +249,8 @@ removes the pulse but not the number, because the number carries information.
   grown to seven blocks, while the right column held one panel and a screen-high
   void. Nobody found them. `e2e/layout.spec.ts` now measures both viewports; the
   cheapest fix for "it does not fit" is usually the empty half of the page, not
-  making something smaller.
+  making something smaller. The lobby inherited the same problem when the
+  configuration moved into it, and got the same answer: two columns past 900px, and on a
+  phone the points table takes a scroll container while the seats and **Start** stay
+  inside the fold. Measured at 390 × 844 in the same file — the seats are what a lobby is
+  for, so they are never what gets capped.
