@@ -201,6 +201,77 @@ than the pronoun. English pluralises at zero and French does not. Adding a langu
 means adding one file that satisfies `Messages`; the tests check that no catalogue
 has drifted from another.
 
+## Card themes
+
+Four card faces, chosen per player: **Classic**, **Flat**, **Letterpress** and
+**Neon**. Pick one from the four miniature previews on the home screen, or cycle
+through them from the button beside the mute toggle on the table.
+
+It is a display preference, not a table option, and that is the whole reason it is
+cheap. A theme changes what one player sees, so two people at the same table can run
+different ones and the game is identical. Nothing crosses the wire: no `TableRules`,
+no `room:create` field, no protocol type, no server code. It lives in `localStorage`
+beside the hand-sort mode and the mute flag, and an unrecognised stored value falls
+back to Classic rather than to a hand of blank cards.
+
+Each theme's decisions are data in `apps/web/src/lib/card-themes.ts` — ground, ink,
+numeral font and size, whether the oval is drawn, how the tokens are placed — and
+`Card.tsx` reads them. Only what needs a different _structure_ is a branch there:
+the oval, the stroked border, the glow. Same reasoning as `lib/palette.ts`.
+
+Two things hold in all four:
+
+- **The colourblind shape tokens stay.** Circle, square, triangle, diamond, per
+  colour. Colour is never the only signal in this project, and a theme does not get
+  to opt out of that. Where a pigment is too pale for its stock to show a shape —
+  yellow on cream measures 1.55:1 — the token keeps the colour and gains an ink
+  outline rather than losing either.
+- **The accessible label never changes.** "Red 7", "Wild draw four — not playable
+  this turn". That is game state; the face it is drawn on is not. A test asserts the
+  label is identical under all four themes.
+
+### Neon had to be fixed before it could ship
+
+It was first drawn as the boldest of the four with an explicit caveat: the glow cost
+contrast and it was the least legible of them. Offering an option already known to be
+the weakest is not a choice, it is a trap. Two changes inverted that, and both were
+measured rather than eyeballed — the numeral is cream on a near-black ground, and the
+glow is a blurred copy **behind** the glyph at half opacity rather than a shadow
+bleeding through it, so the colour the eye receives inside the numeral is the
+numeral's own.
+
+Measured from rendered pixels in Chromium, on the fully-covered interior of a
+numeral against the ground directly beneath it — hiding the glyph and re-sampling,
+so a glowing theme is measured against its own halo and not against the card:
+
+| Theme       | Worst numeral contrast | Where                                 |
+| ----------- | ---------------------- | ------------------------------------- |
+| Classic     | 1.67:1                 | yellow numeral on the bone oval       |
+| Flat        | 4.98:1                 | white numeral on red                  |
+| Letterpress | 15.6:1                 | ink numeral on paper stock            |
+| Neon        | 5.3:1                  | cream numeral against the yellow glow |
+
+Neon is now the second most legible of the four rather than the worst. The numbers
+are the 5th percentile of fully-covered glyph pixels; the single worst pixel sits
+around 2% lower, which is the screenshot encode rounding rather than anything a
+player can see. Antialiased edge pixels are excluded on purpose — their ratio is a
+fact about antialiasing, not about legibility.
+
+The floor for the three new themes is 4.5:1 on every colour, asserted in
+`apps/web/src/lib/card-themes.test.ts` from the same declared colours the browser
+paints — so it holds without a browser and cannot rot. `palette.test.ts` fails if
+those values ever drift from `tokens.css`.
+
+**Classic is exempt, deliberately and in writing.** It is the card everybody already
+has — a pigment numeral on a rotated bone oval — and the requirement was that it look
+exactly as it does today, so a player who never opens the preference notices nothing.
+Its yellow at 1.67:1 is a property of the printed card, and Flat exists partly as the
+answer for anyone who wants the legible version of it.
+
+Flat's light ink is pure white rather than the printed cream for the same measured
+reason: on the fixed red pigment, cream reaches 4.42:1 and no ink choice on that
+ground clears 4.5, while white reaches 4.98:1.
+
 ## Development
 
 Requires Node 22 or later. The repo pins the Active LTS in `.nvmrc`.

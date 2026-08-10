@@ -1,6 +1,9 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { CardThemeProvider } from '../components/CardThemeProvider.js'
+import { CARD_THEMES } from '../lib/card-themes.js'
+import { readCardTheme, writeCardTheme } from '../lib/preferences.js'
 import { Home } from './Home.js'
 
 const setup = (overrides: Partial<Parameters<typeof Home>[0]> = {}) => {
@@ -114,5 +117,62 @@ describe('Home', () => {
   it('shows no alert when there is no error', () => {
     setup()
     expect(screen.queryByRole('alert')).toBeNull()
+  })
+})
+
+describe('the card theme previews', () => {
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+
+  const setupThemes = () =>
+    render(
+      <CardThemeProvider>
+        <Home onCreate={vi.fn()} onJoin={vi.fn()} error={null} prefilledCode={null} />
+      </CardThemeProvider>,
+    )
+
+  it('offers one preview per theme, named for anyone who cannot see them', () => {
+    setupThemes()
+    for (const theme of CARD_THEMES) {
+      expect(screen.getByRole('button', { name: new RegExp(theme, 'i') })).toBeTruthy()
+    }
+  })
+
+  it('renders each preview with the real Card component, so it cannot drift', () => {
+    /* A preview drawn any other way is a second implementation of the card, and the
+       two would part company the first time either changed. Classic is the only
+       theme with the rotated oval, and exactly one preview has one. */
+    const { container } = setupThemes()
+    const previews = container.querySelectorAll('.theme-swatch svg[role="img"]')
+    expect(previews).toHaveLength(CARD_THEMES.length)
+    expect(container.querySelectorAll('.theme-swatch ellipse')).toHaveLength(1)
+  })
+
+  it('keeps the previews out of the way of a screen reader', () => {
+    // The button says which theme it is. The card inside would otherwise announce
+    // itself as a Red 7, which is not what pressing it does.
+    const { container } = setupThemes()
+    for (const preview of container.querySelectorAll('.theme-swatch-card')) {
+      expect(preview.getAttribute('aria-hidden')).toBe('true')
+    }
+  })
+
+  it('writes the preference when a preview is picked', async () => {
+    setupThemes()
+    await userEvent.click(screen.getByRole('button', { name: /letterpress/i }))
+    expect(readCardTheme()).toBe('letterpress')
+    expect(screen.getByRole('button', { name: /letterpress/i }).getAttribute('aria-pressed')).toBe(
+      'true',
+    )
+  })
+
+  it('starts on whatever the player last chose', () => {
+    writeCardTheme('neon')
+    setupThemes()
+    expect(screen.getByRole('button', { name: /neon/i }).getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByRole('button', { name: /classic/i }).getAttribute('aria-pressed')).toBe(
+      'false',
+    )
   })
 })

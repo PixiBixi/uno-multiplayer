@@ -2,6 +2,7 @@ import type { Card as CardData, CardId } from '@uno/engine'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
+import { CARD_THEMES } from '../lib/card-themes.js'
 import { Card, cardLabel } from './Card.js'
 
 const id = (value: string) => value as CardId
@@ -89,5 +90,104 @@ describe('Card', () => {
       expect(glyph?.getAttribute('dominant-baseline')).toBe('central')
       expect(glyph?.getAttribute('y')).toBe('84')
     }
+  })
+})
+
+describe('Card under each theme', () => {
+  const wild4: CardData = { id: id('w4'), kind: 'wild4' }
+
+  it('says exactly the same thing whatever the theme, because the label is game state', () => {
+    /* A display preference must not change what a screen reader hears. "Red 7" is a
+       fact about the game; the face it is drawn on is not. */
+    for (const theme of CARD_THEMES) {
+      const { container } = render(<Card card={num(7)} theme={theme} />)
+      expect(container.querySelector('svg')?.getAttribute('aria-label')).toBe('Red 7')
+    }
+  })
+
+  it('keeps the unplayable note out of the theme’s reach too', () => {
+    for (const theme of CARD_THEMES) {
+      render(<Card card={wild4} theme={theme} onPlay={() => undefined} disabled />)
+    }
+    const buttons = screen.getAllByRole('button')
+    expect(buttons).toHaveLength(CARD_THEMES.length)
+    for (const button of buttons) {
+      expect(button.getAttribute('aria-label')).toBe('Wild draw four — not playable this turn')
+    }
+  })
+
+  it('carries both shape tokens in every theme', () => {
+    for (const theme of CARD_THEMES) {
+      const { container } = render(<Card card={num(7)} theme={theme} />)
+      expect(container.querySelectorAll('[data-token]')).toHaveLength(2)
+    }
+  })
+
+  it('gives a wild four colours in every theme', () => {
+    for (const theme of CARD_THEMES) {
+      const { container } = render(<Card card={{ id: id('w'), kind: 'wild' }} theme={theme} />)
+      expect(container.querySelectorAll('[data-quadrant]')).toHaveLength(4)
+    }
+  })
+
+  it('draws a numeral in every theme', () => {
+    for (const theme of CARD_THEMES) {
+      const { container } = render(<Card card={num(7)} theme={theme} />)
+      expect(container.querySelector('[data-numeral]')?.textContent).toBe('7')
+    }
+  })
+
+  it('makes the flat numeral markedly bigger than the classic one', () => {
+    const sizeOf = (theme: 'classic' | 'flat') => {
+      const { container } = render(<Card card={num(7)} theme={theme} />)
+      return Number(container.querySelector('[data-numeral]')?.getAttribute('font-size'))
+    }
+    expect(sizeOf('flat') / sizeOf('classic')).toBeGreaterThan(1.35)
+  })
+
+  it('sets a serif face for letterpress and leaves the display face elsewhere', () => {
+    const fontOf = (theme: 'classic' | 'letterpress') => {
+      const { container } = render(<Card card={num(7)} theme={theme} />)
+      return container.querySelector('svg')?.getAttribute('font-family') ?? ''
+    }
+    expect(fontOf('letterpress')).toMatch(/georgia|serif/i)
+    expect(fontOf('classic')).toBe('var(--display)')
+  })
+
+  it('glows on neon only, and outside the glyph rather than through it', () => {
+    for (const theme of CARD_THEMES) {
+      const { container } = render(<Card card={num(7)} theme={theme} />)
+      const glow = container.querySelectorAll('[data-glow]')
+      expect(glow).toHaveLength(theme === 'neon' ? 1 : 0)
+      // The glow is a blurred copy behind the numeral. The numeral itself takes no
+      // filter, which is what keeps the contrast measured above true of the glyph.
+      expect(container.querySelector('[data-numeral]')?.getAttribute('filter')).toBeNull()
+    }
+  })
+
+  it('draws the rotated oval on classic and on nothing else', () => {
+    /* The oval is the classic card. A player who never touches this preference must
+       see the face they saw yesterday, which is why classic is also the default. */
+    for (const theme of CARD_THEMES) {
+      const { container } = render(<Card card={num(7)} theme={theme} />)
+      const oval = container.querySelector('ellipse')
+      if (theme === 'classic') {
+        expect(oval?.getAttribute('rx')).toBe('52')
+        expect(oval?.getAttribute('transform')).toBe('rotate(-27 60 84)')
+      } else {
+        expect(oval).toBeNull()
+      }
+    }
+  })
+
+  it('outlines the panel rather than filling it where the theme says so', () => {
+    const strokeOf = (theme: 'classic' | 'flat' | 'letterpress' | 'neon') => {
+      const { container } = render(<Card card={num(7)} theme={theme} />)
+      return container.querySelector('[data-panel]')?.getAttribute('stroke')
+    }
+    expect(strokeOf('classic')).toBeNull()
+    expect(strokeOf('flat')).toBeNull()
+    expect(strokeOf('letterpress')).toBe('var(--red)')
+    expect(strokeOf('neon')).toBe('var(--red)')
   })
 })

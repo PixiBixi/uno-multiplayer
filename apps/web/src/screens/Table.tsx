@@ -1,6 +1,7 @@
 import type { Move } from '@uno/engine'
 import type { LobbyView, PlayerView } from '@uno/protocol'
 import { CentreStack } from '../components/CentreStack.js'
+import { useCardTheme, useSetCardTheme } from '../components/CardThemeProvider.js'
 import { ChatPanel } from '../components/ChatPanel.js'
 import { GameOver } from '../components/GameOver.js'
 import { Hand } from '../components/Hand.js'
@@ -11,6 +12,7 @@ import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
 import { useTableEffects } from '../hooks/useTableEffects.js'
 import { useCountdown } from '../hooks/useCountdown.js'
 import { useTableSounds } from '../hooks/useTableSounds.js'
+import { nextCardTheme } from '../lib/card-themes.js'
 import { useMessages } from '../i18n/index.js'
 
 type TableProps = {
@@ -46,6 +48,8 @@ export function Table({
   onDismissToast,
 }: TableProps) {
   const t = useMessages()
+  const cardTheme = useCardTheme()
+  const setCardTheme = useSetCardTheme()
   const myTurn = view.currentSeat === view.you.seat
   const canDraw = view.you.legalMoves.some((move) => move.type === 'draw')
   const acceptDraw = view.you.legalMoves.find((move) => move.type === 'acceptDraw')
@@ -121,6 +125,35 @@ export function Table({
                 <path d="M18.5 5.5a9 9 0 0 1 0 13" />
               </>
             )}
+          </svg>
+        </button>
+        {/* Beside the mute toggle for the same reason it is: a card face is a
+            setting, not a move, and it must not sit among the buttons a player
+            reaches for with a clock running. A cycler rather than four options,
+            because there is no room on the felt for four and the previews on the
+            home screen are where you choose by looking. */}
+        <button
+          type="button"
+          className="theme-cycler"
+          onClick={() => {
+            setCardTheme(nextCardTheme(cardTheme))
+          }}
+          aria-label={t.cardTheme.named(t.cardTheme.name[cardTheme])}
+          title={t.cardTheme.named(t.cardTheme.name[cardTheme])}
+        >
+          <svg
+            width={20}
+            height={20}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x={3} y={6} width={11} height={15} rx={2} />
+            <path d="M8 3h9a2 2 0 0 1 2 2v12" />
           </svg>
         </button>
         <div className="table-grid">

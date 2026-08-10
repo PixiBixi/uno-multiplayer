@@ -45,6 +45,20 @@ const liste = (noms: string[]): string => {
 export const fr: Messages = {
   card: nomCarte,
   colour: (colour) => COULEUR[colour],
+  /* Les noms de thèmes sont traduits plutôt que laissés en anglais : ce sont des
+     mots courants en français, contrairement à « jump-in ». « Typographié » dit ce
+     que fait la carte — une couleur en filet, un chiffre en serif — là où un calque
+     de « letterpress » ne dirait rien à personne. */
+  cardTheme: {
+    label: 'Thème des cartes',
+    named: (name) => `Thème des cartes : ${name}`,
+    name: {
+      classic: 'Classique',
+      flat: 'Épuré',
+      letterpress: 'Typographié',
+      neon: 'Néon',
+    },
+  },
   count: { cards: cartes, points, list: liste },
 
   event: {

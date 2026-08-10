@@ -36,6 +36,16 @@ const list = (names: string[]): string => {
 export const en: Messages = {
   card: cardName,
   colour: (colour) => COLOUR[colour],
+  cardTheme: {
+    label: 'Card theme',
+    named: (name) => `Card theme: ${name}`,
+    name: {
+      classic: 'Classic',
+      flat: 'Flat',
+      letterpress: 'Letterpress',
+      neon: 'Neon',
+    },
+  },
   count: { cards, points, list },
 
   /* English keeps one form for both persons in these, so the `isYou` argument

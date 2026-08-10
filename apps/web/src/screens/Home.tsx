@@ -1,4 +1,4 @@
-import type { MatchGoal, TableRules } from '@uno/engine'
+import type { Card as CardData, CardId, MatchGoal, TableRules } from '@uno/engine'
 import type { MatchPace } from '@uno/protocol'
 import {
   DEFAULT_MATCH_GOAL,
@@ -13,7 +13,10 @@ import {
   ROOM_CODE_LENGTH,
 } from '@uno/protocol'
 import { useState, type FormEvent } from 'react'
+import { Card } from '../components/Card.js'
 import { CardValues } from '../components/CardValues.js'
+import { useCardTheme, useSetCardTheme } from '../components/CardThemeProvider.js'
+import { CARD_THEMES } from '../lib/card-themes.js'
 import { LOCALES, LOCALE_NAME, useLocale, useMessages, useSetLocale } from '../i18n/index.js'
 
 /* Offered as presets rather than a bare number field, because the interesting
@@ -22,6 +25,18 @@ import { LOCALES, LOCALE_NAME, useLocale, useMessages, useSetLocale } from '../i
 const POINT_PRESETS = [250, 500, 1000] as const
 const ROUND_PRESETS = [1, 3, 5] as const
 const TURN_PRESETS = [5, 10, 15, 30] as const
+
+/**
+ * The card every preview shows. The same card in all four, because the question a
+ * player is answering is which face they prefer, not which colour — and one card
+ * rendered four ways is the only way to see the difference.
+ */
+const PREVIEW_CARD: CardData = {
+  id: 'theme-preview' as CardId,
+  kind: 'number',
+  color: 'R',
+  value: 7,
+}
 
 type HomeProps = {
   onCreate: (name: string, goal: MatchGoal, pace: MatchPace, rules: TableRules) => void
@@ -37,6 +52,8 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
   const t = useMessages()
   const locale = useLocale()
   const setLocale = useSetLocale()
+  const cardTheme = useCardTheme()
+  const setCardTheme = useSetCardTheme()
   const [name, setName] = useState('')
   const [code, setCode] = useState(prefilledCode ?? '')
   const [goalKind, setGoalKind] = useState<MatchGoal['kind']>(DEFAULT_MATCH_GOAL.kind)
@@ -299,6 +316,33 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
             {t.home.joinGame}
           </button>
         </form>
+        {/* Four real cards rather than four named options: you pick by looking. Each
+            preview renders the same `Card` component the table does, with the theme
+            forced, so a preview cannot drift from the face it is offering. */}
+        <div className="lang-row theme-row" role="group" aria-label={t.cardTheme.label}>
+          <span className="hint">{t.cardTheme.label}</span>
+          {CARD_THEMES.map((option) => (
+            <button
+              key={option}
+              type="button"
+              className={option === cardTheme ? 'theme-swatch theme-swatch-on' : 'theme-swatch'}
+              aria-pressed={option === cardTheme}
+              aria-label={t.cardTheme.named(t.cardTheme.name[option])}
+              title={t.cardTheme.name[option]}
+              onClick={() => {
+                setCardTheme(option)
+              }}
+            >
+              {/* Hidden from assistive technology: the button already says which
+                  theme it is, and the card inside would otherwise announce itself as
+                  a Red 7 that cannot be played. */}
+              <span className="theme-swatch-card" aria-hidden="true">
+                <Card card={PREVIEW_CARD} theme={option} />
+              </span>
+            </button>
+          ))}
+        </div>
+
         <div className="lang-row">
           <span className="hint">{t.home.language}</span>
           {LOCALES.map((option) => (

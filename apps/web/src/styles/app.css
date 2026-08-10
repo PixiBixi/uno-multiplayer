@@ -1345,12 +1345,14 @@ h3 {
   border-color: var(--accent);
 }
 
-/* ---------- Sound toggle ---------- */
+/* ---------- Felt settings: sound, card theme ---------- */
 
 /* Pinned to the felt rather than placed in the control row: it is a setting, not
    a move, and it must not sit among the buttons a player reaches for under time
-   pressure. */
-.sound-toggle {
+   pressure. The card-theme cycler sits beside it for exactly the same reason and
+   therefore shares its treatment rather than restating it. */
+.sound-toggle,
+.theme-cycler {
   position: absolute;
   top: 0.6rem;
   right: 0.6rem;
@@ -1373,7 +1375,9 @@ h3 {
 }
 
 .sound-toggle:hover,
-.sound-toggle:focus-visible {
+.sound-toggle:focus-visible,
+.theme-cycler:hover,
+.theme-cycler:focus-visible {
   opacity: 1;
   border-color: var(--accent);
 }
@@ -1382,6 +1386,11 @@ h3 {
 .sound-toggle[aria-pressed='true'] {
   opacity: 1;
   color: var(--yellow);
+}
+
+/* One 44px target clear of the other, so neither is hit by mistake. */
+.theme-cycler {
+  right: 3.5rem;
 }
 
 /* ---------- Blazing ---------- */
@@ -1546,4 +1555,50 @@ h3 {
   border-color: var(--accent);
   color: var(--accent);
   font-weight: 600;
+}
+
+/* ---------- Card theme previews ---------- */
+
+/* Beside the language chips, and laid out like them: both are preferences about how
+   the page looks rather than anything about the match. */
+.theme-swatch {
+  appearance: none;
+  /* A tap target is a tap target, even for a control most players use once. */
+  min-height: 44px;
+  min-width: 44px;
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  border: 1px solid var(--panel-edge);
+  border-radius: 9px;
+  background: none;
+  cursor: pointer;
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease;
+}
+
+.theme-swatch:hover,
+.theme-swatch:focus-visible {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.theme-swatch-on {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+/* Narrow enough that four fit beside the label, wide enough that the difference
+   between the four faces is the thing you notice. */
+.theme-swatch-card {
+  display: block;
+  width: 30px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-swatch:hover,
+  .theme-swatch:focus-visible {
+    transform: none;
+  }
 }

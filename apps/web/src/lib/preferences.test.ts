@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest'
-import { readHandSort, writeHandSort } from './preferences.js'
+import { readCardTheme, readHandSort, writeCardTheme, writeHandSort } from './preferences.js'
 
 beforeEach(() => {
   window.localStorage.clear()
@@ -37,6 +37,46 @@ describe('hand sort preference', () => {
 
     expect(() => writeHandSort('colour')).not.toThrow()
     expect(readHandSort()).toBe('dealt')
+
+    if (original !== undefined) Object.defineProperty(window, 'localStorage', original)
+  })
+})
+
+describe('card theme preference', () => {
+  it('defaults to the card everybody already has', () => {
+    expect(readCardTheme()).toBe('classic')
+  })
+
+  it('round-trips a choice', () => {
+    writeCardTheme('letterpress')
+    expect(readCardTheme()).toBe('letterpress')
+  })
+
+  it('falls back to classic on a stored value that is not a theme', () => {
+    /* Not a blank card: an unknown theme has no spec, and a face built from
+       `undefined` renders nothing at all. The mute flag guards the same way for the
+       same reason. */
+    window.localStorage.setItem('uno.pref.cardTheme', 'holographic')
+    expect(readCardTheme()).toBe('classic')
+  })
+
+  it('keeps its key out of the session namespace', () => {
+    writeCardTheme('neon')
+    expect(window.localStorage.getItem('uno.pref.cardTheme')).toBe('neon')
+    expect(window.localStorage.getItem('uno.session.cardTheme')).toBeNull()
+  })
+
+  it('degrades instead of throwing when storage is unavailable', () => {
+    const original = Object.getOwnPropertyDescriptor(window, 'localStorage')
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new Error('storage blocked')
+      },
+    })
+
+    expect(() => writeCardTheme('neon')).not.toThrow()
+    expect(readCardTheme()).toBe('classic')
 
     if (original !== undefined) Object.defineProperty(window, 'localStorage', original)
   })

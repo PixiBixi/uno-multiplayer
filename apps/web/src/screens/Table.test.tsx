@@ -2,7 +2,10 @@ import type { Card, CardId } from '@uno/engine'
 import { DEFAULT_MATCH_GOAL, type PlayerView } from '@uno/protocol'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { CardThemeProvider } from '../components/CardThemeProvider.js'
+import { CARD_THEMES } from '../lib/card-themes.js'
+import { readCardTheme } from '../lib/preferences.js'
 import { Table } from './Table.js'
 
 const top: Card = { id: 'top' as CardId, kind: 'number', color: 'R', value: 3 }
@@ -240,5 +243,95 @@ describe('Table', () => {
     )
     expect(named.filter((label) => label === 'Face-down card').length).toBeGreaterThan(0)
     expect(named.filter((label) => label === 'Red 5')).toHaveLength(1)
+  })
+})
+
+describe('the card theme cycler', () => {
+  const withProvider = () => {
+    render(
+      <CardThemeProvider>
+        <Table
+          view={viewWith()}
+          lobby={null}
+          feed={[]}
+          toasts={[]}
+          onPlay={vi.fn()}
+          onNextRound={vi.fn()}
+          onRestart={vi.fn()}
+          onLeave={vi.fn()}
+          onSend={vi.fn()}
+          onDismissToast={vi.fn()}
+        />
+      </CardThemeProvider>,
+    )
+  }
+
+  beforeEach(() => {
+    window.localStorage.clear()
+  })
+
+  it('sits beside the mute toggle rather than among the moves', () => {
+    /* Both are settings. The controls row holds the things a player reaches for with
+       a clock running, and a card face is not one of them. */
+    const { container } = render(
+      <CardThemeProvider>
+        <Table
+          view={viewWith()}
+          lobby={null}
+          feed={[]}
+          toasts={[]}
+          onPlay={vi.fn()}
+          onNextRound={vi.fn()}
+          onRestart={vi.fn()}
+          onLeave={vi.fn()}
+          onSend={vi.fn()}
+          onDismissToast={vi.fn()}
+        />
+      </CardThemeProvider>,
+    )
+    expect(container.querySelector('.controls .theme-cycler')).toBeNull()
+    expect(container.querySelector('.table-surface > .theme-cycler')).not.toBeNull()
+  })
+
+  it('steps to the next theme and remembers it', async () => {
+    withProvider()
+    const cycler = screen.getByRole('button', { name: /card theme/i })
+    expect(cycler.getAttribute('aria-label')).toBe('Card theme: Classic')
+
+    await userEvent.click(cycler)
+    expect(cycler.getAttribute('aria-label')).toBe('Card theme: Flat')
+    expect(readCardTheme()).toBe('flat')
+  })
+
+  it('comes back round to classic after the last theme', async () => {
+    withProvider()
+    const cycler = screen.getByRole('button', { name: /card theme/i })
+    for (let step = 0; step < CARD_THEMES.length; step += 1) await userEvent.click(cycler)
+    expect(readCardTheme()).toBe('classic')
+  })
+
+  it('repaints the cards on screen, not only the button', async () => {
+    // The point of the control. A cycler that stores a preference the hand does not
+    // read is a cycler that appears broken.
+    const { container } = render(
+      <CardThemeProvider>
+        <Table
+          view={viewWith()}
+          lobby={null}
+          feed={[]}
+          toasts={[]}
+          onPlay={vi.fn()}
+          onNextRound={vi.fn()}
+          onRestart={vi.fn()}
+          onLeave={vi.fn()}
+          onSend={vi.fn()}
+          onDismissToast={vi.fn()}
+        />
+      </CardThemeProvider>,
+    )
+    expect(container.querySelectorAll('ellipse').length).toBeGreaterThan(0)
+    await userEvent.click(screen.getByRole('button', { name: /card theme/i }))
+    // Flat draws no oval, on any card on the table.
+    expect(container.querySelectorAll('ellipse')).toHaveLength(0)
   })
 })

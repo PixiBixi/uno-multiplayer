@@ -1,5 +1,6 @@
 import type { Card, MatchGoal } from '@uno/engine'
 import type { ErrorCode } from '@uno/protocol'
+import type { CardTheme } from '../lib/card-themes.js'
 
 export const LOCALES = ['en', 'fr'] as const
 export type Locale = (typeof LOCALES)[number]
@@ -25,6 +26,19 @@ export type Messages = {
   /** Card names, which appear inside sentences and so must be a language's own. */
   card: (card: Card) => string
   colour: (colour: 'R' | 'G' | 'B' | 'Y') => string
+
+  /**
+   * The card face a player chose for themselves. Named in both places it can be
+   * changed — the previews on the home screen and the cycler on the table — and
+   * `Record<CardTheme, string>` so adding a theme is a compile error in every
+   * catalogue rather than a blank in one of them.
+   */
+  cardTheme: {
+    label: string
+    /** Accessible name for a control showing one theme: "Card theme: Classic". */
+    named: (name: string) => string
+    name: Record<CardTheme, string>
+  }
 
   count: {
     cards: (n: number) => string

@@ -1,3 +1,4 @@
+import { CARD_THEMES, DEFAULT_CARD_THEME, type CardTheme } from './card-themes.js'
 import { HAND_SORTS, type HandSort } from './sort-hand.js'
 
 const HAND_SORT_KEY = 'uno.pref.handSort'
@@ -49,6 +50,37 @@ export function readMuted(): boolean {
 export function writeMuted(muted: boolean): void {
   try {
     window.localStorage.setItem(MUTED_KEY, muted ? 'true' : 'false')
+  } catch {
+    /* The preference will not survive a reload. Play continues. */
+  }
+}
+
+const CARD_THEME_KEY = 'uno.pref.cardTheme'
+
+const isCardTheme = (value: string | null): value is CardTheme =>
+  value !== null && (CARD_THEMES as readonly string[]).includes(value)
+
+/**
+ * Which of the four card faces this player sees. Nobody else is affected: two
+ * people at the same table can run different themes and the game is identical.
+ *
+ * An unrecognised value falls back to `classic` rather than being trusted, because
+ * a theme name with no spec behind it is not a cosmetic problem — the face would be
+ * built from `undefined` and render as a blank card, with a hand of them. Same
+ * reasoning as the mute flag, which stores the exception rather than the state.
+ */
+export function readCardTheme(): CardTheme {
+  try {
+    const stored = window.localStorage.getItem(CARD_THEME_KEY)
+    return isCardTheme(stored) ? stored : DEFAULT_CARD_THEME
+  } catch {
+    return DEFAULT_CARD_THEME
+  }
+}
+
+export function writeCardTheme(theme: CardTheme): void {
+  try {
+    window.localStorage.setItem(CARD_THEME_KEY, theme)
   } catch {
     /* The preference will not survive a reload. Play continues. */
   }

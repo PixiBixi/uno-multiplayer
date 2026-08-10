@@ -1,12 +1,24 @@
 import { isWild, type Card as CardData, type Color } from '@uno/engine'
+import { useId, type ReactNode } from 'react'
+import {
+  CARD_THEME_SPEC,
+  cardPaints,
+  pigmentPaint,
+  type CardPaints,
+  type CardTheme,
+  type CardThemeSpec,
+} from '../lib/card-themes.js'
 import { COLOR_NAME, COLOR_VALUE } from '../lib/palette.js'
+import { useCardTheme } from './CardThemeProvider.js'
 
-const BONE = 'var(--bone)'
-const INK = 'var(--ink)'
 /**
  * Shape per pigment: the non-chromatic channel. Colour is the rule in UNO, not
  * decoration, so it cannot also be the only way to read a card. Around one man
  * in twelve has a red–green deficiency.
+ *
+ * This holds in all four themes. A theme decides what colour the token is drawn in
+ * and whether it needs an outline to survive its ground; it does not get to decide
+ * whether there is one.
  */
 const SHAPE: Record<Color, 'circle' | 'triangle' | 'square' | 'diamond'> = {
   R: 'circle',
@@ -14,6 +26,11 @@ const SHAPE: Record<Color, 'circle' | 'triangle' | 'square' | 'diamond'> = {
   B: 'square',
   Y: 'diamond',
 }
+
+/** The classic numeral, from which every other glyph on the face is scaled. */
+const BASE_NUMERAL = 66
+/** The classic "+2" against that numeral. Kept as a ratio so a theme scales both. */
+const SMALL_RATIO = 46 / BASE_NUMERAL
 
 export function cardLabel(card: CardData): string {
   switch (card.kind) {
@@ -49,10 +66,27 @@ function cornerLabel(card: CardData): string {
   }
 }
 
-function ShapeToken({ color, x, y }: { color: Color; x: number; y: number }) {
+function ShapeToken({
+  color,
+  x,
+  y,
+  fill,
+  outline,
+}: {
+  color: Color
+  x: number
+  y: number
+  fill: string
+  outline: string | null
+}) {
   const shape = SHAPE[color]
   const r = 5.5
-  if (shape === 'circle') return <circle cx={x} cy={y} r={r} fill={BONE} data-token={shape} />
+  /* An outline is how a pale pigment survives pale stock: the letterpress theme
+     keeps the colour and edges the shape, rather than dropping either. */
+  const edge = outline === null ? {} : { stroke: outline, strokeWidth: 0.9 }
+  if (shape === 'circle') {
+    return <circle cx={x} cy={y} r={r} fill={fill} {...edge} data-token={shape} />
+  }
   if (shape === 'square') {
     return (
       <rect
@@ -61,47 +95,131 @@ function ShapeToken({ color, x, y }: { color: Color; x: number; y: number }) {
         width={r * 2}
         height={r * 2}
         rx={1}
-        fill={BONE}
+        fill={fill}
+        {...edge}
         data-token={shape}
       />
     )
   }
   if (shape === 'triangle') {
     return (
-      <path d={`M${x} ${y - r}L${x + r} ${y + r * 0.8}H${x - r}Z`} fill={BONE} data-token={shape} />
+      <path
+        d={`M${x} ${y - r}L${x + r} ${y + r * 0.8}H${x - r}Z`}
+        fill={fill}
+        {...edge}
+        data-token={shape}
+      />
     )
   }
   return (
     <path
       d={`M${x} ${y - r}L${x + r} ${y}L${x} ${y + r}L${x - r} ${y}Z`}
-      fill={BONE}
+      fill={fill}
+      {...edge}
       data-token={shape}
     />
   )
 }
 
-function Quadrants({ cx, cy, r }: { cx: number; cy: number; r: number }) {
-  const wedges: Array<[string, string]> = [
-    [`M${cx} ${cy} L${cx} ${cy - r} A${r} ${r} 0 0 1 ${cx + r} ${cy} Z`, COLOR_VALUE.R],
-    [`M${cx} ${cy} L${cx + r} ${cy} A${r} ${r} 0 0 1 ${cx} ${cy + r} Z`, COLOR_VALUE.Y],
-    [`M${cx} ${cy} L${cx} ${cy + r} A${r} ${r} 0 0 1 ${cx - r} ${cy} Z`, COLOR_VALUE.G],
-    [`M${cx} ${cy} L${cx - r} ${cy} A${r} ${r} 0 0 1 ${cx} ${cy - r} Z`, COLOR_VALUE.B],
+/**
+ * A wild's four colours. Every theme shows all four — that is what says "wild" —
+ * but the shape they are drawn in belongs to the theme: the printed wheel, four
+ * squares on the flat face, four dots on paper.
+ */
+function WildMark({
+  kind,
+  cx,
+  cy,
+  r,
+  decorated,
+}: {
+  kind: CardThemeSpec['wild']
+  cx: number
+  cy: number
+  r: number
+  decorated: boolean
+}) {
+  const mark = (index: number) => (decorated ? { 'data-quadrant': index } : {})
+
+  if (kind === 'wheel') {
+    const wedges: Array<[string, string]> = [
+      [`M${cx} ${cy} L${cx} ${cy - r} A${r} ${r} 0 0 1 ${cx + r} ${cy} Z`, COLOR_VALUE.R],
+      [`M${cx} ${cy} L${cx + r} ${cy} A${r} ${r} 0 0 1 ${cx} ${cy + r} Z`, COLOR_VALUE.Y],
+      [`M${cx} ${cy} L${cx} ${cy + r} A${r} ${r} 0 0 1 ${cx - r} ${cy} Z`, COLOR_VALUE.G],
+      [`M${cx} ${cy} L${cx - r} ${cy} A${r} ${r} 0 0 1 ${cx} ${cy - r} Z`, COLOR_VALUE.B],
+    ]
+    return (
+      <>
+        {wedges.map(([d, fill], index) => (
+          <path key={index} d={d} fill={fill} {...mark(index)} />
+        ))}
+      </>
+    )
+  }
+
+  /* Same reading order as the wheel — red north-east, then clockwise — so the four
+     colours never appear in two different arrangements. */
+  const offset = r * (kind === 'squares' ? 0.5 : 0.52)
+  const spots: Array<[number, number, string]> = [
+    [cx + offset, cy - offset, COLOR_VALUE.R],
+    [cx + offset, cy + offset, COLOR_VALUE.Y],
+    [cx - offset, cy + offset, COLOR_VALUE.G],
+    [cx - offset, cy - offset, COLOR_VALUE.B],
   ]
+
+  if (kind === 'squares') {
+    const side = r * 0.85
+    return (
+      <>
+        {spots.map(([x, y, fill], index) => (
+          <rect
+            key={index}
+            x={x - side / 2}
+            y={y - side / 2}
+            width={side}
+            height={side}
+            rx={1.5}
+            fill={fill}
+            {...mark(index)}
+          />
+        ))}
+      </>
+    )
+  }
+
   return (
     <>
-      {wedges.map(([d, fill], index) => (
-        <path key={index} d={d} fill={fill} data-quadrant={index} />
+      {spots.map(([x, y, fill], index) => (
+        <circle key={index} cx={x} cy={y} r={r * 0.42} fill={fill} {...mark(index)} />
       ))}
     </>
   )
 }
 
 /**
- * Every glyph is centred on the ellipse centre (60, 84) with dominantBaseline,
- * never by guessing a baseline offset — cap height differs per glyph.
+ * Every glyph is centred on the face centre (60, 84) with dominantBaseline, never
+ * by guessing a baseline offset — cap height differs per glyph, and it differs
+ * again between the display face and the serif one letterpress uses.
+ *
+ * `decorated` is false for the copy a glowing theme draws behind the real one. The
+ * blurred copy must not carry the data attributes the tests and the styles hang
+ * off, or a neon card would appear to have eight quadrants and two numerals.
  */
-function FaceMark({ card, fill }: { card: CardData; fill: string }) {
+function FaceMark({
+  card,
+  spec,
+  paints,
+  fill,
+  decorated,
+}: {
+  card: CardData
+  spec: CardThemeSpec
+  paints: CardPaints
+  fill: string
+  decorated: boolean
+}) {
   const centred = { textAnchor: 'middle' as const, dominantBaseline: 'central' as const }
+  const scale = spec.numeral / BASE_NUMERAL
   const stroke = {
     stroke: fill,
     strokeWidth: 9,
@@ -109,54 +227,83 @@ function FaceMark({ card, fill }: { card: CardData; fill: string }) {
     strokeLinecap: 'round' as const,
     strokeLinejoin: 'round' as const,
   }
+  /* The action glyphs are drawn from fixed coordinates around the face centre, so a
+     theme with a bigger numeral scales them about that centre rather than restating
+     every path. At scale 1 the transform is omitted entirely: the classic face has
+     to stay byte for byte what it was. */
+  const scaled = (children: ReactNode) =>
+    scale === 1 ? (
+      <g {...stroke}>{children}</g>
+    ) : (
+      <g {...stroke} transform={`translate(60 84) scale(${String(scale)}) translate(-60 -84)`}>
+        {children}
+      </g>
+    )
 
   switch (card.kind) {
     case 'number':
       return (
-        <text x={60} y={84} {...centred} fontSize={66} fontWeight={600} fill={fill}>
+        <text
+          x={60}
+          y={84}
+          {...centred}
+          fontSize={spec.numeral}
+          fontWeight={spec.weight}
+          fill={fill}
+          {...(decorated ? { 'data-numeral': '' } : {})}
+        >
           {card.value}
         </text>
       )
     case 'draw2':
       return (
-        <text x={60} y={84} {...centred} fontSize={46} fontWeight={600} fill={fill}>
+        <text
+          x={60}
+          y={84}
+          {...centred}
+          fontSize={Math.round(spec.numeral * SMALL_RATIO)}
+          fontWeight={spec.weight}
+          fill={fill}
+          {...(decorated ? { 'data-numeral': '' } : {})}
+        >
           +2
         </text>
       )
     case 'skip':
-      return (
-        <g {...stroke}>
+      return scaled(
+        <>
           <circle cx={60} cy={84} r={23} />
           <line x1={43} y1={67} x2={77} y2={101} />
-        </g>
+        </>,
       )
     /* Two bold opposing arrows, the way the printed card does it. A pair of thin
        arcs read as squiggles at hand size. */
     case 'reverse':
-      return (
-        <g {...stroke}>
+      return scaled(
+        <>
           <path d="M47 105V65" />
           <path d="M38 74L47 63L56 74" />
           <path d="M73 63V103" />
           <path d="M64 94L73 105L82 94" />
-        </g>
+        </>,
       )
     case 'wild':
-      return <Quadrants cx={60} cy={84} r={26} />
-    /* The +4 label sits INSIDE the bone ellipse. Placed below it, ink on ink
-       would make it vanish off the card. */
+      return <WildMark kind={spec.wild} cx={60} cy={84} r={26} decorated={decorated} />
+    /* The +4 label sits INSIDE the face, in whichever ink survives there. Placed
+       below it, ink on ink would make it vanish off the card — and on the neon face
+       ink on near-black would do the same. */
     case 'wild4':
       return (
         <>
-          <Quadrants cx={60} cy={71} r={19} />
+          <WildMark kind={spec.wild} cx={60} cy={71} r={19} decorated={decorated} />
           <text
             x={60}
             y={107}
             {...centred}
             fontSize={26}
             fontWeight={600}
-            fill={INK}
-            data-plusfour=""
+            fill={paints.legible.css}
+            {...(decorated ? { 'data-plusfour': '' } : {})}
           >
             +4
           </text>
@@ -169,15 +316,42 @@ type CardProps = {
   card: CardData
   onPlay?: () => void
   disabled?: boolean
+  /**
+   * Overrides the player's chosen theme. Only the home screen's previews pass it,
+   * so that each preview can show the face it offers by rendering the real card —
+   * a preview drawn any other way is a preview that can drift from the thing it
+   * previews.
+   */
+  theme?: CardTheme
 }
 
-export function Card({ card, onPlay, disabled = false }: CardProps) {
+export function Card({ card, onPlay, disabled = false, theme }: CardProps) {
+  const chosen = useCardTheme()
+  /* React ids carry colons, which are legal in a fragment but a poor bet inside a
+     url() reference. The glow filter needs a document-unique id because a hand is a
+     dozen of these. */
+  const glowId = `glow-${useId().replace(/[^a-zA-Z0-9]/g, '')}`
+
+  const spec = CARD_THEME_SPEC[theme ?? chosen]
   const wild = isWild(card)
-  const pigment = wild ? INK : COLOR_VALUE[card.color]
-  const faceFill = wild ? BONE : pigment
+  const pigment = wild ? spec.wildPigment : pigmentPaint(card.color)
+  const paints = cardPaints(spec, pigment)
   const tokenColor: Color = wild ? 'R' : card.color
   const label = disabled ? `${cardLabel(card)} — not playable this turn` : cardLabel(card)
   const corner = cornerLabel(card)
+
+  const inset = spec.panel === 'stroke' ? spec.panelStroke / 2 : 0
+  const outlined =
+    spec.panel === 'stroke'
+      ? { stroke: paints.pigment.css, strokeWidth: spec.panelStroke }
+      : undefined
+  const panel = {
+    x: 6 + inset,
+    y: 6 + inset,
+    width: 108 - inset * 2,
+    height: 156 - inset * 2,
+    rx: 7,
+  }
 
   const face = (
     <svg
@@ -185,13 +359,67 @@ export function Card({ card, onPlay, disabled = false }: CardProps) {
       role="img"
       aria-label={label}
       style={{ width: '100%', height: 'auto', display: 'block' }}
-      fontFamily="var(--display)"
+      fontFamily={spec.font}
     >
-      <rect x={0} y={0} width={120} height={168} rx={11} fill={BONE} />
-      <rect x={6} y={6} width={108} height={156} rx={7} fill={pigment} />
-      <ellipse cx={60} cy={84} rx={52} ry={30} fill={BONE} transform="rotate(-27 60 84)" />
-      <FaceMark card={card} fill={faceFill} />
-      <g fontSize={17} fontWeight={600} fill={BONE} textAnchor="middle" dominantBaseline="central">
+      {spec.glow !== null && (
+        <defs>
+          {/* Over the whole card in user space: the default filter region is a
+              percentage of the bounding box and clips a wide blur. */}
+          <filter id={glowId} filterUnits="userSpaceOnUse" x={0} y={0} width={120} height={168}>
+            <feGaussianBlur stdDeviation={spec.glow.blur} />
+          </filter>
+        </defs>
+      )}
+
+      <rect x={0} y={0} width={120} height={168} rx={11} fill={paints.stock.css} />
+
+      {spec.glow !== null && outlined !== undefined && (
+        <rect
+          {...panel}
+          fill="none"
+          {...outlined}
+          filter={`url(#${glowId})`}
+          opacity={spec.glow.opacity}
+        />
+      )}
+
+      <rect {...panel} fill={paints.ground.css} {...outlined} data-panel="" />
+
+      {paints.oval !== null && (
+        <ellipse
+          cx={60}
+          cy={84}
+          rx={52}
+          ry={30}
+          fill={paints.oval.css}
+          transform="rotate(-27 60 84)"
+        />
+      )}
+
+      {/* The glow is a blurred copy BEHIND the glyph, never a shadow through it.
+          That is the whole reason the neon face can be both bright and legible: the
+          colour the eye receives inside the numeral is the numeral's own. */}
+      {spec.glow !== null && (
+        <g filter={`url(#${glowId})`} opacity={spec.glow.opacity} data-glow="">
+          <FaceMark
+            card={card}
+            spec={spec}
+            paints={paints}
+            fill={paints.pigment.css}
+            decorated={false}
+          />
+        </g>
+      )}
+
+      <FaceMark card={card} spec={spec} paints={paints} fill={paints.face.css} decorated />
+
+      <g
+        fontSize={17}
+        fontWeight={600}
+        fill={paints.trim.css}
+        textAnchor="middle"
+        dominantBaseline="central"
+      >
         <text x={32} y={26}>
           {corner}
         </text>
@@ -203,9 +431,21 @@ export function Card({ card, onPlay, disabled = false }: CardProps) {
           </text>
         </g>
       </g>
-      <ShapeToken color={tokenColor} x={20} y={22} />
+      <ShapeToken
+        color={tokenColor}
+        x={20}
+        y={22}
+        fill={paints.token.css}
+        outline={paints.tokenEdge?.css ?? null}
+      />
       <g transform="rotate(180 60 84)">
-        <ShapeToken color={tokenColor} x={20} y={22} />
+        <ShapeToken
+          color={tokenColor}
+          x={20}
+          y={22}
+          fill={paints.token.css}
+          outline={paints.tokenEdge?.css ?? null}
+        />
       </g>
     </svg>
   )

@@ -17,8 +17,8 @@ backed by the engine running in the tab. See
 
 **`lib/` is pure.** Decisions live here as functions with no React in them:
 `sounds.ts` decides which cue an event deserves, `play-effects.ts` which flourish,
-`sort-hand.ts` how to order a hand, `describe-event.ts` what the log says. All are
-unit-tested without a browser.
+`sort-hand.ts` how to order a hand, `describe-event.ts` what the log says,
+`card-themes.ts` what a card face looks like. All are unit-tested without a browser.
 
 **`hooks/` owns bookkeeping.** `useTableEffects` and `useTableSounds` both track
 "what have I already reacted to", which is subtler than it sounds: a reconnect
@@ -34,6 +34,48 @@ Note the two hooks read different sources on purpose. Effects read the **view**,
 because a wild's burst needs the colour that was chosen and the feed may not have
 caught up. Sound reads the **feed**, because a cue only needs the card's kind. That
 asymmetry is intentional; do not "fix" it.
+
+## Card themes
+
+Four faces — classic, flat, letterpress, neon — chosen by **each player**, in
+`localStorage` beside the hand-sort mode and the mute flag. It is a display
+preference, not a table option: two people at the same table can run different ones
+and the game is identical, so nothing about it crosses the wire. No protocol type, no
+`room:create` field, no server code, no socket test.
+
+Each theme's decisions are data in `lib/card-themes.ts` and `Card.tsx` reads them —
+the same reason `palette.ts` exists. Only what needs a different _structure_ is a
+branch in the component: whether the oval is drawn, whether the panel is filled or
+outlined, whether the numeral carries a glow. A value that merely differs per theme
+is a table entry.
+
+Three rules constrain any fifth theme somebody adds:
+
+- **The shape tokens stay.** Colour is never the only signal here, and a theme does
+  not get to opt out. Where a pigment is too pale for its stock, the token keeps the
+  colour and gains an outline — letterpress does this, because a yellow diamond on
+  cream measures 1.55:1 and a shape nobody can see is the same as no shape.
+- **The accessible label does not change with it.** The label is game state; the face
+  is a preference. Asserted for all four themes in `Card.test.tsx`.
+- **Contrast is measured, not judged.** `card-themes.test.ts` holds every theme but
+  classic to 4.5:1 for the numeral against the ground directly beneath it, computed
+  from the declared colours so no browser is needed. Classic is exempt in writing: it
+  is the printed card everybody already has and its yellow measures 1.67:1, which is
+  a property of that card and not of the theme mechanism.
+
+The numbers were also verified against rendered pixels in Chromium — hide the glyph,
+re-screenshot, and diff, so a glowing theme is measured against its own halo rather
+than against the card behind it. That is what turned neon from the least legible of
+the four into the second most: the glow became a blurred copy _behind_ the glyph
+instead of a shadow through it. See the card themes section of the README for the
+four figures.
+
+The preference reaches every card through a context in
+`components/CardThemeProvider.tsx` rather than a read inside `Card`, because the
+cycler on the table has to repaint the hand, the discard pile and the draw pile at
+once. `Card` also takes an optional `theme` prop, which only the home screen's
+previews pass: each preview renders the real `Card` so it cannot drift from the face
+it is offering.
 
 ## Sound
 
@@ -75,8 +117,9 @@ is the part that rots.
 
 ## Accessibility, briefly
 
-Colour is never the only signal — cards carry shape tokens, and the log says in
-words what the animations dramatise. Tap targets are 44px. The countdown is a live
+Colour is never the only signal — cards carry shape tokens in every one of the four
+themes, and the log says in words what the animations dramatise. Tap targets are
+44px, the card-theme controls included. The countdown is a live
 region that only becomes assertive in its last seconds, because a polite update
 every second would queue up behind itself in a screen reader. `prefers-reduced-motion`
 removes the pulse but not the number, because the number carries information.

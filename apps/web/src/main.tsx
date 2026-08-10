@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App.js'
+import { CardThemeProvider } from './components/CardThemeProvider.js'
 import { ErrorBoundary } from './components/ErrorBoundary.js'
 import { LocaleProvider } from './i18n/LocaleProvider.js'
 import './styles/tokens.css'
@@ -15,9 +16,13 @@ createRoot(host).render(
         that feeds every screen — still lands somewhere. */}
     {/* Outside the boundary too, so even the crash screen speaks the language. */}
     <LocaleProvider>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
+      {/* Around the whole client, because the home screen's previews and the
+          table's cycler write the same preference and both have to see it change. */}
+      <CardThemeProvider>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      </CardThemeProvider>
     </LocaleProvider>
   </StrictMode>,
 )

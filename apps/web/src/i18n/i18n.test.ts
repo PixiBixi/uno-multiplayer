@@ -1,5 +1,6 @@
 import type { Card, CardId } from '@uno/engine'
 import { describe, expect, it } from 'vitest'
+import { CARD_THEMES } from '../lib/card-themes.js'
 import { CATALOGUES, LOCALES, detectLocale } from './index.js'
 import type { Messages } from './messages.js'
 
@@ -134,6 +135,31 @@ describe('grammar each language owns', () => {
     expect(CATALOGUES.fr.table.swapTarget('Ana', 1)).toBe('Ana, 1 carte')
     expect(CATALOGUES.en.table.swapTarget('Ana', 4)).toBe('Ana, 4 cards')
     expect(CATALOGUES.fr.table.swapTarget('Ana', 4)).toBe('Ana, 4 cartes')
+  })
+
+  it('names every card theme in both languages, and names them in the language', () => {
+    /* Unlike "jump-in", every one of these has an ordinary French word. Leaving them
+       in English would put four untranslated words in the middle of a French page. */
+    expect(CATALOGUES.en.cardTheme.name.classic).toBe('Classic')
+    expect(CATALOGUES.fr.cardTheme.name.classic).toBe('Classique')
+    expect(CATALOGUES.fr.cardTheme.name.flat).toBe('Épuré')
+    expect(CATALOGUES.fr.cardTheme.name.letterpress).toBe('Typographié')
+    expect(CATALOGUES.fr.cardTheme.name.neon).toBe('Néon')
+    expect(CATALOGUES.fr.cardTheme.label).toBe('Thème des cartes')
+
+    for (const locale of LOCALES) {
+      const catalogue = CATALOGUES[locale]
+      for (const theme of CARD_THEMES) {
+        // The control's accessible name has to carry the theme's own name inside it,
+        // in each language's own punctuation — French spaces its colon, English does
+        // not.
+        expect(catalogue.cardTheme.named(catalogue.cardTheme.name[theme])).toContain(
+          catalogue.cardTheme.name[theme],
+        )
+      }
+    }
+    expect(CATALOGUES.fr.cardTheme.named('Néon')).toBe('Thème des cartes : Néon')
+    expect(CATALOGUES.en.cardTheme.named('Neon')).toBe('Card theme: Neon')
   })
 
   it('covers every error code in both languages', () => {
