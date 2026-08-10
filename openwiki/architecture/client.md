@@ -115,16 +115,63 @@ Adding a language means adding a file that satisfies `Messages`. The tests asser
 that every catalogue covers exactly the same keys and leaves nothing empty, which
 is the part that rots.
 
-**`lib/` and `hooks/` are where a sweep for leftover English forgets to look.** A
-pure module has no JSX in it, which makes it easy to read past — and two of them
-kept their own English: `sort-hand.ts` had a `Record<HandSort, string>` of labels
-beside the three keys `table.sortDealt`/`sortColour`/`sortValue` already covered, and
-`game-reducer.ts` wrote every toast as a literal. Both are fixed, and the shape of
-the fix is the rule for the next one: a pure module cannot read a context, so it
-**takes `Messages` as a parameter** — `gameReducer(state, action, messages)`, exactly
-as `describeEvent` does. Importing a catalogue into `lib/` or `hooks/` would pin the
-language at build time and no control could change it. `useGameSocket` closes the
-current catalogue over the reducer it hands `useReducer`.
+**A pure module cannot read a context, so it takes `Messages` as a parameter.**
+`gameReducer(state, action, messages)`, `describeEvent(event, nameOf, mySeat, messages)`,
+`cardLabel(card, disabled, messages)`. Importing a catalogue into `lib/` — or into an
+exported function in `components/` — would pin the language at build time and no
+control could change it. `useGameSocket` closes the current catalogue over the reducer
+it hands `useReducer`.
+
+### How to know the sweep is finished
+
+Three sweeps have now declared this complete. The first two were wrong, and both were
+wrong the same way: they grepped for the handful of strings they had just fixed, found
+none, and reported zero English left. That proves a fix was applied and nothing else.
+
+So the question is settled by tests rather than by looking, and there are two of them
+because neither is sufficient alone:
+
+- **`i18n/no-english.test.ts`** parses every module in `components/`, `screens/` and
+  `App.tsx` with the TypeScript compiler and makes every string literal justify
+  itself. Two rules: nothing a person reads or a screen reader speaks — JSX text, and
+  `aria-label`, `title`, `placeholder`, `alt` — may contain a word; and no literal
+  anywhere in those files may read as English, meaning a phrase, a trailing ellipsis,
+  or a lone SHOUTED or Capitalised word. The syntax is what decides: `aria-label`
+  reaches a human, `className` does not, and `'btn btn-primary'` is two English words
+  to any heuristic that does not know which attribute it sits in. Lower-case single
+  words are deliberately allowed, because `'circle'`, `'stroke'` and `'wild4'` are
+  what these modules are made of. `UNO` is the one allowed word: it is the brand.
+- **`e2e/i18n.spec.ts`** plays a game in a `fr-FR` browser and searches the rendered
+  page — visible text _and_ every accessible name — for a list of English-only words.
+  A string can be absent from every component and still arrive in English from a table
+  two modules away, which is exactly what happened.
+
+Three habits of a missed string, all found this way:
+
+- **A lookup table in `lib/`.** `palette.ts` held `COLOR_NAME`, an English
+  `Record<Color, string>` that `Card`, `CentreStack` and `ColourPicker` all read — so
+  a French player's discard pile said "Green in play" and every card in their hand
+  announced itself as "Red 7". It is gone; naming is `messages.colour()` and
+  `messages.card()`, and `palette.ts` keeps only values. `sort-hand.ts` had made the
+  same mistake with its labels earlier.
+- **A `Record` rendered through a variable.** `Seat.tsx` kept `'reconnecting…'` and
+  `'left the game'` in a `Record<SeatStatus, string>`. No JSX, no attribute, nothing
+  for a reviewer's eye to catch — which is why the guard checks every literal in the
+  file and not only the ones in markup.
+- **An accessible name.** The largest class by far, and invisible to anyone reading
+  the screen: card labels, `Choose the new colour`, `Match format`, `Dismiss: …`,
+  `Face-down card`. A sighted review of a French page shows none of them.
+
+Two constraints worth knowing before touching this:
+
+- **A card's accessible label is game state, and must not move with the card theme.**
+  It now depends on the language, which is the other axis; `Card.test.tsx` asserts it
+  is identical across all four faces in both languages.
+- **Never assert on an English string to establish a non-language fact.** The leak
+  test in `e2e/game.spec.ts` counted face-up cards as "those whose label is not
+  `Face-down card`". Translating that label would have made every card look face-up
+  and the security assertion pass vacuously. `CardBack` now carries `data-face-down`
+  and the test counts that.
 
 ## Accessibility, briefly
 
@@ -140,9 +187,12 @@ removes the pulse but not the number, because the number carries information.
 - **A stale `dist/`** meant a new client against an old server; the view arrived
   without a field and the whole table went blank. There is now an error boundary
   outside `App`, so a bad render explains itself and offers a reload that rejoins.
-- **Duplicated lookup tables.** Colour names and swatches were defined in four
-  files each. They now live in `lib/palette.ts`. When you need a table in two
-  places, that is the pattern.
+- **Duplicated lookup tables.** Colour swatches were defined in four files. They now
+  live in `lib/palette.ts`. When you need a table in two places, that is the pattern —
+  but only for values. The colour _names_ moved there too and that was a mistake: a
+  word belongs in the catalogues, and one sitting in a language-free module can only
+  ever be English. Deduplication and translation want opposite things, and translation
+  wins.
 - **Layout judged by eye.** Several defects were only visible by measuring computed
   styles or DOM geometry in a real browser — and one "bug" turned out to be a
   screenshot taken mid-transition. Sample after animations settle, or deliberately

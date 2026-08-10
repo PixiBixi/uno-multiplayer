@@ -202,19 +202,29 @@ than the pronoun. English pluralises at zero and French does not. Adding a langu
 means adding one file that satisfies `Messages`; the tests check that no catalogue
 has drifted from another.
 
-**`lib/` and `hooks/` are not exempt, and that is where the first sweep stopped.**
-Two sets of strings survived it because the search covered `components/` and
-`screens/` only: the hand-sort labels, which `lib/sort-hand.ts` kept in a
-`Record<HandSort, string>` of its own right beside the three keys the catalogues
-already had, and every toast title and detail, which `hooks/game-reducer.ts` held as
-English literals. Both now come from the catalogue.
-
 A pure module cannot read a React context, so the catalogue arrives as an argument:
-`gameReducer(state, action, messages)`, the same shape
-`describeEvent(event, nameOf, mySeat, messages)` already had. Importing one
-catalogue into a reducer instead would pick a language at build time and no chip
-could change it. `useGameSocket` closes the current catalogue over the reducer it
-hands to `useReducer`, so switching language switches the language of the next toast.
+`gameReducer(state, action, messages)`, `describeEvent(event, nameOf, mySeat, messages)`,
+`cardLabel(card, disabled, messages)`. Importing one catalogue into a reducer instead
+would pick a language at build time and no chip could change it. `useGameSocket` closes
+the current catalogue over the reducer it hands to `useReducer`, so switching language
+switches the language of the next toast.
+
+**Two sweeps declared this finished and both were wrong**, because both checked by
+grepping for the strings they had just fixed — which proves a fix was applied and
+nothing more. The first stopped at `components/` and `screens/`, missing the hand-sort
+labels in `lib/sort-hand.ts` and every toast in `hooks/game-reducer.ts`. The second went
+the other way and missed the rendering layer, most of it in accessible names nobody sees
+by looking: an English `COLOR_NAME` table in `lib/palette.ts` that three components
+read, so a French discard pile said "Green in play" and every card in a French hand
+announced itself to a screen reader as "Red 7".
+
+It is settled by two tests now rather than by reading. `i18n/no-english.test.ts` parses
+every component and screen with the TypeScript compiler and makes each string literal
+justify itself — JSX text and accessible names may contain no word at all, and no literal
+anywhere in those files may read as English. `e2e/i18n.spec.ts` plays a whole game in a
+French browser and searches the rendered page, accessible names included, for
+English-only words. Neither is sufficient alone: a component can be clean and still
+render English that arrived from a table two modules away.
 
 ## Card themes
 
