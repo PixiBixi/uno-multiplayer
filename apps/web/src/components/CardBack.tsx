@@ -49,17 +49,26 @@ export function CardBack({ theme }: { theme?: CardTheme } = {}) {
         </defs>
       )}
 
-      <rect x={0} y={0} width={120} height={168} rx={11} fill={spec.stock.css} />
+      <rect x={0} y={0} width={120} height={168} rx={11} fill={spec.stock.css} data-back-stock="" />
       <rect
         {...panel}
         fill={ground.css}
+        data-back-panel=""
         {...(spec.panel === 'stroke'
           ? { stroke: badge.css, strokeWidth: spec.panelStroke }
           : undefined)}
       />
 
       {spec.oval !== null && (
-        <ellipse cx={60} cy={84} rx={50} ry={28} fill={badge.css} transform="rotate(-27 60 84)" />
+        <ellipse
+          cx={60}
+          cy={84}
+          rx={50}
+          ry={28}
+          fill={badge.css}
+          transform="rotate(-27 60 84)"
+          data-back-badge=""
+        />
       )}
 
       {spec.glow !== null && (

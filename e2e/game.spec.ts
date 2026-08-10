@@ -267,6 +267,81 @@ test('drawing a card pulses the draw pile', async ({ browser }) => {
   await expect(host.locator('.hand-card')).toHaveCount(8)
 })
 
+test('the draw pile is still a card once the draw ghost has finished', async ({ browser }) => {
+  /* A player reported the draw pile as a blank pale rectangle while every other
+     back on the table drew correctly, and it was real.
+
+     `.pile-draw::after` is the ghost card that peels off the pile: `background:
+     var(--bone)`, `inset: 0`, and an animation from 0.55 opacity to 0. It declared
+     no `opacity` of its own and no `animation-fill-mode`, so the moment the 420ms
+     animation ended the element reverted to its un-animated opacity — the initial
+     value, 1 — and the class is deliberately never removed, since `drawNonce > 0`
+     for the rest of the game. An opaque cream rectangle then covered the pile for
+     good, which is why the `UNO` text was still in the DOM and why the fanned backs
+     beside it were fine: they have no `::after`.
+
+     Measured after the animation finishes, on purpose. Screenshotting during it
+     would show the ghost mid-flight and prove nothing, and this project has already
+     rejected a real fix over a screenshot taken mid-transition. */
+  const host = await openPlayer(browser)
+  const guest = await openPlayer(browser)
+
+  const code = await createGame(host, 'Ana')
+  await joinGame(guest, code, 'Ben')
+  await host.getByRole('button', { name: 'Start game' }).click()
+  await expect(host.locator('.hand-card')).toHaveCount(7)
+
+  await host.getByRole('button', { name: 'Draw card' }).click()
+  await expect(host.locator('.pile-draw')).toBeAttached()
+  await expect(host.locator('.hand-card')).toHaveCount(8)
+
+  const measured = await host.evaluate(async () => {
+    await Promise.allSettled(document.getAnimations().map((animation) => animation.finished))
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+
+    const pile = document.querySelector('.pile-draw')
+    const back = pile?.querySelector('[data-back-word]')
+    if (pile === null || back === null || back === undefined) {
+      throw new Error('the draw pile is missing')
+    }
+    const ghost = getComputedStyle(pile, '::after')
+    const box = back.getBoundingClientRect()
+
+    /* And the flourish is still a flourish: read out of the keyframes rather than
+       caught mid-flight, so the assertion is deterministic. Zeroing the base opacity
+       must leave the ghost something to show while it flies — the cheapest wrong fix
+       for the bug above is to delete the effect. */
+    const opacityAtStart = [...document.styleSheets].flatMap((sheet) =>
+      [...sheet.cssRules]
+        .filter(
+          (rule): rule is CSSKeyframesRule =>
+            rule instanceof CSSKeyframesRule && rule.name === 'fxDrawGhost',
+        )
+        .flatMap((rule) =>
+          [...rule.cssRules]
+            .filter((frame): frame is CSSKeyframeRule => frame instanceof CSSKeyframeRule)
+            .filter((frame) => frame.keyText === '0%')
+            .map((frame) => Number(frame.style.opacity)),
+        ),
+    )
+
+    return {
+      ghostOpacity: Number(ghost.opacity),
+      // Belt and braces: the word is not merely present, it is on screen with a size.
+      wordVisible: box.width > 0 && box.height > 0,
+      wordFill: getComputedStyle(back).fill,
+      opacityAtStart,
+    }
+  })
+
+  // The ghost has flown. Anything above zero is a veil left over the pile.
+  expect(measured.ghostOpacity).toBe(0)
+  expect(measured.wordVisible).toBe(true)
+  expect(measured.wordFill).not.toBe('none')
+  expect(measured.opacityAtStart).toHaveLength(1)
+  expect(measured.opacityAtStart[0]).toBeGreaterThan(0)
+})
+
 test('a long log scrolls inside its panel instead of growing the page', async ({ browser }) => {
   /* Needs more chat than a person would ever send in a second, which the webServer
      block grants by raising CHAT_BURST. Against an already-running instance that

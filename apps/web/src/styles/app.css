@@ -1089,12 +1089,22 @@ h3 {
   animation: fxDrawPulse 420ms ease-out;
 }
 
+/* The ghost card. `opacity: 0` in the base rule is load-bearing, not tidiness: the
+   keyframes run 0.55 -> 0, and with the default `animation-fill-mode: none` the
+   element snaps back to its un-animated opacity the instant they finish. Without a
+   base of 0 that is the initial value, 1 — and since `.pile-draw` is deliberately
+   never removed (`drawNonce > 0` for the rest of the game) an opaque cream
+   rectangle then covered the draw pile permanently. It was reported as the pile
+   "rendering blank and pale" while every other back on the table drew correctly,
+   which is exactly what it was: the card was still there, under a veil.
+   `.fx-flash` above states its own zero for the same reason. */
 .pile-draw::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: 9px;
   background: var(--bone);
+  opacity: 0;
   pointer-events: none;
   animation: fxDrawGhost 420ms ease-out;
 }
