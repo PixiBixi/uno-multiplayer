@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.4.3](https://github.com/PixiBixi/uno-multiplayer/compare/bd8461de63d7479b9d74691e3e360e265d8a3278..v1.4.3) - 2026-08-11
+#### Performance Improvements
+- (**protocol**) let the client drop the schemas it never calls - ([bd8461d](https://github.com/PixiBixi/uno-multiplayer/commit/bd8461de63d7479b9d74691e3e360e265d8a3278)) - Jeremy Delgado
+
+- - -
+
 ## [v1.4.2](https://github.com/PixiBixi/uno-multiplayer/compare/1a8b91ce711517bf1ce8cab959aea18664f44cb1..v1.4.2) - 2026-08-11
 #### Performance Improvements
 - (**server**) compress responses and cache the hashed assets - ([f5200f7](https://github.com/PixiBixi/uno-multiplayer/commit/f5200f712c9ec50b6e22c7069b5c3cd629cc9102)) - Jeremy Delgado
