@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "sideEffects": false,
   "description": "Pure UNO rules engine — no I/O, no networking, deterministic",
   "engines": {
     "node": ">=22"
