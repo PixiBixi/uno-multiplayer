@@ -2,43 +2,40 @@ import type { TableRules } from '@uno/engine'
 import { useMessages } from '../i18n/index.js'
 
 /**
- * What is unusual about this table, during the game.
+ * What this table plays by, during the game.
  *
  * The lobby already shows every setting before the deal, and that turned out to be half a
  * fix: a rule read once is not one anybody recalls twenty minutes later. A manual UNO
  * penalty got reported as a missing one, and the game was right — the table simply never
  * said the rule was on.
  *
- * Deliberately not a list of all four. A strip that says the same thing every game is
- * noise, and noise is what gets ignored, which is the defect this exists to fix. So it
- * answers one question — what is different here — and an ordinary table renders nothing
- * at all.
+ * All four, always, with their state. The first attempt showed only the unusual ones, on the
+ * argument that a strip repeating itself every game becomes noise. The argument holds and
+ * the design still failed, for a reason worth remembering: an ordinary table then rendered
+ * nothing, and nothing is indistinguishable from a feature that was never deployed. The
+ * person who asked for it looked at a table and could not tell. A confirmation that costs a
+ * row is worth more than a row saved.
  */
 export function RulesInPlay({ rules }: { rules: TableRules }) {
   const t = useMessages()
 
-  /*
-   * `playDrawnCard` is inverted, and this is the only place that knows it: it is the
-   * official rule and on by default, so its presence says nothing about a table. Its
-   * ABSENCE does, so the flag being off is what earns a chip.
-   */
-  const unusual: string[] = [
-    rules.liar ? t.table.ruleShort.liar : null,
-    rules.sevenZero ? t.table.ruleShort.sevenZero : null,
-    rules.jumpIn ? t.table.ruleShort.jumpIn : null,
-    rules.playDrawnCard ? null : t.table.ruleShort.noPlayDrawnCard,
-  ].filter((name): name is string => name !== null)
-
-  // Nothing unusual needs no explaining, and an empty strip would still take a row of a
-  // phone screen that the hand already struggles to fit into.
-  if (unusual.length === 0) return null
+  const entries: { key: string; label: string; on: boolean }[] = [
+    { key: 'liar', label: t.table.ruleShort.liar, on: rules.liar },
+    { key: 'sevenZero', label: t.table.ruleShort.sevenZero, on: rules.sevenZero },
+    { key: 'jumpIn', label: t.table.ruleShort.jumpIn, on: rules.jumpIn },
+    { key: 'playDrawnCard', label: t.table.ruleShort.playDrawnCard, on: rules.playDrawnCard },
+  ]
 
   return (
     <div className="rules-in-play">
       <span className="rules-in-play-heading">{t.table.rulesHeading}</span>
-      {unusual.map((name) => (
-        <span className="chip chip-rule" key={name}>
-          {name}
+      {entries.map(({ key, label, on }) => (
+        <span className={on ? 'chip-rule chip-rule-on' : 'chip-rule chip-rule-off'} key={key}>
+          {/* The mark is decoration and the word behind it is the fact: state is never
+              carried by colour alone, and a dimmed chip is not something a screen reader
+              can see. */}
+          <span aria-hidden="true">{on ? '✓' : '✕'}</span> {label}
+          <span className="visually-hidden"> {on ? t.table.ruleOn : t.table.ruleOff}</span>
         </span>
       ))}
     </div>

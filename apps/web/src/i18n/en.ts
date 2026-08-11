@@ -209,16 +209,18 @@ export const en: Messages = {
        lying, and the button's job is to catch an omission, not to allege bad faith. */
     callOut: 'Caught!',
     callOutOn: (name) => `Catch ${name} without an UNO`,
-    rulesHeading: 'This table also plays',
+    rulesHeading: 'Rules',
+    /* Each names the rule rather than addressing the player, and none may contain the words
+       "your turn": `yourTurn` is already on this screen, and a chip repeating it made an e2e
+       selector ambiguous once. */
     ruleShort: {
       liar: 'Call out a missed UNO',
       sevenZero: 'Seven-Zero',
       jumpIn: 'Jump-in',
-      /* Names the rule rather than addressing the player, like the chips beside it, and
-         deliberately avoids the words "your turn" — `yourTurn` is already on this screen
-         and a chip repeating it made an e2e selector ambiguous. */
-      noPlayDrawnCard: 'Drawing ends the turn',
+      playDrawnCard: 'Play a drawn card',
     },
+    ruleOn: 'on',
+    ruleOff: 'off',
     openToCallOut: 'Open to a call-out',
     youAreExposed: 'You are on one card without an UNO — call it on your next turn to be safe.',
     jumpIn: 'Jump in!',

@@ -171,6 +171,17 @@ h3 {
   color: var(--text);
 }
 
+/* An active rule reads first, an inactive one recedes without disappearing. The tick and
+   cross carry the state on their own — this is emphasis, never the message, since a dimmed
+   chip means nothing to a screen reader and little to anyone in bright sun. */
+.chip-rule-on {
+  border-color: rgb(30 158 74 / 0.55);
+}
+
+.chip-rule-off {
+  color: var(--text-dim);
+}
+
 /* A seat a call-out is available against. On the plate and not only on the button, because
    the button alone read as decoration — whole games were played without anybody noticing
    it. No animation on purpose: an overlay here once stuck at `opacity: 1` for ever because

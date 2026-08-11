@@ -4,52 +4,66 @@ import { describe, expect, it } from 'vitest'
 import { RulesInPlay } from './RulesInPlay.js'
 
 /*
- * The strip answers one question — what is unusual about this table — and the tests are
- * mostly about what it refuses to say. A strip that appears every game with the same
- * contents is noise, and noise is ignored, which is the defect this exists to fix.
+ * The strip states every rule and its state, on every table.
+ *
+ * It showed only the unusual ones first, to keep an ordinary table quiet. That failed for a
+ * reason worth keeping in a test: an ordinary table rendered nothing, and nothing looks
+ * exactly like a feature that was never deployed — the person who asked for it opened a game
+ * and could not tell. Hence the first assertion below, which is the one that would have
+ * caught it.
  */
 
 const rules = (over: Partial<TableRules> = {}): TableRules => ({ ...DEFAULT_TABLE_RULES, ...over })
 
-const chips = (): string[] =>
-  [...document.querySelectorAll('.chip-rule')].map((node) => node.textContent ?? '')
+const chips = (): { text: string; on: boolean }[] =>
+  [...document.querySelectorAll('.chip-rule')].map((node) => ({
+    text: node.textContent ?? '',
+    on: node.classList.contains('chip-rule-on'),
+  }))
 
 describe('RulesInPlay', () => {
-  it('renders nothing on an ordinary table', () => {
+  it('says something on an ordinary table, rather than nothing', () => {
     const { container } = render(<RulesInPlay rules={DEFAULT_TABLE_RULES} />)
-    // Not an empty strip: on a phone an empty row still costs height the hand needs.
-    expect(container.firstChild).toBeNull()
+    expect(container.firstChild).not.toBeNull()
+    expect(chips()).toHaveLength(4)
   })
 
-  it('names each house rule that is on', () => {
+  it('states all four rules whatever the table', () => {
     render(<RulesInPlay rules={rules({ liar: true, sevenZero: true, jumpIn: true })} />)
-    expect(chips()).toHaveLength(3)
+    expect(chips()).toHaveLength(4)
   })
 
-  it('names only the ones that are on', () => {
-    render(<RulesInPlay rules={rules({ sevenZero: true })} />)
-    expect(chips()).toHaveLength(1)
-    expect(chips()[0]).toMatch(/seven-zero/i)
+  it('marks which are on and which are off', () => {
+    render(<RulesInPlay rules={rules({ liar: true, playDrawnCard: false })} />)
+    const byState = chips()
+    expect(byState.filter((chip) => chip.on)).toHaveLength(1)
+    expect(byState.filter((chip) => !chip.on)).toHaveLength(3)
+    expect(byState.find((chip) => chip.on)?.text).toMatch(/contre-uno|missed uno/i)
   })
 
   /*
-   * The inversion, and the case most likely to be got wrong. Playing a drawn card is the
-   * official rule and on by default, so announcing it tells nobody anything — while a table
-   * where it is OFF is precisely the unusual one worth naming.
+   * The default table is the one this has to get right, because it is the common case and
+   * the one that was invisible before: three house rules off, the official drawn-card rule
+   * on.
    */
-  it('says nothing about the drawn card when the official rule is on', () => {
-    const { container } = render(<RulesInPlay rules={rules({ playDrawnCard: true })} />)
-    expect(container.firstChild).toBeNull()
+  it('shows the drawn-card rule as on by default, since it is the official one', () => {
+    render(<RulesInPlay rules={DEFAULT_TABLE_RULES} />)
+    const drawn = chips().find((chip) => /drawn|piochée/i.test(chip.text))
+    expect(drawn?.on).toBe(true)
   })
 
-  it('names the drawn card when the table has turned it off', () => {
-    render(<RulesInPlay rules={rules({ playDrawnCard: false })} />)
-    expect(chips()).toHaveLength(1)
-    expect(chips()[0]?.toLowerCase()).toContain('turn')
+  it('never leans on colour alone for the state', () => {
+    render(<RulesInPlay rules={rules({ liar: true })} />)
+    // A screen reader gets the word; the tick beside it is decoration.
+    const hidden = [...document.querySelectorAll('.visually-hidden')].map(
+      (node) => node.textContent?.trim() ?? '',
+    )
+    expect(hidden).toHaveLength(4)
+    expect(hidden.every((word) => word.length > 0)).toBe(true)
   })
 
   it('carries a heading, so four chips are not four unexplained words', () => {
-    render(<RulesInPlay rules={rules({ liar: true })} />)
-    expect(screen.getByText(/this table also plays/i)).toBeTruthy()
+    render(<RulesInPlay rules={DEFAULT_TABLE_RULES} />)
+    expect(screen.getByText(/^rules$|^règles$/i)).toBeTruthy()
   })
 })

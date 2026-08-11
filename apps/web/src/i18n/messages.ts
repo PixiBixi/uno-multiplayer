@@ -232,20 +232,24 @@ export type Messages = {
     /** Its accessible name, which has to say who is being accused. */
     callOutOn: (name: string) => string
     /**
-     * What is unusual about this table, so the game can say so instead of leaving everyone
-     * to remember the lobby. Short names, because these sit in a strip above the play.
+     * Every rule and its state, always, so the game says what it plays by instead of
+     * leaving everyone to remember the lobby.
      *
-     * `noPlayDrawnCard` is the inverted one: playing a drawn card is the official rule and
-     * on by default, so announcing it says nothing — a table where it is OFF is the one
-     * worth naming.
+     * All four rather than only the unusual ones, which was the first attempt: an ordinary
+     * table then rendered nothing, and nothing is indistinguishable from a feature that is
+     * not there. The person who asked for it could not tell. Short names, because these
+     * sit in a strip above the play.
      */
     rulesHeading: string
     ruleShort: {
       liar: string
       sevenZero: string
       jumpIn: string
-      noPlayDrawnCard: string
+      playDrawnCard: string
     }
+    /** The state, for a screen reader — the tick beside it is decoration. */
+    ruleOn: string
+    ruleOff: string
     /** Marks the seat a call-out is available against, so the eye goes to the person. */
     openToCallOut: string
     /**
