@@ -1,6 +1,16 @@
 # Changelog
 
 - - -
+## [v1.4.2](https://github.com/PixiBixi/uno-multiplayer/compare/1a8b91ce711517bf1ce8cab959aea18664f44cb1..v1.4.2) - 2026-08-11
+#### Performance Improvements
+- (**server**) compress responses and cache the hashed assets - ([f5200f7](https://github.com/PixiBixi/uno-multiplayer/commit/f5200f712c9ec50b6e22c7069b5c3cd629cc9102)) - Jeremy Delgado
+#### Documentation
+- make the README a landing page and the wiki the manual - ([1a8b91c](https://github.com/PixiBixi/uno-multiplayer/commit/1a8b91ce711517bf1ce8cab959aea18664f44cb1)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**deps**) bump @fastify/static in the production-dependencies group (#4) - ([1f45f74](https://github.com/PixiBixi/uno-multiplayer/commit/1f45f74e0be415bf66483c47a63714ff3c3c62a1)) - dependabot[bot]
+
+- - -
+
 ## [v1.4.1](https://github.com/PixiBixi/uno-multiplayer/compare/cb7fa6ebf587ebd0fbc2724cba60b686a0e95678..v1.4.1) - 2026-08-10
 #### Bug Fixes
 - (**docker**) run the Node version CI actually validates - ([2e960c1](https://github.com/PixiBixi/uno-multiplayer/commit/2e960c10cff8067d7e1f4d9bf42e3cbfd64dfdd1)) - Jeremy Delgado
