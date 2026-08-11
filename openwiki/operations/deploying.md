@@ -63,18 +63,26 @@ otherwise.
 allowed to throw: a misconfigured environment must stop the boot rather than
 surface later as confusing runtime behaviour.
 
-| Variable                         | Default                 | Purpose                                                                                                                        |
-| -------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `PORT`                           | `5050`                  | Not 5000 — macOS Control Center binds that for AirPlay                                                                         |
-| `HOST`                           | `0.0.0.0`               | Listen address                                                                                                                 |
-| `CORS_ORIGIN`                    | empty                   | Comma-separated allowlist; empty means same-origin only                                                                        |
-| `BEHIND_TLS`                     | `false`                 | See above. Only `'true'` or `'false'` — a security flag that read `TRUE` as false would be worse than one that refuses to boot |
-| `GRACE_PERIOD_MS`                | `60000`                 | How long a disconnected player keeps their seat                                                                                |
-| `MAX_ROOMS`                      | `500`                   | Cap on concurrent rooms, bounding memory                                                                                       |
-| `STATIC_ROOT`                    | `/app/web` in the image | Built client to serve; empty serves the API alone                                                                              |
-| `MOVE_BURST` / `MOVE_PER_SECOND` | `20` / `2`              | Move rate limit, sized for a human                                                                                             |
-| `CHAT_BURST` / `CHAT_PER_SECOND` | `5` / `0.5`             | Chat rate limit, tighter                                                                                                       |
-| `LOG_LEVEL`                      | `info`                  | pino level                                                                                                                     |
+| Variable                             | Default                 | Purpose                                                                                                                        |
+| ------------------------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `PORT`                               | `5050`                  | Not 5000 — macOS Control Center binds that for AirPlay                                                                         |
+| `HOST`                               | `0.0.0.0`               | Listen address                                                                                                                 |
+| `CORS_ORIGIN`                        | empty                   | Comma-separated allowlist; empty means same-origin only                                                                        |
+| `BEHIND_TLS`                         | `false`                 | See above. Only `'true'` or `'false'` — a security flag that read `TRUE` as false would be worse than one that refuses to boot |
+| `GRACE_PERIOD_MS`                    | `60000`                 | How long a disconnected player keeps their seat                                                                                |
+| `MAX_ROOMS`                          | `500`                   | Cap on concurrent rooms, bounding memory                                                                                       |
+| `STATIC_ROOT`                        | `/app/web` in the image | Built client to serve; empty serves the API alone                                                                              |
+| `MOVE_BURST` / `MOVE_PER_SECOND`     | `20` / `2`              | Move rate limit, sized for a human                                                                                             |
+| `CHAT_BURST` / `CHAT_PER_SECOND`     | `5` / `0.5`             | Chat rate limit, tighter                                                                                                       |
+| `CREATE_BURST` / `CREATE_PER_SECOND` | `3` / `0.1`             | Room creation, tighter still — a room costs a seat, a deck and up to three timers                                              |
+| `LOG_LEVEL`                          | `info`                  | pino level                                                                                                                     |
+
+`CREATE_BURST` is keyed by socket id, so it stops a double-tapped Create and a script
+reusing one connection — not one that reconnects, which gets a fresh allowance each time.
+The real bound on rooms is `MAX_ROOMS` together with a purge that can actually reclaim
+them: a socket that moved to another table used to leave its seat holding a dead socket
+id, which made `isEmpty()` permanently false and the room permanently irreclaimable. That
+is fixed, and it is the reason the ceiling means something.
 
 ## One replica, always
 
@@ -105,10 +113,14 @@ The skip states its reason rather than weakening the assertion.
 Two workflows publish, and they own different tags on purpose so they cannot race
 each other:
 
-| Tag                   | Written by    | When                       |
-| --------------------- | ------------- | -------------------------- |
-| `latest`, `sha-<sha>` | `ci.yml`      | every green push to `main` |
-| `X.Y.Z`, `X.Y`        | `release.yml` | every version bump         |
+| Tag                                   | Written by    | When                       |
+| ------------------------------------- | ------------- | -------------------------- |
+| `latest`, the full 40-char commit SHA | `ci.yml`      | every green push to `main` |
+| `X.Y.Z`, `X.Y`                        | `release.yml` | every version bump         |
+
+The SHA tag is the bare `github.sha`, with no `sha-` prefix — `ci.yml` runs
+`docker tag … "$IMAGE:${{ github.sha }}"`. This table claimed a prefix twice; a rollback
+typed from a doc that invents a tag fails with `manifest unknown` at the worst moment.
 
 ```
 ghcr.io/pixibixi/uno-multiplayer:latest
