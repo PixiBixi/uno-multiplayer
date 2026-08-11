@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.5.1](https://github.com/PixiBixi/uno-multiplayer/compare/99122adc657963853c0bf663b31b34e93495deab..v1.5.1) - 2026-08-11
+#### Bug Fixes
+- (**web**) state every rule at the table, not only the odd ones - ([99122ad](https://github.com/PixiBixi/uno-multiplayer/commit/99122adc657963853c0bf663b31b34e93495deab)) - Jeremy Delgado
+
+- - -
+
 ## [v1.5.0](https://github.com/PixiBixi/uno-multiplayer/compare/6c683ed69044d3e79ef1fe8b72e900952cd314bc..v1.5.0) - 2026-08-11
 #### Features
 - (**web**) let the table say what it plays by - ([0ec3030](https://github.com/PixiBixi/uno-multiplayer/commit/0ec30304e799f38997460fca77858040cb2e102d)) - Jeremy Delgado
