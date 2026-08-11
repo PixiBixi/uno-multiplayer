@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -13,13 +13,23 @@ afterEach(async () => {
   app = null
 })
 
-/** A throwaway client build: index.html, one asset, and the icons Vite copies from public/. */
+/**
+ * A throwaway client build, laid out like a real one: index.html at the root, a
+ * content-hashed file under assets/, and the icons Vite copies from public/. The three
+ * locations exist because each gets a different cache policy.
+ *
+ * The asset is padded past the compression threshold — a 20-byte file would be served
+ * uncompressed no matter what is registered, and a test asserting otherwise would be
+ * asserting the threshold rather than the plugin.
+ */
 const fakeBuild = () => {
   const dir = mkdtempSync(join(tmpdir(), 'uno-web-'))
   writeFileSync(join(dir, 'index.html'), '<div id="root">app shell</div>')
   writeFileSync(join(dir, 'app.js'), 'console.log("bundle")')
   writeFileSync(join(dir, 'favicon.svg'), '<svg xmlns="http://www.w3.org/2000/svg" />')
   writeFileSync(join(dir, 'apple-touch-icon.png'), Buffer.from('89504e470d0a1a0a', 'hex'))
+  mkdirSync(join(dir, 'assets'))
+  writeFileSync(join(dir, 'assets', 'index-DR4aIUBH.js'), `// bundle\n${'x'.repeat(4096)}`)
   return dir
 }
 
@@ -67,6 +77,54 @@ describe('static serving', () => {
     expect(response.statusCode).toBe(200)
     expect(response.headers['content-type']).toContain(mediaType)
     expect(response.body).not.toContain('app shell')
+  })
+
+  /*
+   * The bundle went out at 374 KB uncompressed in production before this, with nothing
+   * upstream compressing it either. Asserted on the header rather than on a size, since a
+   * body that happens to be small is not evidence either way.
+   */
+  it('compresses a bundle for a client that accepts it', async () => {
+    const instance = await appWith({ STATIC_ROOT: fakeBuild() })
+    const response = await instance.inject({
+      method: 'GET',
+      url: '/assets/index-DR4aIUBH.js',
+      headers: { 'accept-encoding': 'gzip' },
+    })
+    expect(response.statusCode).toBe(200)
+    expect(response.headers['content-encoding']).toBe('gzip')
+  })
+
+  it('sends it plain to a client that did not ask', async () => {
+    const instance = await appWith({ STATIC_ROOT: fakeBuild() })
+    const response = await instance.inject({ method: 'GET', url: '/assets/index-DR4aIUBH.js' })
+    expect(response.headers['content-encoding']).toBeUndefined()
+  })
+
+  /*
+   * Three policies, and the split is the point. Production served everything with
+   * `max-age=0`, so every visit revalidated files whose names contain a hash of their own
+   * contents. Caching them for a year is safe precisely because the name changes when the
+   * bytes do — and index.html must stay uncached for exactly the same reason, or the
+   * player keeps an app shell that points at assets from the previous deploy.
+   */
+  it.each([
+    ['/assets/index-DR4aIUBH.js', 'immutable'],
+    ['/index.html', 'no-cache'],
+    ['/favicon.svg', 'max-age=86400'],
+  ])('caches %s as %s', async (url, expected) => {
+    const instance = await appWith({ STATIC_ROOT: fakeBuild() })
+    const response = await instance.inject({ method: 'GET', url })
+    expect(response.statusCode).toBe(200)
+    expect(response.headers['cache-control']).toContain(expected)
+  })
+
+  it('never lets the app shell be cached, even on the client-route fallback', async () => {
+    const instance = await appWith({ STATIC_ROOT: fakeBuild() })
+    const response = await instance.inject({ method: 'GET', url: '/play' })
+    // The fallback serves index.html through sendFile, a different path from a direct
+    // request for it. A year-long cache here would pin players to a dead deploy.
+    expect(response.headers['cache-control']).toContain('no-cache')
   })
 
   it('never lets the fallback swallow the health check', async () => {

@@ -1,4 +1,5 @@
 import { resolve } from 'node:path'
+import compress from '@fastify/compress'
 import cors from '@fastify/cors'
 import helmet from '@fastify/helmet'
 import fastifyStatic from '@fastify/static'
@@ -69,10 +70,64 @@ export async function buildApp(config: Config) {
     credentials: false,
   })
 
+  /*
+   * The client bundle went out uncompressed until this existed: 374 KB of JavaScript on
+   * the wire, where gzip takes it to roughly a third. Nothing upstream was doing it
+   * either, so it belongs here — the app should not depend on a particular proxy being
+   * configured a particular way to be usable on a phone.
+   *
+   * Registered before the static plugin so it wraps those replies. Socket.IO is
+   * untouched: it does not go through Fastify's reply pipeline, and its own frames are
+   * small and already optional-deflate.
+   *
+   * `threshold` leaves tiny payloads alone — /healthz is 15 bytes, and compressing it
+   * would add headers worth more than the body.
+   */
+  await app.register(compress, {
+    global: true,
+    threshold: 1024,
+    /*
+     * gzip only, and measured rather than assumed. On this bundle the plugin's default
+     * brotli produced a LARGER body than gzip — 113,536 bytes against 112,412 — because
+     * it compresses at a low quality to keep per-request cost down. Browsers advertise
+     * `br` ahead of `gzip`, so leaving both enabled would serve the worse of the two and
+     * spend more CPU doing it.
+     *
+     * Raising brotli's quality would win a few percent and cost far more per request,
+     * with no cache in front of it. Pre-compressing at build time is the real answer if
+     * this ever matters; at a few players it does not.
+     */
+    encodings: ['gzip', 'deflate'],
+  })
+
   app.get('/healthz', () => ({ status: 'ok' }))
 
   if (config.staticRoot !== null) {
-    await app.register(fastifyStatic, { root: resolve(config.staticRoot), wildcard: false })
+    await app.register(fastifyStatic, {
+      root: resolve(config.staticRoot),
+      wildcard: false,
+      /*
+       * Cache policy has to split by filename, and a single `maxAge` would be wrong for
+       * everything: Vite writes content-hashed names under /assets/, so those files can
+       * never change and are safe to keep for a year — while index.html must never be
+       * cached, or a player stays on a stale app shell after every deploy and no amount
+       * of reloading fixes it.
+       *
+       * The icons sit in between: they are copied from public/ with stable names, so
+       * they are not immutable, but a day is fine for a favicon.
+       */
+      /* The first argument is a FastifyReply here, not a raw ServerResponse — hence
+         `.header()` and no annotation of my own, which only got it wrong. */
+      setHeaders: (reply, path) => {
+        if (path.includes('/assets/')) {
+          reply.header('cache-control', 'public, max-age=31536000, immutable')
+        } else if (path.endsWith('.html')) {
+          reply.header('cache-control', 'no-cache')
+        } else {
+          reply.header('cache-control', 'public, max-age=86400')
+        }
+      },
+    })
 
     // Single-page fallback, explicitly excluding the paths that must never
     // receive HTML: a health probe answered with an app shell reads as healthy
