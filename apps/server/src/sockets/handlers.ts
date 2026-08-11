@@ -118,8 +118,49 @@ export function registerSocketHandlers(
     for (const event of events) io.to(room.code).emit('game:event', event)
   }
 
+  /**
+   * Gives up whatever seat this socket is holding, and tells the table. Silent when it
+   * holds none, so it is safe to call before taking a seat anywhere.
+   *
+   * Extracted rather than duplicated: `room:leave` did exactly this and `attach` did
+   * none of it, which is how a socket could walk to another table and leave its old
+   * seat holding a socket id that would never disconnect again. Two copies of a
+   * seven-step teardown would have drifted; there is one.
+   *
+   * No grace timer, deliberately: the seat is given up rather than lost, and nobody is
+   * coming back to it.
+   */
+  const release = (socket: TypedSocket): void => {
+    const presence = presences.get(socket.id)
+    if (presence === undefined) return
+
+    const { room } = presence
+    const result = room.disconnect(socket.id)
+    presences.delete(socket.id)
+    moveLimiter.forget(socket.id)
+    chatLimiter.forget(socket.id)
+    void socket.leave(room.code)
+
+    if (result === null) return
+    room.expireGrace(result.seat)
+    broadcastEvents(room, [...result.events, { type: 'seatLeft', seat: result.seat }])
+    retime(room)
+    broadcastLobby(room)
+    // The people still playing need a fresh view too, not just a fresh lobby: a seat
+    // going away can change whose turn it is.
+    broadcastViews(room)
+  }
+
   io.on('connection', (socket: TypedSocket) => {
     const attach = (room: Room, seat: number): void => {
+      /*
+       * Scoped to a DIFFERENT room on purpose. Re-attaching to the table you are already
+       * at happens on a same-socket rejoin, and tearing down there would hand back the
+       * very seat the rejoin exists to restore.
+       */
+      const previous = presences.get(socket.id)
+      if (previous !== undefined && previous.room.code !== room.code) release(socket)
+
       presences.set(socket.id, { room, seat })
       void socket.join(room.code)
     }
@@ -232,28 +273,10 @@ export function registerSocketHandlers(
           ack({ ok: false, error: 'invalid_payload' })
           return
         }
-        const presence = presences.get(socket.id)
-        // Leaving twice, or from a stale tab, is not an error worth reporting.
-        if (presence === undefined) {
-          ack({ ok: true })
-          return
-        }
-
-        const { room } = presence
-        const result = room.disconnect(socket.id)
-        presences.delete(socket.id)
-        moveLimiter.forget(socket.id)
-        chatLimiter.forget(socket.id)
-        void socket.leave(room.code)
+        // Leaving twice, or from a stale tab, is not an error worth reporting — `release`
+        // is silent when there is no seat to give up.
+        release(socket)
         ack({ ok: true })
-
-        if (result === null) return
-        // No grace timer: the seat is given up, not lost.
-        room.expireGrace(result.seat)
-        broadcastEvents(room, [...result.events, { type: 'seatLeft', seat: result.seat }])
-        retime(room)
-        broadcastLobby(room)
-        broadcastViews(room)
       })
     })
 
