@@ -1,6 +1,13 @@
 # Changelog
 
 - - -
+## [v1.4.4](https://github.com/PixiBixi/uno-multiplayer/compare/8e13a466b78e32b04ae4f99798c3fe1b9922e1aa..v1.4.4) - 2026-08-11
+#### Bug Fixes
+- (**server**) rate-limit room creation and compress socket frames - ([410500c](https://github.com/PixiBixi/uno-multiplayer/commit/410500c09f5d44fc6ab8a873c06a1a9f8b6285d4)) - Jeremy Delgado
+- (**server**) release the seat when a socket moves to another table - ([8e13a46](https://github.com/PixiBixi/uno-multiplayer/commit/8e13a466b78e32b04ae4f99798c3fe1b9922e1aa)) - Jeremy Delgado
+
+- - -
+
 ## [v1.4.3](https://github.com/PixiBixi/uno-multiplayer/compare/bd8461de63d7479b9d74691e3e360e265d8a3278..v1.4.3) - 2026-08-11
 #### Performance Improvements
 - (**protocol**) let the client drop the schemas it never calls - ([bd8461d](https://github.com/PixiBixi/uno-multiplayer/commit/bd8461de63d7479b9d74691e3e360e265d8a3278)) - Jeremy Delgado
