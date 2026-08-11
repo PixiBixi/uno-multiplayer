@@ -295,4 +295,47 @@ describe('room:configure over sockets', () => {
     )
     expect(passes).toEqual([])
   })
+
+  /*
+   * The lobby was only ever half the problem. A player who read the rules before the deal
+   * does not remember them twenty minutes later, and a correct game then reads as a broken
+   * one — which is exactly what happened: a manual UNO penalty was reported as a missing
+   * one, because nothing on the table said the rule was on.
+   */
+  it('carries the rules into the game, not just the lobby', async () => {
+    const { host, guest } = await lobby()
+    await emit<PlainAck>(host, 'room:configure', { rules: { liar: true, sevenZero: true } })
+    await waitFor(() => guest.lobby()?.rules.liar === true, 'the rule at the guest')
+    await emit<PlainAck>(host, 'game:start', {})
+    await waitFor(() => guest.views.length > 0, 'the guest to be dealt in')
+
+    const view = guest.views[guest.views.length - 1]
+    expect(view?.rules).toEqual({
+      liar: true,
+      sevenZero: true,
+      jumpIn: false,
+      playDrawnCard: true,
+    })
+  })
+
+  it('gives the rules back to a player who reloads mid-game', async () => {
+    /* Why this belongs on the player view rather than being sent once and remembered: a
+       reload mid-game receives a PlayerView and no lobby at all, so a client caching the
+       rules from `room:state` would show a table with none. */
+    const { host, guest, code, guestToken } = await lobby()
+    await emit<PlainAck>(host, 'room:configure', { rules: { jumpIn: true } })
+    await waitFor(() => guest.lobby()?.rules.jumpIn === true, 'the rule at the guest')
+    await emit<PlainAck>(host, 'game:start', {})
+    await waitFor(() => guest.views.length > 0, 'the guest to be dealt in')
+
+    guest.socket.disconnect()
+    const returning = newPlayer()
+    const rejoined = await emit<{ ok: boolean }>(returning, 'room:rejoin', {
+      roomCode: code,
+      sessionToken: guestToken,
+    })
+    expect(rejoined.ok).toBe(true)
+    await waitFor(() => returning.views.length > 0, 'the returning player to get a view')
+    expect(returning.views[returning.views.length - 1]?.rules.jumpIn).toBe(true)
+  })
 })

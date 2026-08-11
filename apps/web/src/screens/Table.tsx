@@ -6,6 +6,7 @@ import { ChatPanel } from '../components/ChatPanel.js'
 import { GameOver } from '../components/GameOver.js'
 import { Hand } from '../components/Hand.js'
 import { PlayEffects } from '../components/PlayEffects.js'
+import { RulesInPlay } from '../components/RulesInPlay.js'
 import { Seat } from '../components/Seat.js'
 import { Toaster } from '../components/Toaster.js'
 import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
@@ -64,6 +65,18 @@ export function Table({
      line, and without it the chance is invisible unless you notice a card light up
      during another player's turn. */
   const canJumpIn = !myTurn && view.you.legalMoves.some((move) => move.type === 'play')
+
+  /*
+   * You are the one exposed. Derived, not sent: `callUno` is offered either at two cards or
+   * while vulnerable, so at ONE card its presence can only mean vulnerable — had you called
+   * it, it would not be on offer at all.
+   *
+   * Worth telling you, because calling UNO on your own next turn before playing is how the
+   * rules let you escape. A player who is not told is playing a different game from the one
+   * everybody else can see. It only ever appears on a table with the call-out rule on:
+   * without it, reaching one card uncalled costs two cards immediately instead.
+   */
+  const exposedToCallOut = canCallUno && view.you.hand.length === 1
 
   /* The one move that is legal off turn, and the client still evaluates nothing:
      an opponent gets a call-out button only because the server put a call-out
@@ -160,6 +173,7 @@ export function Table({
             <path d="M8 3h9a2 2 0 0 1 2 2v12" />
           </svg>
         </button>
+        <RulesInPlay rules={view.rules} />
         <div className="table-grid">
           {view.opponents.slice(0, 3).map((opponent, index) => {
             const callOut = callOutAgainst(opponent.seat)
@@ -203,6 +217,15 @@ export function Table({
           </div>
 
           <div className="area-south">
+            {exposedToCallOut && (
+              /* Assertive, unlike the countdown next door: this is a state you can act on
+                 and it expires at the end of your next turn, so a polite queue behind
+                 whatever else is being announced would deliver it after it stopped being
+                 true. */
+              <p className="banner banner-warn" role="alert">
+                {t.table.youAreExposed}
+              </p>
+            )}
             <div className="controls">
               {acceptDraw !== undefined ? (
                 <button

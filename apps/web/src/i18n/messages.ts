@@ -231,6 +231,29 @@ export type Messages = {
     callOut: string
     /** Its accessible name, which has to say who is being accused. */
     callOutOn: (name: string) => string
+    /**
+     * What is unusual about this table, so the game can say so instead of leaving everyone
+     * to remember the lobby. Short names, because these sit in a strip above the play.
+     *
+     * `noPlayDrawnCard` is the inverted one: playing a drawn card is the official rule and
+     * on by default, so announcing it says nothing — a table where it is OFF is the one
+     * worth naming.
+     */
+    rulesHeading: string
+    ruleShort: {
+      liar: string
+      sevenZero: string
+      jumpIn: string
+      noPlayDrawnCard: string
+    }
+    /** Marks the seat a call-out is available against, so the eye goes to the person. */
+    openToCallOut: string
+    /**
+     * Told to the player who is exposed. Not a courtesy: escaping by calling UNO on your own
+     * next turn is the rule, so a player who is not told is playing a different game from
+     * the one everybody else can see.
+     */
+    youAreExposed: string
     /** Shown when the server has offered a play off turn, which is a jump-in. */
     jumpIn: string
     /**

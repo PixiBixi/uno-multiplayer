@@ -1,4 +1,4 @@
-import type { Card as CardData, CardId } from '@uno/engine'
+import { DEFAULT_TABLE_RULES, type Card as CardData, type CardId } from '@uno/engine'
 import { DEFAULT_MATCH_GOAL, type PlayerView } from '@uno/protocol'
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
@@ -9,6 +9,7 @@ const top: CardData = { id: 'top' as CardId, kind: 'number', color: 'B', value: 
 const viewWith = (overrides: Partial<PlayerView> = {}): PlayerView => ({
   you: { seat: 0, hand: [], legalMoves: [] },
   opponents: [],
+  rules: DEFAULT_TABLE_RULES,
   discardTop: top,
   currentColor: 'B',
   pendingDraw: null,

@@ -44,8 +44,13 @@ export type MatchPace = { turnSeconds: number } | null
 /* `TableRules` is declared in @uno/engine rather than here beside MatchPace, and that
    split is the point: a clock is a house setting the engine never sees, while those
    flags change what the rules are and the reducer has to read them. The protocol
-   re-exports the type and carries it on the wire — see `LobbyView.rules` — but it does
-   not own it, so there is exactly one definition of what a rule is. */
+   re-exports the type and carries it on the wire — on `LobbyView` and on `PlayerView`
+   both — but it does not own it, so there is exactly one definition of what a rule is.
+
+   On both views, because a rule read once before the deal is not one anybody remembers
+   twenty minutes later: a manual UNO penalty got reported as a missing one, and the game
+   was right. And on the player view rather than sent once and cached client-side, because
+   a reload mid-game receives a PlayerView and no lobby at all. */
 
 /** Alphabet without ambiguous characters: no O/0, no I/1. */
 export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -58,6 +63,12 @@ export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 export type PlayerView = {
   you: { seat: number; hand: Card[]; legalMoves: Move[] }
   opponents: { seat: number; name: string; handCount: number; status: SeatStatus }[]
+  /**
+   * What this table plays by, so the game can say so rather than leaving everyone to
+   * remember the lobby. Four booleans against a view of roughly 1.4 KB, and a field that
+   * never changes between frames is almost free once the socket deflates them.
+   */
+  rules: TableRules
   discardTop: Card
   currentColor: Color
   pendingDraw: { amount: number; kind: 'draw2' | 'wild4' } | null

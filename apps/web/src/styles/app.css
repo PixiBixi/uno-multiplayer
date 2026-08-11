@@ -137,6 +137,50 @@ h3 {
   border-left-color: var(--red);
 }
 
+.banner-warn {
+  border-left-color: var(--yellow);
+}
+
+/* What is unusual about this table, above the play. A strip rather than a panel: it is
+   reference, not a control, and it renders only when there is something to say — so it
+   costs a phone screen nothing on an ordinary table. */
+.rules-in-play {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.5rem;
+}
+
+.rules-in-play-heading {
+  font-size: var(--step--1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Not the interactive `.chip`: no 44px target here, because nothing in this strip is
+   tappable and a reference chip sized like a button invites a press that does nothing. */
+.chip-rule {
+  min-height: 0;
+  padding: 0.15rem 0.55rem;
+  border: 1px solid rgb(245 241 232 / 0.22);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.28);
+  font-size: var(--step--1);
+  color: var(--text);
+}
+
+/* A seat a call-out is available against. On the plate and not only on the button, because
+   the button alone read as decoration — whole games were played without anybody noticing
+   it. No animation on purpose: an overlay here once stuck at `opacity: 1` for ever because
+   its animation had no fill mode, and a mark outliving the window it describes points at
+   somebody who is no longer exposed. */
+.plate-exposed {
+  border-color: var(--yellow);
+  box-shadow: 0 0 0 2px rgb(240 179 16 / 0.28);
+}
+
 .code-display {
   margin: 0;
   font-family: var(--data);

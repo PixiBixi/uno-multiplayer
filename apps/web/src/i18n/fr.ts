@@ -225,6 +225,15 @@ export const fr: Messages = {
        dit ce que le bouton fait plutôt que d'accuser quelqu'un de mauvaise foi. */
     callOut: 'Contre-UNO !',
     callOutOn: (name) => `Contre-UNO sur ${name}`,
+    rulesHeading: 'Cette table joue aussi',
+    ruleShort: {
+      liar: 'Contre-UNO',
+      sevenZero: 'Sept-Zéro',
+      jumpIn: 'Jump-in',
+      noPlayDrawnCard: 'Piocher termine le tour',
+    },
+    openToCallOut: 'Contre-UNO possible',
+    youAreExposed: 'Tu es à une carte sans avoir dit UNO — annonce-le à ton prochain tour.',
     jumpIn: 'Jump-in !',
     endTurn: 'Terminer mon tour',
     playDrawnCard: 'Pose la carte piochée, ou termine ton tour',

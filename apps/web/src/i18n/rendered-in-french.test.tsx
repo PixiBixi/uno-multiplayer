@@ -48,6 +48,7 @@ const inFrench = (node: ReactElement) => {
 const viewWith = (overrides: Partial<PlayerView> = {}): PlayerView => ({
   you: { seat: 0, hand: [], legalMoves: [] },
   opponents: [],
+  rules: DEFAULT_TABLE_RULES,
   discardTop: { id: id('top'), kind: 'number', color: 'B', value: 7 },
   currentColor: 'G',
   pendingDraw: null,

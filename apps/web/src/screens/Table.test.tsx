@@ -1,4 +1,4 @@
-import type { Card, CardId } from '@uno/engine'
+import { DEFAULT_TABLE_RULES, type Card, type CardId } from '@uno/engine'
 import { DEFAULT_MATCH_GOAL, type PlayerView } from '@uno/protocol'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -22,6 +22,7 @@ const viewWith = (overrides: Partial<PlayerView> = {}): PlayerView => ({
     { seat: 2, name: 'Cleo', handCount: 2, status: 'active' },
     { seat: 3, name: 'Dan', handCount: 7, status: 'active' },
   ],
+  rules: DEFAULT_TABLE_RULES,
   discardTop: top,
   currentColor: 'R',
   pendingDraw: null,
@@ -119,6 +120,43 @@ describe('Table', () => {
 
     await userEvent.click(buttons[0] as HTMLElement)
     expect(onPlay).toHaveBeenCalledWith({ type: 'callOut', target: 2 })
+  })
+
+  /*
+   * The button existed and was missed for entire games, because a control beside a seat
+   * reads as decoration. The seat itself has to change, so the eye goes to the person.
+   */
+  it('marks the seat a call-out is available against', () => {
+    setup(
+      viewWith({
+        you: { seat: 0, hand: [mine], legalMoves: [{ type: 'callOut', target: 2 }] },
+      }),
+    )
+    const marked = [...document.querySelectorAll('.plate-exposed')]
+    expect(marked).toHaveLength(1)
+    expect(marked[0]?.textContent).toContain('Cleo')
+    // Never colour alone: the plate says so in words as well.
+    expect(marked[0]?.textContent?.toLowerCase()).toContain('call-out')
+  })
+
+  it('marks nobody when no call-out is on offer', () => {
+    setup(viewWith({ opponents: [{ seat: 1, name: 'Ben', handCount: 1, status: 'active' }] }))
+    expect(document.querySelectorAll('.plate-exposed')).toHaveLength(0)
+  })
+
+  /*
+   * Told to the exposed player too, because calling UNO on your own next turn is how the
+   * rules let you out of it. Derived rather than sent: `callUno` is offered at two cards or
+   * while vulnerable, so at ONE card its presence can only mean vulnerable.
+   */
+  it('warns you when you are the one open to a call-out', () => {
+    setup(viewWith({ you: { seat: 0, hand: [mine], legalMoves: [{ type: 'callUno' }] } }))
+    expect(screen.getByRole('alert').textContent?.toLowerCase()).toContain('one card')
+  })
+
+  it('does not warn you at two cards, where calling UNO is merely the ordinary moment', () => {
+    setup(viewWith({ you: { seat: 0, hand: [mine, mine], legalMoves: [{ type: 'callUno' }] } }))
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 
   it('offers one per vulnerable opponent', () => {

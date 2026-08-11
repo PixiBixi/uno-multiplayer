@@ -57,13 +57,27 @@ export function Seat({ name, handCount, status, isTurn, orientation, onCallOut }
           </div>
         ))}
       </div>
-      <p className={isTurn ? 'plate plate-turn' : 'plate'}>
+      {/* Marked from `onCallOut` rather than from a prop of its own: the button existing IS
+          the seat being vulnerable, so a second source for the same fact could only ever
+          disagree with the first. The mark is on the plate because the eye should go to the
+          person, not to a control — a button on its own reads as decoration, which is how
+          entire games were played without anybody noticing it. */}
+      <p
+        className={[
+          'plate',
+          isTurn ? 'plate-turn' : null,
+          onCallOut !== null ? 'plate-exposed' : null,
+        ]
+          .filter((name) => name !== null)
+          .join(' ')}
+      >
         <span className={`presence presence-${status}`} aria-hidden="true" />
         <span>{name}</span>
         <span className="plate-count">{handCount}</span>
-        {/* Turn state and presence are never colour-only. */}
+        {/* Turn state, presence and exposure are never colour-only. */}
         {isTurn && <span className="plate-note">{t.table.theirTurn}</span>}
         {statusText !== null && <span className="plate-note">{statusText}</span>}
+        {onCallOut !== null && <span className="plate-note">{t.table.openToCallOut}</span>}
       </p>
       {onCallOut !== null && (
         // Labelled with the name too: "Caught!" three times over is ambiguous to

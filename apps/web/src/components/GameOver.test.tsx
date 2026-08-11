@@ -1,4 +1,4 @@
-import type { Card, CardId, MatchGoal } from '@uno/engine'
+import { DEFAULT_TABLE_RULES, type Card, type CardId, type MatchGoal } from '@uno/engine'
 import type { PlayerView, SeatStats } from '@uno/protocol'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -36,6 +36,7 @@ const finished = (winner: number | null, match: MatchBits = {}): PlayerView => (
     { seat: 1, name: 'Ben', handCount: 5, status: 'active' },
     { seat: 2, name: 'Cleo', handCount: 0, status: 'active' },
   ],
+  rules: DEFAULT_TABLE_RULES,
   discardTop: top,
   currentColor: 'R',
   pendingDraw: null,

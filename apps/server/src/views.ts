@@ -35,6 +35,10 @@ export function redactFor(
         handCount: s.hand.length,
         status: s.status,
       })),
+    /* Read straight off the state the reducer is playing by, not passed in beside the
+       deadlines: a `rules` argument threaded from `Room` could disagree with the game it
+       describes, and a view that misreports the rules is worse than one that omits them. */
+    rules: state.rules,
     discardTop,
     currentColor: state.currentColor,
     pendingDraw: state.pendingDraw,
