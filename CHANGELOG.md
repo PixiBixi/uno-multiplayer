@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.4.5](https://github.com/PixiBixi/uno-multiplayer/compare/b9df1db6dbe5aab957f71d6e5b44e358c371dc07..v1.4.5) - 2026-08-11
+#### Bug Fixes
+- (**web**) one room creation at a time - ([b9df1db](https://github.com/PixiBixi/uno-multiplayer/commit/b9df1db6dbe5aab957f71d6e5b44e358c371dc07)) - Jeremy Delgado
+#### Documentation
+- (**wiki**) the create limit, and a SHA tag that never existed - ([2b35133](https://github.com/PixiBixi/uno-multiplayer/commit/2b35133331e06af7289d97f89b4845cc578c5346)) - Jeremy Delgado
+
+- - -
+
 ## [v1.4.4](https://github.com/PixiBixi/uno-multiplayer/compare/8e13a466b78e32b04ae4f99798c3fe1b9922e1aa..v1.4.4) - 2026-08-11
 #### Bug Fixes
 - (**server**) rate-limit room creation and compress socket frames - ([410500c](https://github.com/PixiBixi/uno-multiplayer/commit/410500c09f5d44fc6ab8a873c06a1a9f8b6285d4)) - Jeremy Delgado
