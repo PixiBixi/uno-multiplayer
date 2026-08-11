@@ -88,12 +88,30 @@ export function useGameSocket() {
    * the defaults: they are already validated and already tested, and dropping them would
    * break a client mid-deploy for no gain. The host changes any of them from the lobby.
    */
+  /*
+   * One create at a time, guarded here rather than in the button.
+   *
+   * A second tap while the first is unanswered opens a second table and abandons the
+   * first — harmless to the player, who lands somewhere, and not harmless to the server,
+   * which held that room until a fix landed. On a phone the acknowledgement is 300 ms
+   * away, which is exactly long enough for an impatient thumb.
+   *
+   * The flag lives with the emit because this is where the acknowledgement arrives, so it
+   * clears on every outcome including a refusal. A disabled button cannot do that: `Home`
+   * never learns the call finished, so it would either stay stuck when a reply is lost or
+   * need a timer of its own guessing when to give up.
+   */
+  const creating = useRef(false)
+
   const createRoom = useCallback(
     (playerName: string) => {
+      if (creating.current) return
+      creating.current = true
       socketRef.current?.emit(
         'room:create',
         { playerName, goal: DEFAULT_MATCH_GOAL, pace: null, rules: DEFAULT_TABLE_RULES },
         (result) => {
+          creating.current = false
           if (!result.ok) {
             fail(result.error)
             return
