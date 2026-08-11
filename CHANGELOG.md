@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.5.0](https://github.com/PixiBixi/uno-multiplayer/compare/6c683ed69044d3e79ef1fe8b72e900952cd314bc..v1.5.0) - 2026-08-11
+#### Features
+- (**web**) let the table say what it plays by - ([0ec3030](https://github.com/PixiBixi/uno-multiplayer/commit/0ec30304e799f38997460fca77858040cb2e102d)) - Jeremy Delgado
+#### Documentation
+- (**spec**) make the table say what is true - ([6c683ed](https://github.com/PixiBixi/uno-multiplayer/commit/6c683ed69044d3e79ef1fe8b72e900952cd314bc)) - Jeremy Delgado
+
+- - -
+
 ## [v1.4.5](https://github.com/PixiBixi/uno-multiplayer/compare/b9df1db6dbe5aab957f71d6e5b44e358c371dc07..v1.4.5) - 2026-08-11
 #### Bug Fixes
 - (**web**) one room creation at a time - ([b9df1db](https://github.com/PixiBixi/uno-multiplayer/commit/b9df1db6dbe5aab957f71d6e5b44e358c371dc07)) - Jeremy Delgado
