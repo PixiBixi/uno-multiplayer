@@ -76,9 +76,12 @@ export async function buildApp(config: Config) {
    * either, so it belongs here — the app should not depend on a particular proxy being
    * configured a particular way to be usable on a phone.
    *
-   * Registered before the static plugin so it wraps those replies. Socket.IO is
-   * untouched: it does not go through Fastify's reply pipeline, and its own frames are
-   * small and already optional-deflate.
+   * Registered before the static plugin so it wraps those replies. Socket.IO is untouched
+   * by this and needs its own setting: engine.io and ws never reach Fastify's reply
+   * pipeline. An earlier version of this comment claimed their frames were "already
+   * optional-deflate" — they were not, and engine.io only builds a deflate config when
+   * the option is passed, which nothing did. `perMessageDeflate` now handles that side
+   * in `registerSocketHandlers`.
    *
    * `threshold` leaves tiny payloads alone — /healthz is 15 bytes, and compressing it
    * would add headers worth more than the body.

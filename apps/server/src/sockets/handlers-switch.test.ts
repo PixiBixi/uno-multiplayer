@@ -123,6 +123,42 @@ describe('a socket that moves to another table', () => {
     expect(resident).toHaveLength(1)
   }, 20_000)
 
+  /*
+   * What this proves and what it does not: engine.io builds a deflate config only when
+   * this option is present — it is absent from its defaults — so the option being set is
+   * the difference between compression on and off, and it went out off while a comment
+   * claimed otherwise. It does not prove a frame arrived smaller. Reading the negotiated
+   * extension back off the live socket would, but only by reaching into socket.io-client
+   * internals whose shape is undocumented and version-specific, and a test that breaks on
+   * a patch bump costs more than this one buys.
+   */
+  it('is built with websocket compression enabled', () => {
+    const options = (ioServer.engine as unknown as { opts: Record<string, unknown> }).opts
+    expect(options.perMessageDeflate).toEqual({ threshold: 1024 })
+  })
+
+  it('refuses a burst of room creation', async () => {
+    const player = newPlayer()
+    const results = []
+    for (let attempt = 0; attempt < 6; attempt += 1) results.push(await create(player))
+
+    // The default bucket is three, and it refills far slower than a loop runs.
+    const refused = results.filter((result) => !result.ok)
+    expect(refused.length).toBeGreaterThan(0)
+    expect(refused.every((result) => !result.ok && result.error === 'rate_limited')).toBe(true)
+  }, 20_000)
+
+  it('does not refill the create bucket by creating', async () => {
+    const player = newPlayer()
+    /* The trap this pins down: `release` forgets a socket's limiter buckets, and `attach`
+       now calls `release` on every create. Forgetting the create bucket there would hand
+       the socket a fresh allowance on each attempt and cancel the limit entirely, while
+       every other test in this file still passed. */
+    const results = []
+    for (let attempt = 0; attempt < 8; attempt += 1) results.push(await create(player))
+    expect(results.filter((result) => result.ok).length).toBeLessThanOrEqual(4)
+  }, 20_000)
+
   it('keeps the seat when the socket re-attaches to the room it is already in', async () => {
     const host = newPlayer()
     const created = await create(host)
@@ -150,19 +186,28 @@ describe('a socket that moves to another table', () => {
       playerName: 'Bo',
     })
     expect(joined.ok).toBe(true)
-    await waitFor(() => host.lobbies.length > 0, 'the host to see the guest')
+    const seatOfBo = (): string | undefined =>
+      host.lobbies[host.lobbies.length - 1]?.seats.find((seat) => seat.name === 'Bo')?.status
+    await waitFor(() => seatOfBo() !== undefined, 'the host to see the guest')
 
-    const before = host.lobbies.length
-    await create(guest, 'Bo')
+    const moved = await create(guest, 'Bo')
+    // Asserted, not assumed: a refused create performs no teardown, and this test would
+    // then be measuring a stale broadcast rather than the seat being given up.
+    expect(moved.ok).toBe(true)
 
-    // The people still at the table have to be told, or the guest sits there as a ghost
-    // on everyone's screen until something else happens to refresh it.
-    await waitFor(() => host.lobbies.length > before, 'the host to be told the guest left')
-    const latest = host.lobbies[host.lobbies.length - 1]
-    /* Asserted on the status, not on the name disappearing: a departed seat stays listed
-       so the table can show "Bo left" rather than silently renumbering everyone. What
-       must change is that the seat is no longer active — `left`, and not `disconnected`,
-       because a seat given up is not one waiting out a grace period. */
-    expect(latest?.seats.find((seat) => seat.name === 'Bo')?.status).toBe('left')
+    /*
+     * The people still at the table have to be told, or the guest sits there as a ghost on
+     * everyone's screen until something else refreshes it.
+     *
+     * Waiting on the seat's status rather than on the number of broadcasts received: under
+     * load a lobby from the guest's own join can land after the count is sampled, which
+     * satisfies a counter-based wait and then asserts against a view that predates the
+     * teardown. That is how this test failed once in a full parallel run while passing
+     * alone — the condition was a proxy for the one that mattered.
+     */
+    await waitFor(() => seatOfBo() === 'left', 'the host to be told the guest left')
+    /* `left` and not `disconnected`: a seat given up is not one waiting out a grace
+       period. It stays listed under its name so the table can say so. */
+    expect(seatOfBo()).toBe('left')
   }, 20_000)
 })

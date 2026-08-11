@@ -30,6 +30,19 @@ const envSchema = z.object({
   /** Chat is tighter: flooding it costs everyone else attention. */
   CHAT_BURST: z.coerce.number().int().min(1).default(5),
   CHAT_PER_SECOND: z.coerce.number().min(0.1).default(0.5),
+  /*
+   * Tighter still, because a room costs far more than a message: it holds a seat, a deck
+   * and up to three timers until somebody leaves it. Three in a burst then one every ten
+   * seconds is beyond what anyone opening a table for friends will notice.
+   *
+   * Worth being clear about what this does and does not buy. Keyed by socket id, so it
+   * stops a double-tapped Create and a script that reuses one connection — it does not
+   * stop one that reconnects, which gets a fresh bucket every time. The real bound on
+   * rooms is MAX_ROOMS with a purge that can actually reclaim them, which is a property
+   * of the seat-release path rather than of this limit.
+   */
+  CREATE_BURST: z.coerce.number().int().min(1).default(3),
+  CREATE_PER_SECOND: z.coerce.number().min(0.01).default(0.1),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 })
 
@@ -48,6 +61,8 @@ export type Config = {
   movePerSecond: number
   chatBurst: number
   chatPerSecond: number
+  createBurst: number
+  createPerSecond: number
   logLevel: LogLevel
 }
 
@@ -72,6 +87,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     movePerSecond: parsed.MOVE_PER_SECOND,
     chatBurst: parsed.CHAT_BURST,
     chatPerSecond: parsed.CHAT_PER_SECOND,
+    createBurst: parsed.CREATE_BURST,
+    createPerSecond: parsed.CREATE_PER_SECOND,
     logLevel: parsed.LOG_LEVEL,
   }
 }

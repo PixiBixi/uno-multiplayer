@@ -64,6 +64,23 @@ export function registerSocketHandlers(
   const io: TypedServer = new Server(httpServer, {
     cors: { origin: config.corsOrigins.length > 0 ? config.corsOrigins : false },
     transports: ['websocket', 'polling'],
+    /*
+     * Views are the bulk of what this server sends, and they went out as raw JSON. A
+     * measured match at four players moved about a megabyte per phone, and deflate takes
+     * roughly two thirds off that — the same view text repeats heavily from one move to
+     * the next, which is exactly what a compression context exploits.
+     *
+     * This is a separate channel from the HTTP compression in http.ts: engine.io and ws
+     * never touch Fastify's reply pipeline, so compressing one does nothing for the other.
+     * engine.io also only builds a deflate config when this option is present — it is not
+     * in its defaults — so leaving it out meant off, not automatic.
+     *
+     * The cost is a zlib context per socket, a few hundred kilobytes with context
+     * takeover. At a handful of players that is single-digit megabytes; it would be worth
+     * revisiting at hundreds. The threshold leaves small frames alone, since an ack or a
+     * chat line is smaller than the deflate block that would wrap it.
+     */
+    perMessageDeflate: { threshold: 1024 },
   })
 
   const presences = new Map<string, Presence>()
@@ -74,6 +91,12 @@ export function registerSocketHandlers(
   const chatLimiter = createRateLimiter({
     capacity: config.chatBurst,
     refillPerSecond: config.chatPerSecond,
+  })
+  /* A room is the most expensive thing a client can ask for — a seat, a deck and up to
+     three timers, held until somebody gives it up. It was the only unlimited event. */
+  const createLimiter = createRateLimiter({
+    capacity: config.createBurst,
+    refillPerSecond: config.createPerSecond,
   })
 
   /** Pushes every connected seat its own redacted view. */
@@ -170,6 +193,12 @@ export function registerSocketHandlers(
         const data = parsePayload(roomCreateSchema, payload)
         if (data === null) {
           ack({ ok: false, error: 'invalid_payload' })
+          return
+        }
+        /* Checked after the payload and before the room exists, so a refused burst costs
+           nothing and cannot leave a half-created table behind. */
+        if (!createLimiter.allow(socket.id)) {
+          ack({ ok: false, error: 'rate_limited' })
           return
         }
         const created = rooms.create(data.goal, data.pace, data.rules)
@@ -428,6 +457,11 @@ export function registerSocketHandlers(
       attempt(undefined, () => {
         moveLimiter.forget(socket.id)
         chatLimiter.forget(socket.id)
+        /* Only here, and deliberately not in `release`: the socket is genuinely gone, so
+           its bucket is dead weight. `release` runs on every create — it is how a socket
+           gives up its old table — so forgetting there would refill the create bucket on
+           each create and cancel the limit it exists to impose. */
+        createLimiter.forget(socket.id)
         const presence = presences.get(socket.id)
         presences.delete(socket.id)
         if (presence === undefined) return
