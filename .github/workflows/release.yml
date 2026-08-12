@@ -26,7 +26,7 @@ jobs:
     if: github.event_name == 'push'
     runs-on: ubuntu-24.04
     permissions:
-      contents: write   # cog pushes the bump commit and its tag, gh cuts the release
+      contents: write # cog pushes the bump commit and its tag, gh cuts the release
     outputs:
       bumped: ${{ steps.bump.outputs.bumped }}
       tag_name: ${{ steps.bump.outputs.tag_name }}
@@ -99,8 +99,8 @@ jobs:
     permissions:
       contents: read
       packages: write
-      id-token: write      # keyless identity used to sign the provenance attestation
-      attestations: write  # store the attestation on the repo
+      id-token: write # keyless identity used to sign the provenance attestation
+      attestations: write # store the attestation on the repo
     steps:
       # Through env: rather than inline. `inputs.tag` is free text typed into the
       # dispatch form, and an inline ${{ }} would be substituted before bash parses
