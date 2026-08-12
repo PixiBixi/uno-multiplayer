@@ -17,10 +17,12 @@ concurrency:
 jobs:
   quality:
     name: Lint, format and types
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -47,15 +49,17 @@ jobs:
 
   test:
     name: Test on Node ${{ matrix.node }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         # Floor declared in engines, current Active LTS, and current release.
         node: ['22', '24', '26']
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: ${{ matrix.node }}
           cache: npm
@@ -64,16 +68,18 @@ jobs:
 
   coverage:
     name: Coverage
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npm run test:coverage
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: coverage
           path: coverage/
@@ -81,17 +87,19 @@ jobs:
 
   e2e:
     name: End to end
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
           name: playwright-report
@@ -100,7 +108,7 @@ jobs:
 
   docker:
     name: Docker image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     # Gated on the suites so a red build can never move the published tag: a
     # `docker compose pull` would otherwise fetch an image whose tests failed.
     # The cost is that a Dockerfile break is reported after the tests rather than
@@ -113,7 +121,9 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - run: docker build -t uno-multiplayer:ci .
       # Building proves nothing on its own: boot it and probe what it serves.
       - name: Boot the image and probe it
@@ -131,9 +141,15 @@ jobs:
 
       # Only from main, and never from a pull request — a fork must not be able to
       # publish, and neither should a branch nobody has merged.
+      # Every ${{ }} below goes through env: first. The expression is substituted
+      # before bash parses the line, so a value carrying `;` or `$(...)` would run
+      # as a command; as a variable it stays a string whatever it holds.
       - name: Log in to GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+        run: echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
       # Retagged, never rebuilt. What gets published is byte-identical to the image
       # that was just booted and probed above; a second build would publish
@@ -143,11 +159,14 @@ jobs:
       # rollback is `docker run ...@sha` rather than an archaeology exercise.
       - name: Publish to GHCR
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          OWNER: ${{ github.repository_owner }}
+          SHA: ${{ github.sha }}
         run: |
-          IMAGE="ghcr.io/${{ github.repository_owner }}/uno-multiplayer"
+          IMAGE="ghcr.io/${OWNER}/uno-multiplayer"
           IMAGE=$(echo "$IMAGE" | tr '[:upper:]' '[:lower:]')   # GHCR rejects capitals
           docker tag uno-multiplayer:ci "$IMAGE:latest"
-          docker tag uno-multiplayer:ci "$IMAGE:${{ github.sha }}"
+          docker tag uno-multiplayer:ci "$IMAGE:${SHA}"
           docker push "$IMAGE:latest"
-          docker push "$IMAGE:${{ github.sha }}"
-          echo "published $IMAGE:${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
+          docker push "$IMAGE:${SHA}"
+          echo "published $IMAGE:${SHA}" >> "$GITHUB_STEP_SUMMARY"

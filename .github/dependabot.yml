@@ -4,6 +4,10 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # A hijacked npm package is usually spotted and yanked within days, so nothing
+    # here is picked up on the day it ships. Security updates ignore the cooldown.
+    cooldown:
+      default-days: 5
     # One PR per group keeps the review load sane on a small project.
     groups:
       dev-dependencies:
@@ -12,10 +16,14 @@ updates:
         dependency-type: production
     open-pull-requests-limit: 5
 
+  # Actions are pinned by commit SHA, so what Dependabot bumps here is the digest
+  # behind a tag; the version comment on the same line is what it keeps readable.
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    cooldown:
+      default-days: 5
 
   # Nothing watched the base image, which is how it sat on Node 22 unnoticed while the
   # rest of the repo moved to 24. Monthly: a base image moves on the runtime's schedule,
