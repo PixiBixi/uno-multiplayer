@@ -120,6 +120,8 @@ jobs:
       # default stays contents: read.
       contents: read
       packages: write
+      id-token: write # keyless identity used to sign the provenance attestation
+      attestations: write # store the attestation on the repo
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -158,6 +160,7 @@ jobs:
       # Two tags: `latest` for `docker compose pull`, and the commit SHA so a
       # rollback is `docker run ...@sha` rather than an archaeology exercise.
       - name: Publish to GHCR
+        id: publish
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           OWNER: ${{ github.repository_owner }}
@@ -169,4 +172,20 @@ jobs:
           docker tag uno-multiplayer:ci "$IMAGE:${SHA}"
           docker push "$IMAGE:latest"
           docker push "$IMAGE:${SHA}"
-          echo "published $IMAGE:${SHA}" >> "$GITHUB_STEP_SUMMARY"
+          # Read back rather than computed: this is the digest the registry
+          # actually stored, and it is what the attestation below is bound to.
+          DIGEST=$(docker inspect --format='{{index .RepoDigests 0}}' "$IMAGE:${SHA}" | cut -d@ -f2)
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "digest=${DIGEST}" >> "$GITHUB_OUTPUT"
+          echo "published $IMAGE:${SHA} (${DIGEST})" >> "$GITHUB_STEP_SUMMARY"
+
+      # `latest` is what `docker compose pull` fetches, so it is the tag that most
+      # needs to say where it came from -- the semver image in release.yml is the
+      # one nobody pulls by accident.
+      - name: Attest build provenance
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ steps.publish.outputs.image }}
+          subject-digest: ${{ steps.publish.outputs.digest }}
+          push-to-registry: true
