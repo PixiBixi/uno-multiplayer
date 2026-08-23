@@ -1,6 +1,19 @@
 # Changelog
 
 - - -
+## [v1.6.1](https://github.com/PixiBixi/uno-multiplayer/compare/769b7da68db91a4d37a6ad67c036fecd96ab2365..v1.6.1) - 2026-08-23
+#### Continuous Integration
+- (**cog**) let a chore cut its own patch release - ([89d677c](https://github.com/PixiBixi/uno-multiplayer/commit/89d677cd0d344fd3d3da43f01a37fcae67570a68)) - Jeremy Delgado
+- (**dependabot**) check actions and the base image daily - ([1dea0ac](https://github.com/PixiBixi/uno-multiplayer/commit/1dea0acf9f32b9835f1c72523c2fb75ed5ca3b39)) - Jeremy Delgado
+- (**dependabot**) hold back the TypeScript major the dev group cannot install - ([7b517fc](https://github.com/PixiBixi/uno-multiplayer/commit/7b517fc46032ed07615a0ba3c0302af39de93b35)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**deps**) bump docker/setup-buildx-action from 4.2.0 to 4.3.0 - ([47be558](https://github.com/PixiBixi/uno-multiplayer/commit/47be5586d33acb7e90dceacb7a7a39dbe9c558f8)) - dependabot[bot]
+- (**deps**) bump fastify - ([769b7da](https://github.com/PixiBixi/uno-multiplayer/commit/769b7da68db91a4d37a6ad67c036fecd96ab2365)) - dependabot[bot]
+- (**deps-dev**) bump the dev-dependencies group across 1 directory with 2 updates - ([2144d6b](https://github.com/PixiBixi/uno-multiplayer/commit/2144d6b9e499d02d43146e3d10d6b0b1bd4a38ac)) - dependabot[bot]
+- (**deps-dev**) take the five bumps TypeScript 7 was holding hostage - ([35f923e](https://github.com/PixiBixi/uno-multiplayer/commit/35f923ef62ff12227f9e3a56e2ebe741d42d7959)) - Jeremy Delgado
+
+- - -
+
 ## [v1.6.0](https://github.com/PixiBixi/uno-multiplayer/compare/65e0f2ee37634aed86bdc9f36504591661a49126..v1.6.0) - 2026-08-23
 #### Tests
 - (**server**) deal another round rather than give up hunting a seven - ([c2fc694](https://github.com/PixiBixi/uno-multiplayer/commit/c2fc6947ca28442f27fbf15503e79f3c89e40beb)) - Jeremy Delgado
