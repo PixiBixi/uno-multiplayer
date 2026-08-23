@@ -20,9 +20,9 @@ export type SoundName =
   | 'swap'
 
 /**
- * Which sound a played card makes. Unlike the visual burst — which reads the view
+ * Which sound a played card makes. Unlike the visual burst - which reads the view
  * because it needs the colour chosen for a wild, and the feed cannot be trusted
- * to have caught up — sound depends only on the card's kind. That is what lets
+ * to have caught up - sound depends only on the card's kind. That is what lets
  * every cue here come from one source, the feed, and stay testable without a
  * browser or an AudioContext.
  */
@@ -61,7 +61,7 @@ export function soundForEvent(event: GameEvent, mySeat: number): SoundName | nul
     case 'unoCalled':
     case 'calledOut':
       return 'uno'
-    /* One cue for both, because a rotation IS a swap generalised — the same rule
+    /* One cue for both, because a rotation IS a swap generalised - the same rule
        moving hands around, and the same thing to notice: what you are holding is
        not what you were holding. The card itself already sounded as a number. */
     case 'handsSwapped':
@@ -78,7 +78,7 @@ export function soundForEvent(event: GameEvent, mySeat: number): SoundName | nul
       return event.winners.includes(mySeat) ? 'matchWon' : 'matchOver'
     /* Silent, and for a reason of its own: a jump-in is immediately followed by the
        `cardPlayed` for the very same card, which already sounds. A cue here would
-       stack two on one instant — the mistake soundsForEvents exists to stop for a
+       stack two on one instant - the mistake soundsForEvents exists to stop for a
        round that ends a match. */
     case 'jumpedIn':
       return null

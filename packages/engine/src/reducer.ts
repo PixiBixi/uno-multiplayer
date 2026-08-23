@@ -87,8 +87,8 @@ function justDrawn(before: GameState, after: GameState, seatIndex: number): Card
  * Hands the turn to a seat and clears its UNO flag.
  *
  * The single place a turn begins, which is what makes it the single place the drawn-card
- * offer is cleared. Every turn change in the game funnels through here — a pass, a play, a
- * jump-in, a seat being skipped for being absent — so no caller has to remember, and a
+ * offer is cleared. Every turn change in the game funnels through here - a pass, a play, a
+ * jump-in, a seat being skipped for being absent - so no caller has to remember, and a
  * stale offer cannot survive one.
  */
 function beginTurn(state: GameState, seatIndex: number): GameState {
@@ -102,7 +102,7 @@ function beginTurn(state: GameState, seatIndex: number): GameState {
 
 /**
  * Closes the Liar window on one seat. Called out, called UNO, or simply out of
- * time — the three ways the window shuts all land here.
+ * time - the three ways the window shuts all land here.
  */
 function closeWindow(state: GameState, seatIndex: number): GameState {
   if (state.seats[seatIndex]?.vulnerable !== true) return state
@@ -139,7 +139,7 @@ function swapHands(state: GameState, a: number, b: number): GameState {
 }
 
 /**
- * Seven-Zero: a 0 passes every hand one seat along, following `direction` — so a
+ * Seven-Zero: a 0 passes every hand one seat along, following `direction` - so a
  * reverse played earlier in the round changes where the hands go.
  *
  * Active seats only, and `advance` is a rotation of exactly those, which makes the
@@ -228,8 +228,8 @@ function applyPlay(
       break
   }
 
-  /* Victory on an empty hand. Checked before the penalty — the two cases are
-     mutually exclusive, zero cards versus exactly one — and before the Seven-Zero
+  /* Victory on an empty hand. Checked before the penalty - the two cases are
+     mutually exclusive, zero cards versus exactly one - and before the Seven-Zero
      effect below, so the first empty hand wins unconditionally. A 7 that could swap
      the win away would make the card unplayable as a last card, which is a trap
      rather than a rule. */
@@ -253,7 +253,7 @@ function applyPlay(
     }
   }
 
-  /* This seat's turn is ending, so any window opened on an earlier turn closes —
+  /* This seat's turn is ending, so any window opened on an earlier turn closes -
      deliberately before a new one may open just below. The other order would let
      a seat that forgets UNO twice in a row escape the second one. */
   next = closeWindow(next, seatIndex)
@@ -272,7 +272,7 @@ function applyPlay(
        Recomputed rather than penalised, and only on a Liar table: the automatic
        penalty punishes an omission, and after a permutation nobody is holding the
        hand they held when the turn began. A window is the fair instrument here
-       precisely because it is escapable — call UNO on your own next turn. */
+       precisely because it is escapable - call UNO on your own next turn. */
     for (const index of permuted) {
       const moved = next.seats[index]
       if (moved === undefined) continue
@@ -287,9 +287,9 @@ function applyPlay(
 }
 
 /**
- * The Liar call-out. Two cards for the target — the same UNO_PENALTY the
+ * The Liar call-out. Two cards for the target - the same UNO_PENALTY the
  * automatic rule charged, so switching the option on cannot make forgetting
- * cheaper or dearer — and nothing at all for the accuser.
+ * cheaper or dearer - and nothing at all for the accuser.
  *
  * Whose turn it is never changes and no round ever ends here, which keeps the one
  * off-turn move in the game out of the turn-advance logic entirely.
@@ -350,7 +350,7 @@ export function applyMove(
       const drawn = drawInto(state, seatIndex, 1)
       const card = justDrawn(state, drawn, seatIndex)
       /* The official rule: a playable drawn card may be laid down, so the turn is not
-         over. Only when there is genuinely a choice — an unplayable card, or a pile that
+         over. Only when there is genuinely a choice - an unplayable card, or a pile that
          could not pay the draw at all, ends the turn exactly as it always did, with no
          sub-state and nothing for the player to dismiss. */
       if (state.rules.playDrawnCard && card !== null && isPlayable(card, drawn)) {
@@ -369,7 +369,7 @@ export function applyMove(
       return ok(passTurn(drawn, seatIndex, 1))
     }
     case 'play':
-      /* A jump-in IS the jumper's turn, so it begins here — after the gate, which
+      /* A jump-in IS the jumper's turn, so it begins here - after the gate, which
          has to read the state as it really was, or an off-turn seat would be offered
          every move the seat on turn had.
 
@@ -389,7 +389,7 @@ export function applyMove(
 
 /**
  * Hands the turn past seats that are not active. The absent player takes the
- * neutral action — swallow any debt, otherwise draw one — so the table never
+ * neutral action - swallow any debt, otherwise draw one - so the table never
  * stalls on someone who is gone. Bounded: it stops as soon as the turn stops
  * moving.
  */
@@ -408,7 +408,7 @@ export function skipDisconnectedTurn(state: GameState): GameState {
         ? drawInto({ ...next, pendingDraw: null }, from, debt.amount)
         : drawInto(next, from, 1)
 
-    /* Their turn happened, however absently, so their window closes with it — and any
+    /* Their turn happened, however absently, so their window closes with it - and any
        drawn-card offer goes too, cleared here rather than left to `beginTurn` below
        because the loop can break without reaching it when nobody else is active. */
     next = closeWindow({ ...next, drawnCard: null }, from)

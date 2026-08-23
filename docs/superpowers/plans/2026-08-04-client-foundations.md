@@ -1,4 +1,4 @@
-# Plan C1 — Fin du serveur, fondations client, cartes
+# Plan C1 - Fin du serveur, fondations client, cartes
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -9,7 +9,7 @@
 **Tech Stack:** React 19.2, Vite 8.2, Vitest 4 + Testing Library 16, `@fastify/static` 10.
 
 **Spec:** `docs/superpowers/specs/2026-08-04-uno-multiplayer-design.md` §2.7, §4.4
-**Maquettes:** l'artifact publié — le SVG des cartes y est déjà validé et sert de référence.
+**Maquettes:** l'artifact publié - le SVG des cartes y est déjà validé et sert de référence.
 
 **Prérequis:** plans A et B livrés sur `main`.
 
@@ -51,7 +51,7 @@
 - Consumes: `initGame` (`@uno/engine`)
 - Produces: `restart(bySeat: number, nextSeed: number): Result<GameEvent[], ErrorCode>`
 
-Le trou trouvé par la maquette : le bouton « Play again » ne reposait sur rien. La graine est un **paramètre**, pas un tirage interne — sinon `Room` cesse d'être déterministe et testable sans horloge.
+Le trou trouvé par la maquette : le bouton « Play again » ne reposait sur rien. La graine est un **paramètre**, pas un tirage interne - sinon `Room` cesse d'être déterministe et testable sans horloge.
 
 - [ ] **Step 1: Écrire les tests qui échouent**
 
@@ -151,7 +151,7 @@ describe('Room.restart', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run apps/server/src/rooms/room-restart.test.ts`
-Expected: FAIL — `restart` n'existe pas.
+Expected: FAIL - `restart` n'existe pas.
 
 - [ ] **Step 3: Ajouter `gameRestarted` au protocole**
 
@@ -187,7 +187,7 @@ Dans `apps/server/src/rooms/room.ts`, ajouter après `start` :
   }
 ```
 
-Note : `initGame` ne reçoit que les sièges actifs, donc les indices du moteur se resserrent tandis que `members` garde les siens. Le test « leaves out seats that left for good » verrouille ce comportement — `viewFor(2)` retourne `null` parce que le moteur ne connaît plus ce siège.
+Note : `initGame` ne reçoit que les sièges actifs, donc les indices du moteur se resserrent tandis que `members` garde les siens. Le test « leaves out seats that left for good » verrouille ce comportement - `viewFor(2)` retourne `null` parce que le moteur ne connaît plus ce siège.
 
 - [ ] **Step 5: Lancer les tests et la vérification complète**
 
@@ -215,7 +215,7 @@ git commit -m "feat(server): add host-driven game restart"
 - Consumes: `Room.restart` (Task 1)
 - Produces:
   - événement client `'game:restart': (payload: Empty, ack: Ack) => void`
-  - `RoomManager.nextSeed(): number` — expose la source de graines au handler
+  - `RoomManager.nextSeed(): number` - expose la source de graines au handler
 
 - [ ] **Step 1: Écrire le test qui échoue**
 
@@ -338,7 +338,7 @@ describe('game:restart over sockets', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 Run: `npx vitest run apps/server/src/sockets/handlers-restart.test.ts`
-Expected: FAIL — l'événement `game:restart` n'est pas géré, l'ack n'arrive jamais.
+Expected: FAIL - l'événement `game:restart` n'est pas géré, l'ack n'arrive jamais.
 
 - [ ] **Step 3: Déclarer l'événement dans le protocole**
 
@@ -413,7 +413,7 @@ git commit -m "feat(server): expose game restart over the socket"
 **Interfaces:**
 - Consumes: `Config` (plan B)
 - Produces:
-  - `Config.staticRoot: string | null` — dossier du build client, `null` pour ne rien servir
+  - `Config.staticRoot: string | null` - dossier du build client, `null` pour ne rien servir
   - `buildApp` sert les fichiers et retombe sur `index.html` pour toute route inconnue
 
 Le fallback SPA doit **exclure** `/healthz` et `/socket.io`, sinon une sonde de santé reçoit du HTML.
@@ -489,7 +489,7 @@ describe('static serving', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 Run: `npx vitest run apps/server/src/http-static.test.ts`
-Expected: FAIL — 404 à la racine, `STATIC_ROOT` est ignoré.
+Expected: FAIL - 404 à la racine, `STATIC_ROOT` est ignoré.
 
 - [ ] **Step 3: Installer la dépendance**
 
@@ -525,7 +525,7 @@ import fastifyStatic from '@fastify/static'
 import { resolve } from 'node:path'
 ```
 
-Puis, après l'enregistrement de `cors` et **avant** `app.get('/healthz', …)` — l'ordre n'importe pas pour Fastify, mais garder la sonde visible en tête du fichier aide à la lecture — ajouter à la fin de `buildApp`, juste avant `return app` :
+Puis, après l'enregistrement de `cors` et **avant** `app.get('/healthz', …)` - l'ordre n'importe pas pour Fastify, mais garder la sonde visible en tête du fichier aide à la lecture - ajouter à la fin de `buildApp`, juste avant `return app` :
 
 ```ts
   if (config.staticRoot !== null) {
@@ -600,7 +600,7 @@ describe('App', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 Run: `npx vitest run apps/web/src/App.test.tsx`
-Expected: FAIL — le workspace n'existe pas.
+Expected: FAIL - le workspace n'existe pas.
 
 - [ ] **Step 3: Créer le workspace**
 
@@ -954,9 +954,9 @@ git commit -m "feat(web): scaffold Vite React client with design tokens"
 - Produces:
   - `<Card card={CardData} onPlay?={() => void} disabled?={boolean} />`
   - `<CardBack />`
-  - `cardLabel(card: CardData): string` — texte accessible, exporté pour être testé
+  - `cardLabel(card: CardData): string` - texte accessible, exporté pour être testé
 
-Le SVG est repris des maquettes validées. Deux points non négociables : chaque glyphe est centré via `dominantBaseline="central"` sur le centre de l'ellipse, et chaque pigment porte un **jeton de forme** — la couleur ne peut pas être le seul canal, puisque la couleur *est* la règle.
+Le SVG est repris des maquettes validées. Deux points non négociables : chaque glyphe est centré via `dominantBaseline="central"` sur le centre de l'ellipse, et chaque pigment porte un **jeton de forme** - la couleur ne peut pas être le seul canal, puisque la couleur *est* la règle.
 
 - [ ] **Step 1: Écrire les tests qui échouent**
 
@@ -1047,7 +1047,7 @@ describe('Card', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run apps/web/src/components/Card.test.tsx`
-Expected: FAIL — `./Card.js` introuvable.
+Expected: FAIL - `./Card.js` introuvable.
 
 - [ ] **Step 3: Implémenter la carte**
 
@@ -1209,7 +1209,7 @@ export function Card({ card, onPlay, disabled = false }: CardProps) {
   const pigment = isWild ? INK : PIGMENT[card.color]
   const faceFill = isWild ? BONE : pigment
   const tokenColor: Color = isWild ? 'R' : card.color
-  const label = disabled ? `${cardLabel(card)} — not playable this turn` : cardLabel(card)
+  const label = disabled ? `${cardLabel(card)} - not playable this turn` : cardLabel(card)
 
   const face = (
     <svg
@@ -1226,7 +1226,7 @@ export function Card({ card, onPlay, disabled = false }: CardProps) {
       <g fontSize={17} fontWeight={600} fill={BONE} textAnchor="middle" dominantBaseline="central">
         <text x={32} y={26}>{cornerLabel(card)}</text>
         {/* The bottom-right marks are the top-left marks rotated about the card
-            centre — the way a real card is printed. */}
+            centre - the way a real card is printed. */}
         <g transform="rotate(180 60 84)">
           <text x={32} y={26}>{cornerLabel(card)}</text>
         </g>

@@ -110,7 +110,7 @@ describe('a room playing with jump-in', () => {
     expect(heldBy(room, seat)).toEqual(held.filter((id) => id !== move.cardId))
 
     /* Play carries on from the jumper, so the turn is one seat along from THEM and
-       not from whoever was holding it — which is the entire point of the rule.
+       not from whoever was holding it - which is the entire point of the rule.
        Skipped when the card carries an effect of its own: a skip or a reverse moves
        the turn two, and both are legitimate cards to jump. */
     if (card?.kind === 'number' || card?.kind === 'draw2') {

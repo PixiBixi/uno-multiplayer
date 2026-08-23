@@ -17,7 +17,7 @@ import { logger } from './logger.js'
  */
 export async function buildApp(config: Config) {
   // The logger is a module singleton so every module can import it, but its
-  // level belongs to the config — pino lets us set it after construction.
+  // level belongs to the config - pino lets us set it after construction.
   // Setting it here is also what silences request logging under LOG_LEVEL=silent,
   // rather than Fastify's `disableRequestLogging`, deprecated in v5.
   logger.level = config.logLevel
@@ -31,7 +31,7 @@ export async function buildApp(config: Config) {
    * the peer the proxy itself saw. Anything further left in X-Forwarded-For came
    * from the client and stays untrusted.
    *
-   * Tied to BEHIND_TLS because that flag already asserts exactly this shape — a
+   * Tied to BEHIND_TLS because that flag already asserts exactly this shape - a
    * proxy terminating TLS in front of this process. Without it the header is
    * ignored, which is what a directly-exposed server needs: it would otherwise
    * believe whatever a client claimed.
@@ -54,12 +54,12 @@ export async function buildApp(config: Config) {
            premise is wrong: it rewrites every asset request to https, so a
            server reached over plain http answers with a CSS and JS URL that has
            no TLS behind it and the page renders blank. `null` removes it, `[]`
-           emits it valueless — which is the form the directive takes. */
+           emits it valueless - which is the form the directive takes. */
         upgradeInsecureRequests: config.behindTls ? [] : null,
       },
     },
     /* Same reasoning, opposite failure mode: browsers ignore HSTS delivered over
-       plain http, so it does no damage there — but it does promise something this
+       plain http, so it does no damage there - but it does promise something this
        deployment cannot keep, and a header that lies is worth removing. */
     strictTransportSecurity: config.behindTls,
   })
@@ -73,17 +73,17 @@ export async function buildApp(config: Config) {
   /*
    * The client bundle went out uncompressed until this existed: 374 KB of JavaScript on
    * the wire, where gzip takes it to roughly a third. Nothing upstream was doing it
-   * either, so it belongs here — the app should not depend on a particular proxy being
+   * either, so it belongs here - the app should not depend on a particular proxy being
    * configured a particular way to be usable on a phone.
    *
    * Registered before the static plugin so it wraps those replies. Socket.IO is untouched
    * by this and needs its own setting: engine.io and ws never reach Fastify's reply
    * pipeline. An earlier version of this comment claimed their frames were "already
-   * optional-deflate" — they were not, and engine.io only builds a deflate config when
+   * optional-deflate" - they were not, and engine.io only builds a deflate config when
    * the option is passed, which nothing did. `perMessageDeflate` now handles that side
    * in `registerSocketHandlers`.
    *
-   * `threshold` leaves tiny payloads alone — /healthz is 15 bytes, and compressing it
+   * `threshold` leaves tiny payloads alone - /healthz is 15 bytes, and compressing it
    * would add headers worth more than the body.
    */
   await app.register(compress, {
@@ -91,7 +91,7 @@ export async function buildApp(config: Config) {
     threshold: 1024,
     /*
      * gzip only, and measured rather than assumed. On this bundle the plugin's default
-     * brotli produced a LARGER body than gzip — 113,536 bytes against 112,412 — because
+     * brotli produced a LARGER body than gzip - 113,536 bytes against 112,412 - because
      * it compresses at a low quality to keep per-request cost down. Browsers advertise
      * `br` ahead of `gzip`, so leaving both enabled would serve the worse of the two and
      * spend more CPU doing it.
@@ -112,14 +112,14 @@ export async function buildApp(config: Config) {
       /*
        * Cache policy has to split by filename, and a single `maxAge` would be wrong for
        * everything: Vite writes content-hashed names under /assets/, so those files can
-       * never change and are safe to keep for a year — while index.html must never be
+       * never change and are safe to keep for a year - while index.html must never be
        * cached, or a player stays on a stale app shell after every deploy and no amount
        * of reloading fixes it.
        *
        * The icons sit in between: they are copied from public/ with stable names, so
        * they are not immutable, but a day is fine for a favicon.
        */
-      /* The first argument is a FastifyReply here, not a raw ServerResponse — hence
+      /* The first argument is a FastifyReply here, not a raw ServerResponse - hence
          `.header()` and no annotation of my own, which only got it wrong. */
       setHeaders: (reply, path) => {
         if (path.includes('/assets/')) {

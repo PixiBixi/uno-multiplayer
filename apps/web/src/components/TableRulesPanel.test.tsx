@@ -14,7 +14,7 @@ import { TableRulesPanel } from './TableRulesPanel.js'
  * would leave half the table reading a game nobody is playing, and the type checker cannot
  * see it because both copies are just JSX.
  *
- * What is checkable is that the two modes agree — same rules, same labels, same order —
+ * What is checkable is that the two modes agree - same rules, same labels, same order -
  * which is exactly the property a drifted copy breaks. A copy that is still
  * character-identical to the original is undetectable behaviourally, and this file does not
  * pretend otherwise; it fails the moment the two part company, which is the moment that

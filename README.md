@@ -6,7 +6,7 @@ the client renders what it is given and never decides anything. Official rules p
 draw stacking, with the UNO call-out, Seven-Zero and jump-in available as optional
 table rules.
 
-**[Play it at uno.jdelgado.fr](https://uno.jdelgado.fr)** — create a table, share the
+**[Play it at uno.jdelgado.fr](https://uno.jdelgado.fr)** - create a table, share the
 six-character code or the link, and everyone joins from a browser.
 
 ## Why this exists
@@ -20,7 +20,7 @@ in one 810-line function, where the copies had drifted apart.
 
 No amount of patching fixes that shape. Here the rules live in one pure engine, the
 server is the only authority, and cheating is structurally impossible rather than
-discouraged — opponents' cards never cross the wire at all. See
+discouraged - opponents' cards never cross the wire at all. See
 [Server authority](openwiki/architecture/server-authority.md) for the decision the
 rest of the project follows from.
 
@@ -28,7 +28,7 @@ rest of the project follows from.
 
 **Node 24**, the Active LTS pinned in `.nvmrc`. That is the version CI lints, covers
 and runs the browser suite on, and the one the Docker image ships. `engines` says
-`>=22` because the code still runs there and the test matrix proves it — but the floor
+`>=22` because the code still runs there and the test matrix proves it - but the floor
 is what this supports, not what to run it on. Reading it the other way is how the
 image once shipped 22 while everything else validated 24; a CI step now fails if the
 Dockerfile and `.nvmrc` disagree.
@@ -64,7 +64,7 @@ one the pipeline booted and probed rather than a second build of the same source
 docker compose up --build      # then open http://localhost:5050
 ```
 
-Behind an existing reverse proxy, `compose.traefik.yaml` is ready to use — replace
+Behind an existing reverse proxy, `compose.traefik.yaml` is ready to use - replace
 the hostname, the cert resolver and the network name, then:
 
 ```bash
@@ -75,7 +75,7 @@ docker compose -f compose.traefik.yaml up -d
 **No WebSocket configuration is needed.** Traefik proxies the upgrade itself, which
 is verified rather than assumed: the full Playwright suite plays complete
 multi-player games through a real Traefik with only four routing labels. Three
-things do matter — `BEHIND_TLS=true`, no `ports:` mapping, and `external: true` on
+things do matter - `BEHIND_TLS=true`, no `ports:` mapping, and `external: true` on
 the network.
 
 **One replica, always.** Game state lives in memory and there is no Redis adapter, so

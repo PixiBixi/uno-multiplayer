@@ -7,7 +7,7 @@ const MAX_FANNED = 6
 
 /**
  * The note under a seat that is not playing. Built from the catalogue rather than
- * held as a `Record<SeatStatus, string>` of literals — which is exactly how these two
+ * held as a `Record<SeatStatus, string>` of literals - which is exactly how these two
  * phrases survived a sweep for English: no JSX, no attribute, just a table read
  * through a variable.
  *
@@ -21,7 +21,7 @@ const statusNote = (status: SeatStatus, t: Messages): string | null => {
     /* Shared with the lobby roster: the same word for the same fact. */
     case 'disconnected':
       return t.lobby.reconnecting
-    /* Not shared, unlike the line above. See `table.hasLeft` — a bare "left" is a
+    /* Not shared, unlike the line above. See `table.hasLeft` - a bare "left" is a
        direction when it sits next to a badge reading "Anticlockwise". */
     case 'left':
       return t.table.hasLeft
@@ -60,7 +60,7 @@ export function Seat({ name, handCount, status, isTurn, orientation, onCallOut }
       {/* Marked from `onCallOut` rather than from a prop of its own: the button existing IS
           the seat being vulnerable, so a second source for the same fact could only ever
           disagree with the first. The mark is on the plate because the eye should go to the
-          person, not to a control — a button on its own reads as decoration, which is how
+          person, not to a control - a button on its own reads as decoration, which is how
           entire games were played without anybody noticing it. */}
       <p
         className={[

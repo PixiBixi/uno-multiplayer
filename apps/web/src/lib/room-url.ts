@@ -22,8 +22,8 @@ export function writeRoomCodeToUrl(roomCode: string): void {
 /**
  * The invitation a host sends out. Built from the code rather than read off the
  * address bar: the two agree today only because `writeRoomCodeToUrl` happens to
- * have run first, and a link that silently invites people to the wrong table — or
- * to no table at all — is not worth that coupling.
+ * have run first, and a link that silently invites people to the wrong table - or
+ * to no table at all - is not worth that coupling.
  *
  * Whoever opens it lands on the home screen with the code already filled in,
  * which is the whole reason a link is worth offering next to the code.

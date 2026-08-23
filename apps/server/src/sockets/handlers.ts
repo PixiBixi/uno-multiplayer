@@ -37,7 +37,7 @@ function parsePayload<T>(schema: ZodType<T>, payload: unknown): T | null {
 }
 
 /**
- * Runs a handler body so that nothing escapes to the process boundary — an
+ * Runs a handler body so that nothing escapes to the process boundary - an
  * uncaught throw in a socket listener is exactly what took the predecessor down.
  * `ack` is checked at runtime too: a client is free to omit it, and calling
  * `undefined` would defeat the whole purpose.
@@ -67,13 +67,13 @@ export function registerSocketHandlers(
     /*
      * Views are the bulk of what this server sends, and they went out as raw JSON. A
      * measured match at four players moved about a megabyte per phone, and deflate takes
-     * roughly two thirds off that — the same view text repeats heavily from one move to
+     * roughly two thirds off that - the same view text repeats heavily from one move to
      * the next, which is exactly what a compression context exploits.
      *
      * This is a separate channel from the HTTP compression in http.ts: engine.io and ws
      * never touch Fastify's reply pipeline, so compressing one does nothing for the other.
-     * engine.io also only builds a deflate config when this option is present — it is not
-     * in its defaults — so leaving it out meant off, not automatic.
+     * engine.io also only builds a deflate config when this option is present - it is not
+     * in its defaults - so leaving it out meant off, not automatic.
      *
      * The cost is a zlib context per socket, a few hundred kilobytes with context
      * takeover. At a handful of players that is single-digit megabytes; it would be worth
@@ -92,7 +92,7 @@ export function registerSocketHandlers(
     capacity: config.chatBurst,
     refillPerSecond: config.chatPerSecond,
   })
-  /* A room is the most expensive thing a client can ask for — a seat, a deck and up to
+  /* A room is the most expensive thing a client can ask for - a seat, a deck and up to
      three timers, held until somebody gives it up. It was the only unlimited event. */
   const createLimiter = createRateLimiter({
     capacity: config.createBurst,
@@ -302,7 +302,7 @@ export function registerSocketHandlers(
           ack({ ok: false, error: 'invalid_payload' })
           return
         }
-        // Leaving twice, or from a stale tab, is not an error worth reporting — `release`
+        // Leaving twice, or from a stale tab, is not an error worth reporting - `release`
         // is silent when there is no seat to give up.
         release(socket)
         ack({ ok: true })
@@ -312,8 +312,8 @@ export function registerSocketHandlers(
     /**
      * The host changing the table from the lobby.
      *
-     * The guard lives in `Room.configure`, which is checked here — when the event is
-     * handled — and never at render: a host can press Start and toggle a rule in the
+     * The guard lives in `Room.configure`, which is checked here - when the event is
+     * handled - and never at render: a host can press Start and toggle a rule in the
      * same breath, and whichever arrives second must lose.
      *
      * `broadcastLobby`, not an ack carrying the new view: the guest watching the host
@@ -321,7 +321,7 @@ export function registerSocketHandlers(
      * change that only refreshed the sender would satisfy a naive test and fail the
      * feature.
      *
-     * No `retime`. Nothing here can move a turn — there is no turn — and a pace chosen
+     * No `retime`. Nothing here can move a turn - there is no turn - and a pace chosen
      * in the lobby is a number the deal will read, not a clock. RoomManager arms it at
      * the deal, as it always has.
      */
@@ -458,8 +458,8 @@ export function registerSocketHandlers(
         moveLimiter.forget(socket.id)
         chatLimiter.forget(socket.id)
         /* Only here, and deliberately not in `release`: the socket is genuinely gone, so
-           its bucket is dead weight. `release` runs on every create — it is how a socket
-           gives up its old table — so forgetting there would refill the create bucket on
+           its bucket is dead weight. `release` runs on every create - it is how a socket
+           gives up its old table - so forgetting there would refill the create bucket on
            each create and cancel the limit it exists to impose. */
         createLimiter.forget(socket.id)
         const presence = presences.get(socket.id)

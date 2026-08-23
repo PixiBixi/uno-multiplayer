@@ -32,7 +32,7 @@ describe('the palette', () => {
        without a browser. It is only safe while it agrees with the stylesheet, and
        nothing else would notice if it stopped: the page would still render the CSS
        variable and the test asserting the ratio would be measuring a colour nobody
-       sees. Read from disk by path — `?raw` is intercepted by Vite's CSS plugin. */
+       sees. Read from disk by path - `?raw` is intercepted by Vite's CSS plugin. */
     const tokens = readFileSync(resolve(process.cwd(), 'apps/web/src/styles/tokens.css'), 'utf8')
     const declared = (name: string): string => {
       const match = new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{3,8});`).exec(tokens)

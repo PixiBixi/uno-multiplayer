@@ -41,7 +41,7 @@ function playOut(
 /**
  * Plays greedily: lay a card whenever possible, draw only as a last resort.
  * This is how a sensible player behaves, and it is the policy under which
- * termination is meaningful — a random policy draws so often that hands grow
+ * termination is meaningful - a random policy draws so often that hands grow
  * without bound.
  */
 function playOutGreedy(seatCount: number, seed: number, rules?: TableRules): GameState {
@@ -76,7 +76,7 @@ const gameArbitraries = [
 /**
  * Well above what these need, on purpose. Conservation runs 300 games and checks
  * every intermediate state of each, which measures at ~1.1s alone but was seen at
- * 5.5s while the rest of the suite competed for cores — enough to cross vitest's
+ * 5.5s while the rest of the suite competed for cores - enough to cross vitest's
  * 5s default and fail a run that had found nothing wrong.
  *
  * The alternative was cutting numRuns, which trades away the coverage that makes
@@ -194,7 +194,7 @@ describe('state validity', () => {
  * turn, every seat that can call somebody out does.
  *
  * The policy is deliberately not the sensible one. A seat that calls UNO never
- * becomes vulnerable, so a greedy player exercises none of this — the interesting
+ * becomes vulnerable, so a greedy player exercises none of this - the interesting
  * games are the ones full of forgotten UNOs.
  */
 function playOutWatchful(
@@ -321,7 +321,7 @@ describe('the Liar call-out keeps every invariant', () => {
  * is what makes these properties mean anything: a 7 has to be both held and
  * playable, so a neutral policy permutes hands rarely enough that a broken swap
  * could slip through hundreds of runs untouched. Nobody ever calls UNO, and anyone
- * who may call somebody out does — a swap can open a window on a seat whose turn it
+ * who may call somebody out does - a swap can open a window on a seat whose turn it
  * is not, which is the interesting collision between the two options.
  */
 function playOutSevenZero(
@@ -500,7 +500,7 @@ describe('Seven-Zero keeps every invariant', () => {
  * the turn to move: every other move in the game answers to whose turn it is, and a
  * jump-in both ignores that and rewrites it. So the loop asks every off-turn seat
  * what it may do, takes the jump-in, and then carries on with whoever holds the turn
- * afterwards — which is deliberately not who held it a moment ago.
+ * afterwards - which is deliberately not who held it a moment ago.
  *
  * `picks` steers whether an available jump-in is actually taken, so ordinary play is
  * still exercised: a table where every jump-in is always taken is not the only table
@@ -532,8 +532,8 @@ function playOutJumpIn(
       states.push(state)
     }
 
-    /* At most one seat can hold a jump-in against a given top — the twin of a card
-       is in one place only — but the loop does not assume that, and takes the first
+    /* At most one seat can hold a jump-in against a given top - the twin of a card
+       is in one place only - but the loop does not assume that, and takes the first
        one it finds. */
     if (pick % 3 !== 0) {
       for (const jumper of state.seats) {
@@ -570,8 +570,8 @@ function playOutJumpIn(
  * Greedy, and jumping in unconditionally whenever a jump-in is offered.
  *
  * The policy termination is measured under, and deliberately the unfavourable one:
- * jumping down to one card cannot be declared — an off-turn seat is offered no
- * `callUno` — so on a table without `liar` every such jump costs the jumper the two
+ * jumping down to one card cannot be declared - an off-turn seat is offered no
+ * `callUno` - so on a table without `liar` every such jump costs the jumper the two
  * cards it just saved. A player who always jumps is therefore a player who sometimes
  * makes their own hand bigger, which is exactly the shape a non-terminating game
  * would need.
@@ -725,7 +725,7 @@ describe('jump-in keeps every invariant', () => {
     () => {
       /* The invariant most at risk, and the reason this option was worth being ready
          to abandon: a jump-in moves the turn without the previous seat having played,
-         so a cycle in which play never progresses is a real shape. It cannot arise —
+         so a cycle in which play never progresses is a real shape. It cannot arise -
          every jump-in spends a card, and the twin of a card is in one place only, so
          no jump-in can be answered by another jump-in on the same card. */
       for (const rules of JUMP_IN_TABLES) {
@@ -762,8 +762,8 @@ describe('jump-in keeps every invariant', () => {
  * A table playing the official drawn-card rule, driven so the sub-state is reached
  * constantly rather than by luck.
  *
- * The policy draws far more often than a sensible player would — every third turn where a
- * draw is legal — because the sub-state only exists after a voluntary draw whose card
+ * The policy draws far more often than a sensible player would - every third turn where a
+ * draw is legal - because the sub-state only exists after a voluntary draw whose card
  * happens to be playable, and a greedy player draws only as a last resort. It then
  * alternates between laying the card down and keeping it, so both exits are exercised.
  * Nobody ever calls UNO, anybody who can call somebody out does, and any jump-in on offer
@@ -799,8 +799,8 @@ function playOutDrawnCard(
 
     /* Jump-ins taken on two turns in three, not on all three, and that asymmetry is
        load-bearing. Taking every one available means no twin is ever still in a hand by the
-       time somebody draws — the top has not changed, so a seat that could jump already
-       has — and the property below asserting no jump-in is offered mid-decision would be
+       time somebody draws - the top has not changed, so a seat that could jump already
+       has - and the property below asserting no jump-in is offered mid-decision would be
        vacuously true. Measured: with the guard deleted and every jump-in taken, 600 runs
        failed nothing. Declining sometimes is what leaves a twin in play to catch it.
 
@@ -881,7 +881,7 @@ function playOutGreedyDrawing(seatCount: number, seed: number, rules: TableRules
 
 /* Every combination that can meet the sub-state: alone, with the Liar window a seat can
    still close by calling UNO mid-decision, with a drawn 7 offering its swap targets, and
-   with jump-in — which must be shut off entirely while the decision stands. */
+   with jump-in - which must be shut off entirely while the decision stands. */
 const DRAWN_CARD_TABLES: TableRules[] = [
   { liar: false, sevenZero: false, jumpIn: false, playDrawnCard: true },
   { liar: true, sevenZero: false, jumpIn: false, playDrawnCard: true },
@@ -996,8 +996,8 @@ describe('playing the drawn card keeps every invariant', () => {
               }
             }
           }),
-          /* More runs than its neighbours, and deliberately: the coincidence it needs — a
-             seat deciding on a drawn card while another holds the twin of the top — is rare
+          /* More runs than its neighbours, and deliberately: the coincidence it needs - a
+             seat deciding on a drawn card while another holds the twin of the top - is rare
              enough to be worth paying for. Measured rather than guessed. */
           { numRuns: 300 },
         )
@@ -1083,7 +1083,7 @@ describe('playing the drawn card keeps every invariant', () => {
       /* The invariant genuinely at risk, and the reason the sub-state was worth keeping
          small: a turn that does not end is a table that hangs. It cannot happen, because
          re-entering the sub-state needs a second voluntary draw and `draw` is not offered
-         inside it — so the only moves available either spend a card or end the turn. */
+         inside it - so the only moves available either spend a card or end the turn. */
       for (const rules of DRAWN_CARD_TABLES) {
         for (const seatCount of [2, 3, 4]) {
           for (let seed = 0; seed < 40; seed++) {

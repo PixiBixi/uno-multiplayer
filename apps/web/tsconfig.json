@@ -1,6 +1,6 @@
 {
   // The client is bundled by Vite, so it resolves modules the way a bundler
-  // does — not the way Node does. Forcing it into the repo-root program (which
+  // does - not the way Node does. Forcing it into the repo-root program (which
   // is NodeNext, for the server and packages) made CJS/ESM interop misresolve
   // library default exports into module namespaces.
   //

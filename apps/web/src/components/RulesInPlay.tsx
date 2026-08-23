@@ -6,7 +6,7 @@ import { useMessages } from '../i18n/index.js'
  *
  * The lobby already shows every setting before the deal, and that turned out to be half a
  * fix: a rule read once is not one anybody recalls twenty minutes later. A manual UNO
- * penalty got reported as a missing one, and the game was right — the table simply never
+ * penalty got reported as a missing one, and the game was right - the table simply never
  * said the rule was on.
  *
  * All four, always, with their state. The first attempt showed only the unusual ones, on the

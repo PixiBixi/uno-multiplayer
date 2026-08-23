@@ -27,8 +27,8 @@ export function Toaster({ toasts, onDismiss }: ToasterProps) {
     <div className="toaster" role="status" aria-live="polite">
       {toasts.map((toast) => (
         /* Each toast is its own component so it can own its own timer. Keyed by id, so
-           React keeps the instance across the parent's re-renders — which happen several
-           times a turn as views arrive — and the countdown below is started once. */
+           React keeps the instance across the parent's re-renders - which happen several
+           times a turn as views arrive - and the countdown below is started once. */
         <ToastRow key={toast.id} toast={toast} onDismiss={onDismiss} />
       ))}
     </div>

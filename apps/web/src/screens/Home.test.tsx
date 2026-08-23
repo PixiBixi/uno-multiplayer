@@ -36,7 +36,7 @@ describe('Home', () => {
 
   it('configures nothing about the table', () => {
     /* Measured on v1.1.0 this screen carried 21 controls and put the game-code field
-       last, under everything a joining player has no use for — and on three players, two
+       last, under everything a joining player has no use for - and on three players, two
        are joining. Each of these was a control here and is one in the lobby now. */
     setup()
     for (const gone of [

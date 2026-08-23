@@ -6,7 +6,7 @@ import { expect, test, type Browser, type Page } from '@playwright/test'
  * Every earlier check on the translation read the source and reported the language
  * complete. Both times it was not, and both times the reason was the same: reading a
  * catalogue tells you what has been translated, never what a page renders. Only the
- * rendered document knows, and only a browser can produce one — a card's
+ * rendered document knows, and only a browser can produce one - a card's
  * `aria-label` is assembled at render time from a component, a lookup table and a
  * context, and the three of them disagreed for months without a single file looking
  * wrong on its own.
@@ -43,8 +43,8 @@ async function joinGame(page: Page, code: string, name: string): Promise<void> {
 /**
  * Everything the page says, visible text and accessible names together.
  *
- * The names matter more than the text here. A card carries no visible words at all —
- * its face is a numeral and a shape — so its `aria-label` is the only place its
+ * The names matter more than the text here. A card carries no visible words at all -
+ * its face is a numeral and a shape - so its `aria-label` is the only place its
  * identity is written, and it was the single biggest miss: a French player heard
  * "Red 7" on every card in their hand.
  */
@@ -64,7 +64,7 @@ async function everythingSaid(page: Page): Promise<string> {
 /**
  * Words that could only come from the English catalogue or from a literal left in a
  * component. Named individually rather than detected, because "is this word English"
- * has no answer a test can compute — "Table" and "Ana" are French too, and `UNO`,
+ * has no answer a test can compute - "Table" and "Ana" are French too, and `UNO`,
  * `Blazing` and `Jump-in` are deliberately untranslated and documented as such.
  *
  * Whole words, so `Vert` does not trip on the substring of something else and
@@ -111,7 +111,7 @@ function englishFoundIn(said: string): string[] {
 }
 
 test('the detector would notice English if there were any', () => {
-  /* The assertion this file rests on, tested rather than trusted — an emptied word
+  /* The assertion this file rests on, tested rather than trusted - an emptied word
      list, or a regex that never matches, would make every check below pass. */
   expect(englishFoundIn('C’est un Red 7, injouable')).toEqual(['Red'])
   expect(englishFoundIn('34 restantes')).toEqual([])
@@ -124,7 +124,7 @@ test('a French browser gets a French home screen with nothing stored', async ({ 
   await page.goto('/')
 
   // The document declares the language too, or a screen reader speaks French in an
-  // English voice — measured here rather than assumed.
+  // English voice - measured here rather than assumed.
   expect(await page.getAttribute('html', 'lang')).toBe('fr')
   expect(englishFoundIn(await everythingSaid(page))).toEqual([])
 })
@@ -170,7 +170,7 @@ test('a whole French game says nothing in English, card labels included', async 
 
   /* The log, specifically. It is the one surface built from server events rather than
      from static labels, so it is where an untranslated `describeEvent` case would show
-     up — and it must have something in it by now. */
+     up - and it must have something in it by now. */
   const log = await host.locator('.sys-line').allInnerTexts()
   expect(log.length).toBeGreaterThan(0)
   for (const line of log) expect(englishFoundIn(line), line).toEqual([])
@@ -182,7 +182,7 @@ const isWild = (label: string): boolean => label.startsWith('Joker') || label ==
 
 test('a French player choosing a colour is asked in French', async ({ browser }) => {
   /* A dealt hand of seven holds a wild about 43% of the time, so this deals again
-     until it does rather than skipping — a check that quietly opts out most runs is
+     until it does rather than skipping - a check that quietly opts out most runs is
      the same as no check. Twelve deals leave a one-in-a-thousand chance of never
      seeing one, and it normally takes two. */
   for (let attempt = 0; attempt < 12; attempt += 1) {

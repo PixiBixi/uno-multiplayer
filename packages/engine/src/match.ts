@@ -28,7 +28,7 @@ export function startMatch(goal: MatchGoal, seatCount: number): MatchState {
  * goes to the winner, and nothing goes to anybody else.
  *
  * A round with no winner awards nothing. That happens when too few players remain
- * to continue, and there is no official rule for scoring a round nobody finished —
+ * to continue, and there is no official rule for scoring a round nobody finished -
  * so this invents none.
  *
  * A seat that left still has its remaining cards counted. They are out of play
@@ -59,7 +59,7 @@ export function applyRound(match: MatchState, game: GameState): MatchState {
 /**
  * Every seat holding the winning total, or `null` while the match continues.
  *
- * An array in both modes even though `points` can only ever produce one winner —
+ * An array in both modes even though `points` can only ever produce one winner -
  * only the round winner scores, so only one seat can cross the target in a given
  * round. One shape for both modes beats a union the callers must narrow.
  */

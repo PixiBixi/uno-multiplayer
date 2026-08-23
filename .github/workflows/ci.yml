@@ -112,7 +112,7 @@ jobs:
     # Gated on the suites so a red build can never move the published tag: a
     # `docker compose pull` would otherwise fetch an image whose tests failed.
     # The cost is that a Dockerfile break is reported after the tests rather than
-    # beside them, which is the right trade — the image is the last thing anybody
+    # beside them, which is the right trade - the image is the last thing anybody
     # needs feedback on.
     needs: [quality, test, e2e]
     permissions:
@@ -141,7 +141,7 @@ jobs:
           test "$(docker exec uno-ci id -u)" != "0"
           docker stop uno-ci
 
-      # Only from main, and never from a pull request — a fork must not be able to
+      # Only from main, and never from a pull request - a fork must not be able to
       # publish, and neither should a branch nobody has merged.
       # Every ${{ }} below goes through env: first. The expression is substituted
       # before bash parses the line, so a value carrying `;` or `$(...)` would run

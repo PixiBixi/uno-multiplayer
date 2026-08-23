@@ -1,7 +1,7 @@
 import type { SoundName } from './sounds.js'
 
 /**
- * Every sound is synthesised, so the app ships no audio files at all — no binary
+ * Every sound is synthesised, so the app ships no audio files at all - no binary
  * blobs in the repository, nothing added to the image, no licences to track, and
  * each sound is a few numbers that can be tuned by editing them.
  *
@@ -47,7 +47,7 @@ function tone(
 
   const peak = options.gain ?? 0.25
   /* A 8ms attack rather than an instant one. Starting a gain at full level
-     produces a click of its own — the discontinuity is itself a waveform. */
+     produces a click of its own - the discontinuity is itself a waveform. */
   level.gain.setValueAtTime(0.0001, at)
   level.gain.exponentialRampToValueAtTime(peak, at + 0.008)
   level.gain.exponentialRampToValueAtTime(0.0001, at + options.duration)
@@ -182,8 +182,8 @@ const RECIPES: Record<SoundName, Recipe> = {
 
   /* Four endings, not two. Winning and watching someone else win are different
      events to the person listening, and one shared cue for both congratulates the
-     loser. The pairs are deliberately built from the same material — the same
-     intervals, moving the other way — so the table still sounds coherent. */
+     loser. The pairs are deliberately built from the same material - the same
+     intervals, moving the other way - so the table still sounds coherent. */
 
   roundWon: (context, out, at) => {
     // Rising major triad: short, bright, over before it outstays its welcome.
@@ -227,7 +227,7 @@ const RECIPES: Record<SoundName, Recipe> = {
   },
 
   matchOver: (context, out, at) => {
-    // Someone else took it. A settled cadence — final, but not a celebration.
+    // Someone else took it. A settled cadence - final, but not a celebration.
     for (const [index, freq] of [392, 349, 294].entries()) {
       tone(context, out, at + index * 0.13, {
         from: freq,
@@ -286,7 +286,7 @@ export function createAudioEngine(): AudioEngine | null {
       }
 
       /* The very first cue of a session races the unlock. Measuring in a real
-         browser showed the context is not even constructed until then — if that
+         browser showed the context is not even constructed until then - if that
          first cue happens to be the gesture that unlocks it, resume() is still in
          flight and the sound would simply vanish. Resuming and then emitting
          costs a few milliseconds once, and never loses it. */

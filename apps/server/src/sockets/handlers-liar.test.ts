@@ -13,7 +13,7 @@ import { registerSocketHandlers } from './handlers.js'
  * The gap this file closes is the one that has already shipped twice here: both
  * ends of a chain tested, and the wire between them not. A new move needs the type
  * in the engine, a Zod variant at the boundary, a room that plays with the option
- * on, and a view that offers the move — miss any one and the "Liar!" button is a
+ * on, and a view that offers the move - miss any one and the "Liar!" button is a
  * button that does nothing.
  */
 
@@ -87,8 +87,8 @@ const SOCKET_ROUND_TIMEOUT_MS = 20_000
 
 /**
  * Three players, not two. At two seats the only player who could accuse is always
- * the one on turn — the seat that just played down to one card hands the turn
- * straight to them — so a two-player table cannot exercise the one thing that makes
+ * the one on turn - the seat that just played down to one card hands the turn
+ * straight to them - so a two-player table cannot exercise the one thing that makes
  * this move unlike every other: being legal off turn.
  */
 const table = async (rules: TableRules) => {
@@ -128,7 +128,7 @@ const watching = (player: Player): boolean => {
 
 /**
  * Plays the round over the wire until a player who is NOT on turn is offered a
- * call-out, deliberately never calling UNO — a table where everybody remembers
+ * call-out, deliberately never calling UNO - a table where everybody remembers
  * gives this rule nothing to do.
  */
 const playUntilOffered = async (players: Player[]): Promise<Player> => {

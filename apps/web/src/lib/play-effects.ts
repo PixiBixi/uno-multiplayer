@@ -15,7 +15,7 @@ export type PlayEffect = { kind: CardEffectKind; color: Color }
 export type ActiveEffect = { key: string; kind: EffectKind; color?: Color }
 
 /** How long each burst stays on screen, in ms. Wild +4 lingers longest and is
- *  the one that shakes the table — the "impactant" one, by request. */
+ *  the one that shakes the table - the "impactant" one, by request. */
 export const EFFECT_DURATION_MS: Record<EffectKind, number> = {
   wild4: 900,
   uno: 780,
@@ -27,7 +27,7 @@ export const EFFECT_DURATION_MS: Record<EffectKind, number> = {
 
 /**
  * Decides the burst for a card that just landed on the discard pile, or `null`
- * for a plain number — nothing dramatic happens for those beyond the routine
+ * for a plain number - nothing dramatic happens for those beyond the routine
  * drop.
  *
  * Takes the view's own post-move `currentColor` rather than the card's colour,
@@ -35,9 +35,9 @@ export const EFFECT_DURATION_MS: Record<EffectKind, number> = {
  * and wild4 carry no colour of their own in the engine's `Card` type, and the
  * feed is delivered as its own socket message with no ordering guarantee
  * relative to the view that carries the chosen colour. `currentColor` on THIS
- * view is always right by construction — the reducer sets it to the card's own
+ * view is always right by construction - the reducer sets it to the card's own
  * colour for skip/reverse/draw2, and to the chosen colour for a wild, in the
- * same update that placed the card — so one field serves every kind.
+ * same update that placed the card - so one field serves every kind.
  */
 export function effectForCard(card: Card, currentColor: Color): PlayEffect | null {
   switch (card.kind) {
@@ -57,7 +57,7 @@ export type FeedEffect = { overlay: 'uno' } | { pulse: 'draw' } | null
 
 /**
  * Calling UNO and drawing are read from the `game:event` feed, not from the
- * view — the exact opposite of the card bursts above, and for a concrete reason:
+ * view - the exact opposite of the card bursts above, and for a concrete reason:
  * `PlayerView` carries no `unoCalled` field at all, and a hand growing is
  * ambiguous on its own since a +2 grows it too. These events are safe to read
  * from the feed because each carries everything it needs; unlike the wild

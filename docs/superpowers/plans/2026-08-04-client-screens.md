@@ -1,8 +1,8 @@
-# Plan C2 — Socket client, écrans, livraison
+# Plan C2 - Socket client, écrans, livraison
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Livrer le client jouable de bout en bout — connexion, lobby, table, chat, fin de partie — puis les tests Playwright et l'image Docker déployable.
+**Goal:** Livrer le client jouable de bout en bout - connexion, lobby, table, chat, fin de partie - puis les tests Playwright et l'image Docker déployable.
 
 **Architecture:** Un seul point de contact socket (`useGameSocket`), un `useReducer` pour tout l'état, et un écran qui est une **fonction** de ce que le serveur a poussé. Aucune règle, aucune copie d'état de jeu.
 
@@ -11,7 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-08-04-uno-multiplayer-design.md` §2.7, §3.2–3.6, §4.3–4.4
 **Maquettes:** l'artifact publié, section par section.
 
-**Prérequis:** plan C1 livré — `restart()`, service des statiques, squelette `@uno/web`, composant `Card`.
+**Prérequis:** plan C1 livré - `restart()`, service des statiques, squelette `@uno/web`, composant `Card`.
 
 ## Global Constraints
 
@@ -152,7 +152,7 @@ describe('readRoomCodeFromUrl', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run apps/web/src/lib`
-Expected: FAIL — les deux modules sont introuvables.
+Expected: FAIL - les deux modules sont introuvables.
 
 - [ ] **Step 3: Implémenter le stockage de session**
 
@@ -164,7 +164,7 @@ const PREFIX = 'uno.session.'
 const keyFor = (roomCode: string): string => `${PREFIX}${roomCode.toUpperCase()}`
 
 /**
- * localStorage can throw outright — private browsing, blocked storage, a full
+ * localStorage can throw outright - private browsing, blocked storage, a full
  * quota. Losing the ability to reconnect is a degraded experience; a crash on
  * page load is a broken one.
  */
@@ -391,7 +391,7 @@ describe('gameReducer', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run apps/web/src/hooks/game-reducer.test.ts`
-Expected: FAIL — `./game-reducer.js` introuvable.
+Expected: FAIL - `./game-reducer.js` introuvable.
 
 - [ ] **Step 3: Implémenter le réducteur**
 
@@ -565,7 +565,7 @@ const MESSAGES: Record<ErrorCode, string> = {
 
 export function useGameSocket() {
   const [state, dispatch] = useReducer(gameReducer, initialState)
-  /* One socket for the app's lifetime, in a ref — never a module-level variable,
+  /* One socket for the app's lifetime, in a ref - never a module-level variable,
      which would leak between mounts and across two tabs of the same bundle. */
   const socketRef = useRef<TypedSocket | null>(null)
 
@@ -800,7 +800,7 @@ describe('Home', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run apps/web/src/screens/Home.test.tsx`
-Expected: FAIL — `./Home.js` introuvable.
+Expected: FAIL - `./Home.js` introuvable.
 
 - [ ] **Step 3: Implémenter l'écran**
 
@@ -827,7 +827,7 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
   const canJoin = canCreate && normalisedCode.length === ROOM_CODE_LENGTH
 
   /* Mirrors the protocol schemas so feedback is immediate. The server remains
-     the only authority — this just spares a round trip to learn the obvious. */
+     the only authority - this just spares a round trip to learn the obvious. */
   const submitCreate = (event: FormEvent) => {
     event.preventDefault()
     if (canCreate) onCreate(trimmedName)
@@ -1026,7 +1026,7 @@ git commit -m "feat(web): add home screen with create and join"
 - Consumes: `LobbyView`, `MAX_SEATS` (`@uno/protocol`)
 - Produces: `<Lobby lobby={LobbyView} mySeat={number} onStart={() => void} onLeave={() => void} />`
 
-Le bouton de démarrage n'est actif que pour l'hôte **et** à partir de deux joueurs — deux conditions distinctes, avec deux messages distincts, parce que « rien ne se passe quand je clique » est la pire des réponses.
+Le bouton de démarrage n'est actif que pour l'hôte **et** à partir de deux joueurs - deux conditions distinctes, avec deux messages distincts, parce que « rien ne se passe quand je clique » est la pire des réponses.
 
 - [ ] **Step 1: Écrire les tests qui échouent**
 
@@ -1110,7 +1110,7 @@ describe('Lobby', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run apps/web/src/screens/Lobby.test.tsx`
-Expected: FAIL — `./Lobby.js` introuvable.
+Expected: FAIL - `./Lobby.js` introuvable.
 
 - [ ] **Step 3: Implémenter l'écran**
 
@@ -1163,7 +1163,7 @@ export function Lobby({ lobby, mySeat, onStart, onLeave }: LobbyProps) {
         })}
         {Array.from({ length: emptySeats }, (_, index) => (
           <li key={`empty-${index}`} className="slot slot-empty">
-            <span className="avatar avatar-empty">—</span>
+            <span className="avatar avatar-empty">·</span>
             <span>Waiting for a player…</span>
           </li>
         ))}
@@ -1445,7 +1445,7 @@ describe('CentreStack', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run apps/web/src/components/Seat.test.tsx apps/web/src/components/CentreStack.test.tsx`
-Expected: FAIL — les deux modules sont introuvables.
+Expected: FAIL - les deux modules sont introuvables.
 
 - [ ] **Step 3: Implémenter le siège**
 
@@ -1745,7 +1745,7 @@ Ajouter à `apps/web/src/styles/app.css` :
 }
 ```
 
-Attention : la déclaration `font-size: 0.7rem` ci-dessus doit se terminer par un point-virgule. La corriger en l'écrivant — c'est exactement le genre de collision silencieuse qui fait grossir le texte sans erreur visible.
+Attention : la déclaration `font-size: 0.7rem` ci-dessus doit se terminer par un point-virgule. La corriger en l'écrivant - c'est exactement le genre de collision silencieuse qui fait grossir le texte sans erreur visible.
 
 - [ ] **Step 6: Lancer les tests et la vérification complète**
 
@@ -1775,7 +1775,7 @@ git commit -m "feat(web): add seat plates and centre stack with direction badge"
   - `<ColourPicker options={Extract<Move, { type: 'play' }>[]} onChoose={(move) => void} onCancel={() => void} />`
   - `movesForCard(legalMoves: Move[], cardId: CardId): Extract<Move, { type: 'play' }>[]`
 
-Le point clef : une carte est jouable **si et seulement si** un coup de `legalMoves` la référence. Le client ne calcule rien. Et comme un joker est développé en un coup par couleur, choisir une couleur revient à choisir un coup — il n'y a aucune saisie à valider.
+Le point clef : une carte est jouable **si et seulement si** un coup de `legalMoves` la référence. Le client ne calcule rien. Et comme un joker est développé en un coup par couleur, choisir une couleur revient à choisir un coup - il n'y a aucune saisie à valider.
 
 - [ ] **Step 1: Écrire les tests qui échouent**
 
@@ -1941,7 +1941,7 @@ describe('ColourPicker', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run apps/web/src/components/Hand.test.tsx apps/web/src/components/ColourPicker.test.tsx`
-Expected: FAIL — les deux modules sont introuvables.
+Expected: FAIL - les deux modules sont introuvables.
 
 - [ ] **Step 3: Implémenter le sélecteur de couleur**
 
@@ -2233,7 +2233,7 @@ describe('describeEvent', () => {
   it('distinguishes a win from an abandoned game', () => {
     expect(describeEvent({ type: 'gameOver', winner: 0 }, nameOf)).toBe('Ana wins')
     expect(describeEvent({ type: 'gameOver', winner: null }, nameOf)).toBe(
-      'Game abandoned — not enough players',
+      'Game abandoned - not enough players',
     )
   })
 
@@ -2342,7 +2342,7 @@ describe('ChatPanel', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run apps/web/src/components/ChatPanel.test.tsx apps/web/src/lib/describe-event.test.ts`
-Expected: FAIL — les deux modules sont introuvables.
+Expected: FAIL - les deux modules sont introuvables.
 
 - [ ] **Step 3: Implémenter la description des événements**
 
@@ -2395,7 +2395,7 @@ export function describeEvent(event: GameEvent, nameOf: (seat: number) => string
       return `${nameOf(event.seat)} left the game`
     case 'gameOver':
       return event.winner === null
-        ? 'Game abandoned — not enough players'
+        ? 'Game abandoned - not enough players'
         : `${nameOf(event.winner)} wins`
     case 'gameRestarted':
       return 'A new game was dealt'
@@ -2924,7 +2924,7 @@ describe('Table', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run apps/web/src/components/GameOver.test.tsx apps/web/src/screens/Table.test.tsx`
-Expected: FAIL — les modules sont introuvables.
+Expected: FAIL - les modules sont introuvables.
 
 - [ ] **Step 3: Implémenter la fin de partie**
 
@@ -3249,7 +3249,7 @@ export function App() {
 }
 ```
 
-Remplacer le test `apps/web/src/App.test.tsx` du plan C1, devenu obsolète — `App` monte désormais une socket. Le remplacer par :
+Remplacer le test `apps/web/src/App.test.tsx` du plan C1, devenu obsolète - `App` monte désormais une socket. Le remplacer par :
 
 ```tsx
 import { render, screen } from '@testing-library/react'
@@ -3483,9 +3483,9 @@ git commit -m "feat(web): assemble table, end-of-game screen and app shell"
 
 **Interfaces:**
 - Consumes: le build client et le serveur construits
-- Produces: `npm run e2e` — lance le serveur, ouvre plusieurs contextes navigateur, joue une partie
+- Produces: `npm run e2e` - lance le serveur, ouvre plusieurs contextes navigateur, joue une partie
 
-Playwright teste ce qu'aucun test unitaire ne peut : **trois navigateurs réels autour d'une même table**. Chaque joueur est un `browser.newContext()` distinct, donc un `localStorage` et une socket distincts — indispensable pour vérifier la reconnexion.
+Playwright teste ce qu'aucun test unitaire ne peut : **trois navigateurs réels autour d'une même table**. Chaque joueur est un `browser.newContext()` distinct, donc un `localStorage` et une socket distincts - indispensable pour vérifier la reconnexion.
 
 - [ ] **Step 1: Écrire le test qui échoue**
 
@@ -3605,7 +3605,7 @@ test('an unknown code is refused with a readable message', async ({ browser }) =
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 Run: `npm run e2e`
-Expected: FAIL — le script `e2e` n'existe pas.
+Expected: FAIL - le script `e2e` n'existe pas.
 
 - [ ] **Step 3: Installer Playwright**
 
@@ -3883,7 +3883,7 @@ Dans `.github/workflows/ci.yml`, ajouter :
 Cocher la feuille de route :
 
 ```markdown
-- [x] `apps/web` — SVG cards, four-seat table, lobby, chat
+- [x] `apps/web` - SVG cards, four-seat table, lobby, chat
 - [x] Playwright end-to-end tests across multiple browser contexts
 - [x] Dockerfile and deployment
 ```
@@ -3919,7 +3919,7 @@ carries it: `http://localhost:5000/?room=K7QM2X` prefills the field.
 ### One replica, on purpose
 
 Game state lives in memory. There is no Redis adapter and no sticky-session
-setup, so **do not scale past a single replica** — two processes would each hold
+setup, so **do not scale past a single replica** - two processes would each hold
 half the rooms and neither would know about the other. A restart drops games in
 progress. At a few concurrent tables that is a deliberate trade for having no
 datastore to run, back up, or pay for.
@@ -3948,7 +3948,7 @@ npm run verify && npm run build && npm run e2e
 Les trois passent, et :
 
 - Une partie de 2 à 4 joueurs se joue dans un navigateur, de l'accueil à l'écran de fin.
-- Aucune carte adverse n'apparaît dans le document d'un autre joueur — vérifié par Playwright sur le HTML réel.
+- Aucune carte adverse n'apparaît dans le document d'un autre joueur - vérifié par Playwright sur le HTML réel.
 - Un rechargement de page conserve le siège et la main exacte.
 - `docker compose up --build` sert le jeu sur le port 5000, en utilisateur non-root, avec un `HEALTHCHECK` vivant.
 - La CI couvre lint, types, format, tests unitaires sur trois versions de Node, couverture, bout en bout et construction d'image.

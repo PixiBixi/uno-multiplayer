@@ -13,7 +13,7 @@ import { registerSocketHandlers } from './handlers.js'
  * The gap this closes is the one that has already shipped twice here: both ends of a
  * chain tested and the wire between them not. A 7 needs the extra field in the
  * engine's Move, a Zod variant that keeps it rather than dropping it, a room playing
- * with the option on, and a view carrying one move per target — miss any one and the
+ * with the option on, and a view carrying one move per target - miss any one and the
  * target picker is a dialog that cannot do anything.
  */
 
@@ -262,7 +262,7 @@ describe('Seven-Zero on the wire', () => {
 
       /* One seat along, whichever way play is going. Read from the view rather than
          assumed clockwise: the room's seed is not fixed here, so a reverse may well
-         have turned the table round before the 0 was ever reached — and that is
+         have turned the table round before the 0 was ever reached - and that is
          precisely the interaction worth not asserting away. */
       const size = players.length
       for (let index = 0; index < size; index += 1) {

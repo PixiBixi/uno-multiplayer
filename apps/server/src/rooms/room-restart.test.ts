@@ -71,7 +71,7 @@ describe('Room.restart', () => {
   })
 
   /* A departed seat stays in the deal, holding nothing. That is what keeps an
-     engine seat index and a member seat index the same number — dealing only to
+     engine seat index and a member seat index the same number - dealing only to
      the seats still present used to renumber the engine and leave the
      highest-numbered player with no view at all. Nobody receives this view: their
      socket is gone and rejoin refuses a seat that left. */

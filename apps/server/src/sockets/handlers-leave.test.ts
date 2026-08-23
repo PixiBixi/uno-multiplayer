@@ -9,7 +9,7 @@ import { registerSocketHandlers } from './handlers.js'
 /*
  * Leaving a table used to be a client-only idea: the button cleared local state
  * and told the server nothing at all. The seat kept a dead socket id forever, so
- * Room.isEmpty() was permanently false and purge() could never reclaim the room —
+ * Room.isEmpty() was permanently false and purge() could never reclaim the room -
  * one leaked room per leave, until MAX_ROOMS was reached and the server refused
  * every new game. Worse, the socket stayed in the old socket.io room, so the
  * player kept receiving the chat and events of a table they had walked away from.

@@ -32,7 +32,7 @@ export const BETWEEN_ROUNDS_SECONDS = 5
 
 /**
  * How fast a table is played. Independent of MatchGoal, which says how a match
- * ENDS rather than how quickly it runs — hence a separate field and not a third
+ * ENDS rather than how quickly it runs - hence a separate field and not a third
  * goal variant.
  *
  * `null` means what every table did before this existed: no clock at all. It lives
@@ -44,8 +44,8 @@ export type MatchPace = { turnSeconds: number } | null
 /* `TableRules` is declared in @uno/engine rather than here beside MatchPace, and that
    split is the point: a clock is a house setting the engine never sees, while those
    flags change what the rules are and the reducer has to read them. The protocol
-   re-exports the type and carries it on the wire — on `LobbyView` and on `PlayerView`
-   both — but it does not own it, so there is exactly one definition of what a rule is.
+   re-exports the type and carries it on the wire - on `LobbyView` and on `PlayerView`
+   both - but it does not own it, so there is exactly one definition of what a rule is.
 
    On both views, because a rule read once before the deal is not one anybody remembers
    twenty minutes later: a manual UNO penalty got reported as a missing one, and the game
@@ -95,7 +95,7 @@ export type PlayerView = {
 /**
  * What each seat did over the whole match, for the scoreboard at the end.
  *
- * Not a rule and not needed to play — purely something to laugh at afterwards —
+ * Not a rule and not needed to play - purely something to laugh at afterwards -
  * so it lives here rather than in the engine, and is counted from the event feed
  * the server already produces rather than from any new bookkeeping.
  */
@@ -114,7 +114,7 @@ export type SeatStats = {
  * Where the match stands. `scores` is indexed by seat, joined against the names
  * the view already carries rather than repeating them.
  *
- * `winners` is null while the match continues and an array once it is over — an
+ * `winners` is null while the match continues and an array once it is over - an
  * array even in points mode, where only one seat can ever cross the target, so
  * that both modes share one shape.
  */
@@ -134,7 +134,7 @@ export type MatchProgress = {
  * It carries the whole table configuration because a guest who cannot see the rules
  * finds out about Seven-Zero when their hand changes owner. Rules used to be kept off
  * the wire on the grounds that the client evaluates none of them, which is still true
- * — it renders them and never reasons about them.
+ * - it renders them and never reasons about them.
  */
 export type LobbyView = {
   roomCode: string
@@ -153,7 +153,7 @@ export type LobbyView = {
    * rewrite the rules of a contest already in progress.
    *
    * Deliberately not derivable from `canStart`, which reports seat count and nothing
-   * else — a room can be un-startable and already dealt, because somebody left
+   * else - a room can be un-startable and already dealt, because somebody left
    * mid-match. Sent so the host's controls can disappear; the server checks the same
    * thing again when `room:configure` arrives, which is where the guard actually is.
    */

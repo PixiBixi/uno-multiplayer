@@ -36,7 +36,7 @@ const colorSchema = z.enum(['R', 'G', 'B', 'Y'])
 
 /**
  * Bounded: a legitimate cardId is under 16 characters ('reverseR#42'). The cast
- * to the branded type belongs here — this schema IS the boundary where an
+ * to the branded type belongs here - this schema IS the boundary where an
  * untrusted string becomes a validated CardId.
  */
 const cardId = z
@@ -91,12 +91,12 @@ export const moveSchema: z.ZodType<Move> = z.discriminatedUnion('type', [
  *
  * Each flag defaults on its own rather than only the object as a whole. A client built
  * when `liar` was the only option sends `{ liar }` and nothing else, and rejecting that
- * outright would break a client that is perfectly able to play — it simply asks for a
+ * outright would break a client that is perfectly able to play - it simply asks for a
  * table without the newer rule, which is what it wants.
  *
  * Every default matches `DEFAULT_TABLE_RULES` field for field, which is why
  * `playDrawnCard` defaults to TRUE where the three house rules default to false. The
- * alternative — defaulting it off at the boundary to spare a client that predates it —
+ * alternative - defaulting it off at the boundary to spare a client that predates it -
  * was rejected on two counts: omitting the whole object already yields the engine's
  * defaults, so the two spellings of "I said nothing" would disagree, and a client that
  * does not know about the sub-state is not stranded by it anyway. It is offered the drawn
@@ -111,7 +111,7 @@ export const tableRulesSchema: z.ZodType<TableRules> = z.object({
 
 /**
  * Bounded on both variants. Without the ceilings a client could ask for a match to
- * two billion points, which is not a match — it is a way to make the game never end.
+ * two billion points, which is not a match - it is a way to make the game never end.
  */
 export const matchGoalSchema: z.ZodType<MatchGoal> = z.discriminatedUnion('kind', [
   z.object({
@@ -124,7 +124,7 @@ export const matchGoalSchema: z.ZodType<MatchGoal> = z.discriminatedUnion('kind'
   }),
 ])
 
-/** Null is the ordinary case — a table with no clock — so it is spelled out. */
+/** Null is the ordinary case - a table with no clock - so it is spelled out. */
 export const matchPaceSchema: z.ZodType<MatchPace> = z.union([
   z.null(),
   z.object({

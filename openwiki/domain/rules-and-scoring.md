@@ -18,7 +18,7 @@ pinned down deliberately, and this is the full list:
   draw: action cards encountered above it stay where they are in the pile.
 - **An empty draw pile is refilled from the discard pile minus its top card**, which
   is reshuffled in place of the exhausted one. If that is still not enough, the draw
-  is capped at what is actually available rather than failing — `takeFromTop` takes
+  is capped at what is actually available rather than failing - `takeFromTop` takes
   `Math.min(count, pile.length)`, so a draw can come up short but never invents cards.
 - **First empty hand wins the round**, which ends immediately.
 - **Drawing voluntarily does not end your turn when the card can be played.** That is
@@ -26,22 +26,22 @@ pinned down deliberately, and this is the full list:
   voluntary draw, which was a deliberate simplification and also slightly wrong. See
   "Playing the card you drew" below.
 - **Calling UNO is legal only during your own turn, before playing.** Going down to
-  one card without it costs two cards, applied automatically — unless the table
+  one card without it costs two cards, applied automatically - unless the table
   opted into the Liar call-out below, which makes the penalty manual.
 - **A 7 and a 0 are ordinary number cards** unless the table opted into Seven-Zero,
   also below.
 - **Only the seat on turn may lay a card down**, unless the table opted into jump-in
-  — which is the one option that changes that, and the one that also moves the turn.
+  - which is the one option that changes that, and the one that also moves the turn.
 
 Deliberately not implemented: the strict Mattel +4 challenge, which needs a bluff UI
 and hand inspection.
 
 ## Table rules
 
-`TableRules` in `packages/engine/src/types.ts`, set by the host in the lobby — see
+`TableRules` in `packages/engine/src/types.ts`, set by the host in the lobby - see
 [Room lifecycle](room-lifecycle.md#configuring-the-table). The three
 house rules are off by default; `playDrawnCard` is on, because it is not a house rule but
-the rulebook — the `false`s beside it are not a pattern to copy. It lives in the engine
+the rulebook - the `false`s beside it are not a pattern to copy. It lives in the engine
 rather than beside `MatchPace` in the protocol, unlike the clock: a time limit is a house
 setting the engine never sees, while these change what the rules ARE and the reducer has
 to read them.
@@ -70,7 +70,7 @@ Three things about it are worth knowing before touching that code:
   off-turn seat gets call-outs and nothing else. `applyMove`'s turn check exempts
   `callOut` and nothing else.
 - **The window is bounded to the end of the accused seat's next turn**, and closes
-  in `passTurn` — the one place a turn ends. Without a bound a player could be
+  in `passTurn` - the one place a turn ends. Without a bound a player could be
   accused ten minutes later, which is a trap rather than a game. It is a field on
   the seat and not a timer, because the engine has no clock and `Room` is
   timer-free.
@@ -79,10 +79,10 @@ Three things about it are worth knowing before touching that code:
   paying attention badly instead of rewarding paying attention well.
 - **The turn order is untouched.** A call-out is a side effect on one hand and never
   ends a round, which keeps it out of the turn-advance logic entirely. The escape is
-  to call UNO on your own next turn, before playing — a late call still counts.
+  to call UNO on your own next turn, before playing - a late call still counts.
 
 `sameMove` compares the target as well as the type. Without that, a legal call-out
-against one seat would authorise one against any seat — the sort of gap the single
+against one seat would authorise one against any seat - the sort of gap the single
 `legalMoves` gate exists to prevent.
 
 ### Seven-Zero
@@ -94,7 +94,7 @@ Choosing whom to swap with is a second decision after playing a card, so it reus
 the shape a wild's colour already has rather than inventing one:
 `legalMoves` emits one `{ type: 'play', cardId, swapWith }` per legal target, and the
 client renders a picker from the moves it was given. `sameMove` therefore compares
-`swapWith` too — without it, two different targets look like the same move and a 7
+`swapWith` too - without it, two different targets look like the same move and a 7
 offered against one seat authorises taking any seat's hand.
 
 Four things about it are worth knowing before touching that code:
@@ -102,7 +102,7 @@ Four things about it are worth knowing before touching that code:
 - **The effect is applied after the win check.** First empty hand wins,
   unconditionally, so a 7 or a 0 played as a last card ends the round and no hand
   moves. `legalMoves` offers no target for that card, since there is nothing to
-  choose. The alternative — swapping the win away — makes a 7 unplayable as a last
+  choose. The alternative - swapping the win away - makes a 7 unplayable as a last
   card, which is a trap rather than a rule.
 - **Only active seats take part**, as swap targets and in the rotation alike. A seat
   that has left holds nothing, so swapping into it would hand somebody a free win; a
@@ -114,11 +114,11 @@ Four things about it are worth knowing before touching that code:
   round changes where hands go, and why rotating at two players is a swap. `advance`
   is a rotation of exactly the active seats, so the mapping is a bijection and
   conservation holds by construction. At two players a 7 likewise has exactly one
-  legal target, so it always swaps rather than being quietly made a no-op — that
+  legal target, so it always swaps rather than being quietly made a no-op - that
   would silently change what the card is worth.
 - **No automatic UNO penalty is ever charged on a play that permutes hands.** With
   `liar` on, every seat whose hand moved has its window recomputed from what it now
-  holds — one card uncalled opens one, anything else shuts one, because being accused
+  holds - one card uncalled opens one, anything else shuts one, because being accused
   of holding a card you no longer hold is a bug. Without `liar`, nothing is charged
   at all: the automatic penalty punishes an omission, and nobody can be said to have
   failed to declare a hand they were handed. It also keeps draws and permutations off
@@ -126,13 +126,13 @@ Four things about it are worth knowing before touching that code:
   having to compare card ids.
 
 Events are `handsSwapped { seat, with }` and `handsRotated { direction }`, derived in
-`diffEvents` from the card and the table's rules rather than from hand sizes — a swap
+`diffEvents` from the card and the table's rules rather than from hand sizes - a swap
 between two seats holding four cards each changes no count at all.
 
 ### Jump-in
 
-With `jumpIn` on, a card **identical** to the discard top — same colour and same
-value, or same colour and same kind — may be played out of turn, and `currentSeat`
+With `jumpIn` on, a card **identical** to the discard top - same colour and same
+value, or same colour and same kind - may be played out of turn, and `currentSeat`
 becomes the jumper.
 
 It is the riskiest of the three because it inverts the assumption the rest of the
@@ -142,26 +142,26 @@ worth knowing before touching that code:
 - **It reuses `play` rather than adding a move type.** A jump-in is the same card
   resolving the same way from a different seat, so `applyPlay` needed nothing: it
   already advances from the seat that moved, not from `currentSeat`. It also means
-  the client needed no new idea — `Hand` renders a card as playable when a `play`
+  the client needed no new idea - `Hand` renders a card as playable when a `play`
   references it, and that was already true off turn. The alternative, a `jumpIn`
   variant, would have duplicated every branch of `applyPlay` in the type system for
   no behavioural difference. So the card's own effect applies from the jumper's seat
   exactly as it would have on their own turn: a jumped skip skips the seat after
   them, a jumped reverse turns the table round from them, and a jumped 7 on a
   Seven-Zero table offers its swap targets. Play continues in the current direction
-  from the jumper, and the seats in between simply lose their turn — that is the
+  from the jumper, and the seats in between simply lose their turn - that is the
   point of the rule.
 - **`applyMove`'s turn check now exempts two moves**, not one: a `callOut` always,
   and a `play` on a table that opted in. Which of the off-turn plays are real
   jump-ins is left entirely to the single `legalMoves` gate, so a bad one comes back
-  as `illegal_move` and not `not_your_turn` — on a jump-in table an off-turn play is
+  as `illegal_move` and not `not_your_turn` - on a jump-in table an off-turn play is
   a category of legal move, and refusing it for being off turn would name the wrong
   reason.
 - **A jump-in begins the jumper's turn before the card resolves**, which clears
   `unoCalled`. That is deliberate and it is the rule: an off-turn seat is offered
   call-outs and jump-ins and nothing else, so a jumper has no moment at which to
   declare, and a declaration made on an earlier turn must not quietly cover a card
-  laid down on this one. Landing on one card by jumping in is an uncalled UNO — two
+  laid down on this one. Landing on one card by jumping in is an uncalled UNO - two
   cards, or an open window on a Liar table. It also closes the jumper's own window,
   since its turn has just ended, which is the same escape calling UNO gives.
 - **Nothing at all is offered while a draw is pending.** Not even a same-kind card,
@@ -173,7 +173,7 @@ worth knowing before touching that code:
 - **Wilds are never jumpable, in either position.** They have no colour, so matching
   on kind alone would make every wild identical to every other one.
 - **Termination holds, and that was the thing at risk.** Every jump-in spends a card,
-  and a UNO deck holds exactly two copies of any jumpable card — one 0 per colour, so
+  and a UNO deck holds exactly two copies of any jumpable card - one 0 per colour, so
   a 0 has no twin at all. So at most one seat can ever hold a jump-in against a given
   top, no jump-in can be answered by another on the same card, and no chain is longer
   than one. The property tests assert it under a policy that takes every jump-in
@@ -181,14 +181,14 @@ worth knowing before touching that code:
   to one card costs the two cards it just saved.
 
 The event is `jumpedIn { seat }`, derived in `diffEvents` from `before.currentSeat`
-rather than after — the turn has moved to the jumper by then, that being the whole
+rather than after - the turn has moved to the jumper by then, that being the whole
 effect of the rule. It counts towards nothing: the card is already counted by the
 `cardPlayed` that follows it.
 
 A consequence worth recording, because the spec assumed otherwise: **the race between
 two players jumping the same card cannot happen.** The twin of a card is in exactly
 one place, so only one seat is ever holding one. What can race is the same seat asking
-twice, and a jump-in arriving beside the play of the seat whose turn it was — both are
+twice, and a jump-in arriving beside the play of the seat whose turn it was - both are
 driven over a real socket, and both come down to the server applying whichever it
 reads first.
 
@@ -208,7 +208,7 @@ code:
 
 - **Only that card is offered.** `legalMoves` emits the plays for `drawnCard` alone, plus
   a `pass`. Offering the rest of the hand would make drawing a free extra turn, which is a
-  different game — and it is guarded by a property over every intermediate state, not only
+  different game - and it is guarded by a property over every intermediate state, not only
   by unit tests, because whether a seat ever draws into a hand holding three other
   playable cards is a question about the deal.
 - **There is no sub-state when the drawn card is unplayable.** The turn ends immediately,
@@ -218,13 +218,13 @@ code:
   rules do not let you play out of one. The cards arriving almost always include something
   playable, which is exactly why it needs saying.
 - **`pass` is a move.** Drawing no longer ends a turn, so something must, and it is
-  explicit rather than inferred from a timeout — an idle player and a deliberate one are
+  explicit rather than inferred from a timeout - an idle player and a deliberate one are
   not the same thing. It reuses `passTurn`, so the Liar window closes with it like any
   other turn ending.
 - **`beginTurn` clears it, which is why every path does.** Every turn change in the game
   funnels through `beginTurn`, so no caller has to remember. The three paths that do not
   reach it clear the field by hand: the win check in `applyPlay`, `markSeatLeft`, and
-  `skipDisconnectedTurn` — which can break out of its loop when nobody else is active. A
+  `skipDisconnectedTurn` - which can break out of its loop when nobody else is active. A
   stale value would let a seat play a card it no longer holds.
 - **No jump-in while the decision stands**, and `callUno` stays legal. The turn is
   unresolved, the same reasoning that forbids jumping a pending draw; but the seat is on
@@ -237,7 +237,7 @@ code:
 
 The event is `turnPassed { seat }`, read from the move in `diffEvents` for the same reason
 a call-out is: nothing else about the state changed, so the hand-size diff has nothing to
-find. It counts towards nothing — declining to play is not a statistic — and it is silent,
+find. It counts towards nothing - declining to play is not a statistic - and it is silent,
 because the draw it follows has already sounded.
 
 On the client the drawn card needed no new idea, since `Hand` renders a card as playable
@@ -251,7 +251,7 @@ Two interactions with Blazing, both in `RoomManager`:
 - `armTurn` **does not restart the clock** while `Room.decidingOnDrawnCard`, so the seat
   keeps the time it had left to play rather than gaining a fresh allowance for drawing.
   Only while a timer is really live, though: after one has fired the map no longer holds
-  it, so a forced draw landing in the sub-state still arms a new clock — a preserved
+  it, so a forced draw landing in the sub-state still arms a new clock - a preserved
   deadline already in the past would never fire again and the table would sit there.
 - `forceTurnMove` prefers `pass` over everything else. Forcing a second draw would punish
   the clock twice, and `draw` is not on offer in the sub-state anyway, so without `pass`
@@ -271,7 +271,7 @@ A one-round match _is_ a single game. There is no third variant for it, because 
 mode meaning "stop after one round" is what a one-round match already is.
 
 Scoring is official Mattel: the winner of a round takes the total value of every
-card left in the other hands — number cards at face value, Skip/Reverse/Draw Two at
+card left in the other hands - number cards at face value, Skip/Reverse/Draw Two at
 20, both wilds at 50. `cardPoints` is the single source for that table and is read
 by the help panel too, so the interface cannot disagree with the scoring it
 describes.
@@ -282,7 +282,7 @@ Edges the official rules leave open, decided here:
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | Round with no winner    | Awards nothing and ends the match. Scoring a round nobody finished would mean inventing a rule.                                       |
 | Tie on totals           | Possible in rounds mode. Every seat on the winning total shares the win; sudden death would turn "best of 3" into an unbounded match. |
-| Tie on points           | Impossible — only the round winner scores, so only one seat can cross the target.                                                     |
+| Tie on points           | Impossible - only the round winner scores, so only one seat can cross the target.                                                     |
 | A player who leaves     | Keeps what they earned, and their remaining cards still count for whoever went out.                                                   |
 | Next round vs new match | Two distinct host actions. Letting one mean both depending on hidden state is how a player loses a scoreboard by accident.            |
 
@@ -293,7 +293,7 @@ should not have to carry match state through them.
 ## Blazing: an optional clock
 
 `MatchPace` is `{ turnSeconds } | null`, and lives in the protocol rather than the
-engine — a time limit is a house setting, not a rule of UNO, and the engine stays
+engine - a time limit is a house setting, not a rule of UNO, and the engine stays
 free of clocks.
 
 It exists because an idle player used to freeze the table forever: the only timer
@@ -301,7 +301,7 @@ was the disconnect grace period, so somebody who stayed connected and simply
 stopped playing blocked everyone with no way out. It is opt-in rather than universal
 because a clock changes the game rather than protecting it.
 
-When time runs out the server plays **draw** — deliberately, even for a seat holding
+When time runs out the server plays **draw** - deliberately, even for a seat holding
 something playable. Choosing a card for someone is choosing their move; drawing is
 the one action that is always legal, always neutral, and never spends a card they
 were saving. A stacked draw against them makes `draw` illegal, so `acceptDraw` is

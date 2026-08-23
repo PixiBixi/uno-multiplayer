@@ -10,7 +10,7 @@ import { BONE, COLOR_HEX, COLOR_VALUE, INK } from './palette.js'
  * identical. Nothing here crosses the wire.
  *
  * The decisions live in this file rather than inside `Card.tsx` for the same reason
- * `palette.ts` exists — four variants inlined in a component that already draws a
+ * `palette.ts` exists - four variants inlined in a component that already draws a
  * card would be unreadable, and a value that differs per theme is a table entry,
  * not a branch. Only what needs a different *structure* is a branch in `Card.tsx`:
  * whether the oval is drawn at all, whether the panel is filled or outlined,
@@ -34,12 +34,12 @@ export type Paint = { css: string; hex: string }
  * `contrast` is the interesting one: it picks whichever of the theme's own two inks
  * reads better on the ground it will sit on. That is what lets the flat theme put a
  * white numeral on red and blue and a near-black one on green and yellow, which no
- * single choice could do — cream on yellow measures 1.7:1.
+ * single choice could do - cream on yellow measures 1.7:1.
  */
 export type InkSource = 'pigment' | 'contrast' | 'light' | 'dark'
 
 export type CardThemeSpec = {
-  /** The card's outer edge — what keeps two overlapping cards apart in a hand. */
+  /** The card's outer edge - what keeps two overlapping cards apart in a hand. */
   stock: Paint
   /** Whether the card's colour fills the panel or merely outlines it. */
   panel: 'fill' | 'stroke'
@@ -75,8 +75,8 @@ export type CardThemeSpec = {
   glow: { blur: number; opacity: number } | null
 }
 
-/* Colours that exist only inside a card face. They are not furniture — nothing
-   else on the page uses them — and a theme has to be able to compute a contrast
+/* Colours that exist only inside a card face. They are not furniture - nothing
+   else on the page uses them - and a theme has to be able to compute a contrast
    ratio from them, so they live here as values rather than in `tokens.css`. */
 const PAPER: Paint = { css: '#efe9db', hex: '#efe9db' }
 const DARK: Paint = { css: '#0b1114', hex: '#0b1114' }
@@ -132,7 +132,7 @@ export const CARD_THEME_SPEC: Record<CardTheme, CardThemeSpec> = {
   /* Paper stock and a stroked border instead of a filled panel: the colour is the
      frame, not the field. The tokens keep the pigment and gain an ink outline,
      because a yellow diamond on cream measures 1.55:1 and would be a shape nobody
-     can see — which is the same as not having one. */
+     can see - which is the same as not having one. */
   letterpress: {
     stock: PAPER,
     panel: 'stroke',
@@ -157,7 +157,7 @@ export const CARD_THEME_SPEC: Record<CardTheme, CardThemeSpec> = {
      was the least legible. Offering an option already known to be the weakest is a
      trap rather than a choice.
      Two changes make it the strongest instead. The numeral is cream on a near-black
-     ground — 16.9:1, measured, against classic's 1.7:1 on yellow. And the glow is a
+     ground - 16.9:1, measured, against classic's 1.7:1 on yellow. And the glow is a
      blurred copy *behind* the glyph at half opacity rather than a shadow bleeding
      through it, so the glyph's own colour is what the eye receives; the worst case,
      a cream numeral against a fully lit yellow halo, still measures 5.1:1. */

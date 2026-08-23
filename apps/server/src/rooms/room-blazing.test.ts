@@ -42,8 +42,8 @@ const fakeClock = () => {
 
 /**
  * Plays greedily until the round ends. A round can only finish with two or more
- * players still seated by somebody actually going out — dropping a seat from a
- * table of three leaves two active and the round rightly carries on — so ending
+ * players still seated by somebody actually going out - dropping a seat from a
+ * table of three leaves two active and the round rightly carries on - so ending
  * one for real is the only way to reach the pause that follows it.
  */
 const playOutRound = (room: Room, push: (events: GameEvent[]) => void): void => {
@@ -65,7 +65,7 @@ const playOutRound = (room: Room, push: (events: GameEvent[]) => void): void => 
  *
  * Deliberately explicit rather than left to the defaults. The clock's own behaviour is "a
  * draw, and the turn moves on", and on a table that plays the drawn card a draw sometimes
- * does not move the turn at all — which is correct, and which would make every assertion
+ * does not move the turn at all - which is correct, and which would make every assertion
  * below conditional on the deal. The interaction has a describe block of its own further
  * down, on a table that says so.
  */
@@ -352,7 +352,7 @@ describe('the clock and the card you just drew', () => {
    * A second of the fake clock is burnt on every turn, and that is load-bearing rather than
    * decoration. With time frozen, `now() + turnSeconds` recomputes to the very number it
    * replaced, so a clock that wrongly restarts for the draw is indistinguishable from one
-   * that does not — the assertion below passed against the mutant until this line existed.
+   * that does not - the assertion below passed against the mutant until this line existed.
    */
   const drawUntilDeciding = (
     room: Room,
@@ -405,7 +405,7 @@ describe('the clock and the card you just drew', () => {
 
   it('passes rather than drawing again when the clock expires on the decision', () => {
     /* They have already drawn. Forcing a second card would punish the clock twice, and
-       `draw` is not even on offer in the sub-state — so without `pass` the clock would
+       `draw` is not even on offer in the sub-state - so without `pass` the clock would
        expire against the same seat for ever, which is what the absentee test above catches
        from the other side. */
     const { room, push, clock, events } = drawnCardTable(10)
@@ -426,7 +426,7 @@ describe('the clock and the card you just drew', () => {
   })
 
   it('keeps timing out through the decision, so a table of absentees still finishes', () => {
-    /* Two clock periods per absent turn rather than one — the draw, then the pass — and
+    /* Two clock periods per absent turn rather than one - the draw, then the pass - and
        that is the whole cost. What must not happen is a turn the clock can never end. */
     const { clock, events } = drawnCardTable(10)
     for (let turn = 0; turn < 12; turn += 1) clock.advance(10_000)
@@ -435,7 +435,7 @@ describe('the clock and the card you just drew', () => {
 
   it('arms a fresh clock when a forced draw lands on the decision', () => {
     /* The timer that just fired is gone from the map, so the sub-state must not stop the
-       next one being armed — a preserved deadline already in the past would never fire
+       next one being armed - a preserved deadline already in the past would never fire
        again and the table would sit there. */
     const { room, clock } = drawnCardTable(10)
     for (let turn = 0; turn < 8; turn += 1) {

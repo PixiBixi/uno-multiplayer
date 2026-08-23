@@ -85,7 +85,7 @@ describe('security headers', () => {
 describe('the client IP behind a proxy', () => {
   /* Deployed behind Traefik, every request arrives from the proxy's address on the
      docker network, so the log said 172.19.0.10 for everybody. Trusting one hop
-     recovers the real client — and one hop is exactly what BEHIND_TLS already
+     recovers the real client - and one hop is exactly what BEHIND_TLS already
      asserts, since it means a proxy terminates TLS in front of this process.
 
      Safe here because the container publishes no ports and sits only on the proxy

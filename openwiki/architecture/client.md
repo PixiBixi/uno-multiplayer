@@ -6,8 +6,8 @@ the game: `App.tsx` picks a screen from `state.connection` and what the server s
 
 ## The one seam that matters
 
-`useGameSocket` returns `{ state, actions }`. Everything below — `Table`, `Hand`,
-`GameOver`, the effect and sound hooks — depends on that shape and nothing else.
+`useGameSocket` returns `{ state, actions }`. Everything below - `Table`, `Hand`,
+`GameOver`, the effect and sound hooks - depends on that shape and nothing else.
 
 That is what would make offline play cheap: a second hook returning the same shape,
 backed by the engine running in the tab. See
@@ -37,11 +37,11 @@ asymmetry is intentional; do not "fix" it.
 
 ## The lobby owns the table configuration
 
-`Home.tsx` collects a name and a game code. Everything about the table — the goal, the
-pace, the four rules, and the points table in full — is in `Lobby.tsx`, where the host
+`Home.tsx` collects a name and a game code. Everything about the table - the goal, the
+pace, the four rules, and the points table in full - is in `Lobby.tsx`, where the host
 adjusts it while waiting and everybody about to play can read it. `Home` used to carry 21
 controls and 2.42 phone screens with the game-code field last, which is the wrong order
-for a screen most people arrive at in order to join — on three players, two are joining.
+for a screen most people arrive at in order to join - on three players, two are joining.
 It is now 10 controls and 1.25 screens at 390 × 844, with the code field at y=391
 instead of below the fold.
 
@@ -55,7 +55,7 @@ Three constraints hold that in place:
 
 - **One component for both modes.** `TableRulesPanel` holds the rule list, its labels and
   its explanations, and is rendered for the host and for a guest. A second read-only copy
-  passes every test the day it is written and then goes stale — a fifth rule added to the
+  passes every test the day it is written and then goes stale - a fifth rule added to the
   host's switches and forgotten in the guest's would leave half the table reading a game
   nobody is playing, and no type checker can see it. Its own test asserts the two modes
   agree on the rules, the labels and the order, which is the property a drifted copy
@@ -71,29 +71,29 @@ Three constraints hold that in place:
   The only state held locally is what the wire cannot carry: the inactive goal variant's
   number, and the seconds to restore when Blazing is switched back on. The visible cost is
   one round trip before a switch moves. Playwright's `.check()` will not tolerate that and
-  the specs use `.click()` — the shorthand failing is this design showing through.
+  the specs use `.click()` - the shorthand failing is this design showing through.
 
 Whether the host's controls appear at all is `lobby.configurable`, which the server derives
 from the match having begun. It is presentation; the server checks the same condition again
 when the event arrives.
 
 Card theme and language stayed on the home screen, because they are not table
-configuration — see below.
+configuration - see below.
 
 ## Card themes
 
-Four faces — classic, flat, letterpress, neon — chosen by **each player**, in
+Four faces - classic, flat, letterpress, neon - chosen by **each player**, in
 `localStorage` beside the hand-sort mode and the mute flag. An unrecognised stored
 value falls back to classic rather than to a hand of blank cards. It is a display
 preference, not a table option: two people at the same table can run different ones
 and the game is identical, so nothing about it crosses the wire. No protocol type, no
 `room:create` field, no server code, no socket test.
 
-A player picks one from the four miniature previews on the home screen — in the
-right-hand column beneath the card values, beside the language chips — or cycles
+A player picks one from the four miniature previews on the home screen - in the
+right-hand column beneath the card values, beside the language chips - or cycles
 through them from the button next to the mute toggle on the table.
 
-Each theme's decisions are data in `lib/card-themes.ts` and `Card.tsx` reads them —
+Each theme's decisions are data in `lib/card-themes.ts` and `Card.tsx` reads them -
 the same reason `palette.ts` exists. Only what needs a different _structure_ is a
 branch in the component: whether the oval is drawn, whether the panel is filled or
 outlined, whether the numeral carries a glow. A value that merely differs per theme
@@ -103,7 +103,7 @@ Three rules constrain any fifth theme somebody adds:
 
 - **The shape tokens stay.** Colour is never the only signal here, and a theme does
   not get to opt out. Where a pigment is too pale for its stock, the token keeps the
-  colour and gains an outline — letterpress does this, because a yellow diamond on
+  colour and gains an outline - letterpress does this, because a yellow diamond on
   cream measures 1.55:1 and a shape nobody can see is the same as no shape.
 - **The accessible label does not change with it.** The label is game state; the face
   is a preference. Asserted for all four themes in `Card.test.tsx`.
@@ -113,7 +113,7 @@ Three rules constrain any fifth theme somebody adds:
   is the printed card everybody already has and its yellow measures 1.67:1, which is
   a property of that card and not of the theme mechanism.
 
-The numbers were also verified against rendered pixels in Chromium — hide the glyph,
+The numbers were also verified against rendered pixels in Chromium - hide the glyph,
 re-screenshot, and diff, so a glowing theme is measured against its own halo rather
 than against the card behind it:
 
@@ -126,7 +126,7 @@ than against the card behind it:
 
 The figures are the 5th percentile of fully-covered glyph pixels; the single worst
 pixel sits around 2% lower, which is screenshot encode rounding rather than anything
-a player can see. Antialiased edge pixels are excluded on purpose — their ratio is a
+a player can see. Antialiased edge pixels are excluded on purpose - their ratio is a
 fact about antialiasing, not about legibility.
 
 That measurement is what turned neon from the least legible of the four into the
@@ -136,7 +136,7 @@ but a trap. Two changes inverted it: the numeral became cream on a near-black gr
 and the glow became a blurred copy _behind_ the glyph at half opacity rather than a
 shadow bleeding through it, so the colour the eye receives inside the numeral is the
 numeral's own. Flat's light ink is pure white rather than the printed cream for the
-same measured reason — on the fixed red pigment cream reaches only 4.42:1, while
+same measured reason - on the fixed red pigment cream reaches only 4.42:1, while
 white reaches 4.98:1.
 
 `palette.test.ts` fails if any of those declared colours ever drift from
@@ -151,15 +151,15 @@ it is offering.
 
 ## Sound
 
-Everything is synthesised with the Web Audio API in `lib/audio-engine.ts` —
+Everything is synthesised with the Web Audio API in `lib/audio-engine.ts` -
 oscillators and envelopes, no audio files at all. No binaries in the repository, no
 licences, and each sound is a few numbers to tune.
 
 Two traps encoded there:
 
 - An `AudioContext` is born suspended and stays mute until a user gesture. The
-  first cue of a session races that unlock — measurement showed the context is not
-  even constructed until then — so `play` resumes and _then_ emits.
+  first cue of a session races that unlock - measurement showed the context is not
+  even constructed until then - so `play` resumes and _then_ emits.
 - Endings come in pairs, `roundWon`/`roundOver` and `matchWon`/`matchOver`. One
   cue for both congratulates the loser.
 
@@ -174,7 +174,7 @@ is never a surprise.
 ## Internationalisation
 
 `i18n/` holds English and French. A browser asking for French gets it; a chip on the
-home screen — right-hand column, under the card-values panel — switches instantly and
+home screen - right-hand column, under the card-values panel - switches instantly and
 the choice is remembered. Like the card theme it is a per-player display preference
 that crosses no wire.
 
@@ -183,7 +183,7 @@ That is the whole design.
 
 English builds "Ana wins" from a name and an `s`; French builds "Ana gagne" from a
 different stem, and "You win" becomes "Tu gagnes" where the verb changes rather
-than the pronoun. English pluralises at zero, French does not — "0 cards" but
+than the pronoun. English pluralises at zero, French does not - "0 cards" but
 "0 carte". A catalogue of fragments joined by the caller can only ever express the
 grammar of whichever language was written first, usually English and invisibly.
 
@@ -198,8 +198,8 @@ is the part that rots.
 
 **A pure module cannot read a context, so it takes `Messages` as a parameter.**
 `gameReducer(state, action, messages)`, `describeEvent(event, nameOf, mySeat, messages)`,
-`cardLabel(card, disabled, messages)`. Importing a catalogue into `lib/` — or into an
-exported function in `components/` — would pin the language at build time and no
+`cardLabel(card, disabled, messages)`. Importing a catalogue into `lib/` - or into an
+exported function in `components/` - would pin the language at build time and no
 control could change it. `useGameSocket` closes the current catalogue over the reducer
 it hands `useReducer`.
 
@@ -214,8 +214,8 @@ because neither is sufficient alone:
 
 - **`i18n/no-english.test.ts`** parses every module in `components/`, `screens/` and
   `App.tsx` with the TypeScript compiler and makes every string literal justify
-  itself. Two rules: nothing a person reads or a screen reader speaks — JSX text, and
-  `aria-label`, `title`, `placeholder`, `alt` — may contain a word; and no literal
+  itself. Two rules: nothing a person reads or a screen reader speaks - JSX text, and
+  `aria-label`, `title`, `placeholder`, `alt` - may contain a word; and no literal
   anywhere in those files may read as English, meaning a phrase, a trailing ellipsis,
   or a lone SHOUTED or Capitalised word. The syntax is what decides: `aria-label`
   reaches a human, `className` does not, and `'btn btn-primary'` is two English words
@@ -223,21 +223,21 @@ because neither is sufficient alone:
   words are deliberately allowed, because `'circle'`, `'stroke'` and `'wild4'` are
   what these modules are made of. `UNO` is the one allowed word: it is the brand.
 - **`e2e/i18n.spec.ts`** plays a game in a `fr-FR` browser and searches the rendered
-  page — visible text _and_ every accessible name — for a list of English-only words.
+  page - visible text _and_ every accessible name - for a list of English-only words.
   A string can be absent from every component and still arrive in English from a table
   two modules away, which is exactly what happened.
 
 Three habits of a missed string, all found this way:
 
 - **A lookup table in `lib/`.** `palette.ts` held `COLOR_NAME`, an English
-  `Record<Color, string>` that `Card`, `CentreStack` and `ColourPicker` all read — so
+  `Record<Color, string>` that `Card`, `CentreStack` and `ColourPicker` all read - so
   a French player's discard pile said "Green in play" and every card in their hand
   announced itself as "Red 7". It is gone; naming is `messages.colour()` and
   `messages.card()`, and `palette.ts` keeps only values. `sort-hand.ts` had made the
   same mistake with its labels earlier.
 - **A `Record` rendered through a variable.** `Seat.tsx` kept `'reconnecting…'` and
   `'left the game'` in a `Record<SeatStatus, string>`. No JSX, no attribute, nothing
-  for a reviewer's eye to catch — which is why the guard checks every literal in the
+  for a reviewer's eye to catch - which is why the guard checks every literal in the
   file and not only the ones in markup.
 - **An accessible name.** The largest class by far, and invisible to anyone reading
   the screen: card labels, `Choose the new colour`, `Match format`, `Dismiss: …`,
@@ -256,7 +256,7 @@ Two constraints worth knowing before touching this:
 
 ## Accessibility, briefly
 
-Colour is never the only signal — cards carry shape tokens in every one of the four
+Colour is never the only signal - cards carry shape tokens in every one of the four
 themes, and the log says in words what the animations dramatise. Tap targets are
 44px, the card-theme controls included. The countdown is a live
 region that only becomes assertive in its last seconds, because a polite update
@@ -269,18 +269,18 @@ removes the pulse but not the number, because the number carries information.
   without a field and the whole table went blank. There is now an error boundary
   outside `App`, so a bad render explains itself and offers a reload that rejoins.
 - **Duplicated lookup tables.** Colour swatches were defined in four files. They now
-  live in `lib/palette.ts`. When you need a table in two places, that is the pattern —
+  live in `lib/palette.ts`. When you need a table in two places, that is the pattern -
   but only for values. The colour _names_ moved there too and that was a mistake: a
   word belongs in the catalogues, and one sitting in a language-free module can only
   ever be English. Deduplication and translation want opposite things, and translation
   wins.
 - **Layout judged by eye.** Several defects were only visible by measuring computed
-  styles or DOM geometry in a real browser — and one "bug" turned out to be a
+  styles or DOM geometry in a real browser - and one "bug" turned out to be a
   screenshot taken mid-transition. Sample after animations settle, or deliberately
   mid-flight at a timestamp computed from the keyframes.
 - **An animation with no resting state.** `.pile-draw::after` is the ghost card that
   peels off the draw pile. It set `background: var(--bone)` and an animation running
-  0.55 → 0 opacity, but no `opacity` of its own and no `animation-fill-mode` — so
+  0.55 → 0 opacity, but no `opacity` of its own and no `animation-fill-mode` - so
   when the 420ms animation ended the element snapped back to the initial value, 1,
   and covered the pile with an opaque cream rectangle for the rest of the game (the
   class is never removed; `drawNonce > 0` forever). It was reported as the pile
@@ -296,5 +296,5 @@ removes the pulse but not the number, because the number carries information.
   making something smaller. The lobby inherited the same problem when the
   configuration moved into it, and got the same answer: two columns past 900px, and on a
   phone the points table takes a scroll container while the seats and **Start** stay
-  inside the fold. Measured at 390 × 844 in the same file — the seats are what a lobby is
+  inside the fold. Measured at 390 × 844 in the same file - the seats are what a lobby is
   for, so they are never what gets capped.

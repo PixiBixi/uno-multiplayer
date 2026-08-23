@@ -10,7 +10,7 @@ import { registerSocketHandlers } from './handlers.js'
 /*
  * The gap this file closes. Room.viewFor was tested directly and GameOver was
  * tested with a match handed to it, but nothing asserted that the view actually
- * arriving over the wire carries one — so a client crashing on `match.winners`
+ * arriving over the wire carries one - so a client crashing on `match.winners`
  * being undefined was not something any test could have caught.
  */
 
@@ -74,7 +74,7 @@ const waitFor = async (predicate: () => boolean, label: string): Promise<void> =
 
 /**
  * Plays a two-player round to a real finish by driving whichever seat holds the
- * turn, over its own socket, using its own server-issued `legalMoves` — the same
+ * turn, over its own socket, using its own server-issued `legalMoves` - the same
  * property test-helpers.ts's playOut relies on, just over the wire instead of the
  * in-process Room API.
  */
@@ -88,7 +88,7 @@ const playRoundToCompletion = async (playerA: Player, playerB: Player): Promise<
       moves.find((m) => m.type === 'callUno') ?? moves.find((m) => m.type === 'play') ?? moves[0]
     if (move === undefined) return
     /* Both versions, not just the mover's. A move broadcasts a new view to every
-       player, but they do not land at the same instant — waiting only on the
+       player, but they do not land at the same instant - waiting only on the
        mover leaves the other view stale, so the next iteration reads an old
        currentSeat, asks the wrong seat to move, finds no legal moves and quietly
        gives up mid-round. */
@@ -105,7 +105,7 @@ const playRoundToCompletion = async (playerA: Player, playerB: Player): Promise<
 /**
  * Well above what these need. Driving a whole round over real sockets measures
  * well under a second alone, but it was seen crossing vitest's 5s default while
- * the rest of the suite competed for cores — failing a run that had found nothing
+ * the rest of the suite competed for cores - failing a run that had found nothing
  * wrong, exactly as the engine's property tests once did.
  */
 const SOCKET_ROUND_TIMEOUT_MS = 20_000
@@ -165,7 +165,7 @@ describe('game:nextRound over sockets', () => {
    * The bug this section closes. Room.nextRound() was tested directly and it
    * worked; the client emits 'game:nextRound' and it looked wired up; but no
    * socket.on('game:nextRound', ...) handler existed on the server at all. The
-   * button did nothing because nobody was listening — a gap symmetric to the
+   * button did nothing because nobody was listening - a gap symmetric to the
    * missing-match one above, and just as invisible to a test that never goes
    * through the socket.
    */
@@ -186,7 +186,7 @@ describe('game:nextRound over sockets', () => {
       expect(result).toEqual({ ok: true })
 
       /* Waiting on BOTH views, not just the host's. Asserting as soon as one has
-       arrived reads the other's view of the round that just ended — where the
+       arrived reads the other's view of the round that just ended - where the
        player who went out holds an empty hand, which looks exactly like a deal
        that never happened. */
       await waitFor(
@@ -213,7 +213,7 @@ describe('game:nextRound over sockets', () => {
     'refuses from a guest',
     async () => {
       /* The guest has to still be connected to ask, so the round is played out
-       rather than ended by disconnecting them — emitting on a closed socket just
+       rather than ended by disconnecting them - emitting on a closed socket just
        hangs waiting for an ack that will never come. */
       const { host, guest } = await table({ kind: 'rounds', count: 3 })
       await playRoundToCompletion(host, guest)

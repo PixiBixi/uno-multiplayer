@@ -18,7 +18,7 @@ export type ColouredCard = Exclude<Card, WildCard>
  * A type predicate rather than a boolean expression at each call site. Writing
  * `card.kind === 'wild' || card.kind === 'wild4'` inline does NOT narrow the
  * union in the branches that follow, so reading `card.color` afterwards fails to
- * compile — a trap this codebase walked into three separate times.
+ * compile - a trap this codebase walked into three separate times.
  */
 export function isWild(card: Card): card is WildCard {
   return card.kind === 'wild' || card.kind === 'wild4'
@@ -48,11 +48,11 @@ export type Seat = {
 /**
  * Rules a table may switch, chosen by the host at creation. The house rules are off by
  * default: a group that wants plain UNO gets plain UNO. `playDrawnCard` is the exception,
- * and it is not a house rule — see its own comment below.
+ * and it is not a house rule - see its own comment below.
  *
  * Lives here rather than beside `MatchPace` in the protocol, unlike the clock: a
  * time limit is a house setting the engine never sees, while these change what
- * the rules ARE, so the reducer has to read them — and the engine cannot import
+ * the rules ARE, so the reducer has to read them - and the engine cannot import
  * the protocol.
  */
 export type TableRules = {
@@ -64,7 +64,7 @@ export type TableRules = {
    */
   sevenZero: boolean
   /**
-   * A card identical to the discard top — same colour AND same value or kind — may
+   * A card identical to the discard top - same colour AND same value or kind - may
    * be laid down out of turn, and play then continues from whoever laid it.
    *
    * The one option that inverts the assumption the rest of the engine rests on,
@@ -89,7 +89,7 @@ export type TableRules = {
  * drawn-card rule in force.
  *
  * `playDrawnCard: true` is deliberately the odd one out. The `false`s are not a pattern
- * to follow — they mark the three optional house rules, while this one is the rulebook.
+ * to follow - they mark the three optional house rules, while this one is the rulebook.
  */
 export const DEFAULT_TABLE_RULES: TableRules = {
   liar: false,
@@ -124,7 +124,7 @@ export type GameState = {
    * The one sub-state in the game: while it is set the turn is not over, and the seat may
    * play exactly this card or pass. Set only when the card is genuinely playable, so a
    * choice appears only when there is one, and cleared on every turn change from any
-   * cause — a stale value would let a seat play a card it no longer holds.
+   * cause - a stale value would let a seat play a card it no longer holds.
    */
   drawnCard: CardId | null
   rngState: number
@@ -143,7 +143,7 @@ export type GameState = {
 export type MatchGoal = { kind: 'points'; target: number } | { kind: 'rounds'; count: number }
 
 /**
- * Match bookkeeping, deliberately outside GameState — a round has no business
+ * Match bookkeeping, deliberately outside GameState - a round has no business
  * knowing it belongs to a match, and the property tests that guard the round rules
  * should not have to carry match state through them.
  */
@@ -174,7 +174,7 @@ export type Move =
    * Declining to play the card just drawn, which ends the turn.
    *
    * A move of its own because drawing no longer ends a turn on a table that plays the
-   * drawn card, so something has to — and it must be explicit rather than inferred from a
+   * drawn card, so something has to - and it must be explicit rather than inferred from a
    * timeout, which would make an idle player and a deliberate one look alike.
    */
   | { type: 'pass' }

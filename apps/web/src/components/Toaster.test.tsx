@@ -53,8 +53,8 @@ describe('Toaster', () => {
   })
 
   /*
-   * The one that matters. The table re-renders on every view the server pushes — several
-   * times a turn — and each render may hand this component a fresh `onDismiss`. If the
+   * The one that matters. The table re-renders on every view the server pushes - several
+   * times a turn - and each render may hand this component a fresh `onDismiss`. If the
    * countdown lives in an effect that depends on that function, every re-render restarts
    * it and a toast on a busy table never disappears at all: exactly the complaint this
    * feature answers, reintroduced by a plausible-looking dependency array.

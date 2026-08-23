@@ -12,7 +12,7 @@ type MatchGoal = { kind: 'points'; target: number } | { kind: 'rounds'; count: n
 ```
 
 `{ kind: 'rounds', count: 1 }` is a single game. That falls out of the model rather
-than needing a third mode, which is why there is no `'single'` variant — a mode
+than needing a third mode, which is why there is no `'single'` variant - a mode
 that means "stop after one round" is what a one-round match already is.
 
 Bounds are enforced at the socket boundary, not merely in the lobby UI: a client
@@ -56,8 +56,8 @@ nobody read.
 
 ## Decisions on the edges
 
-**A round nobody finished** — `winner === null`, which happens when too few players
-remain — awards no points and ends the match. Awarding points for an unfinished
+**A round nobody finished** - `winner === null`, which happens when too few players
+remain - awards no points and ends the match. Awarding points for an unfinished
 round would mean inventing a rule; stopping is honest.
 
 **A tie on totals after the last round** is possible in `rounds` mode, and the
@@ -69,6 +69,6 @@ it turns "best of 3" into an unbounded match.
 seat can cross the target in a given round. `matchWinners` still returns an array, so
 both modes share one shape.
 
-**A seat that leaves mid-match** keeps the points it earned — they are history — and
+**A seat that leaves mid-match** keeps the points it earned - they are history - and
 stops earning more. The match ends when fewer than two seats remain active, through
 the same path as an unfinished round.

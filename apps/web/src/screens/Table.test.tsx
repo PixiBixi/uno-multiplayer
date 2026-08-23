@@ -112,7 +112,7 @@ describe('Table', () => {
     const buttons = screen.getAllByRole('button', { name: /catch/i })
     expect(buttons).toHaveLength(1)
 
-    /* Beside Cleo, seat 2 — the second opponent in the view, which the layout puts
+    /* Beside Cleo, seat 2 - the second opponent in the view, which the layout puts
        at the north edge. A button under the wrong name accuses the wrong player. */
     const north = document.querySelector('.area-north')
     expect(north?.textContent).toContain('Cleo')

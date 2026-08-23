@@ -12,13 +12,13 @@ import { useMessages } from '../i18n/index.js'
  * The waiting room, and now the place the table is configured.
  *
  * Two things moved here from the home screen. The settings themselves, because this is
- * where the host is while there is still someone to wait for — and, more to the point,
+ * where the host is while there is still someone to wait for - and, more to the point,
  * where everybody who is about to play can see them. A guest used to be shown none of it:
  * `LobbyView` withheld the rules entirely, so a player discovered Seven-Zero when their
  * hand changed owner.
  *
  * Whether the host may still change anything is `lobby.configurable`, which the server
- * derives from the match having begun. It is presentation and nothing else — the server
+ * derives from the match having begun. It is presentation and nothing else - the server
  * checks the same condition again when `room:configure` arrives, because a host can press
  * Start and toggle a rule in the same breath and whichever lands second has to lose.
  */
@@ -35,7 +35,7 @@ export function Lobby({ lobby, mySeat, onStart, onLeave, onConfigure }: LobbyPro
   const t = useMessages()
   const isHost = mySeat === lobby.hostSeat
   /* The fallback is only reachable if the roster arrives without the host in it, which
-     the server does not do — but it is still a noun dropped into a sentence, and it has
+     the server does not do - but it is still a noun dropped into a sentence, and it has
      to be the right noun in the right language. */
   const hostName = lobby.seats.find((seat) => seat.seat === lobby.hostSeat)?.name ?? t.lobby.theHost
   const emptySeats = Math.max(0, MAX_SEATS - lobby.seats.length)
@@ -96,7 +96,7 @@ export function Lobby({ lobby, mySeat, onStart, onLeave, onConfigure }: LobbyPro
           })}
           {Array.from({ length: emptySeats }, (_, index) => (
             <li key={`empty-${String(index)}`} className="slot slot-empty">
-              <span className="avatar avatar-empty">—</span>
+              <span className="avatar avatar-empty">·</span>
               <span>{t.lobby.waitingForPlayer}</span>
             </li>
           ))}

@@ -8,7 +8,7 @@ import { RulesInPlay } from './RulesInPlay.js'
  *
  * It showed only the unusual ones first, to keep an ordinary table quiet. That failed for a
  * reason worth keeping in a test: an ordinary table rendered nothing, and nothing looks
- * exactly like a feature that was never deployed — the person who asked for it opened a game
+ * exactly like a feature that was never deployed - the person who asked for it opened a game
  * and could not tell. Hence the first assertion below, which is the one that would have
  * caught it.
  */

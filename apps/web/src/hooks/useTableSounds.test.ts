@@ -7,7 +7,7 @@ import { useTableSounds } from './useTableSounds.js'
 import type { FeedEntry } from './game-reducer.js'
 
 /* jsdom has no Web Audio, so the engine is replaced wholesale. What is under test
-   here is the bookkeeping — which cues fire, once each, and never for history —
+   here is the bookkeeping - which cues fire, once each, and never for history -
    not the synthesis, which no assertion could judge anyway. */
 const played: SoundName[] = []
 const unlocked = { count: 0 }

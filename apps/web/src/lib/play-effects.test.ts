@@ -22,7 +22,7 @@ describe('effectForCard', () => {
   it('agrees with the card’s own colour for draw2, skip and reverse', () => {
     // currentColor is passed as something else on purpose: the view always
     // carries the card's own colour by the time it lands, so a real caller
-    // would never see them disagree — but the function must still read the
+    // would never see them disagree - but the function must still read the
     // colour it is GIVEN, not reach for the card, to stay correct for wilds.
     expect(effectForCard(draw2, 'B')).toEqual({ kind: 'draw2', color: 'B' })
     expect(effectForCard(skip, 'G')).toEqual({ kind: 'skip', color: 'G' })
@@ -35,7 +35,7 @@ describe('effectForCard', () => {
 })
 
 describe('EFFECT_DURATION_MS', () => {
-  it('gives wild4 the longest stage time of all — the one asked to make a fuss over', () => {
+  it('gives wild4 the longest stage time of all - the one asked to make a fuss over', () => {
     const rest = Object.entries(EFFECT_DURATION_MS)
       .filter(([kind]) => kind !== 'wild4')
       .map(([, ms]) => ms)

@@ -34,7 +34,7 @@ setting nobody has an opinion about.
 
 ## What happens when the clock runs out
 
-The server plays **draw** for the seat on turn — deliberately, even when that seat
+The server plays **draw** for the seat on turn - deliberately, even when that seat
 had a card it could have played. Picking a card for someone is choosing their move;
 drawing is the one action that is always legal, always neutral, and never spends a
 card they were saving. It ends their turn, which is the whole point.
@@ -53,8 +53,8 @@ timer-free, which is what makes the whole lifecycle testable without a clock, an
 the grace period already demonstrates the pattern: timers behind an injectable
 interface, expiry delivered to the socket layer through a callback that broadcasts.
 
-The turn timer is re-armed after anything that can change whose turn it is — a
-move, a forced move, a deal, a disconnection — and cancelled when the round ends or
+The turn timer is re-armed after anything that can change whose turn it is - a
+move, a forced move, a deal, a disconnection - and cancelled when the round ends or
 the room empties. The between-rounds timer is armed when a round ends and the match
 continues, and it deals the next round itself rather than waiting for the host.
 
@@ -66,5 +66,5 @@ client counts down from: a client that misses a frame, sleeps a tab, or reconnec
 mid-turn must not disagree with the server about when time runs out. The server
 remains the only authority on the deadline; the client only renders the remainder.
 
-Under `prefers-reduced-motion` the countdown still ticks — it carries information,
-not decoration — but it does not pulse.
+Under `prefers-reduced-motion` the countdown still ticks - it carries information,
+not decoration - but it does not pulse.

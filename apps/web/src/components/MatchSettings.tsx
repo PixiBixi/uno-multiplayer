@@ -68,7 +68,7 @@ export function MatchSettings({ goal, pace, onChange }: MatchSettingsProps) {
     )
   }
 
-  /* Clamped here as well as on the server, which remains the only authority — this only
+  /* Clamped here as well as on the server, which remains the only authority - this only
      spares the player a round trip to learn that 0 rounds is not a match. */
   const setPoints = (value: number) => {
     setTarget(value)

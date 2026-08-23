@@ -160,7 +160,7 @@ describe('Room.configure', () => {
 
   it('is still refused in a room that has dealt but can no longer start', () => {
     /* The case that separates the real lock from `canStart`. Two of three players drop,
-       so the room reports it cannot start — and it is nonetheless mid-match, holding a
+       so the room reports it cannot start - and it is nonetheless mid-match, holding a
        score, with hands on the table. Gating on `canStart` would reopen the rules here,
        which is the one moment they must not move. */
     const room = roomWith('Ana', 'Ben', 'Cleo')

@@ -21,7 +21,7 @@ is, not only what it does.
 ## The shape of the repository
 
 ```
-packages/engine     Pure rules engine — no I/O, no networking, no dependencies
+packages/engine     Pure rules engine - no I/O, no networking, no dependencies
 packages/protocol   Wire contract: views, events, payload schemas, bounds
 apps/server         Fastify + Socket.IO orchestration, rooms, timers
 apps/web            Vite + React client
@@ -57,7 +57,7 @@ Port 5050 rather than 5000, because macOS Control Center binds 5000 for the AirP
 receiver and a 5000 default fails on any Mac with AirPlay enabled.
 
 If you are editing **server** code, add a third terminal so the compiled output
-keeps up — nothing writes to `dist/` on its own:
+keeps up - nothing writes to `dist/` on its own:
 
 ```bash
 npm run watch                 # tsc --build --watch
@@ -66,12 +66,12 @@ npm run watch                 # tsc --build --watch
 A stale `dist/` is the most common way to lose an hour here: the server runs the
 last thing that was built, so a client change with no rebuild produces a client
 talking to an older server. That failure has already happened once in this
-project — a view arrived without a field the client expected and the table went
+project - a view arrived without a field the client expected and the table went
 blank. See [Testing](operations/testing.md) for what now catches it.
 
 | Script                     | Purpose                                            |
 | -------------------------- | -------------------------------------------------- |
-| `npm run verify`           | Lint, typecheck and test — run this before pushing |
+| `npm run verify`           | Lint, typecheck and test - run this before pushing |
 | `npm test`                 | Vitest once                                        |
 | `npm run test:watch`       | Vitest in watch mode                               |
 | `npm run test:coverage`    | Coverage report into `coverage/`                   |
@@ -88,7 +88,7 @@ a peer range of `<6.1.0`, and a type-aware linter running against an unsupported
 compiler fails silently rather than loudly. A slightly older compiler with working
 typed lint rules beats the reverse.
 
-`tsconfig.json` covers the whole repo including tests and config files — it is what
+`tsconfig.json` covers the whole repo including tests and config files - it is what
 the editor, ESLint and `typecheck` read. `tsconfig.build.json` is the emit-only
 solution and excludes tests.
 
@@ -105,7 +105,7 @@ solution and excludes tests.
 
 ## Where the reasoning lives
 
-`docs/superpowers/specs/` holds one design document per significant feature —
+`docs/superpowers/specs/` holds one design document per significant feature -
 match scoring, Blazing mode, and an analysis of what a bot and offline play would
 take. They record the decisions and the alternatives that were rejected, which is
 usually what you actually want when changing something.

@@ -3,7 +3,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
 /* Read from disk by path. `import.meta.url` is not a file: URL under jsdom, and
-   Vite's `?raw` is intercepted by its CSS plugin — which returned an empty
+   Vite's `?raw` is intercepted by its CSS plugin - which returned an empty
    string and made the absence assertions below pass for the wrong reason. */
 const TOKENS_PATH = resolve(process.cwd(), 'apps/web/src/styles/tokens.css')
 const tokens = readFileSync(TOKENS_PATH, 'utf8')
@@ -22,7 +22,7 @@ describe('the token file itself', () => {
 describe('design tokens', () => {
   /**
    * A regression guard, not pedantry. `ui-rounded` is Safari-only, and one
-   * unsupported generic invalidates the entire font-family declaration — Chrome
+   * unsupported generic invalidates the entire font-family declaration - Chrome
    * silently rendered every heading in its default serif. Nothing failed, no
    * warning appeared; the page just looked wrong.
    */

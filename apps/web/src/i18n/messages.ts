@@ -16,7 +16,7 @@ export const LOCALE_NAME: Record<Locale, string> = { en: 'English', fr: 'França
  * French builds "Ana gagne" from a different stem entirely, and "You win" becomes
  * "Tu gagnes" where the verb changes rather than the pronoun. A catalogue of
  * fragments joined by the caller can only ever express the grammar of whichever
- * language was written first — usually English, invisibly.
+ * language was written first - usually English, invisibly.
  *
  * So the unit of translation here is a whole sentence, and each language owns how
  * it is built. That costs a little repetition and buys the ability to translate
@@ -41,7 +41,7 @@ export type Messages = {
   /**
    * What a card with its back to you is. Game state, not decoration: it is on the
    * draw pile and in every opponent's fan, and it must not change with the card
-   * theme — `CardBack.test.tsx` asserts that for all four faces.
+   * theme - `CardBack.test.tsx` asserts that for all four faces.
    */
   cardFaceDown: string
 
@@ -49,7 +49,7 @@ export type Messages = {
 
   /**
    * The card face a player chose for themselves. Named in both places it can be
-   * changed — the previews on the home screen and the cycler on the table — and
+   * changed - the previews on the home screen and the cycler on the table - and
    * `Record<CardTheme, string>` so adding a theme is a compile error in every
    * catalogue rather than a blank in one of them.
    */
@@ -70,8 +70,8 @@ export type Messages = {
   /**
    * The word each burst shouts across the table.
    *
-   * `aria-hidden` decoration — every fact `PlayEffects` dramatises is also in the log
-   * underneath — and translated regardless, because a French player watching a French
+   * `aria-hidden` decoration - every fact `PlayEffects` dramatises is also in the log
+   * underneath - and translated regardless, because a French player watching a French
    * table should not be shouted at in English. Being invisible to a screen reader is
    * not the same as being invisible.
    *
@@ -86,7 +86,7 @@ export type Messages = {
   /** One entry per GameEvent the log can describe. */
   event: {
     /* `isYou` on every one of these, because French needs it where English does
-       not: "You played" survives with one form, "Toi a posé" does not — it has to
+       not: "You played" survives with one form, "Toi a posé" does not - it has to
        become "Tu as posé". Passing the person to all of them lets each language
        decide whether it cares. */
     cardPlayed: (name: string, isYou: boolean, card: Card) => string
@@ -137,12 +137,12 @@ export type Messages = {
    * The table configuration, which the lobby owns and the home screen no longer offers.
    *
    * Its own section rather than left under `home`, because both the host's controls and
-   * the guest's read-only list are rendered from these keys — a lobby component reading
+   * the guest's read-only list are rendered from these keys - a lobby component reading
    * `t.home.*` would be a name that lies about where the words are used.
    */
   config: {
     matchEnds: string
-    /** Accessible name for the pair of buttons inside the "how the match ends" set —
+    /** Accessible name for the pair of buttons inside the "how the match ends" set -
      *  the legend names the question, this names the control. */
     matchFormat: string
     firstToScore: string
@@ -169,7 +169,7 @@ export type Messages = {
      *
      * Four paragraphs on permanent display is what made the home screen a wall of text.
      * In the lobby the reader has already chosen to look, so the label is short and the
-     * accessible name says which rule it belongs to — four identical summaries would
+     * accessible name says which rule it belongs to - four identical summaries would
      * otherwise be four identical announcements.
      */
     whatThisDoes: string
@@ -211,7 +211,7 @@ export type Messages = {
     waitingForPlayer: string
     host: string
     /** Stands in for the host's name when the roster has not arrived yet, so it has to
-     *  read as a noun inside `waitingForHost` — "the host", not "Host". */
+     *  read as a noun inside `waitingForHost` - "the host", not "Host". */
     theHost: string
     reconnecting: string
     left: string
@@ -247,7 +247,7 @@ export type Messages = {
       jumpIn: string
       playDrawnCard: string
     }
-    /** The state, for a screen reader — the tick beside it is decoration. */
+    /** The state, for a screen reader - the tick beside it is decoration. */
     ruleOn: string
     ruleOff: string
     /** Marks the seat a call-out is available against, so the eye goes to the person. */
@@ -264,7 +264,7 @@ export type Messages = {
      * The control that ends a turn after drawing, and the line telling you it is there.
      *
      * Named for what it does rather than "pass", which in a card game reads as declining to
-     * draw — the opposite of what has just happened. And the note is not decoration: a
+     * draw - the opposite of what has just happened. And the note is not decoration: a
      * player who draws a card that looks unplayable to them, sees the draw button go dead
      * and nothing else change, will conclude the game has hung.
      */
@@ -344,7 +344,7 @@ export type Messages = {
    *
    * A toast is a sentence a player reads, so it belongs here rather than in the
    * reducer that decides *whether* to raise one. The reducer takes a `Messages`
-   * argument the way `describeEvent` does — it is pure, knows no React, and cannot
+   * argument the way `describeEvent` does - it is pure, knows no React, and cannot
    * reach a context; a module that imported one catalogue directly could never be
    * switched at runtime.
    */

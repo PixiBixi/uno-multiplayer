@@ -134,8 +134,8 @@ describe('Lobby', () => {
         0,
       )
       /* By role and name, not by label text: a rule's explanation carries the rule's
-         name in its own accessible name too, which is deliberate — four identical
-         summaries would announce identically — and makes a bare label lookup ambiguous. */
+         name in its own accessible name too, which is deliberate - four identical
+         summaries would announce identically - and makes a bare label lookup ambiguous. */
       await userEvent.click(screen.getByRole('checkbox', { name: /seven-zero/i }))
       expect(onConfigure).toHaveBeenCalledWith({
         rules: { liar: true, sevenZero: true, jumpIn: false, playDrawnCard: false },
@@ -174,7 +174,7 @@ describe('Lobby', () => {
     })
 
     it('takes the host controls away once the cards are dealt', () => {
-      /* Presentation only — the server refuses a late change whatever the screen shows —
+      /* Presentation only - the server refuses a late change whatever the screen shows -
          but a control that cannot work must not be on offer. Driven by `configurable`,
          which the server derives from the match having begun, NOT from `canStart`. */
       const lobby = lobbyWith(['Ana', 'Ben'])

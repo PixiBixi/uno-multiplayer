@@ -11,7 +11,7 @@ two people at the same table can run different themes and the game is identical.
 So it does **not** go through the protocol. No `TableRules`, no `room:create`
 field, no socket test, no server surface. It lives in `localStorage` beside the
 hand-sort mode and the mute flag, using the same defensive-read pattern in
-`apps/web/src/lib/preferences.ts` — storage can be blocked outright, and losing a
+`apps/web/src/lib/preferences.ts` - storage can be blocked outright, and losing a
 preference must never break the page.
 
 ```ts
@@ -24,7 +24,7 @@ export type CardTheme = 'classic' | 'flat' | 'letterpress' | 'neon'
 
 `Card.tsx` is already 226 lines. Four variants inside it would make it unreadable,
 so each theme's decisions go in `apps/web/src/lib/card-themes.ts` and `Card.tsx`
-reads them — the same shape as `palette.ts`, which exists for exactly this reason.
+reads them - the same shape as `palette.ts`, which exists for exactly this reason.
 
 A theme is data, not a component: ground colour, ink colour, numeral font and size,
 whether the oval is drawn, how the corner tokens are placed. Anything that needs a
@@ -44,7 +44,7 @@ that drops them is not shippable.
 ## The neon theme needs fixing before it ships
 
 When these were first presented, neon was described as "the boldest" with an
-explicit caveat — *the glow costs contrast, worst of the four for legibility*. If a
+explicit caveat - *the glow costs contrast, worst of the four for legibility*. If a
 player can pick it, some will, and then the game is harder to read for them.
 
 Offering an option already known to be the weakest is not a choice, it is a trap.
@@ -57,12 +57,12 @@ If it cannot be made to clear that bar, ship three themes and say why.
 
 ## Where the control goes
 
-**Home screen** — four real miniature cards, clickable, beside the language chips.
+**Home screen** - four real miniature cards, clickable, beside the language chips.
 You pick by looking, not by reading a name, which is why the mockups presented them
 that way. Each preview renders the actual `Card` component so the preview cannot
 drift from the thing it previews.
 
-**Table** — a small cycler beside the mute toggle, stepping through the four. It is
+**Table** - a small cycler beside the mute toggle, stepping through the four. It is
 a setting, not a move, so it belongs with the mute button rather than among the
 controls a player reaches for under time pressure. Same 44px target, same quiet
 opacity until hovered.
@@ -74,7 +74,7 @@ other.
 
 - `card-themes.ts` is data, so assert the boring things that rot: every theme has
   every field, no two themes are identical, and every theme keeps a shape token.
-- `Card.tsx` renders under each theme with the same accessible label — the label is
+- `Card.tsx` renders under each theme with the same accessible label - the label is
   the game state and must not change with a display preference.
 - The preference round-trips through storage, and an unknown stored value falls back
   to `classic` rather than to a blank card. The mute flag already does exactly this

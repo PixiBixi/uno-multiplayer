@@ -13,7 +13,7 @@ export default tseslint.config(
   {
     // The engine must stay deterministic: no source of entropy, no clock.
     // `Math.min`/`Math.imul` remain legitimate; only the random source is
-    // banned — shuffling goes through rng.ts and its seed.
+    // banned - shuffling goes through rng.ts and its seed.
     files: ['packages/engine/src/**'],
     rules: {
       'no-restricted-properties': [
@@ -41,7 +41,7 @@ export default tseslint.config(
     // JSX on top of the shared settings. parserOptions must repeat
     // projectService: this block replaces the key rather than merging into it,
     // and dropping it silently strips every type-aware rule of its types.
-    // Browser globals need no list here — `lib: DOM` in tsconfig covers them.
+    // Browser globals need no list here - `lib: DOM` in tsconfig covers them.
     files: ['apps/web/src/**/*.{ts,tsx}'],
     languageOptions: {
       parserOptions: {

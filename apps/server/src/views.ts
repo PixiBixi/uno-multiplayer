@@ -6,7 +6,7 @@ import type { MatchProgress, PlayerView } from '@uno/protocol'
  * draw pile to a length: hidden information never crosses the wire, which is
  * what makes it actually hidden rather than merely covered by a card-back image.
  *
- * Returns null when the seat or the discard top does not exist — the caller
+ * Returns null when the seat or the discard top does not exist - the caller
  * simply sends nothing rather than guessing.
  */
 type Deadlines = { turnDeadline: number | null; nextRoundDeadline: number | null }

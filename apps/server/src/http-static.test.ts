@@ -18,7 +18,7 @@ afterEach(async () => {
  * content-hashed file under assets/, and the icons Vite copies from public/. The three
  * locations exist because each gets a different cache policy.
  *
- * The asset is padded past the compression threshold — a 20-byte file would be served
+ * The asset is padded past the compression threshold - a 20-byte file would be served
  * uncompressed no matter what is registered, and a test asserting otherwise would be
  * asserting the threshold rather than the plugin.
  */
@@ -66,7 +66,7 @@ describe('static serving', () => {
    * fails silently otherwise: `wildcard: false` plus a not-found handler that returns
    * the app shell means a missed icon answers 200 with HTML, the browser quietly shows
    * its default mark, and nothing anywhere reports a problem. A 200 proves nothing here
-   * — only the media type distinguishes the icon from the app shell wearing its name.
+   * - only the media type distinguishes the icon from the app shell wearing its name.
    */
   it.each([
     ['/favicon.svg', 'image/svg+xml'],
@@ -105,7 +105,7 @@ describe('static serving', () => {
    * Three policies, and the split is the point. Production served everything with
    * `max-age=0`, so every visit revalidated files whose names contain a hash of their own
    * contents. Caching them for a year is safe precisely because the name changes when the
-   * bytes do — and index.html must stay uncached for exactly the same reason, or the
+   * bytes do - and index.html must stay uncached for exactly the same reason, or the
    * player keeps an app shell that points at assets from the previous deploy.
    */
   it.each([

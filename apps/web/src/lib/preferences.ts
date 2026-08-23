@@ -8,7 +8,7 @@ const isHandSort = (value: string | null): value is HandSort =>
 
 /**
  * A display preference, kept apart from session tokens: different lifetime,
- * different concern. Same defensive reads — storage can be blocked outright, and
+ * different concern. Same defensive reads - storage can be blocked outright, and
  * losing a preference must never break the page.
  */
 export function readHandSort(): HandSort {
@@ -31,7 +31,7 @@ export function writeHandSort(mode: HandSort): void {
 const MUTED_KEY = 'uno.pref.muted'
 
 /**
- * Sound is on unless someone turned it off, which is the norm for a game — and
+ * Sound is on unless someone turned it off, which is the norm for a game - and
  * safe here because no sound can fire before the click that creates or joins a
  * table. Nobody is ambushed by opening the page.
  *
@@ -65,7 +65,7 @@ const isCardTheme = (value: string | null): value is CardTheme =>
  * people at the same table can run different themes and the game is identical.
  *
  * An unrecognised value falls back to `classic` rather than being trusted, because
- * a theme name with no spec behind it is not a cosmetic problem — the face would be
+ * a theme name with no spec behind it is not a cosmetic problem - the face would be
  * built from `undefined` and render as a blank card, with a hand of them. Same
  * reasoning as the mute flag, which stores the exception rather than the state.
  */

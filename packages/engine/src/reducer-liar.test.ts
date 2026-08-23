@@ -7,7 +7,7 @@ import type { GameState, Move, TableRules } from './types.js'
 /*
  * The Liar call-out. With `liar` on, forgetting to call UNO costs nothing unless
  * somebody notices: a seat that reaches one card uncalled becomes VULNERABLE, and
- * any other active seat may call it out — the one move in the game that is legal
+ * any other active seat may call it out - the one move in the game that is legal
  * when it is not your turn.
  */
 

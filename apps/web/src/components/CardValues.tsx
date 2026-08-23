@@ -7,7 +7,7 @@ import { useMessages } from '../i18n/index.js'
  * A points table copied into help text is a table that goes quietly wrong the
  * first time the rule changes. Every number below is produced by calling
  * `cardPoints` on a representative card, so the page cannot disagree with the
- * scoring it describes — if it ever did, the tests comparing the two would fail
+ * scoring it describes - if it ever did, the tests comparing the two would fail
  * before a player ever saw it.
  */
 const NUMBER_LOW: Card = { id: 'help-0' as CardId, kind: 'number', color: 'R', value: 0 }

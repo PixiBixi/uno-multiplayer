@@ -377,7 +377,7 @@ describe('a swap and the UNO window', () => {
       drawPile: pile(),
     })
     const next = apply(state, 0, { type: 'play', cardId: cid('a'), swapWith: 2 })
-    // Seat 2 received two cards, seat 0 gave two away — neither is on one card.
+    // Seat 2 received two cards, seat 0 gave two away - neither is on one card.
     expect(next.seats[0]?.vulnerable).toBe(false)
     expect(next.seats[2]?.vulnerable).toBe(false)
 
@@ -443,7 +443,7 @@ describe('a swap and the UNO window', () => {
 
   it('charges nothing on a table without the Liar option', () => {
     /* The automatic penalty punishes an omission, and after a permutation nobody is
-       holding the hand they held when the turn began — the mover least of all. */
+       holding the hand they held when the turn began - the mover least of all. */
     const state = stateOf({
       rules: SEVEN_ZERO,
       seats: [

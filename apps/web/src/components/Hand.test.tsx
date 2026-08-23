@@ -212,7 +212,7 @@ describe('Hand sorting', () => {
   it('names the three modes in the player’s language, not in English', () => {
     /* The catalogue already carried these three; the control had its own hardcoded
        table beside them, so a French player was offered "By colour". A label that
-       does not follow the chosen language is the same defect wherever it lives —
+       does not follow the chosen language is the same defect wherever it lives -
        `lib/` is not exempt because it has no JSX in it. */
     render(
       <LocaleContext.Provider

@@ -72,7 +72,7 @@ describe('grammar each language owns', () => {
     /* The accessible label of every greyed card in a hand. English hangs a clause off
        a dash; French makes it an adjective and drops the dash entirely. A shared
        "{card} {suffix}" would have made French borrow the dash. */
-    expect(CATALOGUES.en.cardUnplayable(num(7))).toBe('Red 7 — not playable this turn')
+    expect(CATALOGUES.en.cardUnplayable(num(7))).toBe('Red 7 - not playable this turn')
     expect(CATALOGUES.fr.cardUnplayable(num(7))).toBe('Rouge 7, injouable ce tour-ci')
     // And it still contains the card's own name in that language, not the English one.
     for (const locale of LOCALES) {
@@ -126,7 +126,7 @@ describe('grammar each language owns', () => {
   })
 
   it('names the host in a sentence when the roster has not named them yet', () => {
-    // A noun dropped into `waitingForHost`, so it has to read as one — and French
+    // A noun dropped into `waitingForHost`, so it has to read as one - and French
     // needs its elision.
     expect(CATALOGUES.en.lobby.waitingForHost(CATALOGUES.en.lobby.theHost)).toBe(
       'Waiting for the host to start the game.',
@@ -221,8 +221,8 @@ describe('grammar each language owns', () => {
   })
 
   it('names the jump-in option in each language', () => {
-    /* Unlike Seven-Zero, this variant has no French name in circulation — players
-       say "jump-in" — so the label keeps it rather than inventing one. The sentence
+    /* Unlike Seven-Zero, this variant has no French name in circulation - players
+       say "jump-in" - so the label keeps it rather than inventing one. The sentence
        around it is still French. */
     expect(CATALOGUES.en.config.jumpIn).toContain('jump-in')
     expect(CATALOGUES.fr.config.jumpIn).toContain('Jump-in')
@@ -241,7 +241,7 @@ describe('grammar each language owns', () => {
   it('names the drawn-card option and its control in each language', () => {
     /* No jargon to preserve in either language, unlike jump-in: the rule is described by
        what it lets you do. And the control says it ends the turn rather than "pass", which
-       in a card game reads as declining to draw — precisely backwards here. */
+       in a card game reads as declining to draw - precisely backwards here. */
     expect(CATALOGUES.en.config.playDrawnCard).toContain('drawn card')
     expect(CATALOGUES.fr.config.playDrawnCard).toContain('piocher')
     expect(CATALOGUES.en.config.playDrawnCardHint).toContain('official rule')
@@ -288,7 +288,7 @@ describe('grammar each language owns', () => {
       const catalogue = CATALOGUES[locale]
       for (const theme of CARD_THEMES) {
         // The control's accessible name has to carry the theme's own name inside it,
-        // in each language's own punctuation — French spaces its colon, English does
+        // in each language's own punctuation - French spaces its colon, English does
         // not.
         expect(catalogue.cardTheme.named(catalogue.cardTheme.name[theme])).toContain(
           catalogue.cardTheme.name[theme],

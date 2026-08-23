@@ -1,10 +1,10 @@
-# Plan A — Fondations et moteur de règles
+# Plan A - Fondations et moteur de règles
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Livrer un monorepo TypeScript avec un moteur de règles UNO 2–4 joueurs entièrement testé et un contrat réseau typé, prêts à être consommés par le serveur.
 
-**Architecture:** Monorepo npm workspaces. `packages/engine` contient des fonctions pures sur état immuable avec RNG seedé — aucune I/O, aucune notion de réseau. `packages/protocol` déclare les événements socket et leurs schémas de validation. Aucun code applicatif serveur ou client dans ce plan.
+**Architecture:** Monorepo npm workspaces. `packages/engine` contient des fonctions pures sur état immuable avec RNG seedé - aucune I/O, aucune notion de réseau. `packages/protocol` déclare les événements socket et leurs schémas de validation. Aucun code applicatif serveur ou client dans ce plan.
 
 **Tech Stack:** TypeScript 5.7 (strict), Vitest, fast-check, Zod, npm workspaces, Node 22 LTS.
 
@@ -37,7 +37,7 @@ Deux points que la spec laissait imprécis, tranchés ici et à reporter dans la
 | `vitest.config.ts` | Configuration de test racine |
 | `eslint.config.js` | Lint plat ESLint 9 |
 | `packages/engine/src/types.ts` | `Card`, `Color`, `Seat`, `GameState`, `Move`, `RuleViolation`, `Result` |
-| `packages/engine/src/rng.ts` | `nextRandom`, `nextInt`, `shuffle` — PRNG pur seedé |
+| `packages/engine/src/rng.ts` | `nextRandom`, `nextInt`, `shuffle` - PRNG pur seedé |
 | `packages/engine/src/deck.ts` | `buildDeck`, `takeFromTop`, `reshuffleDiscard` |
 | `packages/engine/src/init.ts` | `initGame` |
 | `packages/engine/src/rules.ts` | `isPlayable`, `legalMoves`, `activeCount`, `advance` |
@@ -79,7 +79,7 @@ describe('engine package', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 Run: `npm test`
-Expected: échec — ni le workspace ni le module n'existent encore.
+Expected: échec - ni le workspace ni le module n'existent encore.
 
 - [ ] **Step 3: Créer les fichiers de configuration**
 
@@ -269,7 +269,7 @@ git commit -m "chore(repo): scaffold npm workspaces monorepo with TypeScript and
 **Interfaces:**
 - Consumes: rien
 - Produces:
-  - `nextRandom(state: number): { value: number; state: number }` — `value` dans `[0, 1)`
+  - `nextRandom(state: number): { value: number; state: number }` - `value` dans `[0, 1)`
   - `nextInt(state: number, maxExclusive: number): { value: number; state: number }`
   - `shuffle<T>(input: readonly T[], state: number): { items: T[]; state: number }`
 
@@ -343,7 +343,7 @@ describe('shuffle', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run packages/engine/src/rng.test.ts`
-Expected: FAIL — `Cannot find module './rng.js'`.
+Expected: FAIL - `Cannot find module './rng.js'`.
 
 - [ ] **Step 3: Implémenter le RNG**
 
@@ -444,7 +444,7 @@ describe('Result', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 Run: `npx vitest run packages/engine/src/types.test.ts`
-Expected: FAIL — module introuvable.
+Expected: FAIL - module introuvable.
 
 - [ ] **Step 3: Écrire les types**
 
@@ -540,7 +540,7 @@ git commit -m "feat(engine): add domain types with discriminated card union"
 **Interfaces:**
 - Consumes: `Card`, `CardId`, `Color`, `COLORS`, `NumberValue` (Task 3)
 - Produces:
-  - `buildDeck(): Card[]` — 108 cartes, dessus en fin de tableau
+  - `buildDeck(): Card[]` - 108 cartes, dessus en fin de tableau
   - `takeFromTop(pile: readonly Card[], count: number): { taken: Card[]; rest: Card[] }`
 
 - [ ] **Step 1: Écrire les tests qui échouent**
@@ -625,7 +625,7 @@ describe('takeFromTop', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run packages/engine/src/deck.test.ts`
-Expected: FAIL — module introuvable.
+Expected: FAIL - module introuvable.
 
 - [ ] **Step 3: Implémenter le paquet**
 
@@ -817,7 +817,7 @@ describe('initGame', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run packages/engine/src/init.test.ts`
-Expected: FAIL — module introuvable.
+Expected: FAIL - module introuvable.
 
 - [ ] **Step 3: Implémenter l'initialisation**
 
@@ -992,7 +992,7 @@ describe('isPlayable without a debt', () => {
   })
 })
 
-describe('isPlayable with a debt — strictly same type', () => {
+describe('isPlayable with a debt - strictly same type', () => {
   it('lets a +2 answer a +2', () => {
     const state = stateOf({ pendingDraw: { amount: 2, kind: 'draw2' } })
     expect(isPlayable(act('x', 'draw2', 'G'), state)).toBe(true)
@@ -1142,7 +1142,7 @@ describe('activeCount and advance', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run packages/engine/src/rules.test.ts`
-Expected: FAIL — module introuvable.
+Expected: FAIL - module introuvable.
 
 - [ ] **Step 3: Implémenter les règles**
 
@@ -1280,7 +1280,7 @@ describe('handOf', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 Run: `npx vitest run packages/engine/src/test-helpers.test.ts`
-Expected: FAIL — `num`, `seatOf`, `stateOf`, `handOf` non exportés.
+Expected: FAIL - `num`, `seatOf`, `stateOf`, `handOf` non exportés.
 
 - [ ] **Step 3: Étendre les helpers**
 
@@ -1377,7 +1377,7 @@ git commit -m "test(engine): extract shared state builders into test helpers"
 
 ---
 
-### Task 8: `applyMove` — pioche, annonce et dette
+### Task 8: `applyMove` - pioche, annonce et dette
 
 **Files:**
 - Create: `packages/engine/src/reducer.ts`
@@ -1595,7 +1595,7 @@ describe('stacking', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run packages/engine/src/reducer-draw.test.ts`
-Expected: FAIL — `./reducer.js` introuvable.
+Expected: FAIL - `./reducer.js` introuvable.
 
 - [ ] **Step 3: Implémenter le réducteur**
 
@@ -1968,7 +1968,7 @@ describe('inactive seats', () => {
 - [ ] **Step 2: Lancer les tests**
 
 Run: `npx vitest run packages/engine/src/reducer-play.test.ts`
-Expected: 17 tests PASS. En cas d'échec, corriger `reducer.ts` — les tests décrivent le comportement attendu.
+Expected: 17 tests PASS. En cas d'échec, corriger `reducer.ts` - les tests décrivent le comportement attendu.
 
 - [ ] **Step 3: Commit**
 
@@ -1979,7 +1979,7 @@ git commit -m "test(engine): cover action card effects, uno penalty and victory"
 
 ---
 
-### Task 10: Test de propriété — conservation des cartes
+### Task 10: Test de propriété - conservation des cartes
 
 **Files:**
 - Create: `packages/engine/src/invariants.test.ts`
@@ -2125,7 +2125,7 @@ describe('state validity', () => {
 - [ ] **Step 3: Lancer les tests**
 
 Run: `npx vitest run packages/engine/src/invariants.test.ts`
-Expected: 6 tests PASS. Un échec ici signale un vrai bug du moteur — fast-check imprime le contre-exemple minimal ; le reproduire dans un test unitaire dédié avant de corriger.
+Expected: 6 tests PASS. Un échec ici signale un vrai bug du moteur - fast-check imprime le contre-exemple minimal ; le reproduire dans un test unitaire dédié avant de corriger.
 
 - [ ] **Step 4: Commit**
 
@@ -2145,7 +2145,7 @@ git commit -m "test(engine): add property-based card conservation and validity i
 
 **Interfaces:**
 - Consumes: tout le moteur
-- Produces: l'API que `apps/server` consommera — `initGame`, `applyMove`, `legalMoves`, `isPlayable`, `activeCount`, `buildDeck`, et tous les types
+- Produces: l'API que `apps/server` consommera - `initGame`, `applyMove`, `legalMoves`, `isPlayable`, `activeCount`, `buildDeck`, et tous les types
 
 - [ ] **Step 1: Écrire le test qui échoue**
 
@@ -2187,7 +2187,7 @@ describe('public surface', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 Run: `npx vitest run packages/engine/src/index.test.ts`
-Expected: FAIL — `initGame` n'est pas exporté depuis `index.ts`.
+Expected: FAIL - `initGame` n'est pas exporté depuis `index.ts`.
 
 - [ ] **Step 3: Écrire la surface publique**
 
@@ -2241,7 +2241,7 @@ git commit -m "feat(engine): expose public API surface"
 
 ---
 
-### Task 12: `packages/protocol` — vues et événements
+### Task 12: `packages/protocol` - vues et événements
 
 **Files:**
 - Create: `packages/protocol/package.json`, `packages/protocol/tsconfig.json`
@@ -2276,7 +2276,7 @@ describe('protocol limits', () => {
 - [ ] **Step 2: Lancer le test pour vérifier qu'il échoue**
 
 Run: `npx vitest run packages/protocol/src/views.test.ts`
-Expected: FAIL — le package n'existe pas.
+Expected: FAIL - le package n'existe pas.
 
 - [ ] **Step 3: Créer le package**
 
@@ -2428,7 +2428,7 @@ export * from './schemas.js'
 - [ ] **Step 4: Lancer les tests**
 
 Run: `npm install && npx vitest run packages/protocol/src/views.test.ts`
-Expected: FAIL sur `./schemas.js` — traité en Task 13. Retirer temporairement la ligne `export * from './schemas.js'` pour valider le reste, puis la remettre en Task 13.
+Expected: FAIL sur `./schemas.js` - traité en Task 13. Retirer temporairement la ligne `export * from './schemas.js'` pour valider le reste, puis la remettre en Task 13.
 
 - [ ] **Step 5: Commit**
 
@@ -2554,7 +2554,7 @@ describe('moveSchema', () => {
 - [ ] **Step 2: Lancer les tests pour vérifier qu'ils échouent**
 
 Run: `npx vitest run packages/protocol/src/schemas.test.ts`
-Expected: FAIL — `./schemas.js` introuvable.
+Expected: FAIL - `./schemas.js` introuvable.
 
 - [ ] **Step 3: Écrire les schémas**
 
@@ -2641,5 +2641,5 @@ Les trois commandes passent, et :
 
 **Hors périmètre du plan A, à traiter dans le plan B** : §2.6 serveur (`RoomManager`, `Room`, handlers, `redactFor`, rate limiting), §2.7 client, §3.1 cycle de vie des rooms, §3.2 câblage des événements, §3.3 production effective des vues, §3.4 traitement d'un coup côté serveur, §3.6 reconnexion et délai de grâce, §4.3 tests d'intégration et E2E, §4.4 Docker et CI.
 
-**Cohérence des types.** `PendingDraw.kind` vaut `'draw2' | 'wild4'` partout (types du moteur, `isPlayable`, `applyMove`, `PlayerView`). `Result` utilise `okay` et non `ok` comme discriminant, `ok`/`err` étant les constructeurs — usage uniforme dans toutes les tasks. `seatOf` est le nom du constructeur de siège dans les tests, `Seat` le type. Le dessus des piles est **toujours** le dernier élément du tableau, en pioche comme en défausse.
+**Cohérence des types.** `PendingDraw.kind` vaut `'draw2' | 'wild4'` partout (types du moteur, `isPlayable`, `applyMove`, `PlayerView`). `Result` utilise `okay` et non `ok` comme discriminant, `ok`/`err` étant les constructeurs - usage uniforme dans toutes les tasks. `seatOf` est le nom du constructeur de siège dans les tests, `Seat` le type. Le dessus des piles est **toujours** le dernier élément du tableau, en pioche comme en défausse.
 

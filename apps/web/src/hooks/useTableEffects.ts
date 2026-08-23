@@ -28,9 +28,9 @@ export function useTableEffects({ discardTop, currentColor, feed }: UseTableEffe
   const [effects, setEffects] = useState<ActiveEffect[]>([])
   const [drawNonce, setDrawNonce] = useState(0)
 
-  /* Both refs start at what is already on screen. A first paint — including the
+  /* Both refs start at what is already on screen. A first paint - including the
      one right after a reconnect, which arrives with a whole backlog of feed
-     entries — must not replay a storm of animations for moves that happened
+     entries - must not replay a storm of animations for moves that happened
      minutes ago. */
   const lastCardId = useRef(discardTop.id)
   const lastFeedId = useRef(highestFeedId(feed))

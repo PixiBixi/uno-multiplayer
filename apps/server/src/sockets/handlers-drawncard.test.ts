@@ -13,7 +13,7 @@ import { registerSocketHandlers } from './handlers.js'
  * The gap this closes is the one that has shipped twice here: both ends of a chain
  * tested and the wire between them not. Ending a turn needs a `pass` in the engine's
  * `Move` union, a branch in the Zod discriminated union, a `game:move` handler that
- * accepts it, and a client that emits it — and the schema is exactly the piece that gets
+ * accepts it, and a client that emits it - and the schema is exactly the piece that gets
  * forgotten, which would leave the button answering `invalid_payload` and the turn
  * unable to end at all.
  *
@@ -135,7 +135,7 @@ const send = async (players: Player[], mover: Player, move: Move): Promise<void>
  * rather than giving up at the end of one.
  *
  * The room's seed is random per test and whether a drawn card is playable is a property
- * of the deal, so a drive that gave up after one round would fail on an unlucky shuffle —
+ * of the deal, so a drive that gave up after one round would fail on an unlucky shuffle -
  * which is the flake the jump-in drive was written to avoid.
  *
  * Drawing on every turn rather than playing is deliberate: the state being hunted exists

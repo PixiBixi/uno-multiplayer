@@ -158,7 +158,7 @@ describe('a room playing with Seven-Zero', () => {
 
   it('opens a Liar window when a swap leaves a seat holding one card', () => {
     /* The two options meeting: the seat handed a single card never had a turn on
-       which it could call UNO, so a window — escapable on its own next turn — is
+       which it could call UNO, so a window - escapable on its own next turn - is
        what it gets, rather than two cards it could not have avoided. */
     const room = roomWith({ liar: true, sevenZero: true, jumpIn: false, playDrawnCard: false })
     for (let turn = 0; turn < 400; turn += 1) {

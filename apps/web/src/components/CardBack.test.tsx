@@ -7,7 +7,7 @@ import { CardThemeProvider } from './CardThemeProvider.js'
 /**
  * The back was reported as "a blank pale rectangle" on one player's screen while
  * the fanned backs beside it drew correctly. The cause turned out to be a CSS
- * overlay left on the draw pile after its animation ended — measured in a real
+ * overlay left on the draw pile after its animation ended - measured in a real
  * browser, and guarded by an end-to-end test, because opacity on a pseudo-element
  * is not a thing jsdom has an opinion about.
  *
@@ -34,7 +34,7 @@ describe('CardBack under every theme', () => {
 
        Which themes those are is read out of the spec rather than listed, so a fifth
        theme is covered the day it is added. `flat` has neither an oval nor a stroke
-       and so carries no red at all — it is the word alone on a dark panel. That is
+       and so carries no red at all - it is the word alone on a dark panel. That is
        the current design and not a claim this test makes about it. */
     for (const theme of CARD_THEMES) {
       const spec = CARD_THEME_SPEC[theme]
@@ -49,7 +49,7 @@ describe('CardBack under every theme', () => {
   it('grounds a filled panel in something other than the stock it sits on', () => {
     /* The pale-rectangle report's other candidate explanation: a ground that
        collapses to the stock colour leaves the panel invisible and the card looks
-       like blank paper. Only the filled-panel themes are held to this — letterpress
+       like blank paper. Only the filled-panel themes are held to this - letterpress
        and neon stroke their panel and deliberately ground it in their own stock,
        taking their edge from the red border instead. Read from the spec so a fifth
        theme lands on the right side of the line by itself. */
@@ -65,7 +65,7 @@ describe('CardBack under every theme', () => {
 
   it('never leaves the back as a bare sheet of stock', () => {
     /* What "blank and pale" looked like. The panel and the badge are both drawn over
-       the stock, and at least one of them has to differ from it — letterpress
+       the stock, and at least one of them has to differ from it - letterpress
        deliberately grounds its panel in the same paper, and earns its contrast from
        the red border instead. */
     for (const theme of CARD_THEMES) {

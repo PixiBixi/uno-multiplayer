@@ -3,7 +3,7 @@
 # Both stages track .nvmrc, not the `engines` floor in package.json. The floor is what
 # this code still runs on; .nvmrc is the Active LTS that CI actually lints, covers and
 # runs the browser suite against, so it is the one thing production should match. They
-# drifted apart once — the image shipped 22 while everything else validated 24 — and a CI
+# drifted apart once - the image shipped 22 while everything else validated 24 - and a CI
 # step now fails if these two lines and .nvmrc disagree.
 
 # ---- build ----

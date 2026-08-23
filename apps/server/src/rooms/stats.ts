@@ -76,15 +76,15 @@ export function tally(stats: SeatStats[], events: GameEvent[]): SeatStats[] {
          is not one of the things this scoreboard keeps. */
       case 'calledOut':
         break
-      /* Nor these. Hands moving is not a card played or a card drawn — the deck is
-         merely rearranged — and a "hands taken" column would be a statistic about
+      /* Nor these. Hands moving is not a card played or a card drawn - the deck is
+         merely rearranged - and a "hands taken" column would be a statistic about
          one optional rule rather than about the game. */
       case 'handsSwapped':
       case 'handsRotated':
         break
       /* Nor this one. The card itself is counted by the `cardPlayed` that follows it,
          and counting the jump as well would make one card look like two things
-         happening — a "cards played" column that disagrees with the hands. */
+         happening - a "cards played" column that disagrees with the hands. */
       case 'jumpedIn':
         break
       /* Nor this one. Declining the card you drew is a choice, not an achievement or a

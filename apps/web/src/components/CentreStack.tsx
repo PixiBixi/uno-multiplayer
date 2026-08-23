@@ -39,7 +39,7 @@ function DirectionBadge({ direction }: { direction: 1 | -1 }) {
         <path d="M20.5 4.5V10h-5.5" />
       </svg>
       {/* Named, not just drawn: an arrow alone is ambiguous at a glance, and the
-          server has always carried `direction` — the interface used to ignore it. */}
+          server has always carried `direction` - the interface used to ignore it. */}
       <span>{direction === 1 ? t.table.clockwise : t.table.anticlockwise}</span>
     </p>
   )

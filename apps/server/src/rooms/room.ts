@@ -49,7 +49,7 @@ export type Member = {
 export type RoomPhase = 'lobby' | 'playing' | 'finished'
 
 /**
- * One room: a lobby, then a game. Deliberately synchronous and timer-free — it
+ * One room: a lobby, then a game. Deliberately synchronous and timer-free - it
  * knows nothing of socket.io or setTimeout, which is what makes the whole
  * lifecycle testable without a clock or a network. Grace periods live in
  * RoomManager, which calls expireGrace when one elapses.
@@ -60,14 +60,14 @@ export class Room {
   private readonly members: Member[] = []
   private host = 0
   private game: GameState | null = null
-  /* Settable from the lobby by the host and frozen by the first deal of the match —
+  /* Settable from the lobby by the host and frozen by the first deal of the match -
      see configure(). Not readonly any more, and not mutable for long: changing any of
      the three mid-match would rewrite a contest that has already been partly played
      under the old ones. */
   private goal: MatchGoal
   private pace: MatchPace
   private rules: TableRules
-  /* Held, never computed. Room owns no clock — RoomManager hands these in, the
+  /* Held, never computed. Room owns no clock - RoomManager hands these in, the
      same way it hands in a seed, so the whole lifecycle stays testable without
      time passing. */
   private turnDeadline: number | null = null
@@ -135,7 +135,7 @@ export class Room {
    * The clock dealing the next round rather than the host.
    *
    * Distinct from nextRound(): no seat asked for this, so there is no host to
-   * check, and it reports nothing when the table can no longer deal — everybody
+   * check, and it reports nothing when the table can no longer deal - everybody
    * having left during the pause is an ordinary way for a fast match to end.
    */
   dealNextRoundAutomatically(nextSeed: number): GameEvent[] {
@@ -217,7 +217,7 @@ export class Room {
    *
    * Derived from the match having begun, deliberately not from `canStart`: that reports
    * how many seats are filled, and a room can be un-startable while already holding a
-   * dealt round and a score — somebody left mid-match. Gating on it would reopen the
+   * dealt round and a score - somebody left mid-match. Gating on it would reopen the
    * rules at exactly the moment they must not move.
    *
    * `match` rather than `game`: the lock is the first deal of the MATCH, not of each
@@ -232,7 +232,7 @@ export class Room {
    *
    * Partial by design: a field absent from `changes` is left alone, so toggling one rule
    * cannot write back a goal the client read a moment earlier. `pace` distinguishes
-   * absent from null — null takes the clock off the table.
+   * absent from null - null takes the clock off the table.
    *
    * Reports no event. There is no narrative feed in the lobby and nothing here belongs
    * in the match statistics; the result reaches players as a fresh `room:state`, which
@@ -284,7 +284,7 @@ export class Room {
    * an engine seat index and a member seat index different numbers the moment
    * anybody was absent at deal time. viewFor() indexes the engine by member seat,
    * so the highest-numbered player fell off the end of the seat array and received
-   * no view of the game at all — present, holding cards, looking at nothing.
+   * no view of the game at all - present, holding cards, looking at nothing.
    *
    * Absent seats are then reconciled: a player gone for good has their hand
    * returned to the pile, which both keeps the 108-card invariant and means they
@@ -312,7 +312,7 @@ export class Room {
 
   /**
    * Settles a round that has just ended and reports it. Lives here rather than in
-   * diffEvents because only the Room knows the standings — a pure diff of two game
+   * diffEvents because only the Room knows the standings - a pure diff of two game
    * states cannot say what the round paid out.
    */
   private settleRound(before: GameState, after: GameState): GameEvent[] {
@@ -347,7 +347,7 @@ export class Room {
 
   /**
    * The next round of the same match: the standings carry over. The seed arrives
-   * as a parameter for the same reason restart's does — a Room that draws its own
+   * as a parameter for the same reason restart's does - a Room that draws its own
    * randomness stops being reproducible.
    */
   nextRound(bySeat: number, nextSeed: number): Result<GameEvent[], ErrorCode> {
@@ -365,7 +365,7 @@ export class Room {
 
   /**
    * A whole new match on the same goal: the standings are abandoned. Distinct from
-   * nextRound on purpose — the host may want either, and letting one action mean
+   * nextRound on purpose - the host may want either, and letting one action mean
    * both depending on hidden state is how a player loses a scoreboard by accident.
    */
   restart(bySeat: number, nextSeed: number): Result<GameEvent[], ErrorCode> {
@@ -418,13 +418,13 @@ export class Room {
    * turn, which is the entire point of the clock.
    *
    * A pending draw against them makes `draw` illegal, so accepting it is the same
-   * decision taken on their behalf. If neither is available — the seat could only
-   * have called UNO — nothing is forced: that penalty belongs to the player who
+   * decision taken on their behalf. If neither is available - the seat could only
+   * have called UNO - nothing is forced: that penalty belongs to the player who
    * forgot, not to the clock.
    *
    * A seat already holding a drawn card is passed rather than made to draw again. They
    * have drawn; forcing a second card would punish the clock twice, and it is also the
-   * only move that ends that turn — `draw` is not on offer in the sub-state, so without
+   * only move that ends that turn - `draw` is not on offer in the sub-state, so without
    * `pass` first the clock would expire against the same seat for ever.
    */
   forceTurnMove(): GameEvent[] {
@@ -516,7 +516,7 @@ export class Room {
  * Read from the card and the table's rules rather than from hand sizes, which a
  * permutation can leave entirely unchanged: two seats holding four cards each swap
  * to no visible difference at all. A finished round means the card emptied a hand
- * and the round ended before any hand could move — first empty hand wins, and the
+ * and the round ended before any hand could move - first empty hand wins, and the
  * reducer settles that before the effect.
  */
 function sevenZeroEvent(
@@ -575,7 +575,7 @@ function diffEvents(before: GameState, after: GameState, seat: number, move: Mov
     /* A play by a seat whose turn it was not is a jump-in, and there is nothing else
        it could be: the reducer exempts exactly two moves from the turn check, and the
        other one is a call-out, which returned above. Read from `before`, since `after`
-       has the turn on the jumper by then — that being the whole effect of the rule. */
+       has the turn on the jumper by then - that being the whole effect of the rule. */
     if (before.rules.jumpIn && before.currentSeat !== seat) {
       events.push({ type: 'jumpedIn', seat })
     }

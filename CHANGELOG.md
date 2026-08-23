@@ -119,13 +119,13 @@
 - (**web**) synthesised sound, with endings that know who won - ([594731f](https://github.com/PixiBixi/uno-multiplayer/commit/594731fec6564c31b021d596854e6d5337a50899)) - Jeremy Delgado
 - (**web**) copy the game code or an invite link from the lobby - ([7c534d6](https://github.com/PixiBixi/uno-multiplayer/commit/7c534d607994bbb151a7c8114c17f4259ada3407)) - Jeremy Delgado
 - (**web**) animate calling UNO and drawing a card - ([63c3f63](https://github.com/PixiBixi/uno-multiplayer/commit/63c3f6389c0f651c2b03e5c37525355872bdb893)) - Jeremy Delgado
-- (**web**) add play effects — a burst for action cards, a shake for wild +4 - ([27f6875](https://github.com/PixiBixi/uno-multiplayer/commit/27f687587736148d3a17d304a39adb88de5a8cea)) - Jeremy Delgado
+- (**web**) add play effects - a burst for action cards, a shake for wild +4 - ([27f6875](https://github.com/PixiBixi/uno-multiplayer/commit/27f687587736148d3a17d304a39adb88de5a8cea)) - Jeremy Delgado
 - (**web**) add hand sorting, enlarge the playing area, fix two wording bugs - ([4c0b333](https://github.com/PixiBixi/uno-multiplayer/commit/4c0b333906a48bbe93d386ccae41985bc71eb0b7)) - Jeremy Delgado
 - (**web**) add home, lobby, table, chat and end-of-game screens - ([a6e5fc1](https://github.com/PixiBixi/uno-multiplayer/commit/a6e5fc13851861cd4c3508a8e71858eac4b90889)) - Jeremy Delgado
 - (**web**) add session storage, room URL handling and the game socket hook - ([ac39b60](https://github.com/PixiBixi/uno-multiplayer/commit/ac39b60f63cdc5275123bb3e0be0b7e9074cef4b)) - Jeremy Delgado
 - (**web**) scaffold Vite React client with SVG card component - ([ee26d73](https://github.com/PixiBixi/uno-multiplayer/commit/ee26d73e6aa80c2a843873c805176ff2218b7377)) - Jeremy Delgado
 - end-of-match awards, counted from the event feed - ([2183596](https://github.com/PixiBixi/uno-multiplayer/commit/21835962cc0d61aacfec2b01543d9e59f0fdf6c5)) - Jeremy Delgado
-- Blazing mode — an optional per-turn clock, and self-dealing rounds - ([b288d9d](https://github.com/PixiBixi/uno-multiplayer/commit/b288d9dad9c4464c4fc476f37aa30e205bfcd1f3)) - Jeremy Delgado
+- Blazing mode - an optional per-turn clock, and self-dealing rounds - ([b288d9d](https://github.com/PixiBixi/uno-multiplayer/commit/b288d9dad9c4464c4fc476f37aa30e205bfcd1f3)) - Jeremy Delgado
 - play a match of scored rounds, and fix the seat mapping it exposed - ([aa7378b](https://github.com/PixiBixi/uno-multiplayer/commit/aa7378b5a21d3f8350d365ca3e2d55e32189a0ad)) - Jeremy Delgado
 #### Bug Fixes
 - (**deploy**) stop stale build state leaking into the Docker image - ([64182a2](https://github.com/PixiBixi/uno-multiplayer/commit/64182a293c591e816a2606e2024d1549be86a497)) - Jeremy Delgado

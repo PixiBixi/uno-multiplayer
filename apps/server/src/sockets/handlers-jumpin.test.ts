@@ -126,7 +126,7 @@ const onTurn = (players: Player[]): Player => {
 }
 
 /**
- * A play offered to somebody who is not holding the turn — which on a jump-in table
+ * A play offered to somebody who is not holding the turn - which on a jump-in table
  * is a jump-in, and can be nothing else: the only other off-turn move is a call-out,
  * and that is a different type.
  */
@@ -150,7 +150,7 @@ const jumpOffered = (players: Player[]): { player: Player; move: PlayMove } | un
  *
  * And it deals further rounds rather than giving up at the end of one. The room's
  * seed is drawn at random per test, and whether the twin of a card ever reaches a
- * hand at a moment somebody can use it is a property of the deal — one round is not
+ * hand at a moment somebody can use it is a property of the deal - one round is not
  * reliably enough, and a test that fails on an unlucky shuffle is a test nobody can
  * read. Several rounds of a points match is plenty.
  */
@@ -236,7 +236,7 @@ describe('jump-in on the wire', () => {
       /* Deliberately NOT asserting the turn left the jumper. That held on almost
          every seed and then failed on Node 24 with "expected 2 not to be 2",
          because it was never a rule: the jumped card's own effect applies from the
-         jumper's seat, so a skip — or a reverse at two players, which acts as one —
+         jumper's seat, so a skip - or a reverse at two players, which acts as one -
          legitimately hands the turn straight back to them.
 
          What IS always true is that the jumper's turn happened and was spent, which
@@ -283,8 +283,8 @@ describe('jump-in on the wire', () => {
     'applies the first of two jump-ins for the same card and refuses the second',
     async () => {
       /* The race, as it can actually happen. Two seats cannot hold a jump-in against
-         the same top — a card has exactly one twin in a UNO deck, so it is in one
-         place only — but the same seat can ask twice: a double tap, an impatient
+         the same top - a card has exactly one twin in a UNO deck, so it is in one
+         place only - but the same seat can ask twice: a double tap, an impatient
          retry, a flaky connection replaying a move. Both are sent without waiting for
          the first to come back, and the server is the only thing that decides. */
       const { players, host } = await table(JUMP)
@@ -327,13 +327,13 @@ describe('jump-in on the wire', () => {
     'stays consistent when a jump-in and the turn holder’s own play arrive together',
     async () => {
       /* Nothing here asserts who wins: that is the point. The server applies whichever
-         it reads first, and what has to hold afterwards is that the table agrees — one
-         top, one set of hands, one turn — however the two landed. */
+         it reads first, and what has to hold afterwards is that the table agrees - one
+         top, one set of hands, one turn - however the two landed. */
       const { players, host } = await table(JUMP)
       const { player, move } = await playUntilJumpable(players, host)
       const mover = onTurn(players)
       /* Whatever the seat on turn was about to do. A play if it has one, otherwise a
-         draw — the race is between two moves arriving at once, and it does not matter
+         draw - the race is between two moves arriving at once, and it does not matter
          which move the loser was making. */
       const theirs = (mover.view()?.you.legalMoves ?? []).find(
         (m) =>
@@ -367,7 +367,7 @@ describe('jump-in on the wire', () => {
 
       /* And the jumper's own view agrees with the answer it was given: the card is
          gone if the server took it and still in hand if it did not. Either outcome is
-         correct — which one happened is the server's to decide and nobody else's. */
+         correct - which one happened is the server's to decide and nobody else's. */
       const stillHeld = (player.view()?.you.hand ?? []).some((card) => card.id === move.cardId)
       expect(stillHeld).toBe(!acks[0]?.ok)
     },

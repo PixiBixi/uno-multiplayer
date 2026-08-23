@@ -9,7 +9,7 @@ import { describe, expect, it } from 'vitest'
  *
  * Two earlier sweeps declared the client fully translated. Both were wrong, and both
  * were wrong the same way: they grepped for the handful of strings they had just
- * fixed, found none, and reported completeness — which proves only that a fix was
+ * fixed, found none, and reported completeness - which proves only that a fix was
  * applied. This test does the opposite. It enumerates every literal the rendering
  * layer contains and makes each one justify itself.
  *
@@ -50,7 +50,7 @@ const MODULES = [
 /**
  * The brand, and the one word allowed to be identical in every language.
  *
- * It is the name printed on the box and on the back of every card — `CardBack` draws
+ * It is the name printed on the box and on the back of every card - `CardBack` draws
  * it as artwork and `Home` sets it as the page's own title. Translating it would be
  * translating a logo.
  */
@@ -123,7 +123,7 @@ const TRAILING_ELLIPSIS = new RegExp('[A-Za-z]…')
 /**
  * Reads as English rather than as a token, by any of three routes.
  *
- * A phrase — two words with a space between them. A trailing ellipsis, which in this
+ * A phrase - two words with a space between them. A trailing ellipsis, which in this
  * codebase only ever ends something said to a player. Or a single word that is
  * SHOUTED or Capitalised, because that is how a lone word gets written when it is
  * meant to be read: `PlayEffects` kept `WILD`, `SKIP` and `REVERSE` exactly that way,
@@ -131,7 +131,7 @@ const TRAILING_ELLIPSIS = new RegExp('[A-Za-z]…')
  *
  * Lower-case single words are deliberately not flagged. `'circle'`, `'stroke'`,
  * `'wild4'` and `'dealt'` are the union tags and CSS keywords these modules are built
- * from, and flagging them would make the guard unusable — which is how a guard ends
+ * from, and flagging them would make the guard unusable - which is how a guard ends
  * up deleted rather than obeyed.
  */
 const readsAsEnglish = (value: string): boolean => {

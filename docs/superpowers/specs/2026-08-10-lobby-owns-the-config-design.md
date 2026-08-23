@@ -1,7 +1,7 @@
 # The lobby owns the configuration
 
 Move every host-only setting off the home screen and into the lobby, where the host
-adjusts it while waiting for players — and where everyone who is about to play can
+adjusts it while waiting for players - and where everyone who is about to play can
 see it.
 
 ## The defect this fixes
@@ -24,20 +24,20 @@ So part of this is protocol work and part is just displaying what already arrive
 ## What moves where
 
 Confirmed with the user, and it settles a tension between two of their earlier
-instructions — *"we can't see the card theme or the language at a glance"* and, of the
+instructions - *"we can't see the card theme or the language at a glance"* and, of the
 points table, *"don't hide it behind a click, there's room everywhere"*.
 
-**Home keeps** — name, game code, Join, Create, card theme, language. Nine controls.
+**Home keeps** - name, game code, Join, Create, card theme, language. Nine controls.
 Theme and language are per-player preferences, not table configuration, and they stay
 visible without a click.
 
-**The lobby gains** — the match goal, the pace (Blazing), the four table rules, and
+**The lobby gains** - the match goal, the pace (Blazing), the four table rules, and
 the points table, rendered in full rather than behind a disclosure.
 
 ## The wire
 
 `LobbyView` gains `rules: TableRules`. It sits beside `goal` and `pace`, which means
-the comment at `views.ts:44` — explaining why rules are *absent* — is now wrong and
+the comment at `views.ts:44` - explaining why rules are *absent* - is now wrong and
 must be rewritten rather than deleted: the reason rules live in the engine while pace
 lives in the protocol is still true and still worth stating.
 
@@ -67,11 +67,11 @@ removing it would break a client mid-deploy for no gain.
 | Point | Decision |
 | --- | --- |
 | Who | The host seat only. Anyone else gets `not_host` and the view is unchanged. |
-| When | Only before the **first deal of the match** — not before each round. A match spans rounds and carries a score; changing Seven-Zero at round three would rewrite the rules of a contest already in progress. After that, `already_started`. |
+| When | Only before the **first deal of the match** - not before each round. A match spans rounds and carries a score; changing Seven-Zero at round three would rewrite the rules of a contest already in progress. After that, `already_started`. |
 | Broadcast | Every accepted change re-emits `room:state` to **every** member, host included. A guest watching the host toggle Jump-in should see it happen. |
 | Rejoining | Covered by the above: `room:state` carries the whole view, so a reconnecting player receives the current rules with no extra path. |
-| Restart | `game:restart` begins a new match. Check what it actually does — if it returns players to the lobby, configuration unlocks; if it deals immediately, it stays locked. Document whichever it is; do not guess. |
-| Guest rendering | The same component, read-only. Not a second copy of the list — a divergent copy is how one of them ends up stale. |
+| Restart | `game:restart` begins a new match. Check what it actually does - if it returns players to the lobby, configuration unlocks; if it deals immediately, it stays locked. Document whichever it is; do not guess. |
+| Guest rendering | The same component, read-only. Not a second copy of the list - a divergent copy is how one of them ends up stale. |
 
 ## Interactions to get right
 
@@ -90,7 +90,7 @@ arm or re-arm a timer from the lobby, that is a bug.
 ## Client
 
 `Home.tsx` is 396 lines and loses most of them. `Lobby.tsx` is 95 and roughly doubles.
-Neither should end up carrying the rules copy twice — the rule list, its labels and its
+Neither should end up carrying the rules copy twice - the rule list, its labels and its
 explanations belong in one component used in both modes.
 
 The explanations are what made the home screen a wall of text: four paragraphs on
@@ -100,7 +100,7 @@ the exception, per the user: shown in full.
 
 Mobile is the constraint that will actually bite. The lobby currently fits a phone;
 after this it carries seats, rules, match settings and the points table. Measure it,
-and if it overflows, the points table is what gets a scroll container — not the seats.
+and if it overflows, the points table is what gets a scroll container - not the seats.
 
 ## Testing
 
@@ -108,7 +108,7 @@ and if it overflows, the points table is what gets a scroll container — not th
   reaches **every** member's `room:state`, not just the sender's; out-of-bounds values
   are refused by Zod with the same bounds as `room:create`; a rejoining player receives
   the current rules.
-- Engine/room: the lock derives from the match having begun, not from `canStart` —
+- Engine/room: the lock derives from the match having begun, not from `canStart` -
   build the case of an un-startable room that has already dealt.
 - Client: the guest renders the rules read-only and cannot emit; the host's controls
   disappear once dealt; both catalogues carry every new key.

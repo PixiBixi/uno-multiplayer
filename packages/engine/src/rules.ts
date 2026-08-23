@@ -29,14 +29,14 @@ export function activeCount(state: GameState): number {
 
 /**
  * The active seat `steps` places further along in the current direction.
- * Inactive seats are skipped without reindexing — that is what lets a
+ * Inactive seats are skipped without reindexing - that is what lets a
  * disconnected player keep their place. Returns `from` when no other seat is
  * active.
  */
 export function advance(state: GameState, from: number, steps: number): number {
   const size = state.seats.length
   // Only bail when nobody at all is active. With a single active seat, landing
-  // on it is legitimate and terminates — the inner loop is bounded by `size`.
+  // on it is legitimate and terminates - the inner loop is bounded by `size`.
   if (activeCount(state) === 0) return from
   let index = from
   for (let step = 0; step < steps; step++) {
@@ -87,7 +87,7 @@ function swapTargets(state: GameState, seatIndex: number): number[] {
  * numbers, same colour and same kind for the action cards.
  *
  * Neither may be a wild. A wild has no colour, so every wild would match every
- * other one — which is not the rule, and would let a wild4 be answered by a wild4
+ * other one - which is not the rule, and would let a wild4 be answered by a wild4
  * from anywhere round the table.
  */
 export function isIdentical(card: Card, top: Card): boolean {
@@ -102,7 +102,7 @@ export function isIdentical(card: Card, top: Card): boolean {
  * target for a 7 on a Seven-Zero table, and otherwise the single plain play.
  *
  * Enumerating the second decision as separate moves is what keeps the client free
- * of rules — it renders a picker from what it was offered — and leaves the reducer
+ * of rules - it renders a picker from what it was offered - and leaves the reducer
  * with nothing to validate beyond "is this one of the moves I produced".
  */
 function playMoves(state: GameState, seatIndex: number, card: Card, handSize: number): Move[] {
@@ -125,7 +125,7 @@ function playMoves(state: GameState, seatIndex: number, card: Card, handSize: nu
  *
  * Nothing at all while a draw is pending. A stacked +2/+4 has its own strict
  * same-type answer rules, and letting a jump-in interleave would make "strictly
- * same type" mean nothing — so the seat on turn is left with its pending-draw
+ * same type" mean nothing - so the seat on turn is left with its pending-draw
  * moves and nobody else has anything to say.
  *
  * Offered only off turn. On turn a card identical to the top is already playable
@@ -141,7 +141,7 @@ function jumpInMoves(state: GameState, seatIndex: number): Move[] {
   if (!state.rules.jumpIn || state.pendingDraw !== null) return []
   /* Nor while the seat on turn is deciding what to do with a card it has just drawn. The
      turn is still theirs and still unresolved, which is the same reason a pending draw
-     closes jumping down — and a card laid on top mid-decision would leave them holding an
+     closes jumping down - and a card laid on top mid-decision would leave them holding an
      offer against a top that has moved. */
   if (state.drawnCard !== null) return []
   const seat = state.seats[seatIndex]
@@ -161,7 +161,7 @@ function jumpInMoves(state: GameState, seatIndex: number): Move[] {
  * and nothing else from its hand.
  *
  * Both conditions are restated rather than trusted. `drawnCard` is only ever set on a card
- * the seat holds and can play, so neither can fail — but this is the one field in the state
+ * the seat holds and can play, so neither can fail - but this is the one field in the state
  * whose staleness would hand somebody a card they no longer own, and a gate that reads the
  * hand it is offering from cannot be wrong about that.
  */
@@ -185,7 +185,7 @@ export function legalMoves(state: GameState, seatIndex: number): Move[] {
   const moves: Move[] = []
   if (state.drawnCard !== null) {
     /* The sub-state: this seat drew a playable card and the turn is not over. Exactly that
-       card, and a pass — not the rest of the hand, which would make drawing a free extra
+       card, and a pass - not the rest of the hand, which would make drawing a free extra
        turn rather than the official rule. `playMoves` is reused, so a drawn wild asks for
        its colour and a drawn 7 for its target like any other. */
     moves.push(...drawnCardMoves(state, seat))

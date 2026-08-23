@@ -8,7 +8,7 @@ type ErrorBoundaryState = { failed: boolean }
 /**
  * The last line of defence. React unmounts the entire tree when a component
  * throws, so without this a single bad render replaces the game with a blank
- * page — which is exactly what a server running an older build once produced
+ * page - which is exactly what a server running an older build once produced
  * here: a view arrived without the field the scoreboard reads, and the table
  * vanished with no explanation.
  *

@@ -307,7 +307,7 @@ describe('moveSchema', () => {
     expect(moveSchema.safeParse({ type: 'acceptDraw' }).success).toBe(true)
     expect(moveSchema.safeParse({ type: 'callUno' }).success).toBe(true)
     /* Without this one the pass button reaches a server that answers `invalid_payload` and
-       the turn never ends — the schema being exactly the piece of a new action that has
+       the turn never ends - the schema being exactly the piece of a new action that has
        been forgotten here before. */
     expect(moveSchema.safeParse({ type: 'pass' }).success).toBe(true)
     expect(moveSchema.parse({ type: 'pass' })).toEqual({ type: 'pass' })

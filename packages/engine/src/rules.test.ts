@@ -41,7 +41,7 @@ describe('isPlayable without a debt', () => {
   })
 })
 
-describe('isPlayable with a debt — strictly same type', () => {
+describe('isPlayable with a debt - strictly same type', () => {
   it('lets a +2 answer a +2', () => {
     const state = stateOf({ pendingDraw: { amount: 2, kind: 'draw2' } })
     expect(isPlayable(act('x', 'draw2', 'G'), state)).toBe(true)

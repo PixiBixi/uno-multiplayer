@@ -130,7 +130,7 @@ describe('describeEvent', () => {
         NOT_ME,
         en,
       ),
-    ).toBe('Round abandoned — not enough players')
+    ).toBe('Round abandoned - not enough players')
   })
 
   it('conjugates the second person when the viewer won', () => {

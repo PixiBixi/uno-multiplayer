@@ -11,21 +11,21 @@ import { LOCALES, LOCALE_NAME, useLocale, useMessages, useSetLocale } from '../i
  * Getting to a table, and nothing else.
  *
  * It used to configure one as well: measured on v1.1.0 the screen carried 21 controls,
- * ran 2.42 screens tall on a phone, and put the game-code field last — below a match
+ * ran 2.42 screens tall on a phone, and put the game-code field last - below a match
  * format, a clock and four rules that a joining player has no use for at all. On three
  * players, two of them are joining, and their job is two fields.
  *
  * Every table setting now lives in the lobby, where the host adjusts it while waiting for
  * players and where everybody about to play can read it. What stays here is what is not
  * table configuration: a name, a code, and the two per-player display preferences. A card
- * theme and a language change what one person sees — two people at the same table can run
- * different ones and the game is identical — so they cross no wire and belong to nothing
+ * theme and a language change what one person sees - two people at the same table can run
+ * different ones and the game is identical - so they cross no wire and belong to nothing
  * the server broadcasts.
  */
 
 /**
  * The card every preview shows. The same card in all four, because the question a
- * player is answering is which face they prefer, not which colour — and one card
+ * player is answering is which face they prefer, not which colour - and one card
  * rendered four ways is the only way to see the difference.
  */
 const PREVIEW_CARD: CardData = {

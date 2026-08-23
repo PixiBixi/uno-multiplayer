@@ -12,7 +12,7 @@ import { registerSocketHandlers } from './handlers.js'
  * `attach()` recorded the new presence and nothing else, so the table a socket walked
  * away from kept that socket's id on a seat for ever. `Room.disconnect` finds a member
  * BY SOCKET ID, and the `disconnect` handler only ever sees the socket's CURRENT
- * presence — so the abandoned seat was never released, `isEmpty()` stayed false, and
+ * presence - so the abandoned seat was never released, `isEmpty()` stayed false, and
  * `purge()` could not reclaim the room for the lifetime of the process.
  *
  * Two ways that hurts, both asserted below: rooms accumulate against MAX_ROOMS until
@@ -118,14 +118,14 @@ describe('a socket that moves to another table', () => {
       if (created.ok) codes.push(created.roomCode)
     }
     // Every create but the last abandons its predecessor, so at most one room should be
-    // occupied — never ten. Before the fix this reached the ceiling and stayed there.
+    // occupied - never ten. Before the fix this reached the ceiling and stayed there.
     const resident = codes.filter((code) => rooms.get(code)?.isEmpty() === false)
     expect(resident).toHaveLength(1)
   }, 20_000)
 
   /*
    * What this proves and what it does not: engine.io builds a deflate config only when
-   * this option is present — it is absent from its defaults — so the option being set is
+   * this option is present - it is absent from its defaults - so the option being set is
    * the difference between compression on and off, and it went out off while a comment
    * claimed otherwise. It does not prove a frame arrived smaller. Reading the negotiated
    * extension back off the live socket would, but only by reaching into socket.io-client
@@ -203,7 +203,7 @@ describe('a socket that moves to another table', () => {
      * load a lobby from the guest's own join can land after the count is sampled, which
      * satisfies a counter-based wait and then asserts against a view that predates the
      * teardown. That is how this test failed once in a full parallel run while passing
-     * alone — the condition was a proxy for the one that mattered.
+     * alone - the condition was a proxy for the one that mattered.
      */
     await waitFor(() => seatOfBo() === 'left', 'the host to be told the guest left')
     /* `left` and not `disconnected`: a seat given up is not one waiting out a grace

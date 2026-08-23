@@ -14,13 +14,13 @@ suite on Node 22/24/26, coverage, e2e, and a Docker build-and-probe.
 | ----------------------------------- | ----------------------------------------------------------------------- |
 | A rule holds for any game           | `fast-check` property tests in `packages/engine/src/invariants.test.ts` |
 | A pure decision is right            | Plain unit tests beside the module in `lib/`                            |
-| A room behaves over its lifecycle   | `Room` driven directly — synchronous, no clock                          |
+| A room behaves over its lifecycle   | `Room` driven directly - synchronous, no clock                          |
 | A timer fires when it should        | `RoomManager` with injected timers and an injected clock                |
 | The wire actually carries something | Socket tests through a real Socket.IO connection                        |
-| A layout works                      | Playwright, measuring geometry — not screenshots                        |
+| A layout works                      | Playwright, measuring geometry - not screenshots                        |
 | A sound plays                       | A real browser with `AudioContext` wrapped                              |
 
-Two projects are configured in `vitest.config.ts` — `node` and `web` (jsdom) —
+Two projects are configured in `vitest.config.ts` - `node` and `web` (jsdom) -
 because the server and the client resolve modules differently and need different
 globals.
 
@@ -28,7 +28,7 @@ The engine is pure functions over immutable state, so each rule is a short unit 
 with no network and no React, and the property tests sit on top of that suite rather
 than replacing it. The conservation invariant alone would have caught the worst bug in
 the predecessor project, where an in-place shuffle of a module-level array stripped 15
-cards from the deck on every game — which is the argument for asserting it on every
+cards from the deck on every game - which is the argument for asserting it on every
 intermediate state rather than only at the end.
 
 ## The blind spot to keep in mind
@@ -46,7 +46,7 @@ bugs shipped through exactly this gap:
 both by driving real connections. When adding a client action, write the socket
 test, not only the `Room` test. `handlers-liar.test.ts`,
 `handlers-sevenzero.test.ts`, `handlers-jumpin.test.ts` and `handlers-drawncard.test.ts`
-do the same for the four table rules — each drives a real round until the server offers
+do the same for the four table rules - each drives a real round until the server offers
 the move, then plays it over the wire. All four carry an explicit 20s timeout and raise
 `MOVE_BURST`, because a scripted round outruns both vitest's 5s default and a rate
 limit sized for a person.
@@ -54,18 +54,18 @@ limit sized for a person.
 The drawn-card drive is the fourth, and it hunts its moment by DRAWING on every turn
 rather than playing: the sub-state exists only after a voluntary draw whose card happens to
 be playable, so a drive that played its cards would almost never reach it. Like the jump-in
-drive it deals further rounds rather than giving up at the end of one, for the same reason —
+drive it deals further rounds rather than giving up at the end of one, for the same reason -
 the seed is random per test and a test that fails on an unlucky shuffle is a test nobody can
 read.
 
 The jump-in drive differs in two ways worth copying if you add a fifth option. It
-cannot play "around" the move it is hunting the way the Seven-Zero drive does — the
+cannot play "around" the move it is hunting the way the Seven-Zero drive does - the
 chance to jump exists only while one particular card is on top, so the check happens
 after every single move. And it deals further rounds rather than giving up at the end
 of one: the room's seed is random per test, whether the twin of a card ever reaches a
 hand at a usable moment is a property of the deal, and a test that fails on an unlucky
 shuffle is a test nobody can read. Two flakes of exactly that shape were found by
-running the file fourteen times, not once — the other being a jumper landing on one
+running the file fourteen times, not once - the other being a jumper landing on one
 card, where the automatic UNO penalty legitimately makes the hand grow rather than
 shrink.
 
@@ -92,13 +92,13 @@ is the difference between a guard and a decoration:
 - Eleven mutations were re-run against jump-in. The instructive ones: making a wild
   jumpable fails three, matching on value while ignoring colour fails six, allowing a
   jump-in while a draw is pending fails three, leaving `currentSeat` where it was
-  fails nine, not beginning the jumper's turn — so a stale UNO call covers the jump —
+  fails nine, not beginning the jumper's turn - so a stale UNO call covers the jump -
   fails two, dropping the `rules.jumpIn` check in either `legalMoves` or the off-turn
   exemption fails three and four, deriving no `jumpedIn` in the room fails two,
   removing the Zod flag fails nine and the typecheck with it, offering jump-ins to the
   seat on turn as well fails one, and never rendering the client's note fails one.
   Two of those are worth dwelling on. Leaving `currentSeat` unchanged after a jump-in
-  fails nine unit tests and **not one property test** — play still terminates and the
+  fails nine unit tests and **not one property test** - play still terminates and the
   deck still conserves, so only tests that say where the turn should be will refuse
   it. And allowing a jump-in during a pending draw was caught by two unit tests but
   originally by no property test at all, because the harness rarely reaches a stacked
@@ -111,17 +111,17 @@ is the difference between a guard and a decoration:
   decision after `acceptDraw` fails 3, granting it on an unplayable card fails 5, removing
   the Zod `pass` branch fails 3 and takes the socket drive with it, deriving no
   `turnPassed` fails 2, never rendering the End turn control fails 2, and defaulting the
-  option off — treating the official rule as a house rule — fails 14.
+  option off - treating the official rule as a house rule - fails 14.
 
   Three of them are worth dwelling on, because two of the guards were decorations until the
   mutant said so. Reordering `forceTurnMove` to prefer `acceptDraw` and `draw` ahead of
   `pass` fails **nothing**, and correctly: neither is on offer in the sub-state, so the
-  reordering cannot change what is chosen — the mutation that bites is deleting `pass`
+  reordering cannot change what is chosen - the mutation that bites is deleting `pass`
   from the list altogether. Removing the guard that stops `armTurn` restarting the clock
   also failed nothing at first, because with a frozen fake clock `now() + turnSeconds`
   recomputes to the number it replaced; the drive now burns a second of fake time per turn,
   and the mutant fails. And allowing a jump-in mid-decision failed only a unit test at
-  first, even at 600 property runs, because the harness took every jump-in on offer — so no
+  first, even at 600 property runs, because the harness took every jump-in on offer - so no
   twin was ever still in a hand by the time somebody drew, and the property asserting none
   is offered was vacuously true. Declining one jump-in in three fixed it, and the property
   now catches the mutant at 300 runs.
@@ -133,7 +133,7 @@ is the difference between a guard and a decoration:
   four in the protocol and two on the wire.
 
   The sixth is the interesting one. Rendering a guest's rule list from a second hardcoded
-  copy fails 4 — but only because the copy was written the way a stale copy really goes
+  copy fails 4 - but only because the copy was written the way a stale copy really goes
   wrong, omitting jump-in. A duplicate that is still character-identical to the original
   cannot be caught behaviourally at all, and the test says so in its own comment rather
   than implying more reach than it has. What it does catch is the two modes disagreeing on
@@ -141,12 +141,12 @@ is the difference between a guard and a decoration:
 
   Also worth noting what a Room-level test cannot reach. `room:configure` with a protocol
   type, a schema and a client emit but no `socket.on` behind it is a control that silently
-  does nothing, and socket.io answers an unknown event by never calling the ack — so the
+  does nothing, and socket.io answers an unknown event by never calling the ack - so the
   first assertion in the socket file is that an answer arrives at all. That is the failure
   this repository has already shipped once.
 
 Equally worth knowing: some things **cannot** drift and so cannot be tested for. The
-help panel reads `cardPoints` from the engine, and so do its tests — change the
+help panel reads `cardPoints` from the engine, and so do its tests - change the
 engine and both move together. There is nothing to catch, which is the point.
 
 ## Traps this suite has already fallen into
@@ -164,7 +164,7 @@ engine and both move together. There is nothing to catch, which is the point.
   and was correct; measuring computed styles after transitions settle showed no bug
   existed. Measure, and measure at a moment you chose.
 - **jsdom is not a browser.** No `localStorage` (there is a shim in `test-setup.ts`),
-  no Web Audio, and `select()` does not move focus the way a real browser does — a
+  no Web Audio, and `select()` does not move focus the way a real browser does - a
   difference that surfaced a genuine implicit dependency in the clipboard fallback.
 - **`<details>` keeps its content in the DOM when closed.** "Collapsed" is a question
   about the `open` property, not about whether text can be found.

@@ -6,7 +6,7 @@ A room is a lobby, then a match. `apps/server/src/rooms/room.ts` owns one;
 ## Room is synchronous and timer-free, on purpose
 
 `Room` knows nothing of Socket.IO or `setTimeout`. That is what makes the whole
-lifecycle — joining, starting, moves, disconnection, grace expiry, forced turns —
+lifecycle - joining, starting, moves, disconnection, grace expiry, forced turns -
 testable without a clock or a network.
 
 It _holds_ deadlines it is handed, exactly as it is handed a seed, but it never
@@ -31,7 +31,7 @@ already tested, and removing it would break a client mid-deploy for no gain.
   three would rewrite a contest already partly played. A late change gets
   `game_already_started`.
 - **Explicitly not `canStart`.** That counts filled seats and is a different question.
-  A room can be un-startable and already dealt, because somebody left mid-match — there
+  A room can be un-startable and already dealt, because somebody left mid-match - there
   is a test built on exactly that room, and gating on `canStart` would reopen the rules
   at the one moment they must not move. Equally, a table with one player cannot deal and
   is precisely a table whose host has time to set the rules.
@@ -39,19 +39,19 @@ already tested, and removing it would break a client mid-deploy for no gain.
   is, so toggling one rule cannot write back a goal the client read a moment earlier.
   `pace` is the one field where absent and `null` differ: null takes the clock off the
   table, absent leaves whatever clock it has. `rules` is replaced wholesale, so a client
-  sending one flag would reset the other three — the client sends the whole object.
+  sending one flag would reset the other three - the client sends the whole object.
 - **Reports no event**, and therefore takes no `record()` path. There is no narrative
   feed in a lobby and nothing here belongs in the match statistics.
 
 Two things the handler gets right and a naive one would not. It broadcasts `room:state`
-to **every** member rather than answering the sender — a guest watching the host toggle
+to **every** member rather than answering the sender - a guest watching the host toggle
 Jump-in is the entire point, and a sender-only refresh passes a careless test and fails
 the feature. And it does not `retime`: nothing in a lobby can move a turn, and a pace set
 there is a number the deal will read, not a running clock. A lobby that armed one would
 be counting down against a seat holding no cards.
 
 Since `room:state` carries the whole view, a reconnecting player gets the current
-configuration with no extra path — which is asserted rather than assumed, because a
+configuration with no extra path - which is asserted rather than assumed, because a
 client rejoining into stale rules is a client playing a different game.
 
 `game:restart` unlocks nothing. It requires a finished round and deals immediately, so it
@@ -66,7 +66,7 @@ load-bearing.
 
 They were not always. `start()` used to deal to the active members only, which
 renumbered the engine the moment anybody was absent at deal time. With three
-players where one had already left, `viewFor(2)` returned `null` — that player was
+players where one had already left, `viewFor(2)` returned `null` - that player was
 present, holding seven cards, and received no view of the game at all.
 
 The deal now goes to **every** member seat, then reconciles the absent ones:
@@ -86,7 +86,7 @@ Scores and statistics are indexed by seat, so this is not cosmetic.
 | `disconnected` | Socket gone, grace period running, hand kept |
 | `left`         | Gone for good; `rejoin` refuses the seat     |
 
-`Room.isEmpty()` means "no sockets attached right now" — which is **also true of a
+`Room.isEmpty()` means "no sockets attached right now" - which is **also true of a
 table whose players are mid-reload**. `Room.abandoned` means nobody could come back
 even if they tried: every member has left, or nobody ever sat down.
 
@@ -96,7 +96,7 @@ stamp so an earlier absence cannot count toward a later one. An abandoned room g
 at once, because holding it would protect nobody.
 
 Before that distinction existed, purge ran on the same 60 s cadence as the grace
-period and won whenever its tick landed first — cancelling the very grace timers it
+period and won whenever its tick landed first - cancelling the very grace timers it
 was pre-empting, and losing the game for anyone who reloaded at the wrong moment.
 
 ## Leaving
@@ -104,7 +104,7 @@ was pre-empting, and losing the game for anyone who reloaded at the wrong moment
 `room:leave` exists because leaving used to be a client-only idea: the button
 cleared local state and the server was never told. The seat kept a dead socket id
 forever, so `isEmpty()` was permanently false and the room could never be
-reclaimed — one leaked room per leave until `MAX_ROOMS` was reached and every new
+reclaimed - one leaked room per leave until `MAX_ROOMS` was reached and every new
 game was refused. The socket also stayed in the old Socket.IO room, so whoever
 walked away kept receiving that table's chat and events.
 
@@ -116,7 +116,7 @@ somebody who pressed Leave is not coming back to that seat.
 Two clocks, both armed from one place in `handlers.ts` (`retime`), called after
 anything that can change whose turn it is:
 
-- **The turn clock**, on a Blazing table, forcing a draw when it expires — or a `pass`,
+- **The turn clock**, on a Blazing table, forcing a draw when it expires - or a `pass`,
   for a seat already deciding what to do with a card it drew. `armTurn` also leaves that
   countdown alone rather than restarting it, since a voluntary draw did not end the turn.
 - **The between-rounds clock**, dealing the next round five seconds after the last
@@ -129,7 +129,7 @@ in its state, so a table with no pace ends up with no timers and null deadlines.
 **Arming guards must match dealing guards.** The between-rounds guard was once only
 `betweenRounds`, while dealing also requires two active members. A round ending
 with one player left made the deal fail, changed nothing about the room, and the
-caller armed it again — every five seconds for the life of the process, pushing a
+caller armed it again - every five seconds for the life of the process, pushing a
 countdown that could never resolve.
 
 Deadlines go to the client as **absolute epoch stamps**, never as durations. A

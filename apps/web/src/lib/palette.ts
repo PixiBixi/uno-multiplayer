@@ -11,7 +11,7 @@ import type { Color } from '@uno/engine'
  * A colour's *name* used to live here too, as `COLOR_NAME`, and that was the same
  * category error `sort-hand.ts` made with its labels: this module is pure and knows no
  * language, so an English word table inside it can only ever be English. Naming is
- * `messages.colour()` in each catalogue. What is left here is values — the thing that
+ * `messages.colour()` in each catalogue. What is left here is values - the thing that
  * genuinely is the same in every language.
  */
 export const COLOR_VALUE: Record<Color, string> = {
@@ -26,8 +26,8 @@ export const COLOR_VALUE: Record<Color, string> = {
  *
  * Rendering still goes through `COLOR_VALUE`, so `tokens.css` stays the one place
  * a colour is defined. These exist because a card theme has to *decide* something
- * from a colour — whether a numeral reads better in cream or in ink on this
- * pigment — and a decision cannot be made from the string "var(--red)". No
+ * from a colour - whether a numeral reads better in cream or in ink on this
+ * pigment - and a decision cannot be made from the string "var(--red)". No
  * browser is running when that choice is computed, and none is running in the test
  * that asserts the contrast it produces.
  *

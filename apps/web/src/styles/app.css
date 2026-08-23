@@ -142,7 +142,7 @@ h3 {
 }
 
 /* What is unusual about this table, above the play. A strip rather than a panel: it is
-   reference, not a control, and it renders only when there is something to say — so it
+   reference, not a control, and it renders only when there is something to say - so it
    costs a phone screen nothing on an ordinary table. */
 .rules-in-play {
   display: flex;
@@ -172,7 +172,7 @@ h3 {
 }
 
 /* An active rule reads first, an inactive one recedes without disappearing. The tick and
-   cross carry the state on their own — this is emphasis, never the message, since a dimmed
+   cross carry the state on their own - this is emphasis, never the message, since a dimmed
    chip means nothing to a screen reader and little to anyone in bright sun. */
 .chip-rule-on {
   border-color: rgb(30 158 74 / 0.55);
@@ -183,7 +183,7 @@ h3 {
 }
 
 /* A seat a call-out is available against. On the plate and not only on the button, because
-   the button alone read as decoration — whole games were played without anybody noticing
+   the button alone read as decoration - whole games were played without anybody noticing
    it. No animation on purpose: an overlay here once stuck at `opacity: 1` for ever because
    its animation had no fill mode, and a mark outliving the window it describes points at
    somebody who is no longer exposed. */
@@ -219,7 +219,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
-  /* Narrower than a primary action, but still 44px tall via .btn — these sit
+  /* Narrower than a primary action, but still 44px tall via .btn - these sit
      close to other controls on a phone. */
   padding: 0.5rem 0.95rem;
   font-size: var(--step--1);
@@ -285,7 +285,7 @@ h3 {
 
 /* Past this width the single column leaves most of the screen empty while the
    card values sit below the fold. Moving them alongside costs nothing and means
-   nobody has to scroll — or click — to read six numbers.
+   nobody has to scroll - or click - to read six numbers.
 
    Two children only, wrapped deliberately: letting a dozen form elements
    auto-place into a grid put the tagline in the same tall row as the help and
@@ -307,7 +307,7 @@ h3 {
 }
 
 /* The right-hand column: the card-values panel, then the two display preferences.
-   Laid out like the left column, so the grid still has exactly two children —
+   Laid out like the left column, so the grid still has exactly two children -
    which is the constraint the comment above exists to protect. Below 900px the
    whole thing is one flex column and this simply stacks after the join form,
    which is where the preferences already were. */
@@ -382,7 +382,7 @@ h3 {
 }
 
 /* The table configuration moved in here and roughly doubled the screen. Past this width
-   it goes into the empty half of the page rather than anything being made smaller — the
+   it goes into the empty half of the page rather than anything being made smaller - the
    same fix and the same reasoning as the card-theme controls on the home screen. Two
    children only, wrapped deliberately, for the reason `.home` states above. */
 @media (min-width: 900px) {
@@ -413,7 +413,7 @@ h3 {
 }
 
 /* How a rule reads to somebody who may not change it. A dotted leader like the card
-   values, because it is the same shape of information — a name and its value — and not a
+   values, because it is the same shape of information - a name and its value - and not a
    control that has been greyed out. */
 .rule-state {
   display: flex;
@@ -564,7 +564,7 @@ h3 {
     /* Capped to the window, NOT left unbounded. .table-screen only sets a
        min-height, so an unbounded panel grew with the log, grew the flex row
        with it, and pushed the composer off the bottom of the page.
-       Constraining just the panel — rather than fixing the row's height — keeps
+       Constraining just the panel - rather than fixing the row's height - keeps
        a short viewport free to give the felt the room it needs. */
     max-height: calc(100dvh - 2 * clamp(0.75rem, 3vw, 1.5rem));
     min-height: 0;
@@ -632,7 +632,7 @@ h3 {
 
    Between the controls and the hand, the only spot on the felt that is on the way from one
    to the other, and in the accent colour for the same reason the jump-in note is: it
-   describes a moment that passes. Deliberately not `.hint`, which is background — a player
+   describes a moment that passes. Deliberately not `.hint`, which is background - a player
    who reads past this one concludes the table has stopped responding. */
 .drawn-prompt {
   margin: 0;
@@ -999,7 +999,7 @@ h3 {
 /* Bottom-aligns a SHORT log while leaving a long one scrollable. Doing this with
    `justify-content: flex-end` on the container looks identical when the log is
    short, but once it overflows the excess spills out of the top of the scroll box
-   with scrollHeight stuck at clientHeight — the earliest lines become
+   with scrollHeight stuck at clientHeight - the earliest lines become
    unreachable, with no scrollbar to reach them. An auto top margin collapses to
    zero as soon as the content overflows, so scrolling behaves normally. */
 .chat-body > *:first-child {
@@ -1214,7 +1214,7 @@ h3 {
 
 /* Every card played gets this: a fresh drop onto the discard pile. Keyed by
    card id in CentreStack, so it replays exactly once per new top card and
-   never on a draw, which leaves the pile's top card — and its id — unchanged. */
+   never on a draw, which leaves the pile's top card - and its id - unchanged. */
 .pile-discard {
   animation: fxCardDrop 380ms cubic-bezier(0.2, 0.9, 0.3, 1.2);
 }
@@ -1245,7 +1245,7 @@ h3 {
 /* The ghost card. `opacity: 0` in the base rule is load-bearing, not tidiness: the
    keyframes run 0.55 -> 0, and with the default `animation-fill-mode: none` the
    element snaps back to its un-animated opacity the instant they finish. Without a
-   base of 0 that is the initial value, 1 — and since `.pile-draw` is deliberately
+   base of 0 that is the initial value, 1 - and since `.pile-draw` is deliberately
    never removed (`drawNonce > 0` for the rest of the game) an opaque cream
    rectangle then covered the draw pile permanently. It was reported as the pile
    "rendering blank and pale" while every other back on the table drew correctly,
@@ -1285,7 +1285,7 @@ h3 {
   }
 }
 
-/* A decorative burst layered on top for skip, reverse, +2 and the two wilds —
+/* A decorative burst layered on top for skip, reverse, +2 and the two wilds -
    the routine drop above still plays underneath every one of these. */
 .fx-layer {
   position: absolute;
@@ -1352,7 +1352,7 @@ h3 {
   }
 }
 
-/* Calling UNO earns a double bounce rather than the single swell the cards get —
+/* Calling UNO earns a double bounce rather than the single swell the cards get -
    it is a shout, not a card landing. */
 .fx-label-uno {
   animation-name: fxUnoPop;
@@ -1623,7 +1623,7 @@ h3 {
   }
 }
 
-/* The number still ticks — it carries information, unlike the pulse. */
+/* The number still ticks - it carries information, unlike the pulse. */
 @media (prefers-reduced-motion: reduce) {
   .turn-clock-urgent .turn-clock-number {
     animation: none;

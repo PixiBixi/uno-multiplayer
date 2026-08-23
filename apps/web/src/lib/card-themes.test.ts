@@ -38,7 +38,7 @@ const FIELDS: (keyof CardThemeSpec)[] = [
 /**
  * `classic` is held to a lower bar than the other three, on purpose and in writing.
  *
- * It is the card every player already has — a pigment numeral on a bone oval — and
+ * It is the card every player already has - a pigment numeral on a bone oval - and
  * the requirement was that it look exactly as it does today. Its yellow numeral
  * measures 1.67:1, which is a property of the printed card and not of this change.
  * Writing the exemption down keeps a new theme from quietly joining it.

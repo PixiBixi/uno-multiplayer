@@ -42,7 +42,7 @@ const SMALL_RATIO = 46 / BASE_NUMERAL
  * pin the language at build time and no control could change it.
  *
  * Two things this label is not. It is not the card *face*, so it does not change with
- * the card theme — that is a display preference and this is game state, asserted for
+ * the card theme - that is a display preference and this is game state, asserted for
  * all four faces in `Card.test.tsx`. And it is not assembled here from a colour and a
  * noun: `messages.card` owns the whole name, because "Red 7" and "Rouge 7" agree only
  * by luck and "Wild draw four" and "+4" do not agree at all.
@@ -124,7 +124,7 @@ function ShapeToken({
 }
 
 /**
- * A wild's four colours. Every theme shows all four — that is what says "wild" —
+ * A wild's four colours. Every theme shows all four - that is what says "wild" -
  * but the shape they are drawn in belongs to the theme: the printed wheel, four
  * squares on the flat face, four dots on paper.
  */
@@ -159,7 +159,7 @@ function WildMark({
     )
   }
 
-  /* Same reading order as the wheel — red north-east, then clockwise — so the four
+  /* Same reading order as the wheel - red north-east, then clockwise - so the four
      colours never appear in two different arrangements. */
   const offset = r * (kind === 'squares' ? 0.5 : 0.52)
   const spots: Array<[number, number, string]> = [
@@ -200,7 +200,7 @@ function WildMark({
 
 /**
  * Every glyph is centred on the face centre (60, 84) with dominantBaseline, never
- * by guessing a baseline offset — cap height differs per glyph, and it differs
+ * by guessing a baseline offset - cap height differs per glyph, and it differs
  * again between the display face and the serif one letterpress uses.
  *
  * `decorated` is false for the copy a glowing theme draws behind the real one. The
@@ -292,7 +292,7 @@ function FaceMark({
     case 'wild':
       return <WildMark kind={spec.wild} cx={60} cy={84} r={26} decorated={decorated} />
     /* The +4 label sits INSIDE the face, in whichever ink survives there. Placed
-       below it, ink on ink would make it vanish off the card — and on the neon face
+       below it, ink on ink would make it vanish off the card - and on the neon face
        ink on near-black would do the same. */
     case 'wild4':
       return (
@@ -320,7 +320,7 @@ type CardProps = {
   disabled?: boolean
   /**
    * Overrides the player's chosen theme. Only the home screen's previews pass it,
-   * so that each preview can show the face it offers by rendering the real card —
+   * so that each preview can show the face it offers by rendering the real card -
    * a preview drawn any other way is a preview that can drift from the thing it
    * previews.
    */
@@ -427,7 +427,7 @@ export function Card({ card, onPlay, disabled = false, theme }: CardProps) {
           {corner}
         </text>
         {/* The bottom-right marks are the top-left marks rotated about the card
-            centre — the way a real card is printed. */}
+            centre - the way a real card is printed. */}
         <g transform="rotate(180 60 84)">
           <text x={32} y={26}>
             {corner}

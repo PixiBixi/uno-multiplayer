@@ -18,7 +18,7 @@ type TargetPickerProps = {
 }
 
 /**
- * One button per legal move, exactly like ColourPicker — a 7 asking whose hand to
+ * One button per legal move, exactly like ColourPicker - a 7 asking whose hand to
  * take is the same shape of decision as a wild asking for a colour, so it reuses
  * that shape rather than inventing a mechanism.
  *

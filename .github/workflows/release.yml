@@ -4,8 +4,8 @@ on:
   push:
     branches: [main]
   # Re-tag an image for a release that already exists. Needed the first time a
-  # version is seeded by hand — cog finds nothing to bump, so the push path never
-  # reaches the image job — and useful whenever a publish failed and wants a retry
+  # version is seeded by hand - cog finds nothing to bump, so the push path never
+  # reaches the image job - and useful whenever a publish failed and wants a retry
   # without inventing a commit to carry it.
   workflow_dispatch:
     inputs:
@@ -48,8 +48,8 @@ jobs:
           command: check
           args: --from-latest-tag
 
-      # `cog bump` is a no-op when nothing since the tag warrants one — a release
-      # of only docs or tests, say — so its exit code cannot be the signal.
+      # `cog bump` is a no-op when nothing since the tag warrants one - a release
+      # of only docs or tests, say - so its exit code cannot be the signal.
       # Comparing the described tag before and after can.
       - name: Bump version
         id: bump
@@ -82,7 +82,7 @@ jobs:
             --verify-tag
 
   # Semver tags only. `latest` and the full commit sha belong to ci.yml's Docker job,
-  # which publishes on every green push — so a fix that has not been released is
+  # which publishes on every green push - so a fix that has not been released is
   # still deployable. Splitting ownership this way keeps two workflows from racing
   # each other over the same tag.
   tag-release-image:

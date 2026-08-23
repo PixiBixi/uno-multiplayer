@@ -12,7 +12,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const [locale, setLocale] = useState<Locale>(detectLocale)
 
   /* Also on mount, not only on a manual change. A French browser was rendering
-     French while the document still declared lang="en" — measured, not guessed —
+     French while the document still declared lang="en" - measured, not guessed -
      which tells a screen reader to pronounce it in an English voice. */
   useEffect(() => {
     document.documentElement.lang = locale

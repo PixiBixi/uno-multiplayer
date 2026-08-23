@@ -6,11 +6,11 @@ self-hosted for a small group.
 ## Ground rules for working here
 
 - **Code, comments and commit messages in English.** Conversation may be in French.
-- **`npm run verify` before every commit** — lint, typecheck and unit tests. Check
+- **`npm run verify` before every commit** - lint, typecheck and unit tests. Check
   the exit code; piping to `tail` swallows it, which has hidden a broken typecheck
   in a commit before.
 - **Conventional Commits, one commit per scope.** Do not bundle unrelated changes.
-- Avoid backticks in commit messages written inline in a shell — they get executed
+- Avoid backticks in commit messages written inline in a shell - they get executed
   as command substitution. Use `git commit -F <file>`.
 
 ## The invariants worth protecting
@@ -29,7 +29,7 @@ self-hosted for a small group.
 
 - Testing both ends of a chain proves nothing about the wire between them. A new
   client action needs a protocol type, a Zod schema, a `socket.on` handler **and**
-  the client emit — the handler is the piece that gets forgotten.
+  the client emit - the handler is the piece that gets forgotten.
 - Judge layout by measuring geometry or computed styles in a real browser, not by
   reading a screenshot, and sample after transitions settle.
 - A stale `dist/` means a new client talking to an old server.

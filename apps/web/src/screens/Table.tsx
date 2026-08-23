@@ -59,7 +59,7 @@ export function Table({
      still lay down, which is the one moment a turn does not end by itself. Read from
      `legalMoves` like everything else here: the client is told, never works it out. */
   const canPass = view.you.legalMoves.some((move) => move.type === 'pass')
-  /* A play offered while it is somebody else's turn can only be a jump-in — the
+  /* A play offered while it is somebody else's turn can only be a jump-in - the
      server offers an off-turn seat call-outs and jump-ins and nothing else. Purely a
      label: the card is clickable because the move is in the view, not because of this
      line, and without it the chance is invisible unless you notice a card light up
@@ -68,7 +68,7 @@ export function Table({
 
   /*
    * You are the one exposed. Derived, not sent: `callUno` is offered either at two cards or
-   * while vulnerable, so at ONE card its presence can only mean vulnerable — had you called
+   * while vulnerable, so at ONE card its presence can only mean vulnerable - had you called
    * it, it would not be on offer at all.
    *
    * Worth telling you, because calling UNO on your own next turn before playing is how the
@@ -201,7 +201,7 @@ export function Table({
             <CentreStack view={view} drawNonce={drawNonce} />
             {secondsLeft !== null && (
               /* A live region so the number is announced as it falls, and urgent
-                 only at the end — a polite update every second would queue up
+                 only at the end - a polite update every second would queue up
                  behind itself in a screen reader. */
               <p
                 className={secondsLeft <= 3 ? 'turn-clock turn-clock-urgent' : 'turn-clock'}

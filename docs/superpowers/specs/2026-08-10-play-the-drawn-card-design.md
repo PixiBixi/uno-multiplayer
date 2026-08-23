@@ -6,8 +6,8 @@ happens to be playable.
 ## Why this one defaults on, unlike the three variants
 
 It is not a variant. It is the official rule: *if the card drawn can be played, the
-player is free to lay down that card.* The current behaviour — a voluntary draw
-always ends the turn — was a deliberate simplification, recorded in the README as
+player is free to lay down that card.* The current behaviour - a voluntary draw
+always ends the turn - was a deliberate simplification, recorded in the README as
 removing "a whole class of UI and protocol complexity". It did, and it also made
 the game slightly wrong.
 
@@ -17,7 +17,7 @@ gains its first `true`; say so in a comment beside it, or somebody will assume t
 `false`s are a pattern.
 
 Keeping the flag at all, rather than simply changing the rule, is for the group who
-learned it the other way — and because the sub-state below is worth being able to
+learned it the other way - and because the sub-state below is worth being able to
 switch off if it proves annoying in practice.
 
 ```ts
@@ -41,17 +41,17 @@ The rules that keep this from spreading:
 
 | Point | Decision |
 | --- | --- |
-| Only the drawn card | `legalMoves` offers `play` for **that card alone**, plus `pass`. Not the rest of the hand — that would be a different game, where drawing is a free extra turn. |
+| Only the drawn card | `legalMoves` offers `play` for **that card alone**, plus `pass`. Not the rest of the hand - that would be a different game, where drawing is a free extra turn. |
 | Only when it is playable | If the drawn card cannot be played, the turn ends immediately as it does today. No sub-state, no extra click, nothing to dismiss. A choice only appears when there is one. |
-| Only a voluntary draw | `acceptDraw` — taking a stacked +2 or +4 — grants nothing. That is a penalty, not a draw, and the official rules do not let you play out of it. |
+| Only a voluntary draw | `acceptDraw` - taking a stacked +2 or +4 - grants nothing. That is a penalty, not a draw, and the official rules do not let you play out of it. |
 | Passing is a move | `{ type: 'pass' }`. Drawing no longer ends the turn, so something has to, and it must be explicit rather than inferred from a timeout. |
 | A wild drawn | Playable, and needs its colour like any other wild. `legalMoves` enumerates one `play` per colour, exactly as it already does. |
-| Clearing it | On `pass`, on playing it, and on any turn change from any cause — a timeout, a disconnection, a round ending. A stale `drawnCard` would let a seat play a card it no longer holds. |
+| Clearing it | On `pass`, on playing it, and on any turn change from any cause - a timeout, a disconnection, a round ending. A stale `drawnCard` would let a seat play a card it no longer holds. |
 
 ## Interactions to get right
 
 **Blazing.** If the clock expires in the sub-state, the forced move is `pass`, not
-another draw — they have already drawn, and forcing a second would punish the clock
+another draw - they have already drawn, and forcing a second would punish the clock
 twice. `forceTurnMove` currently prefers `acceptDraw` then `draw`; `pass` goes first
 when `drawnCard` is set.
 
@@ -68,12 +68,12 @@ reach one card.
 
 ## Client
 
-The drawn card is offered as playable and everything else is not — which the client
+The drawn card is offered as playable and everything else is not - which the client
 already renders correctly, because it only ever offers what `legalMoves` contains.
 What is new is the **pass** control, and it must be obvious: a player who drew an
 unplayable-looking card and sees no way forward will think the game has hung.
 
-Label it for what it does — ending the turn — rather than "pass", which in a card
+Label it for what it does - ending the turn - rather than "pass", which in a card
 game can read as declining to draw. Copy goes in both catalogues.
 
 Under Blazing the countdown keeps running in the sub-state, which is correct and
@@ -85,7 +85,7 @@ worth checking: the clock must not reset because a draw happened.
   draw ends the turn with no sub-state; `acceptDraw` grants nothing; `pass` ends the
   turn; a drawn wild offers its colours; the sub-state clears on every turn change.
 - Property tests: extend the harness with the option on **and** off. The invariants
-  that matter are the usual ones — card conservation, termination, `currentSeat`
+  that matter are the usual ones - card conservation, termination, `currentSeat`
   always active, every offered move accepted. Termination deserves attention: a
   sub-state that could be re-entered without spending a card would hang the game.
   Assert non-vacuity, that generated games really do enter the sub-state.

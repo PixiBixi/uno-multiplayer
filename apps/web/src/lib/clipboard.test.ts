@@ -37,8 +37,8 @@ describe('copyText', () => {
     const selected: string[] = []
     stubExecCommand(() => {
       /* Reading the value off the focused element proves the carrier really is
-         selected at the moment of the copy — the property the command depends
-         on — rather than merely proving we called the command. */
+         selected at the moment of the copy - the property the command depends
+         on - rather than merely proving we called the command. */
       const active = document.activeElement
       if (active instanceof HTMLTextAreaElement) selected.push(active.value)
       return true

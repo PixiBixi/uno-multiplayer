@@ -6,7 +6,7 @@ import { expect, test, type Browser, type Page } from '@playwright/test'
  * Every assertion here is a number read out of a real browser after its
  * animations have finished. This project has shipped two defects that only
  * geometry showed, and once refused a fix for a "bug" that was a screenshot
- * caught mid-transition — so nothing in this file compares pixels.
+ * caught mid-transition - so nothing in this file compares pixels.
  */
 
 const DESKTOP = { width: 1440, height: 900 }
@@ -81,7 +81,7 @@ test('the language and card-theme controls sit inside a desktop viewport, unscro
 test('the phone layout keeps both controls on the page and never scrolls sideways', async ({
   page,
 }) => {
-  /* One column at this width, so "above the fold" is not the claim — the claim is
+  /* One column at this width, so "above the fold" is not the claim - the claim is
      that nothing was pushed out of the page sideways to make the desktop layout
      work, which is the usual cost of moving a wide control into a narrow column. */
   await page.setViewportSize(PHONE)
@@ -117,7 +117,7 @@ test('the phone layout keeps both controls on the page and never scrolls sideway
  *
  * Measured rather than assumed, on the viewport this project has already been bitten on.
  * Two separate claims: nothing is pushed sideways, and the panels that grew have not
- * pushed the seats and the Start button down the page — those are what a lobby is for,
+ * pushed the seats and the Start button down the page - those are what a lobby is for,
  * and the points table is pure reference, so it is the one that gets capped.
  */
 async function openLobby(page: Page, browser: Browser): Promise<Page> {
@@ -210,7 +210,7 @@ test('the lobby uses the second column on a desktop instead of one tall stack', 
 
 test('the home screen no longer runs two and a half phone screens tall', async ({ page }) => {
   /* The ergonomic half of the defect, measured on the same viewport as the rest: 21
-     controls, 2.42 screens of them, with the game-code field last — below a match format,
+     controls, 2.42 screens of them, with the game-code field last - below a match format,
      a clock and four rules that a joining player has no use for. Two of three arrivals are
      joining.
   

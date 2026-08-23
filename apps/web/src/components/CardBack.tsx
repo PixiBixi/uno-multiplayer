@@ -42,7 +42,7 @@ export function CardBack({ theme }: { theme?: CardTheme } = {}) {
       aria-label={messages.cardFaceDown}
       /* Marked as well as labelled. "How many cards are face up in this document" is
          a leak test, and expressing it as "whose label is not the English for
-         face-down" made a security assertion depend on the interface language — it
+         face-down" made a security assertion depend on the interface language - it
          would have passed vacuously the moment the page rendered in French. */
       data-face-down=""
       style={{ width: '100%', height: 'auto', display: 'block' }}

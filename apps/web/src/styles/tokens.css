@@ -1,6 +1,6 @@
 /* Self-hosted so the display face is the same everywhere. Relying on a system
    rounded font did not work: the `ui-rounded` generic is Safari-only, and one
-   unsupported generic invalidates the whole font-family declaration — Chrome
+   unsupported generic invalidates the whole font-family declaration - Chrome
    dropped it and rendered every heading in its default serif. No `ui-*`
    generics anywhere below; tokens.test.ts enforces that. */
 @font-face {

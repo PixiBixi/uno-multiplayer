@@ -3,7 +3,7 @@ const PREFIX = 'uno.session.'
 const keyFor = (roomCode: string): string => `${PREFIX}${roomCode.toUpperCase()}`
 
 /**
- * localStorage can throw outright — private browsing, blocked storage, a full
+ * localStorage can throw outright - private browsing, blocked storage, a full
  * quota. Losing the ability to reconnect is a degraded experience; a crash on
  * page load is a broken one.
  */

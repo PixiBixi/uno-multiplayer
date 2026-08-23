@@ -85,7 +85,7 @@ test('nobody can see anybody else’s cards', async ({ browser }) => {
 
      Counted by `data-face-down`, not by comparing the label to the English for
      "face-down". That label is translated now, so the old form would have counted
-     every card as face-up on a French page and passed this test vacuously — a leak
+     every card as face-up on a French page and passed this test vacuously - a leak
      assertion that quietly stops asserting is worse than one that fails. */
   const faceUp = (page: Page) =>
     page
@@ -184,7 +184,7 @@ test('the hand can be sorted, and the choice survives a reload', async ({ browse
   await host.getByRole('button', { name: 'Start game' }).click()
 
   /* Sorted on the guest on purpose. Seat 0 opens, and reloading while on turn
-     legitimately costs a drawn card — see the test below — which would confound
+     legitimately costs a drawn card - see the test below - which would confound
      a count assertion here. */
   await expect(guest.locator('.hand-card')).toHaveCount(7)
 
@@ -271,8 +271,8 @@ test('the draw pile is still a card once the draw ghost has finished', async ({ 
      `.pile-draw::after` is the ghost card that peels off the pile: `background:
      var(--bone)`, `inset: 0`, and an animation from 0.55 opacity to 0. It declared
      no `opacity` of its own and no `animation-fill-mode`, so the moment the 420ms
-     animation ended the element reverted to its un-animated opacity — the initial
-     value, 1 — and the class is deliberately never removed, since `drawNonce > 0`
+     animation ended the element reverted to its un-animated opacity - the initial
+     value, 1 - and the class is deliberately never removed, since `drawNonce > 0`
      for the rest of the game. An opaque cream rectangle then covered the pile for
      good, which is why the `UNO` text was still in the DOM and why the fanned backs
      beside it were fine: they have no `::after`.
@@ -306,7 +306,7 @@ test('the draw pile is still a card once the draw ghost has finished', async ({ 
 
     /* And the flourish is still a flourish: read out of the keyframes rather than
        caught mid-flight, so the assertion is deterministic. Zeroing the base opacity
-       must leave the ghost something to show while it flies — the cheapest wrong fix
+       must leave the ghost something to show while it flies - the cheapest wrong fix
        for the bug above is to delete the effect. */
     const opacityAtStart = [...document.styleSheets].flatMap((sheet) =>
       [...sheet.cssRules]
@@ -394,7 +394,7 @@ test('the End turn control is on screen once a drawn card can be played', async 
 test('a long log scrolls inside its panel instead of growing the page', async ({ browser }) => {
   /* Needs more chat than a person would ever send in a second, which the webServer
      block grants by raising CHAT_BURST. Against an already-running instance that
-     block does not apply, so the limiter — correctly — stops this at 5 messages.
+     block does not apply, so the limiter - correctly - stops this at 5 messages.
      Skipped rather than weakened: the assertion is about a long log, and a short
      one would prove nothing. */
   test.skip(

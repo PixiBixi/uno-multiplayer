@@ -6,14 +6,14 @@ import type { Messages } from '../i18n/messages.js'
  * The four table rules, in the one component both the host and a guest render.
  *
  * One component rather than two is the whole design here. A guest has to be able to see
- * which rules they are about to play by — before this they found out about Seven-Zero
- * when their hand changed owner — and a second, read-only copy of the list is how one of
+ * which rules they are about to play by - before this they found out about Seven-Zero
+ * when their hand changed owner - and a second, read-only copy of the list is how one of
  * the two ends up stale: a fifth rule added to the host's copy and forgotten in the
  * guest's would leave half the table looking at a game that is not the one being played.
  *
  * So the list, the labels and the explanations are declared once, below. The only thing
  * the two modes differ in is how a row is drawn: a switch when this seat may change it,
- * the state in words when it may not. `onChange` being absent is what says which — a
+ * the state in words when it may not. `onChange` being absent is what says which - a
  * read-only panel renders no input at all, so it cannot emit even if something tried.
  */
 
@@ -60,7 +60,7 @@ export function TableRulesPanel({ rules, onChange, note }: TableRulesPanelProps)
                 checked={rules[rule.key]}
                 onChange={(event) => {
                   /* The whole object, not the one flag. `room:configure` is partial per
-                     FIELD — goal, pace, rules — and `rules` is one field the server
+                     FIELD - goal, pace, rules - and `rules` is one field the server
                      replaces wholesale, so sending a lone flag would reset the other
                      three to their defaults. */
                   onChange({ ...rules, [rule.key]: event.target.checked })

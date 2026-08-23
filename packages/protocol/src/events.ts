@@ -34,7 +34,7 @@ export type GameEvent =
   | { type: 'handsSwapped'; seat: number; with: number }
   | { type: 'handsRotated'; direction: 1 | -1 }
   /* Jump-in: a card laid down by a seat whose turn it was not. Named rather than
-     left to `cardPlayed` alone, because the surprising part is not the card — it is
+     left to `cardPlayed` alone, because the surprising part is not the card - it is
      that play has just moved somewhere nobody was expecting, and the seats in
      between never got their turn. The card still arrives as `cardPlayed` right
      after, so the statistics and the sound cue need to learn nothing. */
@@ -42,7 +42,7 @@ export type GameEvent =
   /* A seat declining the card it just drew, on a table that plays the official
      drawn-card rule. Named rather than left silent, because the feed would otherwise have
      nothing at all to say about a turn that ended: a draw no longer implies the turn is
-     over, so "Ana drew a card" followed by somebody else playing is genuinely ambiguous —
+     over, so "Ana drew a card" followed by somebody else playing is genuinely ambiguous -
      she may have been still deciding. Counts towards nothing; declining to play is not a
      statistic. */
   | { type: 'turnPassed'; seat: number }
@@ -105,7 +105,7 @@ export type ClientToServer = {
    * Changes the table from the lobby. Host only, and only before the first deal of the
    * match; anyone else gets `not_host` and a late one gets `game_already_started`.
    *
-   * Partial on purpose — see `roomConfigureSchema`. Every accepted change re-emits
+   * Partial on purpose - see `roomConfigureSchema`. Every accepted change re-emits
    * `room:state` to every member, not to the sender: the whole reason configuration
    * moved into the lobby is that a guest watches the host toggle Jump-in.
    */

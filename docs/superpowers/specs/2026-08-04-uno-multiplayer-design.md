@@ -1,4 +1,4 @@
-# UNO multijoueur — Design
+# UNO multijoueur - Design
 
 - **Date** : 2026-08-04
 - **Statut** : sections 1 et « approche » validées par l'utilisateur ; sections 2 et 3 rédigées, en attente de relecture
@@ -13,7 +13,7 @@ Jeu de UNO en ligne, **2 à 4 joueurs**, jouable depuis un navigateur, déployé
 ### Critères de succès
 
 1. Une partie de 2 à 4 joueurs se déroule de bout en bout sans crash ni blocage.
-2. Un joueur ne peut ni voir les cartes des autres, ni jouer un coup illégal, ni jouer à la place d'un autre — **même en manipulant le client**.
+2. Un joueur ne peut ni voir les cartes des autres, ni jouer un coup illégal, ni jouer à la place d'un autre - **même en manipulant le client**.
 3. Un rafraîchissement de page ou une coupure réseau de moins de 60 s ne fait pas perdre la partie.
 4. Le serveur ne peut pas être mis à terre par un client malveillant.
 5. Le moteur de règles est couvert par des tests unitaires déterministes.
@@ -50,10 +50,10 @@ Jeu de UNO en ligne, **2 à 4 joueurs**, jouable depuis un navigateur, déployé
 uno-multiplayer/
 ├── packages/
 │   ├── protocol/          # contrat réseau : types + schémas de validation
-│   └── engine/            # moteur de règles pur — 0 dépendance runtime
+│   └── engine/            # moteur de règles pur - 0 dépendance runtime
 ├── apps/
-│   ├── server/            # Fastify + socket.io — orchestration
-│   └── web/               # Vite + React 19 — rendu
+│   ├── server/            # Fastify + socket.io - orchestration
+│   └── web/               # Vite + React 19 - rendu
 ├── Dockerfile             # multi-stage → image unique
 └── compose.yaml           # dev local
 ```
@@ -73,9 +73,9 @@ Conséquences :
 
 Coût : un aller-retour réseau par coup (30–100 ms), imperceptible en tour par tour.
 
-Le package partagé se réduit donc aux **types du protocole** — ce qui reste le bénéfice principal de TypeScript des deux côtés : le contrat réseau est vérifié à la compilation sur les deux rives.
+Le package partagé se réduit donc aux **types du protocole** - ce qui reste le bénéfice principal de TypeScript des deux côtés : le contrat réseau est vérifié à la compilation sur les deux rives.
 
-### 2.3 `packages/engine` — les règles, et rien d'autre
+### 2.3 `packages/engine` - les règles, et rien d'autre
 
 Aucune notion de réseau, de socket ou de joueur connecté. Fonctions pures sur structures immuables.
 
@@ -93,7 +93,7 @@ Trois invariants de conception :
 
 **Le RNG est seedé et la graine vit dans l'état.** Une partie est intégralement rejouable depuis `(seed, moves[])` : tests déterministes, et reproduction d'un bug de prod depuis les logs. C'est aussi la réponse au bug de mutation du paquet global : l'état est immuable, il n'existe plus de paquet partagé à corrompre.
 
-**Les sièges sont stables.** `seats: Seat[]` indexés 0..3, chacun avec un `status`. Un joueur qui part ne provoque aucune réindexation : l'avancement de tour saute les sièges non actifs. Ça supprime une classe entière de bugs d'index — dont celui qui produisait deux « Player 2 » dans la même room.
+**Les sièges sont stables.** `seats: Seat[]` indexés 0..3, chacun avec un `status`. Un joueur qui part ne provoque aucune réindexation : l'avancement de tour saute les sièges non actifs. Ça supprime une classe entière de bugs d'index - dont celui qui produisait deux « Player 2 » dans la même room.
 
 ### 2.4 Modèle de données du moteur
 
@@ -139,11 +139,11 @@ type Move =
 
 `currentColor` est volontairement séparé de la carte du dessus : après un joker, la couleur en cours n'est pas celle de la carte visible. Le prototype confondait les deux et dérivait la couleur par `charAt()`, ce qui produisait `currentColor = 'W'`.
 
-### 2.5 `packages/protocol` — le contrat réseau
+### 2.5 `packages/protocol` - le contrat réseau
 
 Les événements dans les deux sens, avec un **schéma de validation par payload entrant** (Zod). Importé par le serveur et le client : contrat vérifié à la compilation des deux côtés, validé à l'exécution côté serveur. C'est la couche entièrement absente du prototype.
 
-### 2.6 `apps/server` — l'orchestration
+### 2.6 `apps/server` - l'orchestration
 
 | Module | Responsabilité |
 |---|---|
@@ -151,16 +151,16 @@ Les événements dans les deux sens, avec un **schéma de validation par payload
 | `Room` | Un lobby *ou* une partie : sièges, hôte, `GameState`, timers de grâce |
 | `handlers` | Validation du payload → délégation à `Room` → diffusion des vues |
 | `rateLimit` | Token bucket par socket |
-| `views` | `redactFor(state, seat): PlayerView` — le filtre anti-fuite |
+| `views` | `redactFor(state, seat): PlayerView` - le filtre anti-fuite |
 | `http` | Fastify : fichiers statiques, fallback SPA, `/healthz` |
 
 `Room` est le seul module qui connaît à la fois les règles et le réseau, et il ne fait qu'appeler le moteur. **Les handlers ne contiennent aucune logique de jeu.**
 
-### 2.7 `apps/web` — le rendu
+### 2.7 `apps/web` - le rendu
 
 `useGameSocket` est le **seul** point de contact avec la socket : instance dans un `useRef`, `socket.disconnect()` au démontage, listeners retirés nommément. Pas de variable socket au niveau module.
 
-Composants : `Table` (grille CSS 4 sièges), `Hand`, `Card` (composant SVG paramétré par `kind`/`color`/`value` — un composant, pas 54 fichiers), `DiscardPile`, `ColorPicker`, `Chat`, `Toaster`, `Lobby`.
+Composants : `Table` (grille CSS 4 sièges), `Hand`, `Card` (composant SVG paramétré par `kind`/`color`/`value` - un composant, pas 54 fichiers), `DiscardPile`, `ColorPicker`, `Chat`, `Toaster`, `Lobby`.
 
 `ColorPicker` et `Toaster` remplacent `prompt()` et `alert()`. Ces deux appels bloquaient le thread JS et causaient deux crashes dans le prototype : `prompt()` annulé retournait `null` (puis `.toUpperCase()` levait), et une couleur invalide saisie à la main bloquait la partie définitivement.
 
@@ -190,16 +190,16 @@ CREATE ──> LOBBY ──(hôte lance, ≥2 joueurs)──> PLAYING ──> FI
 | `room:create` | `{ playerName }` | `{ roomCode, sessionToken, seat }` |
 | `room:join` | `{ roomCode, playerName }` | `{ sessionToken, seat }` \| `{ error }` |
 | `room:rejoin` | `{ roomCode, sessionToken }` | `{ seat }` \| `{ error }` |
-| `game:start` | — | `{ error }` si non-hôte ou < 2 joueurs |
+| `game:start` | - | `{ error }` si non-hôte ou < 2 joueurs |
 | `game:move` | `Move` | `{ error }` si illégal |
-| `chat:send` | `{ text }` | — |
+| `chat:send` | `{ text }` | - |
 
 **Serveur → client** :
 
 | Événement | Contenu |
 |---|---|
 | `room:state` | Composition du lobby : sièges, noms, hôte, statuts |
-| `game:view` | `PlayerView` — **par socket**, filtrée pour ce siège |
+| `game:view` | `PlayerView` - **par socket**, filtrée pour ce siège |
 | `game:event` | Fil d'événements pour animations et journal (« Siège 2 a joué +2 ») |
 | `chat:message` | `{ seat, name, text }` |
 | `error` | `{ code, message }` |
@@ -221,7 +221,7 @@ type PlayerView = {
 }
 ```
 
-`opponents` n'expose qu'un **compte** de cartes, jamais leur contenu. C'est la correction structurelle de la fuite d'information du prototype, qui envoyait les deux mains complètes et la pioche entière aux deux clients — le masquage n'y étant qu'une image de dos affichée en CSS.
+`opponents` n'expose qu'un **compte** de cartes, jamais leur contenu. C'est la correction structurelle de la fuite d'information du prototype, qui envoyait les deux mains complètes et la pioche entière aux deux clients - le masquage n'y étant qu'une image de dos affichée en CSS.
 
 ### 3.4 Traitement d'un coup
 
@@ -234,7 +234,7 @@ La vue est **poussée, jamais tirée**. Le client n'a aucune requête d'état à
 
 Comme le client renvoie un coup pris dans `legalMoves`, il ne peut pas même en construire un de forme invalide. La vérification serveur reste évidemment appliquée : elle est la seule autorité.
 
-### 3.5 Règles — points à trancher explicitement
+### 3.5 Règles - points à trancher explicitement
 
 Chaque point ci-dessous était source d'ambiguïté ou de bug dans le prototype.
 
@@ -242,17 +242,17 @@ Chaque point ci-dessous était source d'ambiguïté ou de bug dans le prototype.
 
 **Reverse à 2 joueurs actifs.** Il agit comme un **skip** (règle officielle) : le tour revient au joueur qui l'a posé. À 3 ou 4, il inverse `direction`. Le prototype traitait le reverse comme une carte numérique, donc sans aucun effet.
 
-**`pendingDraw.kind` reprend le `kind` de la carte** — `'draw2' | 'wild4'`, et non `'draw2' | 'draw4'`. La règle « strictement même type » devient ainsi une égalité directe `card.kind === pendingDraw.kind`, sans table de correspondance à maintenir.
+**`pendingDraw.kind` reprend le `kind` de la carte** - `'draw2' | 'wild4'`, et non `'draw2' | 'draw4'`. La règle « strictement même type » devient ainsi une égalité directe `card.kind === pendingDraw.kind`, sans table de correspondance à maintenir.
 
 **Piocher volontairement termine le tour.** La carte piochée rejoint la main et la main passe au joueur suivant. Pas de sous-état « tu peux maintenant jouer la carte que tu viens de piocher » : ce confort aurait ajouté une phase intermédiaire à l'état, donc une branche supplémentaire dans toutes les fonctions de règle, pour un gain marginal.
 
-**Empilement — strictement même type.** Quand `pendingDraw !== null`, les seuls coups légaux pour le joueur dont c'est le tour sont :
-- jouer une carte du **même type** que `pendingDraw.kind` (+2 sur +2, +4 sur +4 — aucun croisement), ce qui incrémente `amount` de 2 ou 4 et passe la main ;
+**Empilement - strictement même type.** Quand `pendingDraw !== null`, les seuls coups légaux pour le joueur dont c'est le tour sont :
+- jouer une carte du **même type** que `pendingDraw.kind` (+2 sur +2, +4 sur +4 - aucun croisement), ce qui incrémente `amount` de 2 ou 4 et passe la main ;
 - `acceptDraw` : piocher `amount` cartes, `pendingDraw` repasse à `null`, le tour passe.
 
 Quand on renchérit, la couleur en cours n'entre pas en compte : seul le type importe.
 
-**Pioche épuisée.** Dès qu'une pioche est nécessaire et que `drawPile` est vide, `reshuffleDiscard` prend tout `discardPile` **sauf la carte du dessus**, le mélange avec le RNG de l'état, et en fait la nouvelle pioche. Si après recyclage il n'y a toujours pas assez de cartes, la pioche est **plafonnée au disponible** — cas explicitement testé. C'était un crash garanti dans le prototype : `pop()` sur pioche vide puis `.charAt()` sur `undefined`.
+**Pioche épuisée.** Dès qu'une pioche est nécessaire et que `drawPile` est vide, `reshuffleDiscard` prend tout `discardPile` **sauf la carte du dessus**, le mélange avec le RNG de l'état, et en fait la nouvelle pioche. Si après recyclage il n'y a toujours pas assez de cartes, la pioche est **plafonnée au disponible** - cas explicitement testé. C'était un crash garanti dans le prototype : `pop()` sur pioche vide puis `.charAt()` sur `undefined`.
 
 **Annonce d'UNO.** `callUno` n'est légal que pendant son propre tour, avant de jouer ; il positionne `unoCalled` pour ce siège. Si un coup fait descendre la main à exactement 1 carte sans que `unoCalled` soit positionné, le siège pioche immédiatement 2 cartes de pénalité. `unoCalled` est remis à `false` au début de chaque tour du siège.
 
@@ -262,9 +262,9 @@ Quand on renchérit, la couleur en cours n'entre pas en compte : seul le type im
 
 ### 3.6 Déconnexion et reconnexion
 
-**Jeton de session.** À la jonction, le serveur génère un `sessionToken` (`crypto.randomUUID`) et le mappe vers `(roomCode, seat)`. Le client le conserve en `localStorage`, indexé par code de room. Ce jeton est l'identité du joueur — **jamais le `socket.id`**, qui change à chaque reconnexion. C'est précisément ce qui manquait : dans le prototype, l'identité était dérivée de l'ordre d'arrivée.
+**Jeton de session.** À la jonction, le serveur génère un `sessionToken` (`crypto.randomUUID`) et le mappe vers `(roomCode, seat)`. Le client le conserve en `localStorage`, indexé par code de room. Ce jeton est l'identité du joueur - **jamais le `socket.id`**, qui change à chaque reconnexion. C'est précisément ce qui manquait : dans le prototype, l'identité était dérivée de l'ordre d'arrivée.
 
-**À la déconnexion** : `seat.status = 'disconnected'`, démarrage d'un timer de 60 s, diffusion aux autres. Si c'est son tour, le serveur joue immédiatement pour lui le coup neutre légal (`acceptDraw` s'il y a une dette, sinon `draw` puis passage de tour) — la partie ne se bloque pas.
+**À la déconnexion** : `seat.status = 'disconnected'`, démarrage d'un timer de 60 s, diffusion aux autres. Si c'est son tour, le serveur joue immédiatement pour lui le coup neutre légal (`acceptDraw` s'il y a une dette, sinon `draw` puis passage de tour) - la partie ne se bloque pas.
 
 **Reconnexion dans le délai** (`room:rejoin` avec jeton valide) : `status = 'active'`, timer annulé, vue complète envoyée. Le joueur retrouve sa main exacte.
 
@@ -294,9 +294,9 @@ En lobby, un départ libère simplement le siège ; s'il s'agissait de l'hôte, 
 | Rate limiting | Token bucket par socket : 20 coups / 10 s, 5 messages / 10 s. Dépassement → `error` ; abus répété → déconnexion |
 | Validation | Tout payload entrant passe par un schéma. `playerName` ≤ 20 caractères, `text` ≤ 200, `roomCode` exactement 6 caractères de l'alphabet autorisé |
 | Bornes mémoire | Plafond `MAX_ROOMS`, plafond de joueurs par room, historique de chat borné par room |
-| CORS | Allowlist explicite d'origines via variable d'environnement — pas de `cors()` nu |
+| CORS | Allowlist explicite d'origines via variable d'environnement - pas de `cors()` nu |
 | En-têtes | `@fastify/helmet` avec CSP |
-| Codes de room | `crypto.randomInt`, alphabet non ambigu — pas `Math.random` |
+| Codes de room | `crypto.randomInt`, alphabet non ambigu - pas `Math.random` |
 | Jetons | UUID opaques, valables pour une seule paire (room, siège) |
 
 Le chat est rendu comme du texte par React (échappement par défaut) ; la limite de longueur côté serveur couvre le volet déni de service.

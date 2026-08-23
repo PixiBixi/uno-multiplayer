@@ -47,7 +47,7 @@ describe('soundForEvent', () => {
   })
 
   it('sounds hands moving, with one cue for a swap and a rotation alike', () => {
-    /* A rotation is a swap generalised — the same rule, and the same thing to
+    /* A rotation is a swap generalised - the same rule, and the same thing to
        notice: what you are holding is not what you were holding. */
     expect(soundForEvent({ type: 'handsSwapped', seat: 1, with: 0 }, 0)).toBe('swap')
     expect(soundForEvent({ type: 'handsRotated', direction: -1 }, 0)).toBe('swap')

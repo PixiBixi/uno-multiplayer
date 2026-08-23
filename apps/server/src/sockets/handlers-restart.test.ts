@@ -133,7 +133,7 @@ describe('game:restart over sockets', () => {
   it('rejects a payload of the wrong shape without dropping the connection', async () => {
     const { host } = await table()
     // A string is not an empty object, undefined or null, so validation fails.
-    // Note that surplus *keys* on an object are stripped rather than rejected —
+    // Note that surplus *keys* on an object are stripped rather than rejected -
     // that is Zod's default and the right call here, since they are ignored.
     expect(await emit<PlainAck>(host, 'game:restart', 'not an object')).toEqual({
       ok: false,

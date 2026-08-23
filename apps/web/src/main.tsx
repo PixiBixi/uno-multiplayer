@@ -12,8 +12,8 @@ if (host === null) throw new Error('missing #root element')
 
 createRoot(host).render(
   <StrictMode>
-    {/* Outside App, so a throw anywhere inside it — including in the socket hook
-        that feeds every screen — still lands somewhere. */}
+    {/* Outside App, so a throw anywhere inside it - including in the socket hook
+        that feeds every screen - still lands somewhere. */}
     {/* Outside the boundary too, so even the crash screen speaks the language. */}
     <LocaleProvider>
       {/* Around the whole client, because the home screen's previews and the

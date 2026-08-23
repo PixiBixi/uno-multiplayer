@@ -59,7 +59,7 @@ export const initialState: ClientState = {
  * Only events worth interrupting a player for. A toast per drawn card is noise,
  * and noise trains people to ignore the channel.
  *
- * The tone is this module's decision — how loudly to interrupt is behaviour. The
+ * The tone is this module's decision - how loudly to interrupt is behaviour. The
  * words are not: they are two sentences a player reads, so they come from the
  * catalogue it was handed, exactly as `describeEvent` takes one. Importing a
  * catalogue here instead would pick a language at build time and no chip on the

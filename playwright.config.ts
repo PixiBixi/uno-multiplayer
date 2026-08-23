@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test'
 const PORT = 5099
 
 /**
- * Point the suite at an already-running instance — a container, a staging box —
+ * Point the suite at an already-running instance - a container, a staging box -
  * instead of letting Playwright start one. Useful to prove that what actually
  * ships plays a game, not merely that it serves files.
  */

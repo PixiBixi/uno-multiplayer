@@ -32,7 +32,7 @@ const nomCarte = (card: Card): string => {
   }
 }
 
-/** French pluralises from 2, and 0 stays singular — unlike English. */
+/** French pluralises from 2, and 0 stays singular - unlike English. */
 const cartes = (n: number) => (Math.abs(n) < 2 ? `${String(n)} carte` : `${String(n)} cartes`)
 const points = (n: number) => (Math.abs(n) < 2 ? `${String(n)} point` : `${String(n)} points`)
 
@@ -45,7 +45,7 @@ const liste = (noms: string[]): string => {
 export const fr: Messages = {
   card: nomCarte,
   /* « injouable » plutôt qu’un calque de « not playable this turn » : un adjectif là
-     où l’anglais met une proposition. Pas de tiret cadratin non plus — la phrase se
+     où l’anglais met une proposition. Pas de tiret cadratin non plus - la phrase se
      construit autrement, ce qui est précisément pourquoi c’est une entrée entière et
      pas un suffixe collé au nom de la carte. */
   cardUnplayable: (card) => `${nomCarte(card)}, injouable ce tour-ci`,
@@ -53,7 +53,7 @@ export const fr: Messages = {
   colour: (colour) => COULEUR[colour],
   /* Les noms de thèmes sont traduits plutôt que laissés en anglais : ce sont des
      mots courants en français, contrairement à « jump-in ». « Typographié » dit ce
-     que fait la carte — une couleur en filet, un chiffre en serif — là où un calque
+     que fait la carte - une couleur en filet, un chiffre en serif - là où un calque
      de « letterpress » ne dirait rien à personne. */
   cardTheme: {
     label: 'Thème des cartes',
@@ -119,7 +119,7 @@ export const fr: Messages = {
     turnTimedOut: (name, isYou) => (isYou ? 'Tu n’as plus de temps' : `${name} n’a plus de temps`),
     roundWon: (name, isYou, pts) =>
       `${isYou ? 'Tu gagnes' : `${name} gagne`} la manche, +${points(pts)}`,
-    roundAbandoned: () => 'Manche abandonnée — pas assez de joueurs',
+    roundAbandoned: () => 'Manche abandonnée - pas assez de joueurs',
     matchResult: (names, youWon) => {
       if (names.length === 0) return 'La partie se termine sans vainqueur'
       if (names.length === 1) {
@@ -157,7 +157,7 @@ export const fr: Messages = {
     clockOnEveryTurn: 'Mettre un chrono sur chaque tour',
     secondsPerTurn: 'Secondes par tour',
     blazingHint:
-      'Le temps écoulé, tu pioches — même si tu avais une carte à jouer. Les manches s’enchaînent cinq secondes après la précédente.',
+      'Le temps écoulé, tu pioches - même si tu avais une carte à jouer. Les manches s’enchaînent cinq secondes après la précédente.',
     tableRules: 'Règles de table',
     liar: 'Laisser les joueurs dénoncer un UNO oublié',
     liarHint:
@@ -167,10 +167,10 @@ export const fr: Messages = {
       'Un 7 échange ta main avec celle d’un joueur de ton choix ; un 0 fait tourner toutes les mains d’un siège, dans le sens du jeu.',
     jumpIn: 'Autoriser le Jump-in',
     jumpInHint:
-      'Si tu as exactement la même carte que celle qui vient d’être posée — même couleur, même valeur — tu peux la poser hors de ton tour, et le jeu reprend depuis toi. Jamais un joker, et jamais pendant une pioche en attente.',
+      'Si tu as exactement la même carte que celle qui vient d’être posée - même couleur, même valeur - tu peux la poser hors de ton tour, et le jeu reprend depuis toi. Jamais un joker, et jamais pendant une pioche en attente.',
     playDrawnCard: 'Laisser poser la carte que l’on vient de piocher',
     playDrawnCardHint:
-      'La règle officielle, donc active sauf si tu la désactives : si la carte piochée est jouable, tu peux la poser aussitôt, ou la garder et terminer ton tour. Rien ne change quand elle est injouable — le tour se termine, comme avant.',
+      'La règle officielle, donc active sauf si tu la désactives : si la carte piochée est jouable, tu peux la poser aussitôt, ou la garder et terminer ton tour. Rien ne change quand elle est injouable - le tour se termine, comme avant.',
     whatThisDoes: 'Ce que ça change',
     explainRule: (rule) => `Ce que ça change : ${rule}`,
     ruleOn: 'activée',
@@ -193,7 +193,7 @@ export const fr: Messages = {
     wild: 'Joker',
     wildFour: '+4',
     deckTotal: (total) =>
-      `Un jeu complet vaut ${String(total)} points. Une manche ne rapporte que ce que les perdants tenaient encore, donc le même objectif demande bien plus de manches à deux joueurs qu’à quatre — bon à savoir avant de choisir.`,
+      `Un jeu complet vaut ${String(total)} points. Une manche ne rapporte que ce que les perdants tenaient encore, donc le même objectif demande bien plus de manches à deux joueurs qu’à quatre - bon à savoir avant de choisir.`,
   },
 
   lobby: {
@@ -203,7 +203,7 @@ export const fr: Messages = {
     copyLink: 'Copier le lien',
     codeCopied: 'Code copié',
     linkCopied: 'Lien d’invitation copié',
-    copyFailed: 'Copie impossible — sélectionne-le à la main',
+    copyFailed: 'Copie impossible - sélectionne-le à la main',
     waitingForPlayer: 'En attente d’un joueur…',
     host: 'Hôte',
     theHost: 'l’hôte',
@@ -235,7 +235,7 @@ export const fr: Messages = {
     ruleOn: 'activée',
     ruleOff: 'désactivée',
     openToCallOut: 'Contre-UNO possible',
-    youAreExposed: 'Tu es à une carte sans avoir dit UNO — annonce-le à ton prochain tour.',
+    youAreExposed: 'Tu es à une carte sans avoir dit UNO - annonce-le à ton prochain tour.',
     jumpIn: 'Jump-in !',
     endTurn: 'Terminer mon tour',
     playDrawnCard: 'Pose la carte piochée, ou termine ton tour',
@@ -247,7 +247,7 @@ export const fr: Messages = {
     left: (n) => `${String(n)} restantes`,
     /* « en attente » et non « empilées » : ce qui compte est que la dette n’est pas
        encore payée, pas la façon dont elle s’est constituée. Locution invariable, donc
-       aucun accord à faire ici — contrairement à `left`, juste au-dessus. */
+       aucun accord à faire ici - contrairement à `left`, juste au-dessus. */
     stacked: (n) => `+${String(n)} en attente`,
     hasLeft: 'a quitté la partie',
     sortHand: 'Trier ta main',
@@ -291,7 +291,7 @@ export const fr: Messages = {
     },
   },
 
-  /* Les titres restent courts — un bandeau qui passe — et le détail dit la
+  /* Les titres restent courts - un bandeau qui passe - et le détail dit la
      conséquence. « Manche » et « partie » sont distingués partout : une partie est
      une suite de manches, et confondre les deux rend le score incompréhensible. */
   toast: {
@@ -330,7 +330,7 @@ export const fr: Messages = {
   crash: {
     heading: 'Quelque chose dans la table s’est arrêté.',
     seatHeld:
-      'Ton siège est conservé. Recharger te fait rejoindre la même partie — le serveur garde l’état, il n’y a que cet écran de perdu.',
+      'Ton siège est conservé. Recharger te fait rejoindre la même partie - le serveur garde l’état, il n’y a que cet écran de perdu.',
     reload: 'Recharger et rejoindre',
   },
 

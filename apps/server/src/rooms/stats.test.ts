@@ -72,7 +72,7 @@ describe('tally', () => {
 describe('the room tallies everything it reports', () => {
   /**
    * The guard that matters. A room produces events from eight different methods,
-   * and every one has to pass through the same recording funnel — miss one and
+   * and every one has to pass through the same recording funnel - miss one and
    * the statistics under-count silently. Rather than trusting that, this replays
    * the events the room actually returned and checks the totals agree.
    */

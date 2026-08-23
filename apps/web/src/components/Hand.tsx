@@ -51,7 +51,7 @@ export function Hand({ cards, legalMoves, onPlay, targets }: HandProps) {
   const choose = (options: PlayMove[]) => {
     const only = options[0]
     if (only === undefined) return
-    /* One option means no choice to make — an ordinary card, or a 7 at a table where
+    /* One option means no choice to make - an ordinary card, or a 7 at a table where
        exactly one other seat could take the hand, which the spec is explicit about:
        it swaps rather than quietly doing nothing. */
     if (options.length === 1) onPlay(only)

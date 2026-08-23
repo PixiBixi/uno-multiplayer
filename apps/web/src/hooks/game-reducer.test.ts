@@ -178,7 +178,7 @@ describe('gameReducer', () => {
 
   it('writes its toasts in the language it was handed, title and detail both', () => {
     /* The toasts were the last English left on a French table. They are text a
-       player reads, so they belong in the catalogues like every other sentence —
+       player reads, so they belong in the catalogues like every other sentence -
        and the reducer takes the catalogue rather than importing one, because a
        module that picks its own language cannot be switched at runtime. */
     const fr = reduce(

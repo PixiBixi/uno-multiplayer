@@ -3,7 +3,7 @@
 The single decision the rest of the project follows from: **the server owns the
 state, owns the rules, and sends each player only what that player may see.**
 
-This is a rewrite of a prototype where the server was a bare relay — it broadcast
+This is a rewrite of a prototype where the server was a bare relay - it broadcast
 whatever state a client sent it. Three consequences of that design could not be
 patched: any client could declare itself the winner, both players' full hands were
 sent to everyone and hidden with a CSS card back, and the same move logic appeared
@@ -29,7 +29,7 @@ properties follow directly:
 
 - **No rule duplication**, so copies cannot drift.
 - **No desynchronisation**, because a view is a complete idempotent state rather
-  than a delta — no sequence numbers, no gap detection, no resync path.
+  than a delta - no sequence numbers, no gap detection, no resync path.
 - **Cheating is structurally impossible**: `opponents` carries a count and never
   card contents, and a move is only accepted if it appears in the server's own
   `legalMoves`.
@@ -53,7 +53,7 @@ Two consequences worth knowing before adding an event:
   counters, precisely because the feed cannot lie about what happened.
 - A room produces events from eight different methods, so all of them funnel
   through a single `record()` call that keeps the tally. Missing one under-counts
-  silently — there is a test that replays a real round and cross-checks the totals,
+  silently - there is a test that replays a real round and cross-checks the totals,
   and it fails if the funnel is bypassed.
 
 ## Three engine invariants
@@ -64,7 +64,7 @@ take the process down.
 
 **The RNG is seeded and its state lives in the game state.** A game is fully
 replayable from `(seed, moves[])`. Tests are deterministic and a production bug can
-be reproduced from logs. It is also why shuffling cannot corrupt a shared deck —
+be reproduced from logs. It is also why shuffling cannot corrupt a shared deck -
 nothing is mutated in place.
 
 **Seats are stable.** Each seat carries `active`, `disconnected` or `left`, and a
@@ -76,7 +76,7 @@ See [Room lifecycle](../domain/room-lifecycle.md).
 ## The wire boundary
 
 Every client-to-server payload is validated with Zod at the socket boundary
-(`packages/protocol/src/schemas.ts`), including the bounds on table options — a
+(`packages/protocol/src/schemas.ts`), including the bounds on table options - a
 points target, a rounds count, seconds per turn. Enforcing those only in the lobby
 would be enforcing them nowhere, and that is doubly true now the lobby is where those
 options are chosen: `roomConfigureSchema` composes the same `matchGoalSchema`,
@@ -92,8 +92,8 @@ view degrades to an explanation rather than a blank page.
 
 ## Changing things here
 
-- `LobbyView` carries the whole table configuration — `goal`, `pace`, `rules` and
-  `configurable` — because a guest who cannot see the rules discovers Seven-Zero when
+- `LobbyView` carries the whole table configuration - `goal`, `pace`, `rules` and
+  `configurable` - because a guest who cannot see the rules discovers Seven-Zero when
   their hand changes owner. That is not a hole in "the client knows no rules": it renders
   them and never reasons about them. `configurable` is derived by the server and is
   presentation only; the guard is re-checked when `room:configure` is handled, since a
@@ -101,7 +101,7 @@ view degrades to an explanation rather than a blank page.
 - Adding a field to `PlayerView` means touching `packages/protocol/src/views.ts`,
   `apps/server/src/views.ts`, and every test fixture that builds a view. The
   typechecker will find them all.
-- Adding a `GameEvent` variant makes several exhaustive switches fail to compile —
+- Adding a `GameEvent` variant makes several exhaustive switches fail to compile -
   in `describe-event.ts`, `sounds.ts` and `stats.ts`. That is the point; fill them
   in rather than adding a default case.
 - Adding a client-to-server event needs four pieces: the type in `events.ts`, a

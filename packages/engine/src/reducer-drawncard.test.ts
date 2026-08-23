@@ -19,7 +19,7 @@ import {
  * Every row of the spec's decision table has a test here. The property harness in
  * invariants.test.ts covers conservation and termination with the option on and off;
  * what only unit tests can say is WHICH moves are offered and where the turn lands,
- * and the Seven-Zero work is the precedent — swapping with a departed seat conserved
+ * and the Seven-Zero work is the precedent - swapping with a departed seat conserved
  * the deck perfectly well and only a unit test refused it.
  */
 
@@ -182,7 +182,7 @@ describe('a penalty is not a draw', () => {
   it('grants nothing after acceptDraw, even when what arrived is playable', () => {
     /* Taking a stacked +2 or +4 is a penalty. The official rules do not let you play
        out of one, and the cards arriving happen to include playable ones almost every
-       time — which is exactly why this needs saying. */
+       time - which is exactly why this needs saying. */
     const state = stateOf({
       seats: [seatOf(0, [num('h', 'G', 3)]), seatOf(1, [])],
       drawPile: [num('a', 'R', 5), num('b', 'R', 2)],
@@ -340,7 +340,7 @@ describe('the drawn card is cleared on every turn change', () => {
   it('clears when nobody at all is left to take the turn over', () => {
     /* The one path that never reaches `beginTurn`: `skipDisconnectedTurn` breaks out of its
        loop when the turn cannot move, which happens when no seat is active. Deleting the
-       clearing there fails nothing else in the suite — every other route through that
+       clearing there fails nothing else in the suite - every other route through that
        function ends in `beginTurn`, which clears the field for free. */
     const state = stateOf({
       seats: [seatOf(0, [num('h', 'G', 3)]), seatOf(1, []), seatOf(2, [])],

@@ -37,7 +37,7 @@ services:
     restart: unless-stopped
     # State lives in memory: never scale this past one replica. Traefik makes
     # scaling a one-line change, and it would break the game rather than spread
-    # it — two replicas would each hold half the rooms, and neither would know
+    # it - two replicas would each hold half the rooms, and neither would know
     # about the other.
     deploy:
       replicas: 1

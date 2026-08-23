@@ -9,7 +9,7 @@ const envSchema = z.object({
   /** Comma-separated allowlist. Empty means same-origin only. */
   CORS_ORIGIN: z.string().default(''),
   /**
-   * Whether players reach this server over HTTPS — directly, or through a proxy
+   * Whether players reach this server over HTTPS - directly, or through a proxy
    * that terminates TLS. Governs the two headers that only make sense when that
    * is true; http.ts explains what each does when the premise is wrong.
    *
@@ -36,7 +36,7 @@ const envSchema = z.object({
    * seconds is beyond what anyone opening a table for friends will notice.
    *
    * Worth being clear about what this does and does not buy. Keyed by socket id, so it
-   * stops a double-tapped Create and a script that reuses one connection — it does not
+   * stops a double-tapped Create and a script that reuses one connection - it does not
    * stop one that reconnects, which gets a fresh bucket every time. The real bound on
    * rooms is MAX_ROOMS with a purge that can actually reclaim them, which is a property
    * of the seat-release path rather than of this limit.

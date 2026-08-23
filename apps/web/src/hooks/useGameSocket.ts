@@ -21,7 +21,7 @@ export function useGameSocket() {
     [messages],
   )
   const [state, dispatch] = useReducer(reduce, initialState)
-  /* One socket for the app's lifetime, in a ref — never a module-level variable,
+  /* One socket for the app's lifetime, in a ref - never a module-level variable,
      which would leak between mounts and across two tabs of the same bundle. */
   const socketRef = useRef<TypedSocket | null>(null)
 
@@ -92,7 +92,7 @@ export function useGameSocket() {
    * One create at a time, guarded here rather than in the button.
    *
    * A second tap while the first is unanswered opens a second table and abandons the
-   * first — harmless to the player, who lands somewhere, and not harmless to the server,
+   * first - harmless to the player, who lands somewhere, and not harmless to the server,
    * which held that room until a fix landed. On a phone the acknowledgement is 300 ms
    * away, which is exactly long enough for an impatient thumb.
    *
@@ -129,7 +129,7 @@ export function useGameSocket() {
    * The host changing the table from the lobby.
    *
    * Nothing is dispatched on success. The server answers by broadcasting `room:state` to
-   * every member — which is the only way a guest sees the change at all — so writing the
+   * every member - which is the only way a guest sees the change at all - so writing the
    * new value into local state here would be a second source of truth for something the
    * server is still free to refuse.
    */

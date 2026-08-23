@@ -108,7 +108,7 @@ describe('purge and the grace window', () => {
   /**
    * A room counted as empty the instant every socket id was null, which includes
    * players still inside their grace period. Purge runs on the same 60 s cadence
-   * as the grace period, so it won whenever its tick landed first — and it
+   * as the grace period, so it won whenever its tick landed first - and it
    * cancelled the very grace timers it was pre-empting. A player who reloaded at
    * the wrong moment lost the game.
    */

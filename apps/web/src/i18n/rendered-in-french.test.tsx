@@ -19,7 +19,7 @@ import { LocaleProvider } from './LocaleProvider.js'
  *
  * That one reads source and proves no component *contains* an English phrase. This
  * one renders them in French and proves that what a French player actually receives
- * is French — including the accessible names, which is where every one of these
+ * is French - including the accessible names, which is where every one of these
  * defects lived. A string can be absent from a component and still arrive in English
  * from a lookup table two modules away, which is exactly what `COLOR_NAME` did.
  *
@@ -37,7 +37,7 @@ const num = (value: number): CardData => ({
 })
 
 /** Through the real provider and the real preference, the way a French browser does
- *  it — not by handing a catalogue straight to a context. */
+ *  it - not by handing a catalogue straight to a context. */
 const inFrench = (node: ReactElement) => {
   window.localStorage.setItem('uno.pref.locale', 'fr')
   const result = render(<LocaleProvider>{node}</LocaleProvider>)
@@ -194,7 +194,7 @@ describe('the whole rendered tree', () => {
   it('carries no English word from the old catalogue-free surfaces', () => {
     /* A sweep rather than a list of expectations: render the table's centre, a seat, a
        card and the chat together and search the text for the words that used to be
-       there. Naming them is the point — these are the exact strings two sweeps
+       there. Naming them is the point - these are the exact strings two sweeps
        reported as absent. */
     const { container } = inFrench(
       <>

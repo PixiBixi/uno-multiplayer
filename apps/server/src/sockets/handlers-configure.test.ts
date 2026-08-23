@@ -238,7 +238,7 @@ describe('room:configure over sockets', () => {
 
   it('gives a rejoining player the rules as they now stand', async () => {
     /* No extra path for this: `room:state` carries the whole view, so a reconnection is
-       already covered — which is worth asserting rather than assuming, since a client
+       already covered - which is worth asserting rather than assuming, since a client
        that rejoins into stale rules is a client playing a different game. */
     const { host, guest, code, guestToken } = await lobby()
     await emit<PlainAck>(host, 'room:configure', { rules: ALL_ON, pace: { turnSeconds: 9 } })
@@ -272,7 +272,7 @@ describe('room:configure over sockets', () => {
   it('really is the rules the round is dealt with, not a label on the view', async () => {
     /* The end of the chain: a rule switched on in the lobby has to reach `initGame`, or
        the lobby is showing a setting the engine never received. Seven-Zero is visible in
-       a view — it puts a swap target on a 7 — so this reads it back off the wire. */
+       a view - it puts a swap target on a 7 - so this reads it back off the wire. */
     const { host, guest } = await lobby()
     await emit<PlainAck>(host, 'room:configure', {
       rules: { sevenZero: true, playDrawnCard: false },
@@ -289,7 +289,7 @@ describe('room:configure over sockets', () => {
       playDrawnCard: false,
     })
     /* Every seat is offered a `pass` on a table that plays the drawn card, and none on a
-       table that does not — which is the second flag, read out of a real view. */
+       table that does not - which is the second flag, read out of a real view. */
     const passes = [...host.views, ...guest.views].flatMap((view) =>
       view.you.legalMoves.filter((move) => move.type === 'pass'),
     )
@@ -299,7 +299,7 @@ describe('room:configure over sockets', () => {
   /*
    * The lobby was only ever half the problem. A player who read the rules before the deal
    * does not remember them twenty minutes later, and a correct game then reads as a broken
-   * one — which is exactly what happened: a manual UNO penalty was reported as a missing
+   * one - which is exactly what happened: a manual UNO penalty was reported as a missing
    * one, because nothing on the table said the rule was on.
    */
   it('carries the rules into the game, not just the lobby', async () => {

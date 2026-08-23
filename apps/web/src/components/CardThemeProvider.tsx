@@ -6,7 +6,7 @@ type CardThemeValue = { theme: CardTheme; setTheme: (next: CardTheme) => void }
 
 /**
  * A context rather than a read in `Card`, for one reason: the cycler on the table
- * has to repaint every card on screen — the hand, the discard pile, the draw pile —
+ * has to repaint every card on screen - the hand, the discard pile, the draw pile -
  * the moment it is pressed. A dozen components reading `localStorage` on their own
  * would each keep their own idea of the answer.
  *

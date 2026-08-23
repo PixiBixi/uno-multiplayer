@@ -9,7 +9,7 @@ import { emptyStatsFor, tally } from './stats.js'
  *
  * The engine owns whether the card may be played; what is checked here is that the view
  * every player receives carries the decision, that ending a turn produces an event the
- * log can read, and that the event goes through the recording funnel — a room method
+ * log can read, and that the event goes through the recording funnel - a room method
  * that reports outside `record` under-counts the match statistics silently.
  */
 
@@ -36,7 +36,7 @@ const SEATS = [0, 1, 2]
 /**
  * Draws on every turn until one of the cards drawn turns out playable.
  *
- * Deterministic — the room is seeded — but which turn it lands on is a property of that
+ * Deterministic - the room is seeded - but which turn it lands on is a property of that
  * seed rather than something to assert, so the caller checks it was reached at all.
  */
 const drawUntilDeciding = (

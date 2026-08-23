@@ -5,8 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
  * The one guard in this hook worth a test of its own: a second Create while the first is
  * unanswered must not open a second table.
  *
- * A double tap is easy to do — the acknowledgement is a round trip away, 300 ms on a
- * phone — and it used to cost the server a room it then held for the life of the process,
+ * A double tap is easy to do - the acknowledgement is a round trip away, 300 ms on a
+ * phone - and it used to cost the server a room it then held for the life of the process,
  * because the socket abandoned the first table without releasing its seat. The server no
  * longer leaks that room, so this is about not asking for it at all.
  *

@@ -20,7 +20,7 @@ export function nextInt(state: number, maxExclusive: number): { value: number; s
 
 /**
  * Fisher-Yates on a copy: the input is never modified. This is a hard rule of
- * the engine — shuffling a module-level array in place would strip cards from
+ * the engine - shuffling a module-level array in place would strip cards from
  * the deck on every game.
  */
 export function shuffle<T>(input: readonly T[], state: number): { items: T[]; state: number } {

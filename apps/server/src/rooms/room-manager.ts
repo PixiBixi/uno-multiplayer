@@ -120,7 +120,7 @@ export class RoomManager {
        decision, which is what the player watching it expects.
 
        Only while a timer is really live. After one has fired the map no longer holds it,
-       so a forced draw that lands in the sub-state still arms a fresh clock — and has to,
+       so a forced draw that lands in the sub-state still arms a fresh clock - and has to,
        or the deadline would sit in the past and nothing would ever fire against that seat
        again. */
     if (room.decidingOnDrawnCard && this.turnTimers.has(room.code)) return
@@ -130,7 +130,7 @@ export class RoomManager {
     const seconds = room.turnSeconds
     /* activeMemberCount, not just awaitingMove. With every seat gone the clock
        would expire, find no legal move, change nothing, and be armed again by the
-       caller — forever, against a room nobody is sitting at. */
+       caller - forever, against a room nobody is sitting at. */
     if (seconds === null || !room.awaitingMove || room.activeMemberCount() === 0) {
       room.setTurnDeadline(null)
       return
@@ -166,7 +166,7 @@ export class RoomManager {
     this.cancelNextRound(room)
     /* The dealing guard also requires two active members, and this one used not
        to. A round ending with one player left made the deal fail, changed nothing
-       about the room, and the caller armed it again — every five seconds for the
+       about the room, and the caller armed it again - every five seconds for the
        life of the process, pushing a countdown that could never resolve. */
     if (room.turnSeconds === null || !room.betweenRounds || room.activeMemberCount() < MIN_SEATS) {
       room.setNextRoundDeadline(null)
@@ -200,7 +200,7 @@ export class RoomManager {
    * "Empty" alone is not enough: it becomes true the instant every socket id is
    * null, which includes players still inside their grace period. Purge runs on
    * the same cadence as that grace period, so it used to win whenever its tick
-   * landed first — cancelling the very grace timers it was pre-empting, and
+   * landed first - cancelling the very grace timers it was pre-empting, and
    * losing the game for anyone who reloaded at the wrong moment. A room now has
    * to have STAYED empty for a full grace period.
    */

@@ -6,8 +6,8 @@ import { act, cid, handOf, num, seatOf, stateOf, wild } from './test-helpers.js'
 import type { GameState, Move, TableRules } from './types.js'
 
 /*
- * Jump-in. With `jumpIn` on, a card identical to the discard top — same colour AND
- * same value, or same colour and same kind — may be laid down out of turn, and play
+ * Jump-in. With `jumpIn` on, a card identical to the discard top - same colour AND
+ * same value, or same colour and same kind - may be laid down out of turn, and play
  * continues from whoever laid it.
  *
  * It is the only rule in the game that inverts "only `currentSeat` can act" AND
@@ -63,7 +63,7 @@ describe('what the deck itself allows', () => {
   it('holds at most two identical cards, so at most one seat can ever jump a top', () => {
     /* Not a rule so much as the reason the rule is bounded: the twin of the top is
        in one place only. A jump-in chain longer than one is impossible, and two
-       players cannot hold a jump-in against the same card — which is what the race
+       players cannot hold a jump-in against the same card - which is what the race
        between two jumpers, as it is usually imagined, would need. */
     const deck = buildDeck()
     for (const card of deck) {
@@ -96,7 +96,7 @@ describe('what counts as identical', () => {
 
   it('never matches a wild, in either position', () => {
     /* A wild has no colour, so matching on kind alone would make every wild
-       identical to every other one — a wild4 answerable by a wild4 from anywhere
+       identical to every other one - a wild4 answerable by a wild4 from anywhere
        round the table, which is not the rule and is chaos. */
     expect(isIdentical(wild('a', 'wild'), wild('b', 'wild'))).toBe(false)
     expect(isIdentical(wild('a', 'wild4'), wild('b', 'wild4'))).toBe(false)
@@ -193,7 +193,7 @@ describe('a pending draw closes the window entirely', () => {
         seatOf(0, [num('a', 'R', 2), num('b', 'B', 3), num('c', 'B', 4)]),
         seatOf(1, [num('y', 'B', 6), num('y2', 'B', 5)]),
         /* Seat 2 holds the twin, and is off turn both before the debt is settled and
-           after — seat 0 accepting it hands the turn to seat 1. */
+           after - seat 0 accepting it hands the turn to seat 1. */
         seatOf(2, [act('twin', 'draw2', 'R'), num('z', 'Y', 9)]),
       ],
       ...over,
@@ -459,7 +459,7 @@ describe('a jumper who empties their hand', () => {
 })
 
 describe('the race, as it can actually happen', () => {
-  /* Two seats cannot hold a jump-in against the same top — the twin of a card is in
+  /* Two seats cannot hold a jump-in against the same top - the twin of a card is in
      one place only. What can race is the same seat asking twice, and a jump-in
      arriving beside the play of the seat whose turn it was. The server applies
      whichever it sees first; the loser is refused. */
@@ -475,7 +475,7 @@ describe('the race, as it can actually happen', () => {
   it('leaves the skipped seat refused as off turn once the jump has landed', () => {
     const first = apply(table(), 1, { type: 'play', cardId: cid('twin') })
     /* Seat 0 was on turn and its move arrived second. Play has moved to seat 2, so
-       what seat 0 offers now is a jump-in or nothing — and it holds no twin. */
+       what seat 0 offers now is a jump-in or nothing - and it holds no twin. */
     expect(legalMoves(first, 0)).toEqual([])
     expect(applyMove(first, 0, { type: 'play', cardId: cid('a') })).toEqual({
       okay: false,
@@ -485,7 +485,7 @@ describe('the race, as it can actually happen', () => {
 
   it('accepts the play instead when it is the one that arrives first', () => {
     /* Anticlockwise, so the turn lands on seat 2 and seat 1 is still off turn and
-       still a candidate jumper — except that the top is a red 2 now, and the red 7
+       still a candidate jumper - except that the top is a red 2 now, and the red 7
        it was about to jump with is an ordinary card again. */
     const played = apply(table({ direction: -1 }), 0, { type: 'play', cardId: cid('a') })
     expect(played.currentSeat).toBe(2)

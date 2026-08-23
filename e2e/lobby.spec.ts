@@ -52,7 +52,7 @@ test('the guest sees the host toggle a rule, before anything is dealt', async ({
   /* `.click()` rather than `.check()`, and the difference is the design: every control
      here is rendered from the lobby view the server pushed, so the box does not flip until
      the change comes back. `.check()` asserts the new state the instant after the click and
-     would be asserting that the client decided on its own — which is the one thing it must
+     would be asserting that the client decided on its own - which is the one thing it must
      not do, because the server is free to refuse. */
   await host.getByRole('checkbox', { name: /Seven-Zero/ }).click()
   await expect(host.getByRole('checkbox', { name: /Seven-Zero/ })).toBeChecked()
@@ -81,7 +81,7 @@ test('a guest is given no control to configure the table with', async ({ browser
   await joinGame(guest, code, 'Ben')
   await expect(guest.locator('.roster').getByText('Ana')).toBeVisible()
 
-  // Not disabled controls — none at all, and the host has the four the guest lacks.
+  // Not disabled controls - none at all, and the host has the four the guest lacks.
   await expect(guest.getByRole('checkbox')).toHaveCount(0)
   await expect(host.getByRole('checkbox')).toHaveCount(5)
   await expect(guest.getByText(/Ana sets these for the table/)).toBeVisible()
@@ -96,7 +96,7 @@ test('a rule chosen in the lobby is the rule the round is dealt with', async ({ 
      that does not depend on the shuffle: with the rule on, a voluntary draw may or may not
      end the turn depending on whether the card happens to be playable, and with it off a
      draw always ends the turn. Seat 0 always opens and can always draw, so this cannot
-     pass vacuously — something has to change hands. Seven-Zero would have been the obvious
+     pass vacuously - something has to change hands. Seven-Zero would have been the obvious
      choice and is the wrong one: its visible effect needs a 7 within reach, which is a
      question about the deal. */
   const host = await openPlayer(browser)
@@ -121,7 +121,7 @@ test('a rule chosen in the lobby is the rule the round is dealt with', async ({ 
   await expect(host.getByText(/your turn/)).toBeVisible()
   await host.getByRole('button', { name: 'Draw card' }).click()
 
-  /* The rule is off, so the draw ended the turn — no End turn control, no one-card hand,
+  /* The rule is off, so the draw ended the turn - no End turn control, no one-card hand,
      and the turn is at the other seat. Every one of those would be false on a table
      playing the default, which is what makes this an assertion about the flag. */
   await expect(host.locator('.hand-card')).toHaveCount(8)

@@ -3,7 +3,7 @@
  * everywhere else, so it lives behind one function that reports whether it
  * worked rather than throwing.
  *
- * The fallback is not legacy-browser defensiveness — it is the path this app
+ * The fallback is not legacy-browser defensiveness - it is the path this app
  * actually takes when self-hosted. `navigator.clipboard` is undefined outside a
  * secure context, and http://<lan-ip>:5050 is not one. Without the fallback the
  * buttons would work perfectly on localhost and silently do nothing on the
@@ -36,7 +36,7 @@ function copyViaSelection(text: string): boolean {
   /* Invisible but not hidden: `display: none` and `visibility: hidden` both make
      an element unselectable, and a selection is precisely what the copy command
      acts on. Pinned inside the viewport at 1px rather than parked off-screen at
-     a negative offset — focusing something outside the viewport makes the
+     a negative offset - focusing something outside the viewport makes the
      browser scroll to reach it, yanking the lobby out from under the player. */
   carrier.style.position = 'fixed'
   carrier.style.top = '0'

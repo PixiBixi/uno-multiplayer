@@ -35,7 +35,7 @@ const list = (names: string[]): string => {
 
 export const en: Messages = {
   card: cardName,
-  cardUnplayable: (card) => `${cardName(card)} — not playable this turn`,
+  cardUnplayable: (card) => `${cardName(card)} - not playable this turn`,
   cardFaceDown: 'Face-down card',
   colour: (colour) => COLOUR[colour],
   cardTheme: {
@@ -100,7 +100,7 @@ export const en: Messages = {
     turnTimedOut: (name, isYou) => (isYou ? 'You ran out of time' : `${name} ran out of time`),
     roundWon: (name, isYou, pts) =>
       `${isYou ? 'You win' : `${name} wins`} the round, +${points(pts)}`,
-    roundAbandoned: () => 'Round abandoned — not enough players',
+    roundAbandoned: () => 'Round abandoned - not enough players',
     matchResult: (names, youWon) => {
       if (names.length === 0) return 'The match ends with no winner'
       if (names.length === 1)
@@ -151,10 +151,10 @@ export const en: Messages = {
       'A 7 swaps your hand with a player you choose; a 0 sends every hand one seat along, in the direction of play.',
     jumpIn: 'Allow jump-in',
     jumpInHint:
-      'Holding the exact same card as the one just played — same colour, same value — you may lay it down out of turn, and play carries on from you. Never a wild, and never while a draw is pending.',
+      'Holding the exact same card as the one just played - same colour, same value - you may lay it down out of turn, and play carries on from you. Never a wild, and never while a draw is pending.',
     playDrawnCard: 'Let a drawn card be played straight away',
     playDrawnCardHint:
-      'The official rule, so it is on unless you turn it off: draw a card you can play and you may lay it down there and then, or keep it and end your turn. Nothing changes when the card is unplayable — the turn simply ends, as it always did.',
+      'The official rule, so it is on unless you turn it off: draw a card you can play and you may lay it down there and then, or keep it and end your turn. Nothing changes when the card is unplayable - the turn simply ends, as it always did.',
     whatThisDoes: 'What it does',
     explainRule: (rule) => `What it does: ${rule}`,
     ruleOn: 'on',
@@ -177,7 +177,7 @@ export const en: Messages = {
     wild: 'Wild',
     wildFour: 'Wild Draw Four',
     deckTotal: (total) =>
-      `A full deck is ${String(total)} points. A round pays out only what the losers were still holding, so the same target takes far more rounds at two players than at four — worth knowing before picking one.`,
+      `A full deck is ${String(total)} points. A round pays out only what the losers were still holding, so the same target takes far more rounds at two players than at four - worth knowing before picking one.`,
   },
 
   lobby: {
@@ -187,7 +187,7 @@ export const en: Messages = {
     copyLink: 'Copy link',
     codeCopied: 'Game code copied',
     linkCopied: 'Invite link copied',
-    copyFailed: 'Couldn’t copy — select it by hand',
+    copyFailed: 'Couldn’t copy - select it by hand',
     waitingForPlayer: 'Waiting for a player…',
     host: 'Host',
     theHost: 'the host',
@@ -222,7 +222,7 @@ export const en: Messages = {
     ruleOn: 'on',
     ruleOff: 'off',
     openToCallOut: 'Open to a call-out',
-    youAreExposed: 'You are on one card without an UNO — call it on your next turn to be safe.',
+    youAreExposed: 'You are on one card without an UNO - call it on your next turn to be safe.',
     jumpIn: 'Jump in!',
     endTurn: 'End turn',
     playDrawnCard: 'Play the card you drew, or end your turn',
@@ -311,7 +311,7 @@ export const en: Messages = {
   crash: {
     heading: 'Something in the table stopped working.',
     seatHeld:
-      'Your seat is still held. Reloading rejoins the same game — the server keeps the state, so nothing is lost but this screen.',
+      'Your seat is still held. Reloading rejoins the same game - the server keeps the state, so nothing is lost but this screen.',
     reload: 'Reload and rejoin',
   },
 

@@ -8,7 +8,7 @@ import { emptyStatsFor, tally } from './stats.js'
 /*
  * The Liar call-out as the Room reports it. The engine owns whether the move is
  * legal; what is checked here is that the room turns it into the events the log,
- * the sounds and the statistics all read — and that every one of them goes through
+ * the sounds and the statistics all read - and that every one of them goes through
  * the recording funnel.
  */
 
