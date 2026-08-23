@@ -26,8 +26,9 @@ rest of the project follows from.
 
 ## Run it locally
 
-**Node 24**, the Active LTS pinned in `.nvmrc`. That is the version CI lints, covers
-and runs the browser suite on, and the one the Docker image ships. `engines` says
+**Node 26**, pinned in `.nvmrc`. That is the version CI lints, covers and runs the
+browser suite on, and the one the Docker image ships. It is the current release, not
+yet the Active LTS: Node 26 takes that title in October 2026. `engines` says
 `>=22` because the code still runs there and the test matrix proves it - but the floor
 is what this supports, not what to run it on. Reading it the other way is how the
 image once shipped 22 while everything else validated 24; a CI step now fails if the

@@ -35,7 +35,7 @@ Anything that breaks one of those is worth a second look.
 
 ## Running it
 
-Node 22 or later; the repo pins the Active LTS in `.nvmrc`.
+Node 22 or later; `.nvmrc` pins the version the project actually runs on.
 
 ```bash
 npm install

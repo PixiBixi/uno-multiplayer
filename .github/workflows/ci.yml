@@ -32,7 +32,7 @@ jobs:
       - run: npm run typecheck
       - run: npm run build
 
-      # The image once shipped Node 22 while every other job validated the 24 in .nvmrc:
+      # The image once shipped Node 22 while every other job validated the version in .nvmrc:
       # supported, but not the runtime anything was tested on, and nothing failed to say
       # so. This is the only place the two can be compared, so it is asserted here.
       - name: The image runs the Node version CI validates
@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Floor declared in engines, current Active LTS, and current release.
+        # Floor declared in engines, the Active LTS, and the release .nvmrc pins.
         node: ['22', '24', '26']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
