@@ -1,6 +1,21 @@
 # Changelog
 
 - - -
+## [v1.6.0](https://github.com/PixiBixi/uno-multiplayer/compare/65e0f2ee37634aed86bdc9f36504591661a49126..v1.6.0) - 2026-08-23
+#### Tests
+- (**server**) deal another round rather than give up hunting a seven - ([c2fc694](https://github.com/PixiBixi/uno-multiplayer/commit/c2fc6947ca28442f27fbf15503e79f3c89e40beb)) - Jeremy Delgado
+- (**server**) seed the socket table so the move test stops flaking - ([cd511a7](https://github.com/PixiBixi/uno-multiplayer/commit/cd511a763ca2c5ec7d236229b942470491ed59d8)) - Jeremy Delgado
+#### Continuous Integration
+- (**docker**) attest the image published on every green main - ([35c887f](https://github.com/PixiBixi/uno-multiplayer/commit/35c887f3c07e4370742bc140e805acccab0cb8cb)) - Jeremy Delgado
+- pin every action by SHA and close the injection paths - ([65e0f2e](https://github.com/PixiBixi/uno-multiplayer/commit/65e0f2ee37634aed86bdc9f36504591661a49126)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**node**) move the runtime from 24 to 26 - ([1719658](https://github.com/PixiBixi/uno-multiplayer/commit/171965816ba69d96dc120f97c25db4a7f1cb371a)) - Jeremy Delgado
+#### Style
+- (**ci**) align the release workflow comments with prettier - ([80f90c0](https://github.com/PixiBixi/uno-multiplayer/commit/80f90c0d5b6b8377932d383e121a101691c3ca5f)) - Jeremy Delgado
+- drop every em dash for a plain hyphen - ([093efcb](https://github.com/PixiBixi/uno-multiplayer/commit/093efcb8678ade948a5c68f3516363e034546018)) - Jeremy Delgado
+
+- - -
+
 ## [v1.5.1](https://github.com/PixiBixi/uno-multiplayer/compare/99122adc657963853c0bf663b31b34e93495deab..v1.5.1) - 2026-08-11
 #### Bug Fixes
 - (**web**) state every rule at the table, not only the odd ones - ([99122ad](https://github.com/PixiBixi/uno-multiplayer/commit/99122adc657963853c0bf663b31b34e93495deab)) - Jeremy Delgado
