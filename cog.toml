@@ -3,6 +3,10 @@ tag_prefix = "v"
 
 [commit_types]
 desloppify = { changelog_title = "Code Health" }
+# Dependency bumps are most of what lands here and they change the image that ships, so
+# they earn a tag of their own instead of waiting for an unrelated fix to carry them out.
+# Patch rather than minor: no feature ships, and Dependabot now runs daily.
+chore = { bump_patch = true }
 # Out of the box cog only bumps on feat and fix, so a release made only of perf
 # work produced no tag - and, in the sibling repo where this was learned, therefore
 # no image: the improvement sat on the branch until an unrelated fix carried it out.
