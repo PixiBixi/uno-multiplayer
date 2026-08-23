@@ -125,17 +125,38 @@ const zeroOffered = (player: Player): PlayMove | undefined => {
 }
 
 /**
- * Plays the round over the wire until the seat on turn is offered what `find` is
- * after, deliberately avoiding it in the meantime so it is still there to use.
+ * Plays over the wire until the seat on turn is offered what `find` is after,
+ * deliberately avoiding it in the meantime so it is still there to use.
+ *
+ * Whether a 7 or a 0 is ever dealt or drawn is a property of the shuffle, so it deals
+ * further rounds rather than giving up at the end of one: the drive used to fail on an
+ * unlucky deal, which is the same flake the drawn-card drive is written to avoid.
+ * `rounds` bounds that, and a caller proving nothing is ever offered passes 1.
  */
 const playUntilOffered = async (
   players: Player[],
   find: (player: Player) => PlayMove | undefined,
+  rounds = 3,
 ): Promise<{ player: Player; move: PlayMove }> => {
-  for (let turn = 0; turn < 400; turn += 1) {
+  // The host, the only seat the server lets deal the next round.
+  const host = players[0]
+  let dealt = 1
+  for (let turn = 0; turn < 600; turn += 1) {
     const view = players[0]?.view()
-    if (view == null || view.phase === 'finished') {
-      throw new Error('the round ended before the move was ever offered')
+    if (view == null) throw new Error('the round ended before the move was ever offered')
+    if (view.phase === 'finished') {
+      if (host === undefined || dealt >= rounds || view.match.winners !== null) {
+        throw new Error('the round ended before the move was ever offered')
+      }
+      const seen = players.map((player) => player.version())
+      const next = await emit<PlainAck>(host, 'game:nextRound', {})
+      if (!next.ok) throw new Error(`could not deal another round: ${next.error}`)
+      await waitFor(
+        () => players.every((player, index) => player.version() > (seen[index] ?? 0)),
+        'every view after a fresh deal',
+      )
+      dealt += 1
+      continue
     }
     const onTurn = players.find((player) => player.view()?.you.seat === view.currentSeat)
     if (onTurn === undefined) throw new Error('no player holds the turn')
@@ -330,7 +351,8 @@ describe('Seven-Zero on the wire', () => {
         jumpIn: false,
         playDrawnCard: false,
       })
-      await expect(playUntilOffered(players, (p) => swapsOffered(p)[0])).rejects.toThrow(
+      // One round is proof enough here, and dealing more would only make it slower.
+      await expect(playUntilOffered(players, (p) => swapsOffered(p)[0], 1)).rejects.toThrow(
         /ended before the move was ever offered|nobody was ever offered/,
       )
       for (const player of players) {
