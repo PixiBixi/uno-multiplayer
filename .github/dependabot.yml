@@ -15,6 +15,12 @@ updates:
       production-dependencies:
         dependency-type: production
     open-pull-requests-limit: 5
+    # typescript-eslint peers on typescript <6.1.0, so TypeScript 7 fails `npm ci`
+    # outright and takes the whole dev group down with it: every other bump in the
+    # group is held hostage. Drop this the day typescript-eslint accepts 7.
+    ignore:
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major']
 
   # Actions are pinned by commit SHA, so what Dependabot bumps here is the digest
   # behind a tag; the version comment on the same line is what it keeps readable.
