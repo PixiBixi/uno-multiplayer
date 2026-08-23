@@ -17,7 +17,10 @@ beforeEach(async () => {
   httpServer = createServer()
   ioServer = registerSocketHandlers(
     httpServer,
-    new RoomManager({ maxRooms: 10, gracePeriodMs: config.gracePeriodMs }),
+    /* A fixed seed: nothing here is about the shuffle, and a random one dealt seat 0
+       a hand with nothing playable in roughly one run in sixty, which flaked the move
+       test. Deals that need a particular shape drive the game to it instead. */
+    new RoomManager({ maxRooms: 10, gracePeriodMs: config.gracePeriodMs, seedSource: () => 42 }),
     config,
   )
   await new Promise<void>((resolve) => httpServer.listen(0, resolve))
@@ -180,8 +183,11 @@ describe('playing over sockets', () => {
     const dealt = Promise.all([host, ...others].map(nextView))
     await emit<PlainAck>(host, 'game:start', {})
     const first = await dealt
-    const move = first[0]?.you.legalMoves[0]
-    if (move === undefined) throw new Error('expected a legal move')
+    /* A play, not merely the first legal move. A voluntary draw is legal too and
+       deliberately keeps the turn when the drawn card is playable, so asking it to
+       move the turn on asserts the opposite of the rule. */
+    const move = first[0]?.you.legalMoves.find((candidate) => candidate.type === 'play')
+    if (move === undefined) throw new Error('expected a playable card in the seeded deal')
 
     const updated = Promise.all([host, ...others].map(nextView))
     expect(await emit<PlainAck>(host, 'game:move', { move })).toEqual({ ok: true })
