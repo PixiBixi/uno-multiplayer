@@ -1,0 +1,34 @@
+{
+  "hooks": {
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -n \"$OPENWIKI_HOOK\" ] || OPENWIKI_HOOK=1 nohup claude -p '/openwiki:wiki update' --permission-mode acceptEdits >/dev/null 2>&1 &"
+          }
+        ]
+      }
+    ]
+  },
+  "permissions": {
+    "allow": [
+      "Bash(git --no-pager status:*)",
+      "Bash(git --no-pager rev-parse:*)",
+      "Bash(git --no-pager rev-list:*)",
+      "Bash(git --no-pager log:*)",
+      "Bash(git --no-pager diff:*)",
+      "Bash(git --no-pager show:*)",
+      "Bash(git --no-pager blame:*)",
+      "Bash(find:*)",
+      "Bash(shasum:*)",
+      "Bash(sha256sum:*)",
+      "Bash(date:*)",
+      "Bash(rg:*)",
+      "Bash(npx prettier:*)",
+      "Bash(rm -f openwiki/_plan.md)",
+      "Edit(openwiki/**)",
+      "Edit(CLAUDE.md)"
+    ]
+  }
+}
