@@ -1,16 +1,4 @@
 {
-  "hooks": {
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "[ -n \"$OPENWIKI_HOOK\" ] || OPENWIKI_HOOK=1 nohup claude -p '/openwiki:wiki update' --permission-mode acceptEdits >/dev/null 2>&1 &"
-          }
-        ]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Bash(git --no-pager status:*)",
