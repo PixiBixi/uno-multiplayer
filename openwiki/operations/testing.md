@@ -1,7 +1,7 @@
 # Testing
 
 ```bash
-npm run verify   # lint + typecheck + unit tests, the gate CI runs
+npm run verify   # lint + typecheck + unit tests
 npm run e2e      # Playwright against a real build
 ```
 

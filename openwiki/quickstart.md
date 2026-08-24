@@ -39,9 +39,18 @@ Node 22 or later; `.nvmrc` pins the version the project actually runs on.
 
 ```bash
 npm install
-npm run verify      # lint + typecheck + unit tests, the same gate CI runs
+npm run verify      # lint + typecheck + unit tests
 npm run e2e         # Playwright against a real build
 ```
+
+`verify` is not the whole of CI: the lint job also runs `format:check` and `build`,
+which `verify` does not, so a Prettier-unformatted file used to pass locally and fail
+CI. `.pre-commit-config.yaml` closes that on the staged files - install it once with
+`pre-commit install`. It runs Prettier and ESLint through `npx`, so the versions are
+the ones in `package-lock.json` rather than versions a hook mirror pinned on its own;
+`npm ci` therefore has to have run. It deliberately leaves out typecheck and build,
+which cannot be scoped to staged files, so the two gates cover opposite gaps and
+neither replaces the other.
 
 To play locally you need both halves up. The client is served by Vite on its own
 port and proxies the socket handshake to the API, so both have to be running:
@@ -72,6 +81,7 @@ blank. See [Testing](operations/testing.md) for what now catches it.
 | Script                     | Purpose                                            |
 | -------------------------- | -------------------------------------------------- |
 | `npm run verify`           | Lint, typecheck and test - run this before pushing |
+| `npm run format:check`     | Prettier check - CI runs it, `verify` does not     |
 | `npm test`                 | Vitest once                                        |
 | `npm run test:watch`       | Vitest in watch mode                               |
 | `npm run test:coverage`    | Coverage report into `coverage/`                   |
