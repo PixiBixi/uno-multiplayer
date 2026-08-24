@@ -135,9 +135,13 @@ lags behind `main`. That was learned in a sibling repo and is recorded in
 
 Versions come from **cocogitto**, which reads the Conventional Commit history: a
 `fix:` bumps the patch, a `feat:` the minor, a `!` or `BREAKING CHANGE` the major.
-`perf:` is configured to bump a patch, because out of the box it bumps nothing and
-a release made only of performance work would produce no tag. `cog check` runs in
-CI, so a malformed commit message fails before it can reach a changelog.
+Two profiles are added in `cog.toml` because the defaults leave real releases untagged:
+`perf:` bumps a patch, since out of the box it bumps nothing and a release made only of
+performance work would produce no tag; `chore:` bumps a patch too, because dependency
+bumps are most of what lands here, they change the image that ships, and Dependabot now
+runs daily - waiting for an unrelated `fix:` to carry them out is how a shipped change
+goes untagged. `cog check` runs in CI, so a malformed commit message fails before it can
+reach a changelog.
 
 So a deployment is a pull rather than a build on the server:
 
@@ -155,6 +159,21 @@ Two properties worth knowing, because they were the point of doing it this way:
 - **A red build cannot move `latest`.** The job is gated on the lint, unit and e2e
   suites, so `pull` can never fetch an image whose tests failed. The cost is that a
   Dockerfile break is reported after the suites rather than beside them.
+
+Each image `ci.yml` publishes also carries a signed **build provenance attestation**,
+pushed to the registry beside it. `latest` is what `docker compose pull` fetches, so it is
+the tag that most needs to say where it came from; the semver image from `release.yml` is
+the one nobody pulls by accident. Verify a pulled image with:
+
+```bash
+gh attestation verify oci://ghcr.io/pixibixi/uno-multiplayer:latest \
+  --owner pixibixi
+```
+
+The attestation is bound to the digest read back from the registry with
+`docker inspect --format='{{index .RepoDigests 0}}'`, not to one computed locally. That
+distinction is the whole point: an attestation bound to anything other than what the
+registry actually stored proves nothing about what you pull.
 
 Rolling back is the SHA tag: set `image:` to
 `ghcr.io/pixibixi/uno-multiplayer:<sha>` and `up -d`. No archaeology, no rebuild

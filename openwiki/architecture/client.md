@@ -77,6 +77,19 @@ Whether the host's controls appear at all is `lobby.configurable`, which the ser
 from the match having begun. It is presentation; the server checks the same condition again
 when the event arrives.
 
+Configuring the table is the lobby's job, but **stating what it plays by is also the
+table's**. `RulesInPlay` renders a strip above the felt from `view.rules`, which is why that
+field is on `PlayerView` and not only on `LobbyView` - see
+[Server authority](server-authority.md#changing-things-here). It shows **all four rules
+always, with their state**, and the first attempt did the opposite: only the unusual ones,
+on the argument that a strip repeating itself every game becomes noise. The argument is
+sound and the design still failed, for a reason worth keeping - an ordinary table then
+rendered nothing, and nothing is indistinguishable from a feature that was never deployed.
+The person who asked for it looked at a table and could not tell. A confirmation that costs
+one row is worth more than a row saved. State is carried by the word, not the tick: the
+mark is `aria-hidden` and each chip carries an on/off word in a visually-hidden span, the
+same reason the card faces carry shape tokens.
+
 Card theme and language stayed on the home screen, because they are not table
 configuration - see below.
 

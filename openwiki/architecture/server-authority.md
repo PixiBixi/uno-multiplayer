@@ -18,6 +18,7 @@ The server computes what is legal and ships it inside each player's view
 type PlayerView = {
   you: { seat: number; hand: Card[]; legalMoves: Move[] }
   opponents: { seat: number; name: string; handCount: number; status: SeatStatus }[]
+  rules: TableRules
   discardTop: Card
   currentColor: Color
   // ... plus match standings and, on a Blazing table, deadlines
@@ -98,6 +99,14 @@ view degrades to an explanation rather than a blank page.
   them and never reasons about them. `configurable` is derived by the server and is
   presentation only; the guard is re-checked when `room:configure` is handled, since a
   host can press Start and toggle a rule in the same breath.
+- `rules` rides on `PlayerView` as well, and that duplication is deliberate. A rule read
+  once before the deal is not one anybody recalls twenty minutes later - a manual UNO
+  penalty was reported as a bug, and the game was right. Sent on the view rather than
+  cached client-side from the lobby, because a reload mid-game receives a `PlayerView` and
+  no lobby at all. `TableRules` is still declared once, in `@uno/engine`; both views
+  re-export it rather than restating what a rule is. Four booleans against a view of
+  roughly 1.4 KB, on a field that never changes between frames, is close to free once the
+  socket deflates them.
 - Adding a field to `PlayerView` means touching `packages/protocol/src/views.ts`,
   `apps/server/src/views.ts`, and every test fixture that builds a view. The
   typechecker will find them all.
