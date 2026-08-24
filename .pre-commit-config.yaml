@@ -1,0 +1,29 @@
+# Catches what `npm run verify` does not: verify runs lint, typecheck and test,
+# while CI lint also runs `format:check` and `build`. A Prettier-unformatted file
+# therefore passed verify and failed CI. This closes that gap on the staged files.
+#
+# `repo: local` with `language: system` rather than mirrors-prettier and
+# mirrors-eslint: those pin their own versions, which drift from
+# package-lock.json. A hook formatting with one Prettier while CI checks with
+# another produces exactly the "passes locally, fails CI" this exists to prevent.
+# The cost is that `npm ci` must have been run, which is true of anyone
+# committing here.
+#
+# typecheck and build stay out: neither can be scoped to staged files, and both
+# are already covered by `npm run verify` and by CI.
+repos:
+  - repo: local
+    hooks:
+      - id: prettier
+        name: prettier
+        entry: npx prettier --write --ignore-unknown
+        language: system
+        files: \.(ts|tsx|js|jsx|json|css|md|ya?ml|html)$
+
+      # No --max-warnings 0: `npm run lint` in CI is a bare `eslint .`, which
+      # exits 0 on warnings. A stricter hook would block commits CI accepts.
+      - id: eslint
+        name: eslint
+        entry: npx eslint --fix
+        language: system
+        files: \.(ts|tsx|js)$

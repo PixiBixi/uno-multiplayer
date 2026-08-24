@@ -9,6 +9,12 @@ self-hosted for a small group.
 - **`npm run verify` before every commit** - lint, typecheck and unit tests. Check
   the exit code; piping to `tail` swallows it, which has hidden a broken typecheck
   in a commit before.
+- **`verify` and the pre-commit hook cover opposite gaps; neither replaces the
+  other.** CI lint runs `format:check` and `build`, which `verify` does not, so an
+  unformatted file used to pass locally and fail CI. `.pre-commit-config.yaml` runs
+  Prettier and ESLint on the staged files to close that. It deliberately does not
+  run typecheck or build, which cannot be scoped to staged files, so `verify` is
+  still the thing that catches those.
 - **Conventional Commits, one commit per scope.** Do not bundle unrelated changes.
 - Avoid backticks in commit messages written inline in a shell - they get executed
   as command substitution. Use `git commit -F <file>`.
