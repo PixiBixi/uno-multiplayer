@@ -113,7 +113,7 @@ somebody who pressed Leave is not coming back to that seat.
 
 ## Timers
 
-Two clocks, both armed from one place in `handlers.ts` (`retime`), called after
+Three clocks, all armed from one place in `handlers.ts` (`retime`), called after
 anything that can change whose turn it is:
 
 - **The turn clock**, on a Blazing table, forcing a draw when it expires - or a `pass`,
@@ -122,9 +122,14 @@ anything that can change whose turn it is:
 - **The between-rounds clock**, dealing the next round five seconds after the last
   one ended. Five is fixed rather than exposed as a setting: a second dial for it
   would be one nobody has an opinion about.
+- **The UNO grace clock**, three seconds for a seat that played down to one card to say
+  it, and only on a table without call-outs - elsewhere an opponent shuts that window.
+  See [the three seconds that follow](rules-and-scoring.md#forgetting-uno-and-the-three-seconds-that-follow)
+  for who pays what; the clock is here because `Room` may not hold one.
 
-Both arms are safe to call unconditionally: each clears itself when the room is not
-in its state, so a table with no pace ends up with no timers and null deadlines.
+All three arms are safe to call unconditionally: each clears itself when the room is not
+in its state, so a table with no pace ends up with no turn timer and null deadlines, and
+one with call-outs never arms a grace clock at all.
 
 **Arming guards must match dealing guards.** The between-rounds guard was once only
 `betweenRounds`, while dealing also requires two active members. A round ending

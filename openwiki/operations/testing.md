@@ -66,8 +66,8 @@ of one: the room's seed is random per test, whether the twin of a card ever reac
 hand at a usable moment is a property of the deal, and a test that fails on an unlucky
 shuffle is a test nobody can read. Two flakes of exactly that shape were found by
 running the file fourteen times, not once - the other being a jumper landing on one
-card, where the automatic UNO penalty legitimately makes the hand grow rather than
-shrink.
+card, which back then made the hand grow rather than shrink, because the forgotten-UNO
+penalty was charged on the spot.
 
 ## Test your tests
 
@@ -86,7 +86,7 @@ is the difference between a guard and a decoration:
 - Ten mutations were re-run against Seven-Zero. The instructive ones: ignoring
   `swapWith` in `sameMove` fails seven, rotating against `direction` fails five,
   making a departed seat a legal swap target fails six, deriving no hands-moved event
-  in the room fails four, charging the automatic UNO penalty on a play that permutes
+  in the room fails four, charging a forgotten UNO on a play that permutes hands
   fails five, and never rendering the target picker fails three in the browser suite.
   Worth noting what the property tests did **not** catch: swapping with a seat that
   has left conserves the deck perfectly well, so only the unit tests refuse it.
