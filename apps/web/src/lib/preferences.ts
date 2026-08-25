@@ -85,3 +85,41 @@ export function writeCardTheme(theme: CardTheme): void {
     /* The preference will not survive a reload. Play continues. */
   }
 }
+
+const COLOUR_MODE_KEY = 'uno.pref.colourMode'
+
+/**
+ * Paper, ink, or whatever the machine is set to.
+ *
+ * `system` is a real option and the default rather than an absence of one: somebody who
+ * has told their OS they want dark has already answered this question, and the two
+ * palettes are the same design either way. The other two exist because that setting is
+ * often not a preference about a game - a laptop on a schedule flips at sunset, and a
+ * player mid-match should be able to say "not this, not now".
+ */
+export const COLOUR_MODES = ['system', 'light', 'dark'] as const
+export type ColourMode = (typeof COLOUR_MODES)[number]
+
+const isColourMode = (value: string | null): value is ColourMode =>
+  value !== null && (COLOUR_MODES as readonly string[]).includes(value)
+
+export function readColourMode(): ColourMode {
+  try {
+    const stored = window.localStorage.getItem(COLOUR_MODE_KEY)
+    return isColourMode(stored) ? stored : 'system'
+  } catch {
+    return 'system'
+  }
+}
+
+export function writeColourMode(mode: ColourMode): void {
+  try {
+    window.localStorage.setItem(COLOUR_MODE_KEY, mode)
+  } catch {
+    /* The preference will not survive a reload. Play continues. */
+  }
+}
+
+/** The next mode round the loop. The masthead cycles rather than opening a menu. */
+export const nextColourMode = (mode: ColourMode): ColourMode =>
+  COLOUR_MODES[(COLOUR_MODES.indexOf(mode) + 1) % COLOUR_MODES.length] ?? 'system'

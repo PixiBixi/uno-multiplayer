@@ -8,7 +8,7 @@ const base = {
   handCount: 3,
   status: 'active' as const,
   isTurn: false,
-  orientation: 'horizontal' as const,
+  seat: 1,
   onCallOut: null,
 }
 
@@ -19,20 +19,20 @@ describe('Seat', () => {
     expect(screen.getByText('3')).toBeTruthy()
   })
 
-  it('renders one card back per held card', () => {
+  it('renders one block per held card', () => {
     const { container } = render(<Seat {...base} handCount={4} />)
-    expect(container.querySelectorAll('.fan-card')).toHaveLength(4)
+    expect(container.querySelectorAll('.seat-back')).toHaveLength(4)
   })
 
-  it('caps the fan for a wide hand but still shows the true count', () => {
+  it('caps the row for a wide hand but still shows the true count', () => {
     const { container } = render(<Seat {...base} handCount={12} />)
-    expect(container.querySelectorAll('.fan-card')).toHaveLength(6)
+    expect(container.querySelectorAll('.seat-back')).toHaveLength(6)
     expect(screen.getByText('12')).toBeTruthy()
   })
 
-  it('renders no card backs for an empty hand', () => {
+  it('renders no blocks for an empty hand', () => {
     const { container } = render(<Seat {...base} handCount={0} />)
-    expect(container.querySelectorAll('.fan-card')).toHaveLength(0)
+    expect(container.querySelectorAll('.seat-back')).toHaveLength(0)
   })
 
   it('marks the active seat in text, not only in colour', () => {
@@ -69,8 +69,13 @@ describe('Seat', () => {
     )
   })
 
-  it('lays the fan out vertically for a side seat', () => {
-    const { container } = render(<Seat {...base} orientation="vertical" />)
-    expect(container.querySelector('.fan-vertical')).toBeTruthy()
+  /* The rail is one column, so a seat no longer has an orientation. What replaced it
+     is the pigment: the row is marked by the seat's own colour, indexed by seat number
+     and never by position, which is the invariant that has already cost a player their
+     whole view of a game once. */
+  it('marks the row with the pigment of its own seat number', () => {
+    const { container } = render(<Seat {...base} seat={2} />)
+    const style = container.querySelector('.seat')?.getAttribute('style') ?? ''
+    expect(style).toContain('--yellow')
   })
 })

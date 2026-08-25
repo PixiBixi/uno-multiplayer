@@ -53,8 +53,8 @@ export function MatchSettings({ goal, pace, onChange }: MatchSettingsProps) {
 
   if (onChange === undefined) {
     return (
-      <fieldset className="goal-picker">
-        <legend>{t.config.matchEnds}</legend>
+      <div className="setting-group">
+        <span className="eyebrow">{t.config.matchEnds}</span>
         <p className="rule-state">
           <span>{t.goalSummary(goal)}</span>
         </p>
@@ -64,7 +64,7 @@ export function MatchSettings({ goal, pace, onChange }: MatchSettingsProps) {
             {pace === null ? t.config.noClock : t.config.paceSummary(pace.turnSeconds)}
           </strong>
         </p>
-      </fieldset>
+      </div>
     )
   }
 
@@ -86,9 +86,9 @@ export function MatchSettings({ goal, pace, onChange }: MatchSettingsProps) {
   }
 
   return (
-    <>
-      <fieldset className="goal-picker">
-        <legend>{t.config.matchEnds}</legend>
+    <div className="setting-row">
+      <div className="setting-group">
+        <span className="eyebrow">{t.config.matchEnds}</span>
         <div className="segmented" role="group" aria-label={t.config.matchFormat}>
           <button
             type="button"
@@ -131,7 +131,8 @@ export function MatchSettings({ goal, pace, onChange }: MatchSettingsProps) {
                 <button
                   key={preset}
                   type="button"
-                  className="chip"
+                  className={target === preset ? 'chip chip-on' : 'chip'}
+                  aria-pressed={target === preset}
                   onClick={() => {
                     setPoints(preset)
                   }}
@@ -160,7 +161,8 @@ export function MatchSettings({ goal, pace, onChange }: MatchSettingsProps) {
                 <button
                   key={preset}
                   type="button"
-                  className="chip"
+                  className={rounds === preset ? 'chip chip-on' : 'chip'}
+                  aria-pressed={rounds === preset}
                   onClick={() => {
                     setRoundCount(preset)
                   }}
@@ -171,13 +173,14 @@ export function MatchSettings({ goal, pace, onChange }: MatchSettingsProps) {
             </span>
           </div>
         )}
-      </fieldset>
+      </div>
 
-      <fieldset className="goal-picker">
-        <legend>{t.config.blazing}</legend>
+      <div className="setting-group">
+        <span className="eyebrow">{t.config.blazing}</span>
         <label className="switch-row">
           <input
             type="checkbox"
+            className="switch"
             checked={pace !== null}
             onChange={(event) => {
               /* Null rather than an absent field: absent means "leave the clock alone",
@@ -193,7 +196,7 @@ export function MatchSettings({ goal, pace, onChange }: MatchSettingsProps) {
               )
             }}
           />
-          <span>{t.config.clockOnEveryTurn}</span>
+          <span className="rule-name">{t.config.clockOnEveryTurn}</span>
         </label>
 
         {pace !== null && (
@@ -216,7 +219,8 @@ export function MatchSettings({ goal, pace, onChange }: MatchSettingsProps) {
                   <button
                     key={preset}
                     type="button"
-                    className="chip"
+                    className={turnSeconds === preset ? 'chip chip-on chip-clock' : 'chip'}
+                    aria-pressed={turnSeconds === preset}
                     onClick={() => {
                       setSeconds(preset)
                     }}
@@ -229,7 +233,7 @@ export function MatchSettings({ goal, pace, onChange }: MatchSettingsProps) {
             <p className="hint">{t.config.blazingHint}</p>
           </>
         )}
-      </fieldset>
-    </>
+      </div>
+    </div>
   )
 }

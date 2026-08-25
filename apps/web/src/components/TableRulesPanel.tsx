@@ -40,23 +40,23 @@ export function TableRulesPanel({ rules, onChange, note }: TableRulesPanelProps)
   const t = useMessages()
 
   return (
-    <fieldset className="goal-picker">
-      <legend>{t.config.tableRules}</legend>
+    <div className="rule-list">
       {ruleList(t).map((rule) => (
-        <div className="rule" key={rule.key}>
+        <div className={rules[rule.key] ? 'rule rule-on' : 'rule'} key={rule.key}>
           {onChange === undefined ? (
             /* The state in words, not a dimmed checkbox: a disabled control says "you
                could change this, but not now", which is not what a guest is being told,
                and it drops out of the tab order on the one surface where reading is the
                whole point. */
             <p className="rule-state">
-              <span>{rule.label}</span>
+              <span className="rule-name">{rule.label}</span>
               <strong>{rules[rule.key] ? t.config.ruleOn : t.config.ruleOff}</strong>
             </p>
           ) : (
             <label className="switch-row">
               <input
                 type="checkbox"
+                className="switch"
                 checked={rules[rule.key]}
                 onChange={(event) => {
                   /* The whole object, not the one flag. `room:configure` is partial per
@@ -66,19 +66,27 @@ export function TableRulesPanel({ rules, onChange, note }: TableRulesPanelProps)
                   onChange({ ...rules, [rule.key]: event.target.checked })
                 }}
               />
-              <span>{rule.label}</span>
+              <span className="rule-name">{rule.label}</span>
             </label>
           )}
-          {/* Behind a disclosure rather than on permanent display. Four explanations at
-              once is what made the home screen a wall of text; here the reader has
-              already chosen to look. */}
-          <details className="rule-why">
-            <summary aria-label={t.config.explainRule(rule.label)}>{t.config.whatThisDoes}</summary>
-            <p className="hint">{rule.hint}</p>
-          </details>
+          {/* On permanent display rather than behind a disclosure. Four explanations at
+              once is what made the home screen a wall of text, but this column is twice
+              that width and the explanation is the thing a guest most needs: a rule they
+              can read is a rule they are not surprised by. */}
+          <p className="rule-why">{rule.hint}</p>
         </div>
       ))}
-      {note !== undefined && <p className="hint">{note}</p>}
-    </fieldset>
+      {note !== undefined && (
+        /* An ink block rather than a dim line. It says who is allowed to change what, and
+           that is the answer to the question a guest asks first - a hint-coloured
+           sentence at the foot of a column is the one thing nobody reads. */
+        <p className="rule-note">
+          <span className="rule-note-mark" aria-hidden="true">
+            !
+          </span>
+          <span>{note}</span>
+        </p>
+      )}
+    </div>
   )
 }

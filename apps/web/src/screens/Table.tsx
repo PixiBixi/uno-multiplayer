@@ -1,6 +1,6 @@
 import type { Move } from '@uno/engine'
 import type { LobbyView, PlayerView } from '@uno/protocol'
-import { CentreStack } from '../components/CentreStack.js'
+import { CentreStack, ColourBand } from '../components/CentreStack.js'
 import { useCardTheme, useSetCardTheme } from '../components/CardThemeProvider.js'
 import { ChatPanel } from '../components/ChatPanel.js'
 import { GameOver } from '../components/GameOver.js'
@@ -14,6 +14,8 @@ import { useTableEffects } from '../hooks/useTableEffects.js'
 import { useCountdown } from '../hooks/useCountdown.js'
 import { useTableSounds } from '../hooks/useTableSounds.js'
 import { nextCardTheme } from '../lib/card-themes.js'
+import { nextColourMode } from '../lib/preferences.js'
+import { useColourMode, useSetColourMode } from '../components/ColourModeProvider.js'
 import { useMessages } from '../i18n/index.js'
 
 type TableProps = {
@@ -28,13 +30,6 @@ type TableProps = {
   onSend: (text: string) => void
   onDismissToast: (id: number) => void
 }
-
-/**
- * Seats are laid out relative to the viewer: your hand is always at the bottom
- * edge. The engine keeps seat numbers stable, so the client rotates the
- * arrangement rather than the data.
- */
-const AREAS = ['west', 'north', 'east'] as const
 
 export function Table({
   view,
@@ -51,6 +46,8 @@ export function Table({
   const t = useMessages()
   const cardTheme = useCardTheme()
   const setCardTheme = useSetCardTheme()
+  const colourMode = useColourMode()
+  const setColourMode = useSetColourMode()
   const myTurn = view.currentSeat === view.you.seat
   const canDraw = view.you.legalMoves.some((move) => move.type === 'draw')
   const acceptDraw = view.you.legalMoves.find((move) => move.type === 'acceptDraw')
@@ -111,81 +108,133 @@ export function Table({
   // Null on a table with no clock, which is what keeps Blazing opt-in.
   const secondsLeft = useCountdown(view.turnDeadline)
 
+  /* The turn, as the headline it is. `AREAS` is gone with the felt: the opponents sit in
+     one rail down the left, in seat order, so there is nothing left to place by compass
+     point. */
+  const headline = myTurn ? t.table.yourMove : t.table.waitingOn(nameOf(view.currentSeat))
+
   return (
     <main className="table-screen">
       <div className={shaking ? 'table-surface fx-shake' : 'table-surface'}>
         <PlayEffects effects={effects} />
-        <button
-          type="button"
-          className="sound-toggle"
-          onClick={toggleMuted}
-          aria-pressed={muted}
-          aria-label={muted ? t.table.unmuteSound : t.table.muteSound}
-          title={muted ? t.table.unmuteSound : t.table.muteSound}
-        >
-          <svg
-            width={20}
-            height={20}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-            {muted ? (
-              <path d="m16 9 5 6m0-6-5 6" />
-            ) : (
-              <>
-                <path d="M15.5 8.5a5 5 0 0 1 0 7" />
-                <path d="M18.5 5.5a9 9 0 0 1 0 13" />
-              </>
-            )}
-          </svg>
-        </button>
-        {/* Beside the mute toggle for the same reason it is: a card face is a
-            setting, not a move, and it must not sit among the buttons a player
-            reaches for with a clock running. A cycler rather than four options,
-            because there is no room on the felt for four and the previews on the
-            home screen are where you choose by looking. */}
-        <button
-          type="button"
-          className="theme-cycler"
-          onClick={() => {
-            setCardTheme(nextCardTheme(cardTheme))
-          }}
-          aria-label={t.cardTheme.named(t.cardTheme.name[cardTheme])}
-          title={t.cardTheme.named(t.cardTheme.name[cardTheme])}
-        >
-          <svg
-            width={20}
-            height={20}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <rect x={3} y={6} width={11} height={15} rx={2} />
-            <path d="M8 3h9a2 2 0 0 1 2 2v12" />
-          </svg>
-        </button>
-        <RulesInPlay rules={view.rules} />
-        <div className="table-grid">
-          {view.opponents.slice(0, 3).map((opponent, index) => {
-            const callOut = callOutAgainst(opponent.seat)
-            return (
-              <div className={`area-${AREAS[index] ?? 'north'}`} key={opponent.seat}>
+
+        <header className="table-bar">
+          <div className="table-bar-left">
+            <span className="wordmark">UNO</span>
+            {/* The match, said once at the top rather than on the end-of-round card only.
+                Reuses the strings the scoreboard already owns: the round and the target
+                are the same two facts wherever they are read. */}
+            <span className="eyebrow">
+              {view.match.goal.kind === 'points'
+                ? t.over.firstTo(view.match.goal.target)
+                : t.over.roundOf(view.match.round, view.match.goal.count)}
+            </span>
+          </div>
+          <div className="table-bar-right">
+            <span className="table-code">
+              <span className="eyebrow">{t.lobby.gameCodeLabel}</span>
+              <span className="table-code-value">{lobby?.roomCode ?? ''}</span>
+            </span>
+            <button
+              type="button"
+              className="icon-btn icon-btn-framed"
+              onClick={toggleMuted}
+              aria-pressed={muted}
+              aria-label={muted ? t.table.unmuteSound : t.table.muteSound}
+              title={muted ? t.table.unmuteSound : t.table.muteSound}
+            >
+              <svg
+                width={20}
+                height={20}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+                {muted ? (
+                  <path d="m16 9 5 6m0-6-5 6" />
+                ) : (
+                  <>
+                    <path d="M15.5 8.5a5 5 0 0 1 0 7" />
+                    <path d="M18.5 5.5a9 9 0 0 1 0 13" />
+                  </>
+                )}
+              </svg>
+            </button>
+            {/* The palette, reachable mid-match: the machine's own setting flips at
+                sunset on a schedule that has nothing to do with a game in progress. */}
+            <button
+              type="button"
+              className="icon-btn icon-btn-framed mode-cycler"
+              onClick={() => {
+                setColourMode(nextColourMode(colourMode))
+              }}
+              aria-label={`${t.home.colourMode}: ${t.home.colourModeName[colourMode]}`}
+              title={`${t.home.colourMode}: ${t.home.colourModeName[colourMode]}`}
+            >
+              <svg
+                width={20}
+                height={20}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx={12} cy={12} r={8} />
+                <path d="M12 4a8 8 0 0 0 0 16Z" fill="currentColor" stroke="none" />
+              </svg>
+            </button>
+
+            {/* Beside the mute toggle for the same reason it is: a card face is a
+                setting, not a move, and it must not sit among the buttons a player
+                reaches for with a clock running. */}
+            <button
+              type="button"
+              className="icon-btn icon-btn-framed theme-cycler"
+              onClick={() => {
+                setCardTheme(nextCardTheme(cardTheme))
+              }}
+              aria-label={t.cardTheme.named(t.cardTheme.name[cardTheme])}
+              title={t.cardTheme.named(t.cardTheme.name[cardTheme])}
+            >
+              <svg
+                width={20}
+                height={20}
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <rect x={3} y={6} width={11} height={15} rx={2} />
+                <path d="M8 3h9a2 2 0 0 1 2 2v12" />
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <div className="table-body">
+          <aside className="rail rail-seats">
+            <span className="eyebrow">{t.table.opponents}</span>
+            {view.opponents.map((opponent) => {
+              const callOut = callOutAgainst(opponent.seat)
+              return (
                 <Seat
+                  key={opponent.seat}
+                  seat={opponent.seat}
                   name={opponent.name}
                   handCount={opponent.handCount}
                   status={opponent.status}
                   isTurn={view.currentSeat === opponent.seat}
-                  orientation={index === 1 ? 'horizontal' : 'vertical'}
                   onCallOut={
                     callOut === undefined
                       ? null
@@ -194,40 +243,71 @@ export function Table({
                         }
                   }
                 />
+              )
+            })}
+
+            {/* At the foot of the rail, under the seats. A rule read once in the lobby is
+                not one anybody recalls twenty minutes later, and this is the column a
+                player is already reading to see who holds what. */}
+            <div className="rail-foot">
+              <RulesInPlay rules={view.rules} />
+            </div>
+          </aside>
+
+          <section className="table-centre">
+            <ColourBand view={view} />
+            <div className="centre-row">
+              <CentreStack view={view} drawNonce={drawNonce} />
+              <div className="turn-block">
+                <h2 className="turn-headline">{headline}</h2>
+                {secondsLeft !== null && (
+                  /* A live region so the number is announced as it falls, and urgent
+                     only at the end - a polite update every second would queue up
+                     behind itself in a screen reader. */
+                  <p
+                    className={secondsLeft <= 3 ? 'turn-clock turn-clock-urgent' : 'turn-clock'}
+                    role="status"
+                    aria-live={secondsLeft <= 3 ? 'assertive' : 'off'}
+                  >
+                    <span className="turn-clock-number">{secondsLeft}</span>
+                    <span className="turn-clock-label">
+                      {myTurn ? t.table.secondsToPlay : t.table.secondsLeft}
+                    </span>
+                  </p>
+                )}
+                {canJumpIn && <p className="turn-note turn-note-jump">{t.table.jumpIn}</p>}
               </div>
-            )
-          })}
+            </div>
+          </section>
 
-          <div className="area-centre">
-            <CentreStack view={view} drawNonce={drawNonce} />
-            {secondsLeft !== null && (
-              /* A live region so the number is announced as it falls, and urgent
-                 only at the end - a polite update every second would queue up
-                 behind itself in a screen reader. */
-              <p
-                className={secondsLeft <= 3 ? 'turn-clock turn-clock-urgent' : 'turn-clock'}
-                role="status"
-                aria-live={secondsLeft <= 3 ? 'assertive' : 'off'}
-              >
-                <span className="turn-clock-number">{secondsLeft}</span>
-                <span className="turn-clock-label">
-                  {myTurn ? t.table.secondsToPlay : t.table.secondsLeft}
-                </span>
-              </p>
-            )}
-          </div>
+          <ChatPanel feed={feed} mySeat={view.you.seat} nameOf={nameOf} onSend={onSend} />
+        </div>
 
-          <div className="area-south">
-            {exposedToCallOut && (
-              /* Assertive, unlike the countdown next door: this is a state you can act on
-                 and it expires at the end of your next turn, so a polite queue behind
-                 whatever else is being announced would deliver it after it stopped being
-                 true. */
-              <p className="banner banner-warn" role="alert">
-                {t.table.youAreExposed}
-              </p>
-            )}
+        <div className="table-south">
+          {exposedToCallOut && (
+            /* Assertive, unlike the countdown next door: this is a state you can act on
+               and it expires at the end of your next turn, so a polite queue behind
+               whatever else is being announced would deliver it after it stopped being
+               true. */
+            <p className="banner banner-warn" role="alert">
+              {t.table.youAreExposed}
+            </p>
+          )}
+
+          <div className="south-bar">
             <div className="controls">
+              {/* The UNO control only exists when calling it is a legal move. */}
+              {canCallUno && (
+                <button
+                  type="button"
+                  className="btn btn-uno"
+                  onClick={() => {
+                    onPlay({ type: 'callUno' })
+                  }}
+                >
+                  {t.table.callUno}
+                </button>
+              )}
               {acceptDraw !== undefined ? (
                 <button
                   type="button"
@@ -265,47 +345,34 @@ export function Table({
                   {t.table.drawCard}
                 </button>
               )}
-              {/* The UNO control only exists when calling it is a legal move. */}
-              {canCallUno && (
-                <button
-                  type="button"
-                  className="btn btn-uno"
-                  onClick={() => {
-                    onPlay({ type: 'callUno' })
-                  }}
-                >
-                  {t.table.callUno}
-                </button>
+
+              {/* Says which two things are on offer, because neither is obvious from the
+                  felt: the drawn card lights up among cards that no longer do, and the only
+                  other control has just changed what it says. A player who reads nothing and
+                  sees no move concludes the table has hung. */}
+              {canPass && (
+                <p className="drawn-prompt" role="status">
+                  {t.table.playDrawnCard}
+                </p>
               )}
             </div>
-
-            {/* Says which two things are on offer, because neither is obvious from the
-                felt: the drawn card lights up among cards that no longer do, and the only
-                other control has just changed what it says. A player who reads nothing and
-                sees no move concludes the table has hung. */}
-            {canPass && (
-              <p className="drawn-prompt" role="status">
-                {t.table.playDrawnCard}
-              </p>
-            )}
-
-            {/* `opponents` is exactly what the swap picker needs to name a seat, so
-                it is passed through rather than rebuilt. */}
-            <Hand
-              cards={view.you.hand}
-              legalMoves={view.you.legalMoves}
-              onPlay={onPlay}
-              targets={view.opponents}
-            />
 
             <p className={myTurn ? 'plate plate-turn' : 'plate'}>
               <span className="presence presence-active" aria-hidden="true" />
               <span>{t.table.you}</span>
               <span className="plate-count">{view.you.hand.length}</span>
               {myTurn && <span className="plate-note">{t.table.yourTurn}</span>}
-              {canJumpIn && <span className="plate-note plate-note-jump">{t.table.jumpIn}</span>}
             </p>
           </div>
+
+          {/* `opponents` is exactly what the swap picker needs to name a seat, so
+              it is passed through rather than rebuilt. */}
+          <Hand
+            cards={view.you.hand}
+            legalMoves={view.you.legalMoves}
+            onPlay={onPlay}
+            targets={view.opponents}
+          />
         </div>
 
         {view.phase === 'finished' && (
@@ -320,7 +387,6 @@ export function Table({
         )}
       </div>
 
-      <ChatPanel feed={feed} mySeat={view.you.seat} nameOf={nameOf} onSend={onSend} />
       <Toaster toasts={toasts} onDismiss={onDismissToast} />
     </main>
   )

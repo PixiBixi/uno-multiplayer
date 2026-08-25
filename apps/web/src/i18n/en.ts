@@ -39,9 +39,20 @@ export const en: Messages = {
   cardFaceDown: 'Face-down card',
   colour: (colour) => COLOUR[colour],
   cardTheme: {
+    note: {
+      poster: 'the default',
+      classic: 'the printed card',
+      flat: 'most legible',
+      letterpress: 'paper',
+      neon: 'halo',
+    },
+    chosen: 'chosen',
+    privacy:
+      'Your own preference: it never crosses the wire. Two players at the same table can run two different faces.',
     label: 'Card theme',
     named: (name) => `Card theme: ${name}`,
     name: {
+      poster: 'Poster',
       classic: 'Classic',
       flat: 'Flat',
       letterpress: 'Letterpress',
@@ -123,10 +134,13 @@ export const en: Messages = {
     gameCode: 'Game code',
     codePlaceholder: 'K7QM2X',
     joinGame: 'Join game',
+    colourMode: 'Palette',
+    colourModeName: { system: 'System', light: 'Paper', dark: 'Ink' },
     language: 'Language',
   },
 
   config: {
+    tableSettings: 'Table settings',
     matchEnds: 'How the match ends',
     matchFormat: 'Match format',
     firstToScore: 'First to a score',
@@ -155,8 +169,6 @@ export const en: Messages = {
     playDrawnCard: 'Let a drawn card be played straight away',
     playDrawnCardHint:
       'The official rule, so it is on unless you turn it off: draw a card you can play and you may lay it down there and then, or keep it and end your turn. Nothing changes when the card is unplayable - the turn simply ends, as it always did.',
-    whatThisDoes: 'What it does',
-    explainRule: (rule) => `What it does: ${rule}`,
     ruleOn: 'on',
     ruleOff: 'off',
     noClock: 'No clock',
@@ -181,6 +193,8 @@ export const en: Messages = {
   },
 
   lobby: {
+    seatNumber: (n) => `Seat ${String(n)}`,
+    freeSeat: 'waiting',
     gameCodeLabel: 'Game code',
     shareHint: 'Share this with the people you want to play.',
     copyCode: 'Copy code',
@@ -200,6 +214,10 @@ export const en: Messages = {
   },
 
   table: {
+    opponents: 'Opponents',
+    discardPile: 'Discard',
+    yourMove: 'Your move',
+    waitingOn: (name) => `${name} to play`,
     yourTurn: 'your turn',
     theirTurn: 'their turn',
     drawCard: 'Draw card',
@@ -266,6 +284,7 @@ export const en: Messages = {
     waitingNewMatch: 'Waiting for the host to start a new match.',
     dealsItself: 'The next round starts on its own.',
     dealsIn: (seconds) => `Next round deals in ${String(seconds)}…`,
+    awardsTitle: 'How the table played',
     awards: {
       mostWild4: 'Most Wild Draw Fours',
       mostDrawn: 'Most cards drawn',

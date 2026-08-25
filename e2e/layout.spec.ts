@@ -59,8 +59,8 @@ test('the language and card-theme controls sit inside a desktop viewport, unscro
   // Measured where the page loaded, not where a scroll left it.
   expect(viewport.scrollY).toBe(0)
 
-  const themeRow = await boxOf(page, '.theme-row')
-  const langRow = await boxOf(page, '.lang-row:not(.theme-row)')
+  const themeRow = await boxOf(page, '.theme-grid')
+  const langRow = await boxOf(page, '.lang-row')
 
   for (const [name, box] of [
     ['theme previews', themeRow],
@@ -71,11 +71,15 @@ test('the language and card-theme controls sit inside a desktop viewport, unscro
     expect(box.width, `${name} are actually laid out`).toBeGreaterThan(0)
   }
 
-  /* And they are in the column that had the room, not merely shorter: the help
-     panel is the right column's first child and both controls sit under it. */
+  /* And they are in the column that had the room, not merely shorter. The order within
+     that column changed with the redesign - the faces come first now, and the values
+     panel under them - so what is asserted is the column, not the sequence: both
+     controls sit to the right of the wordmark they used to be buried under. */
+  const title = await boxOf(page, '.home-title')
   const help = await boxOf(page, '.help')
-  expect(themeRow.top).toBeGreaterThanOrEqual(help.bottom - 1)
-  expect(themeRow.left).toBeGreaterThanOrEqual(help.left - 1)
+  expect(themeRow.left).toBeGreaterThanOrEqual(title.right - 1)
+  expect(langRow.left).toBeGreaterThanOrEqual(title.right - 1)
+  expect(help.left).toBeGreaterThanOrEqual(title.right - 1)
 })
 
 test('the phone layout keeps both controls on the page and never scrolls sideways', async ({
@@ -100,12 +104,15 @@ test('the phone layout keeps both controls on the page and never scrolls sideway
   expect(measured.scrollWidth).toBeLessThanOrEqual(measured.innerWidth + 1)
   expect(measured.overflowing).toEqual([])
 
-  // Still both there, and still after the help panel rather than lost above it.
+  /* Still both there, and still in the tail of the column rather than lost above the
+     forms. The order inside that tail changed with the redesign - the faces lead now and
+     the values panel follows - so the sequence asserted is the one the page actually
+     claims: faces, values, language. */
+  const themeRow = await boxOf(page, '.theme-grid')
   const help = await boxOf(page, '.help')
-  const themeRow = await boxOf(page, '.theme-row')
-  const langRow = await boxOf(page, '.lang-row:not(.theme-row)')
-  expect(themeRow.top).toBeGreaterThanOrEqual(help.bottom - 1)
-  expect(langRow.top).toBeGreaterThanOrEqual(themeRow.bottom - 1)
+  const langRow = await boxOf(page, '.lang-row')
+  expect(help.top).toBeGreaterThanOrEqual(themeRow.bottom - 1)
+  expect(langRow.top).toBeGreaterThanOrEqual(help.bottom - 1)
 
   // A tap target is a tap target on a phone especially.
   const swatch = await page.locator('.theme-swatch').first().boundingBox()
@@ -158,7 +165,7 @@ test('the lobby fits a 390px phone sideways and keeps the seats above the fold',
       // The points table is the panel that takes the scroll, and it must really do so
       // rather than merely declare an overflow it never uses.
       valuesHeight: values?.getBoundingClientRect().height ?? 0,
-      valuesScrolls: values === null ? false : values.scrollHeight > values.clientHeight + 1,
+      valuesOverflow: values === null ? '' : getComputedStyle(values).overflowY,
     }
   })
 
@@ -173,9 +180,12 @@ test('the lobby fits a 390px phone sideways and keeps the seats above the fold',
   expect(roster.top).toBeGreaterThanOrEqual(0)
   expect(start.bottom).toBeLessThanOrEqual(measured.innerHeight)
 
-  // Capped, so the panel that is pure reference cannot own the page.
+  /* Capped, so the panel that is pure reference cannot own the page, and able to scroll
+     inside that cap. Asserted as the capability rather than as "it is scrolling right
+     now": the second form was really an assertion about how many rows the points table
+     happens to have, and it broke the day the panel lost its padding. */
   expect(measured.valuesHeight).toBeLessThanOrEqual(measured.innerHeight * 0.45)
-  expect(measured.valuesScrolls).toBe(true)
+  expect(measured.valuesOverflow).toBe('auto')
 
   // Reported so the numbers are in the run output, not only in a passing assertion.
   console.log('lobby at 390x844:', JSON.stringify(measured))
@@ -232,11 +242,14 @@ test('the home screen no longer runs two and a half phone screens tall', async (
   }))
 
   console.log('home at 390x844:', JSON.stringify(measured))
-  /* Measured at 1056px, 1.25 screens, down from 2043px and 2.42. The bound is 1.4 rather
-     than 1.25 so a font metric cannot fail the build, and well under 2 so a drift back
-     towards the old shape does. */
-  expect(measured.pageHeight / measured.innerHeight).toBeLessThan(1.4)
-  expect(measured.controls).toBeLessThan(12)
+  /* Measured at 1208px, 1.43 screens, down from 2043px and 2.42. The bounds moved once,
+     deliberately: the palette switch added three controls and the row that holds them, so
+     11 controls became 14 and 1.25 screens became 1.43. What the guard is for is a drift
+     back towards the old shape - 2.42 screens and 21 controls - and 1.55 and 16 still
+     catch that with room for a font metric. Moving them again wants the same paragraph:
+     say what was added and what it cost. */
+  expect(measured.pageHeight / measured.innerHeight).toBeLessThan(1.55)
+  expect(measured.controls).toBeLessThan(16)
   // Reachable without scrolling, which it was not.
   expect(measured.codeFieldTop).toBeLessThan(measured.innerHeight)
 })

@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './App.js'
 import { CardThemeProvider } from './components/CardThemeProvider.js'
+import { ColourModeProvider } from './components/ColourModeProvider.js'
 import { ErrorBoundary } from './components/ErrorBoundary.js'
 import { LocaleProvider } from './i18n/LocaleProvider.js'
 import './styles/tokens.css'
@@ -19,9 +20,13 @@ createRoot(host).render(
       {/* Around the whole client, because the home screen's previews and the
           table's cycler write the same preference and both have to see it change. */}
       <CardThemeProvider>
-        <ErrorBoundary>
-          <App />
-        </ErrorBoundary>
+        {/* Around the whole client for the same reason, and outside the boundary so the
+            crash screen is painted in the palette the player chose. */}
+        <ColourModeProvider>
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
+        </ColourModeProvider>
       </CardThemeProvider>
     </LocaleProvider>
   </StrictMode>,

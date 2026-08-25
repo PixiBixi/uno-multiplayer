@@ -54,6 +54,18 @@ export type Messages = {
    * catalogue rather than a blank in one of them.
    */
   cardTheme: {
+    /**
+     * A word per face, beside its name in the picker.
+     *
+     * Not decoration: which face is the most legible is a measured fact, and which one
+     * is the printed card is the reason the printed card is still on offer at all. A
+     * player choosing by looking deserves to know what they are choosing.
+     */
+    note: Record<CardTheme, string>
+    /** Marks the face currently in use, since the pressed state is not a word. */
+    chosen: string
+    /** Why a face is safe to change: it is yours, and it never crosses the wire. */
+    privacy: string
     label: string
     /** Accessible name for a control showing one theme: "Card theme: Classic". */
     named: (name: string) => string
@@ -130,6 +142,15 @@ export type Messages = {
      *  label, so it belongs here beside `namePlaceholder` rather than in the JSX. */
     codePlaceholder: string
     joinGame: string
+    /**
+     * The palette switch, and a word per mode.
+     *
+     * Named for what the player sees rather than for `prefers-color-scheme`: "Paper" and
+     * "Ink" are the two grounds this design is drawn on, and "Dark mode" would describe a
+     * setting rather than the thing being chosen.
+     */
+    colourMode: string
+    colourModeName: Record<'system' | 'light' | 'dark', string>
     language: string
   }
 
@@ -141,6 +162,8 @@ export type Messages = {
    * `t.home.*` would be a name that lies about where the words are used.
    */
   config: {
+    /** Eyebrow over the whole right column of the lobby. */
+    tableSettings: string
     matchEnds: string
     /** Accessible name for the pair of buttons inside the "how the match ends" set -
      *  the legend names the question, this names the control. */
@@ -164,16 +187,6 @@ export type Messages = {
     /** The one option here that is on by default, and the only one that is a real rule. */
     playDrawnCard: string
     playDrawnCardHint: string
-    /**
-     * The disclosure holding one rule's explanation.
-     *
-     * Four paragraphs on permanent display is what made the home screen a wall of text.
-     * In the lobby the reader has already chosen to look, so the label is short and the
-     * accessible name says which rule it belongs to - four identical summaries would
-     * otherwise be four identical announcements.
-     */
-    whatThisDoes: string
-    explainRule: (rule: string) => string
     /** What a rule's state reads as when nobody at this seat may change it. */
     ruleOn: string
     ruleOff: string
@@ -201,6 +214,10 @@ export type Messages = {
   }
 
   lobby: {
+    /** The seat's own number, under the name in the roster. One-based: seat 0 is "Seat 1". */
+    seatNumber: (n: number) => string
+    /** Said under the placeholder name of a seat nobody has taken. */
+    freeSeat: string
     gameCodeLabel: string
     shareHint: string
     copyCode: string
@@ -222,6 +239,17 @@ export type Messages = {
   }
 
   table: {
+    /** Heading over the rail of other players. */
+    opponents: string
+    /** Label under the discard pile. The draw pile says how many are left instead. */
+    discardPile: string
+    /**
+     * The turn, said once and loudly, as a headline rather than as the note beside a
+     * name. `yourTurn` and `theirTurn` stay: they are the short marks on a plate, and a
+     * plate is read while scanning, not while deciding what to do next.
+     */
+    yourMove: string
+    waitingOn: (name: string) => string
     yourTurn: string
     theirTurn: string
     drawCard: string
@@ -330,6 +358,8 @@ export type Messages = {
     waitingNewMatch: string
     dealsItself: string
     dealsIn: (seconds: number) => string
+    /** Heading over the end-of-match awards column. */
+    awardsTitle: string
     awards: {
       mostWild4: string
       mostDrawn: string

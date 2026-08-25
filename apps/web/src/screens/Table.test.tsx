@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CardThemeProvider } from '../components/CardThemeProvider.js'
-import { CARD_THEMES } from '../lib/card-themes.js'
+import { CARD_THEMES, DEFAULT_CARD_THEME } from '../lib/card-themes.js'
 import { readCardTheme } from '../lib/preferences.js'
 import { Table } from './Table.js'
 
@@ -112,11 +112,13 @@ describe('Table', () => {
     const buttons = screen.getAllByRole('button', { name: /catch/i })
     expect(buttons).toHaveLength(1)
 
-    /* Beside Cleo, seat 2 - the second opponent in the view, which the layout puts
-       at the north edge. A button under the wrong name accuses the wrong player. */
-    const north = document.querySelector('.area-north')
-    expect(north?.textContent).toContain('Cleo')
-    expect(north?.contains(buttons[0] ?? null)).toBe(true)
+    /* Beside Cleo, seat 2 - the second row of the rail. A button under the wrong name
+       accuses the wrong player, so the assertion is that the button and the name are in
+       the SAME row, not merely both on screen. */
+    const row = [...document.querySelectorAll('.seat')].find((seat) =>
+      seat.textContent?.includes('Cleo'),
+    )
+    expect(row?.contains(buttons[0] ?? null)).toBe(true)
 
     await userEvent.click(buttons[0] as HTMLElement)
     expect(onPlay).toHaveBeenCalledWith({ type: 'callOut', target: 2 })
@@ -132,10 +134,10 @@ describe('Table', () => {
         you: { seat: 0, hand: [mine], legalMoves: [{ type: 'callOut', target: 2 }] },
       }),
     )
-    const marked = [...document.querySelectorAll('.plate-exposed')]
+    const marked = [...document.querySelectorAll('.seat-exposed')]
     expect(marked).toHaveLength(1)
     expect(marked[0]?.textContent).toContain('Cleo')
-    // Never colour alone: the plate says so in words as well.
+    // Never colour alone: the row says so in words as well.
     expect(marked[0]?.textContent?.toLowerCase()).toContain('call-out')
   })
 
@@ -408,25 +410,28 @@ describe('the card theme cycler', () => {
         />
       </CardThemeProvider>,
     )
+    /* The masthead, not the controls row. Same rule as before the relayout: a card face
+       is a setting, and it must not sit among the buttons a player reaches for with a
+       clock running. */
     expect(container.querySelector('.controls .theme-cycler')).toBeNull()
-    expect(container.querySelector('.table-surface > .theme-cycler')).not.toBeNull()
+    expect(container.querySelector('.table-bar .theme-cycler')).not.toBeNull()
   })
 
   it('steps to the next theme and remembers it', async () => {
     withProvider()
     const cycler = screen.getByRole('button', { name: /card theme/i })
-    expect(cycler.getAttribute('aria-label')).toBe('Card theme: Classic')
+    expect(cycler.getAttribute('aria-label')).toBe('Card theme: Poster')
 
     await userEvent.click(cycler)
-    expect(cycler.getAttribute('aria-label')).toBe('Card theme: Flat')
-    expect(readCardTheme()).toBe('flat')
+    expect(cycler.getAttribute('aria-label')).toBe('Card theme: Classic')
+    expect(readCardTheme()).toBe('classic')
   })
 
-  it('comes back round to classic after the last theme', async () => {
+  it('comes back round to the default after the last theme', async () => {
     withProvider()
     const cycler = screen.getByRole('button', { name: /card theme/i })
     for (let step = 0; step < CARD_THEMES.length; step += 1) await userEvent.click(cycler)
-    expect(readCardTheme()).toBe('classic')
+    expect(readCardTheme()).toBe(DEFAULT_CARD_THEME)
   })
 
   it('repaints the cards on screen, not only the button', async () => {
@@ -448,9 +453,10 @@ describe('the card theme cycler', () => {
         />
       </CardThemeProvider>,
     )
-    expect(container.querySelectorAll('ellipse').length).toBeGreaterThan(0)
-    await userEvent.click(screen.getByRole('button', { name: /card theme/i }))
-    // Flat draws no oval, on any card on the table.
+    // The poster default draws no oval; the printed card one step along draws one on
+    // every card. Either direction proves the same thing: the hand repainted.
     expect(container.querySelectorAll('ellipse')).toHaveLength(0)
+    await userEvent.click(screen.getByRole('button', { name: /card theme/i }))
+    expect(container.querySelectorAll('ellipse').length).toBeGreaterThan(0)
   })
 })

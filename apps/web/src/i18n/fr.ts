@@ -56,9 +56,20 @@ export const fr: Messages = {
      que fait la carte - une couleur en filet, un chiffre en serif - là où un calque
      de « letterpress » ne dirait rien à personne. */
   cardTheme: {
+    note: {
+      poster: 'par défaut',
+      classic: 'le carton imprimé',
+      flat: 'le plus lisible',
+      letterpress: 'papier',
+      neon: 'halo',
+    },
+    chosen: 'choisi',
+    privacy:
+      'Préférence personnelle : elle ne traverse jamais le réseau. Deux joueurs à la même table peuvent en avoir deux différentes.',
     label: 'Thème des cartes',
     named: (name) => `Thème des cartes : ${name}`,
     name: {
+      poster: 'Affiche',
       classic: 'Classique',
       flat: 'Épuré',
       letterpress: 'Typographié',
@@ -142,10 +153,13 @@ export const fr: Messages = {
     gameCode: 'Code de la partie',
     codePlaceholder: 'K7QM2X',
     joinGame: 'Rejoindre',
+    colourMode: 'Palette',
+    colourModeName: { system: 'Système', light: 'Papier', dark: 'Encre' },
     language: 'Langue',
   },
 
   config: {
+    tableSettings: 'Réglages de la table',
     matchEnds: 'Comment la partie se termine',
     matchFormat: 'Format de la partie',
     firstToScore: 'Premier à un score',
@@ -171,8 +185,6 @@ export const fr: Messages = {
     playDrawnCard: 'Laisser poser la carte que l’on vient de piocher',
     playDrawnCardHint:
       'La règle officielle, donc active sauf si tu la désactives : si la carte piochée est jouable, tu peux la poser aussitôt, ou la garder et terminer ton tour. Rien ne change quand elle est injouable - le tour se termine, comme avant.',
-    whatThisDoes: 'Ce que ça change',
-    explainRule: (rule) => `Ce que ça change : ${rule}`,
     ruleOn: 'activée',
     ruleOff: 'désactivée',
     noClock: 'Pas de chrono',
@@ -197,6 +209,8 @@ export const fr: Messages = {
   },
 
   lobby: {
+    seatNumber: (n) => `Siège ${String(n)}`,
+    freeSeat: 'en attente',
     gameCodeLabel: 'Code de la partie',
     shareHint: 'Partage-le avec les personnes que tu veux inviter.',
     copyCode: 'Copier le code',
@@ -216,6 +230,10 @@ export const fr: Messages = {
   },
 
   table: {
+    opponents: 'Adversaires',
+    discardPile: 'Talon',
+    yourMove: 'À toi de jouer',
+    waitingOn: (name) => `Au tour de ${name}`,
     yourTurn: 'à toi',
     theirTurn: 'à eux',
     drawCard: 'Piocher',
@@ -283,6 +301,7 @@ export const fr: Messages = {
     waitingNewMatch: 'En attente que l’hôte lance une nouvelle partie.',
     dealsItself: 'La manche suivante démarre toute seule.',
     dealsIn: (seconds) => `Manche suivante dans ${String(seconds)}…`,
+    awardsTitle: 'Palmarès de la table',
     awards: {
       mostWild4: 'Le plus de +4',
       mostDrawn: 'Le plus de cartes piochées',

@@ -2,7 +2,7 @@ import { MAX_CHAT_LENGTH } from '@uno/protocol'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { FeedEntry } from '../hooks/game-reducer.js'
 import { useMessages } from '../i18n/index.js'
-import { describeEvent } from '../lib/describe-event.js'
+import { describeEvent, seatOfEvent } from '../lib/describe-event.js'
 import { pigmentForSeat } from '../lib/palette.js'
 
 type ChatPanelProps = {
@@ -93,8 +93,14 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
       <div className="chat-body" ref={bodyRef}>
         {feed.map((entry) => {
           if (entry.kind === 'event') {
+            const seat = seatOfEvent(entry.event)
             return (
-              <p className="sys-line" data-system="" key={entry.id}>
+              <p
+                className="sys-line"
+                data-system=""
+                key={entry.id}
+                style={seat === null ? undefined : { borderInlineStartColor: pigmentForSeat(seat) }}
+              >
                 {describeEvent(entry.event, nameOf, mySeat, messages)}
               </p>
             )
@@ -102,7 +108,10 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
           const mine = entry.seat === mySeat
           return (
             <div className={mine ? 'msg msg-mine' : 'msg'} key={entry.id}>
-              <div className="msg-bubble">
+              <div
+                className="msg-bubble"
+                style={{ borderInlineStartColor: pigmentForSeat(entry.seat) }}
+              >
                 {!mine && (
                   <span className="msg-who" style={{ color: pigmentForSeat(entry.seat) }}>
                     {entry.name}

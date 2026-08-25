@@ -1,4 +1,5 @@
 import type { PlayerView, SeatStats } from '@uno/protocol'
+import { pigmentForSeat } from '../lib/palette.js'
 import { useCountdown } from '../hooks/useCountdown.js'
 import { useMessages } from '../i18n/index.js'
 import type { Messages } from '../i18n/messages.js'
@@ -45,89 +46,123 @@ export function GameOver({ view, nameOf, isHost, onNextRound, onRestart, onLeave
 
   return (
     <div className="over-veil">
-      <div className="over-card" role="dialog" aria-modal="true">
-        {matchOver ? (
-          <h2>
-            {t.event.matchResult(
-              winners.map((seat) => nameOf(seat)),
-              winners.includes(view.you.seat),
-            )}
-          </h2>
-        ) : abandoned ? (
-          <>
-            <h2>{t.over.roundAbandoned}</h2>
-            <p className="hint">{t.over.needsTwo}</p>
-          </>
-        ) : (
-          <h2>{t.over.winsRound(nameOf(view.winner ?? -1), view.winner === view.you.seat)}</h2>
-        )}
+      <div
+        className={awards.length > 0 ? 'over-card over-card-wide' : 'over-card'}
+        role="dialog"
+        aria-modal="true"
+      >
+        <div className="over-main">
+          <div className="pigment-strip" aria-hidden="true">
+            <span style={{ background: 'var(--red)' }} />
+            <span style={{ background: 'var(--blue)' }} />
+            <span style={{ background: 'var(--yellow)' }} />
+            <span style={{ background: 'var(--green)' }} />
+          </div>
 
-        <p className="eyebrow">{goalLine}</p>
+          <span className="over-eyebrow">{goalLine}</span>
 
-        <ul className="standings">
-          {standings.map((row) => (
-            <li
-              key={row.seat}
-              className={winners.includes(row.seat) ? 'standing standing-won' : 'standing'}
-            >
-              <span>{nameOf(row.seat)}</span>
-              <span className="standing-count">{row.score}</span>
-            </li>
-          ))}
-        </ul>
-
-        {dealingIn !== null && (
-          <p className="hint" role="status">
-            {t.over.dealsIn(dealingIn)}
-          </p>
-        )}
-
-        {awards.length > 0 && (
-          <ul className="awards">
-            {awards.map((award) => (
-              <li className="award" key={award.title}>
-                <span className="award-title">{award.title}</span>
-                <span className="award-holder">{award.holder}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-
-        <div className="over-actions">
-          {isHost ? (
-            <>
-              {!matchOver && (
-                <button type="button" className="btn btn-primary" onClick={onNextRound}>
-                  {t.over.nextRound}
-                </button>
+          {matchOver ? (
+            <h2 className="over-title">
+              {t.event.matchResult(
+                winners.map((seat) => nameOf(seat)),
+                winners.includes(view.you.seat),
               )}
-              <button
-                type="button"
-                className={matchOver ? 'btn btn-primary' : 'btn'}
-                onClick={onRestart}
-              >
-                {t.over.newMatch}
-              </button>
+            </h2>
+          ) : abandoned ? (
+            <>
+              <h2 className="over-title">{t.over.roundAbandoned}</h2>
+              <p className="over-lede">{t.over.needsTwo}</p>
             </>
           ) : (
-            <p className="hint">
-              {matchOver
-                ? t.over.waitingNewMatch
-                : dealingIn !== null
-                  ? t.over.dealsItself
-                  : t.over.waitingNextRound}
+            <h2 className="over-title">
+              {t.over.winsRound(nameOf(view.winner ?? -1), view.winner === view.you.seat)}
+            </h2>
+          )}
+
+          {/* A table, not a list of pills: a rank, the seat's own pigment, the name and
+              the figure, ruled off from each other. The two heavy rules are what make it
+              read as a result rather than as a summary. */}
+          <ol className="standings">
+            {standings.map((row, index) => (
+              <li
+                key={row.seat}
+                className={winners.includes(row.seat) ? 'standing standing-won' : 'standing'}
+              >
+                <span className="standing-rank">{index + 1}</span>
+                <span
+                  className="standing-pigment"
+                  style={{ background: pigmentForSeat(row.seat) }}
+                  aria-hidden="true"
+                />
+                <span className="standing-name">{nameOf(row.seat)}</span>
+                <span className="standing-count">{row.score}</span>
+              </li>
+            ))}
+          </ol>
+
+          {dealingIn !== null && (
+            <p className="over-lede" role="status">
+              {t.over.dealsIn(dealingIn)}
             </p>
           )}
-          <button type="button" className="btn" onClick={onLeave}>
-            {t.lobby.leaveTable}
-          </button>
+
+          <div className="over-actions">
+            {isHost ? (
+              <>
+                {!matchOver && (
+                  <button type="button" className="btn btn-primary" onClick={onNextRound}>
+                    {t.over.nextRound}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className={matchOver ? 'btn btn-primary' : 'btn'}
+                  onClick={onRestart}
+                >
+                  {t.over.newMatch}
+                </button>
+              </>
+            ) : (
+              <p className="over-lede">
+                {matchOver
+                  ? t.over.waitingNewMatch
+                  : dealingIn !== null
+                    ? t.over.dealsItself
+                    : t.over.waitingNextRound}
+              </p>
+            )}
+            <button type="button" className="btn" onClick={onLeave}>
+              {t.lobby.leaveTable}
+            </button>
+          </div>
         </div>
+
+        {awards.length > 0 && (
+          <div className="over-aside">
+            <span className="over-eyebrow">{t.over.awardsTitle}</span>
+            <ul className="awards">
+              {awards.map((award, index) => (
+                <li
+                  className="award"
+                  key={award.title}
+                  style={{ borderInlineStartColor: pigmentForSeat(index) }}
+                >
+                  <span className="award-title">{award.title}</span>
+                  <span className="award-line">
+                    <span className="award-holder">{award.holder}</span>
+                    <span className="award-value">{award.value}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
-type Award = { title: string; holder: string }
+type Award = { title: string; holder: string; value: number }
 
 /**
  * The handful of things worth saying out loud at the end of a match.
@@ -168,6 +203,8 @@ function pickAwards(
     if (value === 0) return []
     // Everybody level means nobody stood out, which is not an award.
     if (names.length === seats.length) return []
-    return [{ title: candidate.title, holder: `${names.join(' & ')} (${String(value)})` }]
+    /* The figure is its own field rather than a parenthesis inside the name: it is set
+       in the seat's pigment and at its own size, which a string cannot carry. */
+    return [{ title: candidate.title, holder: names.join(' & '), value }]
   })
 }

@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type { ReactElement } from 'react'
 import { Card } from '../components/Card.js'
 import { CardBack } from '../components/CardBack.js'
-import { CentreStack } from '../components/CentreStack.js'
+import { CentreStack, ColourBand } from '../components/CentreStack.js'
 import { ChatPanel } from '../components/ChatPanel.js'
 import { ColourPicker } from '../components/ColourPicker.js'
 import { PlayEffects } from '../components/PlayEffects.js'
@@ -90,7 +90,7 @@ describe('the centre of the table, in French', () => {
 
   it('names the colour in play in French', () => {
     // The one that proved `COLOR_NAME` was still being read: "Green in play".
-    inFrench(<CentreStack view={viewWith({ currentColor: 'G' })} />)
+    inFrench(<ColourBand view={viewWith({ currentColor: 'G' })} />)
     expect(screen.getByText('Vert en jeu')).toBeTruthy()
   })
 
@@ -142,7 +142,7 @@ describe('a seat and a burst, in French', () => {
       name: 'Ben',
       handCount: 3,
       isTurn: false,
-      orientation: 'horizontal' as const,
+      seat: 1,
       onCallOut: null,
     }
     const away = inFrench(<Seat {...base} status="disconnected" />)
@@ -201,14 +201,7 @@ describe('the whole rendered tree', () => {
         <Card card={num(7)} />
         <CardBack />
         <CentreStack view={viewWith({ pendingDraw: { amount: 6, kind: 'draw2' } })} />
-        <Seat
-          name="Ben"
-          handCount={2}
-          status="left"
-          isTurn={false}
-          orientation="horizontal"
-          onCallOut={null}
-        />
+        <Seat name="Ben" handCount={2} status="left" isTurn={false} seat={1} onCallOut={null} />
         <ChatPanel feed={[]} mySeat={0} nameOf={() => 'Ana'} onSend={vi.fn()} />
       </>,
     )
@@ -243,7 +236,10 @@ describe('the whole rendered tree', () => {
 describe('the French fixture', () => {
   it('really rendered in French rather than rendering nothing', () => {
     const { container } = inFrench(<CentreStack view={viewWith()} />)
-    expect(container.textContent).toContain('Vert')
+    /* "restantes" rather than a colour name: the colour moved into the band across the
+       top of the table, and this check exists to prove the fixture renders French at
+       all, so it has to read a word this component still owns. */
+    expect(container.textContent).toContain('restantes')
     expect(document.documentElement.lang).toBe('fr')
   })
 })

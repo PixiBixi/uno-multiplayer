@@ -9,6 +9,9 @@ table rules.
 **[Play it at uno.jdelgado.fr](https://uno.jdelgado.fr)** - create a table, share the
 six-character code or the link, and everyone joins from a browser.
 
+Each player picks their own card face and whether the page is paper or ink; neither
+crosses the wire, so two people at the same table can run different ones.
+
 ## Why this exists
 
 This is a ground-up rewrite. The predecessor was a two-player prototype where the
@@ -92,15 +95,15 @@ and probing a live instance are in [Deploying](openwiki/operations/deploying.md)
 The manual lives in [`openwiki/`](openwiki/quickstart.md). Every page explains why
 something is the way it is, not only what it does.
 
-| Page                                                          | What it covers                                                         |
-| ------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| [Quickstart](openwiki/quickstart.md)                          | Repository shape, running it, the toolchain, where the reasoning lives |
-| [Server authority](openwiki/architecture/server-authority.md) | The one decision everything follows from; engine invariants, the wire  |
-| [The client](openwiki/architecture/client.md)                 | React layers, card themes, sound, internationalisation, accessibility  |
-| [Rules and scoring](openwiki/domain/rules-and-scoring.md)     | Every rule pinned down, the four table rules, match scoring, Blazing   |
-| [Room lifecycle](openwiki/domain/room-lifecycle.md)           | Rooms, seats, reconnection, timers, configuring the table              |
-| [Deploying](openwiki/operations/deploying.md)                 | Docker, Traefik, configuration, the published image                    |
-| [Testing](openwiki/operations/testing.md)                     | Which tool proves which claim, and the traps this suite has hit        |
+| Page                                                          | What it covers                                                                |
+| ------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| [Quickstart](openwiki/quickstart.md)                          | Repository shape, running it, the toolchain, where the reasoning lives        |
+| [Server authority](openwiki/architecture/server-authority.md) | The one decision everything follows from; engine invariants, the wire         |
+| [The client](openwiki/architecture/client.md)                 | React layers, card faces, palette, sound, internationalisation, accessibility |
+| [Rules and scoring](openwiki/domain/rules-and-scoring.md)     | Every rule pinned down, the four table rules, match scoring, Blazing          |
+| [Room lifecycle](openwiki/domain/room-lifecycle.md)           | Rooms, seats, reconnection, timers, configuring the table                     |
+| [Deploying](openwiki/operations/deploying.md)                 | Docker, Traefik, configuration, the published image                           |
+| [Testing](openwiki/operations/testing.md)                     | Which tool proves which claim, and the traps this suite has hit               |
 
 Design documents live in `docs/superpowers/`: the
 [design spec](docs/superpowers/specs/2026-08-04-uno-multiplayer-design.md) records the

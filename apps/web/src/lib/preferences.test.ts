@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
+import { DEFAULT_CARD_THEME } from './card-themes.js'
+import { COLOUR_MODES, readColourMode, writeColourMode } from './preferences.js'
 import { readCardTheme, readHandSort, writeCardTheme, writeHandSort } from './preferences.js'
 
 beforeEach(() => {
@@ -44,7 +46,7 @@ describe('hand sort preference', () => {
 
 describe('card theme preference', () => {
   it('defaults to the card everybody already has', () => {
-    expect(readCardTheme()).toBe('classic')
+    expect(readCardTheme()).toBe(DEFAULT_CARD_THEME)
   })
 
   it('round-trips a choice', () => {
@@ -52,12 +54,12 @@ describe('card theme preference', () => {
     expect(readCardTheme()).toBe('letterpress')
   })
 
-  it('falls back to classic on a stored value that is not a theme', () => {
+  it('falls back to the default on a stored value that is not a theme', () => {
     /* Not a blank card: an unknown theme has no spec, and a face built from
        `undefined` renders nothing at all. The mute flag guards the same way for the
        same reason. */
     window.localStorage.setItem('uno.pref.cardTheme', 'holographic')
-    expect(readCardTheme()).toBe('classic')
+    expect(readCardTheme()).toBe(DEFAULT_CARD_THEME)
   })
 
   it('keeps its key out of the session namespace', () => {
@@ -76,7 +78,49 @@ describe('card theme preference', () => {
     })
 
     expect(() => writeCardTheme('neon')).not.toThrow()
-    expect(readCardTheme()).toBe('classic')
+    expect(readCardTheme()).toBe(DEFAULT_CARD_THEME)
+
+    if (original !== undefined) Object.defineProperty(window, 'localStorage', original)
+  })
+})
+
+describe('colour mode preference', () => {
+  it('follows the system until somebody says otherwise', () => {
+    expect(readColourMode()).toBe('system')
+  })
+
+  it('remembers an explicit choice', () => {
+    writeColourMode('dark')
+    expect(readColourMode()).toBe('dark')
+    writeColourMode('light')
+    expect(readColourMode()).toBe('light')
+  })
+
+  /* Same reasoning as the card face: a value with no palette behind it would paint the
+     page from `undefined`, and here that is the whole page rather than one card. */
+  it('falls back to the system on a stored value that is not a mode', () => {
+    window.localStorage.setItem('uno.pref.colourMode', 'sepia')
+    expect(readColourMode()).toBe('system')
+  })
+
+  it('offers exactly the three modes, system included', () => {
+    expect([...COLOUR_MODES]).toEqual(['system', 'light', 'dark'])
+  })
+
+  /* Blocked at the property, the way the two tests above do it: a browser set to refuse
+     storage throws on ACCESS to `localStorage`, not on the call, so stubbing the method
+     tests a failure mode that does not exist. */
+  it('degrades instead of throwing when storage is unavailable', () => {
+    const original = Object.getOwnPropertyDescriptor(window, 'localStorage')
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      get() {
+        throw new Error('storage blocked')
+      },
+    })
+
+    expect(() => writeColourMode('dark')).not.toThrow()
+    expect(readColourMode()).toBe('system')
 
     if (original !== undefined) Object.defineProperty(window, 'localStorage', original)
   })

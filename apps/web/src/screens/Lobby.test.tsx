@@ -190,15 +190,19 @@ describe('Lobby', () => {
       expect(screen.getByRole('checkbox', { name: /seven-zero/i })).toBeTruthy()
     })
 
-    it('explains each rule behind its own disclosure rather than four paragraphs at once', () => {
-      const { container } = { container: document.body }
+    /* These used to hide behind a `<details>` each, because four explanations at once was
+       what made the old home screen a wall of text. They are on permanent display now: the
+       column is twice that width, and the explanation is the thing a guest most needs -
+       a rule you can read is a rule you are not surprised by. What is still asserted is
+       that every rule carries one, which is the part that mattered. */
+    it('explains every rule, in full, one explanation per rule', () => {
       setup(lobbyWith(['Ana', 'Ben']), 0)
-      const disclosures = container.querySelectorAll('.rule-why')
-      expect(disclosures).toHaveLength(4)
-      for (const disclosure of disclosures) {
-        expect(disclosure.querySelector('summary')?.getAttribute('aria-label')).toBeTruthy()
-        expect((disclosure as HTMLDetailsElement).open).toBe(false)
+      const explanations = [...document.body.querySelectorAll('.rule-why')]
+      expect(explanations).toHaveLength(4)
+      for (const explanation of explanations) {
+        expect(explanation.textContent?.length ?? 0).toBeGreaterThan(20)
       }
+      expect(document.body.querySelectorAll('.rule details')).toHaveLength(0)
     })
 
     it('shows the points table in full, not behind a click', () => {

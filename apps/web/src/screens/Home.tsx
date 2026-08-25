@@ -4,7 +4,9 @@ import { useState, type FormEvent } from 'react'
 import { Card } from '../components/Card.js'
 import { CardValues } from '../components/CardValues.js'
 import { useCardTheme, useSetCardTheme } from '../components/CardThemeProvider.js'
+import { useColourMode, useSetColourMode } from '../components/ColourModeProvider.js'
 import { CARD_THEMES } from '../lib/card-themes.js'
+import { COLOUR_MODES } from '../lib/preferences.js'
 import { LOCALES, LOCALE_NAME, useLocale, useMessages, useSetLocale } from '../i18n/index.js'
 
 /**
@@ -44,6 +46,8 @@ type HomeProps = {
 
 export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
   const t = useMessages()
+  const colourMode = useColourMode()
+  const setColourMode = useSetColourMode()
   const locale = useLocale()
   const setLocale = useSetLocale()
   const cardTheme = useCardTheme()
@@ -68,8 +72,17 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
   return (
     <main className="home">
       <div className="home-column">
-        <h1>UNO</h1>
-        <p className="hint">{t.home.tagline}</p>
+        {/* The four pigments, as a strip across the top. They are the only thing about
+            this game that nobody has to be told, so they introduce it. */}
+        <div className="pigment-strip" aria-hidden="true">
+          <span style={{ background: 'var(--red)' }} />
+          <span style={{ background: 'var(--blue)' }} />
+          <span style={{ background: 'var(--yellow)' }} />
+          <span style={{ background: 'var(--green)' }} />
+        </div>
+
+        <h1 className="home-title">UNO</h1>
+        <p className="home-lede">{t.home.tagline}</p>
 
         {error !== null && (
           <p className="banner banner-bad" role="alert">
@@ -77,41 +90,49 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
           </p>
         )}
 
-        <form className="home-form" onSubmit={submitCreate}>
-          <label htmlFor="player-name">{t.home.yourName}</label>
-          <input
-            id="player-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            maxLength={MAX_NAME_LENGTH}
-            autoComplete="nickname"
-            placeholder={t.home.namePlaceholder}
-          />
-          <button type="submit" className="btn btn-primary" disabled={!canCreate}>
-            {t.home.createGame}
-          </button>
-        </form>
+        {/* Both forms sit at the foot of the column, under the wordmark rather than
+            beside it: the page reads as a poster first and a form second. */}
+        <div className="home-forms">
+          <form className="home-form home-form-row" onSubmit={submitCreate}>
+            <div className="field-group">
+              <label htmlFor="player-name">{t.home.yourName}</label>
+              <input
+                id="player-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                maxLength={MAX_NAME_LENGTH}
+                autoComplete="nickname"
+                placeholder={t.home.namePlaceholder}
+              />
+            </div>
+            <button type="submit" className="btn btn-primary" disabled={!canCreate}>
+              {t.home.createGame}
+            </button>
+          </form>
 
-        <div className="home-divider">
-          <span>{t.home.orJoin}</span>
+          <div className="home-divider">
+            <span>{t.home.orJoin}</span>
+          </div>
+
+          <form className="home-form home-form-row" onSubmit={submitJoin}>
+            <div className="field-group">
+              <label htmlFor="room-code">{t.home.gameCode}</label>
+              <input
+                id="room-code"
+                className="code-input"
+                value={code}
+                onChange={(event) => setCode(event.target.value.toUpperCase())}
+                maxLength={ROOM_CODE_LENGTH}
+                autoComplete="off"
+                spellCheck={false}
+                placeholder={t.home.codePlaceholder}
+              />
+            </div>
+            <button type="submit" className="btn" disabled={!canJoin}>
+              {t.home.joinGame}
+            </button>
+          </form>
         </div>
-
-        <form className="home-form" onSubmit={submitJoin}>
-          <label htmlFor="room-code">{t.home.gameCode}</label>
-          <input
-            id="room-code"
-            className="code-input"
-            value={code}
-            onChange={(event) => setCode(event.target.value.toUpperCase())}
-            maxLength={ROOM_CODE_LENGTH}
-            autoComplete="off"
-            spellCheck={false}
-            placeholder={t.home.codePlaceholder}
-          />
-          <button type="submit" className="btn" disabled={!canJoin}>
-            {t.home.joinGame}
-          </button>
-        </form>
       </div>
 
       {/* The second column of the desktop grid, and the tail of the single column
@@ -120,55 +141,80 @@ export function Home({ onCreate, onJoin, error, prefilledCode }: HomeProps) {
           Both preferences live here rather than under the join form because that
           column used to run to 1272px of name field, match format, Blazing, four
           rules, a create button and a join form, which put these two 372px below a
-          900px fold. Players reported never finding them. The column is far shorter
-          now that the settings have moved to the lobby, but the preferences stay
-          beside the card values: this is where they were found. */}
+          900px fold. Players reported never finding them. */}
       <div className="home-aside">
-        <CardValues />
-
-        {/* Four real cards rather than four named options: you pick by looking. Each
-            preview renders the same `Card` component the table does, with the theme
-            forced, so a preview cannot drift from the face it is offering. */}
-        <div className="lang-row theme-row" role="group" aria-label={t.cardTheme.label}>
-          <span className="hint">{t.cardTheme.label}</span>
-          {CARD_THEMES.map((option) => (
-            <button
-              key={option}
-              type="button"
-              className={option === cardTheme ? 'theme-swatch theme-swatch-on' : 'theme-swatch'}
-              aria-pressed={option === cardTheme}
-              aria-label={t.cardTheme.named(t.cardTheme.name[option])}
-              title={t.cardTheme.name[option]}
-              onClick={() => {
-                setCardTheme(option)
-              }}
-            >
-              {/* Hidden from assistive technology: the button already says which
-                  theme it is, and the card inside would otherwise announce itself as
-                  a Red 7 that cannot be played. */}
-              <span className="theme-swatch-card" aria-hidden="true">
-                <Card card={PREVIEW_CARD} theme={option} />
-              </span>
-            </button>
-          ))}
+        {/* Real cards rather than named options: you pick by looking. Each preview
+            renders the same `Card` component the table does, with the theme forced, so
+            a preview cannot drift from the face it is offering. */}
+        <div className="theme-block" role="group" aria-label={t.cardTheme.label}>
+          <span className="eyebrow">{t.cardTheme.label}</span>
+          <div className="theme-grid">
+            {CARD_THEMES.map((option) => (
+              <button
+                key={option}
+                type="button"
+                className={option === cardTheme ? 'theme-swatch theme-swatch-on' : 'theme-swatch'}
+                aria-pressed={option === cardTheme}
+                aria-label={t.cardTheme.named(t.cardTheme.name[option])}
+                onClick={() => {
+                  setCardTheme(option)
+                }}
+              >
+                {/* Hidden from assistive technology: the button already says which
+                    theme it is, and the card inside would otherwise announce itself as
+                    a Red 7 that cannot be played. */}
+                <span className="theme-swatch-card" aria-hidden="true">
+                  <Card card={PREVIEW_CARD} theme={option} />
+                </span>
+                <span className="theme-swatch-foot" aria-hidden="true">
+                  <span className="theme-swatch-name">{t.cardTheme.name[option]}</span>
+                  <span className="theme-swatch-note">
+                    {option === cardTheme ? t.cardTheme.chosen : t.cardTheme.note[option]}
+                  </span>
+                </span>
+              </button>
+            ))}
+          </div>
+          <p className="hint">{t.cardTheme.privacy}</p>
         </div>
 
-        <div className="lang-row">
-          <span className="hint">{t.home.language}</span>
-          {LOCALES.map((option) => (
-            <button
-              key={option}
-              type="button"
-              className={option === locale ? 'chip chip-on' : 'chip'}
-              aria-pressed={option === locale}
-              lang={option}
-              onClick={() => {
-                setLocale(option)
-              }}
-            >
-              {LOCALE_NAME[option]}
-            </button>
-          ))}
+        <CardValues />
+
+        <div className="home-foot">
+          <div className="lang-row">
+            <span className="eyebrow">{t.home.colourMode}</span>
+            {COLOUR_MODES.map((option) => (
+              <button
+                key={option}
+                type="button"
+                className={option === colourMode ? 'chip chip-on' : 'chip'}
+                aria-pressed={option === colourMode}
+                onClick={() => {
+                  setColourMode(option)
+                }}
+              >
+                {t.home.colourModeName[option]}
+              </button>
+            ))}
+          </div>
+
+          <div className="lang-row">
+            <span className="eyebrow">{t.home.language}</span>
+            {LOCALES.map((option) => (
+              <button
+                key={option}
+                type="button"
+                className={option === locale ? 'chip chip-on' : 'chip'}
+                aria-pressed={option === locale}
+                lang={option}
+                onClick={() => {
+                  setLocale(option)
+                }}
+              >
+                {LOCALE_NAME[option]}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </main>

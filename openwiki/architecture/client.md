@@ -78,7 +78,7 @@ from the match having begun. It is presentation; the server checks the same cond
 when the event arrives.
 
 Configuring the table is the lobby's job, but **stating what it plays by is also the
-table's**. `RulesInPlay` renders a strip above the felt from `view.rules`, which is why that
+table's**. `RulesInPlay` renders a strip at the foot of the opponents rail from `view.rules`, which is why that
 field is on `PlayerView` and not only on `LobbyView` - see
 [Server authority](server-authority.md#changing-things-here). It shows **all four rules
 always, with their state**, and the first attempt did the opposite: only the unusual ones,
@@ -95,16 +95,27 @@ configuration - see below.
 
 ## Card themes
 
-Four faces - classic, flat, letterpress, neon - chosen by **each player**, in
-`localStorage` beside the hand-sort mode and the mute flag. An unrecognised stored
-value falls back to classic rather than to a hand of blank cards. It is a display
+Five faces - poster, classic, flat, letterpress, neon - chosen by **each player**, in
+`localStorage` beside the hand-sort mode, the mute flag and the palette. An unrecognised
+stored value falls back to the default rather than to a hand of blank cards.
+
+`poster` is the one that ships: the pigment fills the card edge to edge, the numeral
+drops into the bottom-left corner at poster scale with its baseline BELOW the viewBox so
+the card's own border crops it, and the shape token moves to the top-right where a fanned
+hand does not cover it. It is the only face whose `layout` is `'corner'` and the only one
+whose `stock` is `'pigment'` rather than a colour - a face with no edge of its own, where
+the gap between cards does the separating.
+
+`classic` is no longer the default, deliberately: it is the printed card, its yellow
+numeral measures 1.67:1, and a face that fails a contrast floor is not one to ship to
+somebody who never opened the preference. It stays on offer for anyone who wants it. It is a display
 preference, not a table option: two people at the same table can run different ones
 and the game is identical, so nothing about it crosses the wire. No protocol type, no
 `room:create` field, no server code, no socket test.
 
-A player picks one from the four miniature previews on the home screen - in the
-right-hand column beneath the card values, beside the language chips - or cycles
-through them from the button next to the mute toggle on the table.
+A player picks one from the previews on the home screen - a two-up grid in the
+right-hand column, each card labelled with its name and what it is for - or cycles
+through them from the button next to the mute toggle in the table's masthead.
 
 Each theme's decisions are data in `lib/card-themes.ts` and `Card.tsx` reads them -
 the same reason `palette.ts` exists. Only what needs a different _structure_ is a
@@ -119,9 +130,9 @@ Three rules constrain any fifth theme somebody adds:
   colour and gains an outline - letterpress does this, because a yellow diamond on
   cream measures 1.55:1 and a shape nobody can see is the same as no shape.
 - **The accessible label does not change with it.** The label is game state; the face
-  is a preference. Asserted for all four themes in `Card.test.tsx`.
+  is a preference. Asserted for every theme in `Card.test.tsx`.
 - **Contrast is measured, not judged.** `card-themes.test.ts` holds every theme but
-  classic to 4.5:1 for the numeral against the ground directly beneath it, computed
+  classic - the default included, which is the point of changing it - to 4.5:1 for the numeral against the ground directly beneath it, computed
   from the declared colours so no browser is needed. Classic is exempt in writing: it
   is the printed card everybody already has and its yellow measures 1.67:1, which is
   a property of that card and not of the theme mechanism.
@@ -132,6 +143,7 @@ than against the card behind it:
 
 | Theme       | Worst numeral contrast | Where                                 |
 | ----------- | ---------------------- | ------------------------------------- |
+| poster      | 4.98:1                 | white numeral on red                  |
 | classic     | 1.67:1                 | yellow numeral on the bone oval       |
 | flat        | 4.98:1                 | white numeral on red                  |
 | letterpress | 15.6:1                 | ink numeral on paper stock            |
@@ -180,7 +192,21 @@ Nothing in `audio-engine.ts` is unit-testable, since jsdom has no Web Audio. It 
 checked in a real browser by wrapping `AudioContext` and asserting oscillators
 actually start.
 
-Sound is on by default, with a mute toggle on the felt persisted in `localStorage`.
+## Palette
+
+Paper, ink, or the machine's own setting, in `localStorage` beside the card face.
+`ColourModeProvider` writes `data-theme` on the document root, which is what `tokens.css`
+keys its two explicit palettes on; `system` REMOVES the attribute rather than setting it
+to anything, because the media query is the fallback and an attribute present but
+matching neither palette is a trap for the next selector written against it. It sets
+`color-scheme` alongside, or a page forced to ink still draws light native scrollbars.
+
+`system` is the default and a real option: somebody who told their OS they want dark has
+already answered. The other two exist because that setting is often not a preference
+about a game - a laptop on a schedule flips at sunset - so the switch is on the home
+screen AND in the table's masthead, reachable mid-match.
+
+Sound is on by default, with a mute toggle in the masthead persisted in `localStorage`.
 Nothing can play before the click that creates or joins a table, so opening the page
 is never a surprise.
 

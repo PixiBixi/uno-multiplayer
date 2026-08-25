@@ -55,10 +55,10 @@ export function Lobby({ lobby, mySeat, onStart, onLeave, onConfigure }: LobbyPro
   return (
     <main className="lobby">
       <div className="lobby-column">
-        <div className="stack">
+        <div className="code-block">
           <span className="eyebrow">{t.lobby.gameCodeLabel}</span>
           <p className="code-display">{lobby.roomCode}</p>
-          <p className="hint">{t.lobby.shareHint}</p>
+          <p className="lobby-lede">{t.lobby.shareHint}</p>
           {/* Both, because they suit different conversations: a code to read out
               loud, a link to paste where a code would just have to be retyped. */}
           <div className="copy-row">
@@ -88,7 +88,10 @@ export function Lobby({ lobby, mySeat, onStart, onLeave, onConfigure }: LobbyPro
                 <span className="avatar" style={{ background: pigmentForSeat(seat.seat) }}>
                   {seat.name.slice(0, 1).toUpperCase()}
                 </span>
-                <span>{seat.name}</span>
+                <span className="slot-who">
+                  <span className="slot-name">{seat.name}</span>
+                  <span className="slot-seat">{t.lobby.seatNumber(seat.seat + 1)}</span>
+                </span>
                 {status !== null && <span className="slot-status">{status}</span>}
                 {seat.seat === lobby.hostSeat && <span className="host-tag">{t.lobby.host}</span>}
               </li>
@@ -97,7 +100,10 @@ export function Lobby({ lobby, mySeat, onStart, onLeave, onConfigure }: LobbyPro
           {Array.from({ length: emptySeats }, (_, index) => (
             <li key={`empty-${String(index)}`} className="slot slot-empty">
               <span className="avatar avatar-empty">·</span>
-              <span>{t.lobby.waitingForPlayer}</span>
+              <span className="slot-who">
+                <span className="slot-name">{t.lobby.waitingForPlayer}</span>
+                <span className="slot-seat">{t.lobby.freeSeat}</span>
+              </span>
             </li>
           ))}
         </ul>
@@ -105,28 +111,36 @@ export function Lobby({ lobby, mySeat, onStart, onLeave, onConfigure }: LobbyPro
         {/* Two separate reasons the game cannot start, said separately. "Nothing
             happens when I click" is the worst possible answer.
 
-            Deliberately still here, above the settings rather than under them: this
-            column grows now, and the control that ends the waiting is the one that must
-            not end up at the bottom of it. */}
-        {isHost ? (
-          <div className="stack">
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={onStart}
-              disabled={!lobby.canStart}
-            >
-              {t.lobby.startGame}
-            </button>
-            {!lobby.canStart && <p className="hint">{t.lobby.needTwo}</p>}
-          </div>
-        ) : (
-          <p className="hint">{t.lobby.waitingForHost(hostName)}</p>
-        )}
-
-        <button type="button" className="btn" onClick={onLeave}>
-          {t.lobby.leaveTable}
-        </button>
+            At the foot of the column, the two controls on one line: the one that ends
+            the waiting is filled, the one that leaves is outlined, and neither is at the
+            bottom of a growing list of settings the way it used to be. */}
+        <div className="lobby-actions">
+          {isHost ? (
+            <>
+              <div className="lobby-start">
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={onStart}
+                  disabled={!lobby.canStart}
+                >
+                  {t.lobby.startGame}
+                </button>
+                {!lobby.canStart && <p className="hint">{t.lobby.needTwo}</p>}
+              </div>
+              <button type="button" className="btn" onClick={onLeave}>
+                {t.lobby.leaveTable}
+              </button>
+            </>
+          ) : (
+            <>
+              <p className="hint">{t.lobby.waitingForHost(hostName)}</p>
+              <button type="button" className="btn" onClick={onLeave}>
+                {t.lobby.leaveTable}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* The second column on a desktop and the tail of the single column on a phone,
@@ -134,16 +148,23 @@ export function Lobby({ lobby, mySeat, onStart, onLeave, onConfigure }: LobbyPro
           half of the page rather than making anything smaller, which is the lesson the
           card-theme controls taught this project once already. */}
       <div className="lobby-aside">
-        <MatchSettings
-          goal={lobby.goal}
-          pace={lobby.pace}
-          {...(mayConfigure ? { onChange: onConfigure } : {})}
-        />
+        <div className="lobby-aside-head">
+          <span className="eyebrow">{t.config.tableSettings}</span>
+          <h2>{t.config.tableRules}</h2>
+        </div>
+
         <TableRulesPanel
           rules={lobby.rules}
           {...(mayConfigure ? { onChange: configureRules } : {})}
           {...(note === undefined ? {} : { note })}
         />
+
+        <MatchSettings
+          goal={lobby.goal}
+          pace={lobby.pace}
+          {...(mayConfigure ? { onChange: onConfigure } : {})}
+        />
+
         {/* In full rather than behind a disclosure: the host is choosing a points target
             two panels up, and "how many rounds does 500 take" is the question the numbers
             answer. Its own scroll container on a narrow screen, so the panel that is pure

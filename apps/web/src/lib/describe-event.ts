@@ -12,6 +12,45 @@ import type { Messages } from '../i18n/messages.js'
  * `mySeat` is passed rather than inferred from the name, so the second person
  * gets the right verb without string-matching a display name.
  */
+/**
+ * Whose line this is, or null for one that belongs to the table rather than to a person.
+ *
+ * The log used to be a column of identical grey lines. A pigment down the left edge is
+ * the same device the seat rail and the roster use, and it is what lets a player find
+ * "what did Ben just do" without reading four sentences - but `describeEvent` returns a
+ * sentence, so the seat has to be read off the event itself. A switch rather than a
+ * lookup: a new event type fails the typecheck here instead of quietly rendering grey.
+ */
+export function seatOfEvent(event: GameEvent): number | null {
+  switch (event.type) {
+    case 'cardPlayed':
+    case 'cardsDrawn':
+    case 'unoCalled':
+    case 'unoPenalty':
+    case 'handsSwapped':
+    case 'jumpedIn':
+    case 'turnPassed':
+    case 'seatDisconnected':
+    case 'seatReconnected':
+    case 'seatLeft':
+    case 'turnTimedOut':
+      return event.seat
+    /* The accuser, not the accused: it is their line, and the penalty arrives as its own
+       `unoPenalty` event against the target right after. */
+    case 'calledOut':
+      return event.by
+    case 'roundEnded':
+      return event.winner
+    case 'matchEnded':
+      return event.winners[0] ?? null
+    /* Nobody's in particular: the table's own. */
+    case 'handsRotated':
+    case 'roundStarted':
+    case 'gameRestarted':
+      return null
+  }
+}
+
 export function describeEvent(
   event: GameEvent,
   nameOf: (seat: number) => string,

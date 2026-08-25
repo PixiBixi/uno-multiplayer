@@ -4,9 +4,9 @@
    dropped it and rendered every heading in its default serif. No `ui-*`
    generics anywhere below; tokens.test.ts enforces that. */
 @font-face {
-  font-family: 'Fredoka';
-  src: url('../assets/fonts/fredoka-600.woff2') format('woff2');
-  font-weight: 600;
+  font-family: 'Archivo Black';
+  src: url('../assets/fonts/archivo-black-400.woff2') format('woff2');
+  font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
@@ -21,56 +21,81 @@
   --bone: #f5f1e8;
   --ink: #14100e;
 
-  /* Furniture. Green-biased neutrals, pulled toward the felt. */
-  --ground: #f2f4ef;
-  --panel: #ffffff;
-  --panel-edge: #d6dcd2;
-  --felt: #1b3730;
-  --felt-edge: #2c4d44;
-  --text: #17211d;
-  --text-dim: #566158;
-  --accent: #1e9e4a;
+  /* Furniture. The page is paper one step down from the card stock, not the stock
+     itself: a whole screen of `--bone` reads as white rather than as paper, and the
+     cards then dissolve into it. `#efe9db` is the ground the letterpress face already
+     prints on, so the value is one the system owned. There is no separate panel colour
+     - regions are separated by rules, not by floating cards. */
+  --ground: #efe9db;
+  --panel: #efe9db;
+  --panel-edge: #d5cdb9;
+  --felt: #14100e;
+  --felt-edge: #3a322c;
+  --text: #14100e;
+  --text-dim: #6f6558;
+  /* The red pigment, not a fifth green. An accent that is not already one of the
+     four would be a colour the cards cannot speak. */
+  --accent: #d2321e;
 
-  --step--1: 0.8125rem;
+  --step--1: 0.75rem;
   --step-0: 1rem;
-  --step-1: 1.3rem;
-  --step-2: 1.85rem;
-  --step-3: 2.6rem;
+  --step-1: 1.3125rem;
+  --step-2: 2.25rem;
+  --step-3: 3.875rem;
+  --step-4: 5.25rem;
 
-  --r-sm: 6px;
-  --r-md: 12px;
-  --r-lg: 20px;
+  /* Zero, and deliberately so: flat colour separated by rules. The card keeps the
+     only radius on the page, because a card is a printed object and the rest of
+     the screen is a layout. */
+  --r-sm: 0;
+  --r-md: 0;
+  --r-lg: 0;
+  --r-card: 8px;
 
-  --display: 'Fredoka', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Display is uppercase, tight and heavy - it is the whole personality, so it is
+     the one face worth a download. Body stays on the system grotesque: at 13-16px
+     it is indistinguishable from a webfont and costs nothing to ship. */
+  --display: 'Archivo Black', 'Arial Black', 'Helvetica Neue', sans-serif;
   --body: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --data: 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Tracking, as tokens rather than inline: display type is set tight and label
+     type wide, and the two must not drift apart across files. */
+  --track-tight: -0.03em;
+  --track-wide: 0.18em;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ground: #101a17;
-    --panel: #172420;
-    --panel-edge: #26372f;
-    --text: #e6ece7;
-    --text-dim: #93a29a;
-    --accent: #3fc46b;
+    --ground: #14100e;
+    /* The same value as the ground, exactly as in paper mode. A panel a shade lighter
+       than what it sits on turns every region into a floating box, which is the one
+       thing this direction does not do: regions are separated by rules. */
+    --panel: #14100e;
+    --panel-edge: #3a322c;
+    --text: #f5f1e8;
+    --text-dim: #a1958a;
+    /* Yellow, not the red used on paper. Measured: the red pigment on the ink
+       ground reaches 3.4:1 and fails text, while the yellow clears 9:1. An accent
+       has to read on the ground it actually sits on. */
+    --accent: #f0b310;
   }
 }
 
 :root[data-theme='dark'] {
-  --ground: #101a17;
-  --panel: #172420;
-  --panel-edge: #26372f;
-  --text: #e6ece7;
-  --text-dim: #93a29a;
-  --accent: #3fc46b;
+  --ground: #14100e;
+  --panel: #14100e;
+  --panel-edge: #3a322c;
+  --text: #f5f1e8;
+  --text-dim: #a1958a;
+  --accent: #f0b310;
 }
 
 :root[data-theme='light'] {
-  --ground: #f2f4ef;
-  --panel: #ffffff;
-  --panel-edge: #d6dcd2;
-  --text: #17211d;
-  --text-dim: #566158;
-  --accent: #1e9e4a;
+  --ground: #efe9db;
+  --panel: #efe9db;
+  --panel-edge: #d5cdb9;
+  --text: #14100e;
+  --text-dim: #6f6558;
+  --accent: #d2321e;
 }
