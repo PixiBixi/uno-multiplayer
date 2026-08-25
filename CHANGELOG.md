@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.7.3](https://github.com/PixiBixi/uno-multiplayer/compare/a9a076f9530e640dc5fbfce3fcf95b0e2dcb9827..v1.7.3) - 2026-08-25
+#### Bug Fixes
+- (**server**) trust the proxy by address, since a hop count no longer can - ([a9a076f](https://github.com/PixiBixi/uno-multiplayer/commit/a9a076f9530e640dc5fbfce3fcf95b0e2dcb9827)) - Jeremy Delgado
+
+- - -
+
 ## [v1.7.2](https://github.com/PixiBixi/uno-multiplayer/compare/bb9d3777560c0d7b82c9c47ad056fec8b5c176ed..v1.7.2) - 2026-08-25
 #### Bug Fixes
 - (**rules**) the host opened every round, and now only opens the match - ([bb9d377](https://github.com/PixiBixi/uno-multiplayer/commit/bb9d3777560c0d7b82c9c47ad056fec8b5c176ed)) - Jeremy Delgado
