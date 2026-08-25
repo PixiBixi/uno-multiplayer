@@ -8,6 +8,11 @@ const start = (names: string[], seed = 1) => {
   return r.value
 }
 
+const ok = (result: ReturnType<typeof initGame>) => {
+  if (!result.okay) throw new Error(result.error)
+  return result.value
+}
+
 describe('initGame', () => {
   it('rejects fewer than two players', () => {
     expect(initGame({ names: ['Solo'], seed: 1 })).toEqual({
@@ -79,5 +84,40 @@ describe('initGame', () => {
 
   it('names the seats in the order given', () => {
     expect(start(['Ana', 'Ben', 'Cleo']).seats.map((s) => s.name)).toEqual(['Ana', 'Ben', 'Cleo'])
+  })
+})
+
+describe('who starts', () => {
+  /* It was seat 0, hard-coded, on every deal of every match - and seat 0 is whoever
+     created the table. Measured before the fix: 5000 deals out of 5000. The engine has no
+     idea what a round number is, so it takes the seat and the caller owns the policy. */
+  it('starts on seat 0 when nobody says otherwise', () => {
+    const game = ok(initGame({ names: ['a', 'b', 'c'], seed: 1 }))
+    expect(game.currentSeat).toBe(0)
+  })
+
+  it('starts wherever it is told to', () => {
+    for (const firstSeat of [0, 1, 2]) {
+      const game = ok(initGame({ names: ['a', 'b', 'c'], seed: 1, firstSeat }))
+      expect(game.currentSeat).toBe(firstSeat)
+    }
+  })
+
+  /* A seat outside the table would leave `currentSeat` pointing at nothing: `legalMoves`
+     returns [] for a seat that does not exist, so the round would deal and then sit there
+     with nobody able to move and no clock able to force one. */
+  it('refuses a seat that is not at the table', () => {
+    for (const firstSeat of [-1, 3, 1.5, Number.NaN]) {
+      expect(initGame({ names: ['a', 'b', 'c'], seed: 1, firstSeat }).okay, String(firstSeat)).toBe(
+        false,
+      )
+    }
+  })
+
+  it('deals the same cards whoever starts, so the seat is not a second shuffle', () => {
+    const first = ok(initGame({ names: ['a', 'b', 'c'], seed: 7, firstSeat: 0 }))
+    const second = ok(initGame({ names: ['a', 'b', 'c'], seed: 7, firstSeat: 2 }))
+    expect(second.seats.map((seat) => seat.hand)).toEqual(first.seats.map((seat) => seat.hand))
+    expect(second.discardPile).toEqual(first.discardPile)
   })
 })

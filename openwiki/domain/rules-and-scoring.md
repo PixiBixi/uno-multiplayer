@@ -36,6 +36,32 @@ pinned down deliberately, and this is the full list:
 Deliberately not implemented: the strict Mattel +4 challenge, which needs a bluff UI
 and hand inspection.
 
+## Who opens a round
+
+The host opens the **match**. After that, the seat that **won the last round** opens the
+next one, and a restart hands the open back to the host - a new match is not decided by a
+result the table has just abandoned.
+
+This was a bug before it was a rule. `initGame` set `currentSeat: 0` unconditionally, and
+seat 0 is whoever created the table, so the host opened every round of every match:
+measured at 5000 deals out of 5000 before the fix. It surfaced as a player report rather
+than as a failing test, because nothing asserted the value.
+
+Two things about the fix worth keeping:
+
+- **The engine takes a seat, not a policy.** `initGame({ firstSeat })` says who starts and
+  refuses a seat that is not at the table rather than clamping it - a `currentSeat` pointing
+  at nothing deals a round where `legalMoves` is empty for everybody and no clock can force
+  a move. Rotating the deal is a decision about a match, which the engine knows nothing
+  about, so `Room` owns it.
+- **The opener is remembered, not derived at deal time.** `Room.opensNextDeal` is set when a
+  round settles, because a restart deals a new match off a finished game and reading
+  `game.winner` there would carry the old result into it. An abandoned round leaves it
+  alone: nobody won, so nobody earned the first move.
+
+A winner who has left the table by the time the next round deals is skipped by
+`skipDisconnectedTurn`, exactly as seat 0 always was.
+
 ## Table rules
 
 `TableRules` in `packages/engine/src/types.ts`, set by the host in the lobby - see

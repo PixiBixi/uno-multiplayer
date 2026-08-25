@@ -161,3 +161,53 @@ describe('seat numbering across a match', () => {
     expect(view?.currentSeat).not.toBe(0)
   })
 })
+
+describe('who opens a round', () => {
+  /* Reported from a real table: "it is always the host who starts". It was - `initGame`
+     set `currentSeat: 0` unconditionally and seat 0 is whoever created the room, so the
+     host opened every round of every match. Measured before the fix at 5000 deals out of
+     5000.
+
+     The rule now: the host opens the MATCH, and after that the seat that won the last
+     round opens the next one. Winning is what earns the first move, which is also the one
+     policy a player can predict without being told. */
+  const openerOf = (room: Room): number | undefined => room.viewFor(0)?.currentSeat
+
+  it('gives the first turn of a match to the host', () => {
+    const room = seated(DEFAULT_MATCH_GOAL, 'Ana', 'Ben', 'Cleo')
+    const started = room.start(0)
+    if (!started.okay) throw new Error(started.error)
+    expect(openerOf(room)).toBe(0)
+  })
+
+  it('hands each later round to whoever won the one before', () => {
+    const room = seated(DEFAULT_MATCH_GOAL, 'Ana', 'Ben', 'Cleo')
+    const started = room.start(0)
+    if (!started.okay) throw new Error(started.error)
+
+    for (let round = 0; round < 5; round += 1) {
+      playRound(room)
+      const winner = room.viewFor(0)?.winner
+      const next = room.nextRound(0, 200 + round)
+      if (!next.okay) break
+      /* Skipped when the winner is null - an abandoned round pays out nothing and nobody
+         earned the open - and when they have left the table, which `skipDisconnectedTurn`
+         moves past exactly as it always did for seat 0. */
+      if (winner === null || winner === undefined) continue
+      expect(openerOf(room), `round ${String(round + 2)} should open on ${String(winner)}`).toBe(
+        winner,
+      )
+    }
+  })
+
+  it('gives a fresh match back to the host, whoever won the last round of the old one', () => {
+    const room = seated(DEFAULT_MATCH_GOAL, 'Ana', 'Ben', 'Cleo')
+    const started = room.start(0)
+    if (!started.okay) throw new Error(started.error)
+    playRound(room)
+
+    const restarted = room.restart(0, 31)
+    if (!restarted.okay) throw new Error(restarted.error)
+    expect(openerOf(room)).toBe(0)
+  })
+})

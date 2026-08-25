@@ -72,6 +72,18 @@ export class Room {
      time passing. */
   private turnDeadline: number | null = null
   private nextRoundDeadline: number | null = null
+  /**
+   * Who plays first on the next deal.
+   *
+   * The host opens the match; after that, whoever won the last round opens the next one.
+   * `initGame` used to set seat 0 unconditionally and seat 0 is whoever created the table,
+   * so the host opened every round of every match - measured at 5000 deals out of 5000.
+   *
+   * Held here rather than derived at deal time from `game.winner`, because a restart deals
+   * a NEW match off a finished game: reading the old winner there would carry a result the
+   * table has just abandoned into a match that has not started.
+   */
+  private opensNextDeal = 0
   private stats = emptyStatsFor(0)
   /** Null until the first round is dealt; the goal is known from creation. */
   private match: MatchState | null = null
@@ -295,7 +307,12 @@ export class Room {
     const active = this.members.filter((m) => m.status === 'active')
     if (active.length < MIN_SEATS) return err('too_few_players')
 
-    const init = initGame({ names: this.members.map((m) => m.name), seed, rules: this.rules })
+    const init = initGame({
+      names: this.members.map((m) => m.name),
+      seed,
+      rules: this.rules,
+      firstSeat: this.opensNextDeal,
+    })
     if (!init.okay) return err('too_few_players')
 
     let game = init.value
@@ -306,7 +323,7 @@ export class Room {
           ? markSeatLeft(game, member.seat)
           : setSeatStatus(game, member.seat, 'disconnected')
     }
-    // The deal always starts on seat 0, which may be one of the absent ones.
+    // The opening seat may be one of the absent ones, exactly as seat 0 could be.
     return ok(skipDisconnectedTurn(game))
   }
 
@@ -318,6 +335,11 @@ export class Room {
   private settleRound(before: GameState, after: GameState): GameEvent[] {
     if (after.phase !== 'finished' || before.phase === 'finished') return []
     if (this.match === null) return []
+
+    /* Winning earns the first move of the next round. An abandoned round pays out nothing
+       and nobody earned it, so the open stays where it was rather than moving to a seat
+       that did not win. */
+    if (after.winner !== null) this.opensNextDeal = after.winner
 
     const awarded = roundPoints(after)
     this.match = applyRound(this.match, after)
@@ -336,6 +358,7 @@ export class Room {
     if (this.game !== null) return err('game_already_started')
     if (bySeat !== this.host) return err('not_host')
 
+    this.opensNextDeal = this.host
     const dealt = this.dealRound(this.seed)
     if (!dealt.okay) return err(dealt.error)
 
@@ -373,6 +396,9 @@ export class Room {
     if (this.game.phase !== 'finished') return err('round_in_progress')
     if (bySeat !== this.host) return err('not_host')
 
+    // A new match opens on the host, like the first one did. Carrying the last winner over
+    // would let a result the table has just abandoned decide a match that has not started.
+    this.opensNextDeal = this.host
     const dealt = this.dealRound(nextSeed)
     if (!dealt.okay) return err(dealt.error)
 
