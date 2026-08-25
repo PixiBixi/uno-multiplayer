@@ -123,7 +123,7 @@ branch in the component: whether the oval is drawn, whether the panel is filled 
 outlined, whether the numeral carries a glow. A value that merely differs per theme
 is a table entry.
 
-Three rules constrain any fifth theme somebody adds:
+Three rules constrain a sixth theme somebody adds:
 
 - **The shape tokens stay.** Colour is never the only signal here, and a theme does
   not get to opt out. Where a pigment is too pale for its stock, the token keeps the
@@ -286,7 +286,7 @@ Two constraints worth knowing before touching this:
 
 - **A card's accessible label is game state, and must not move with the card theme.**
   It now depends on the language, which is the other axis; `Card.test.tsx` asserts it
-  is identical across all four faces in both languages.
+  is identical across every face in both languages.
 - **Never assert on an English string to establish a non-language fact.** The leak
   test in `e2e/game.spec.ts` counted face-up cards as "those whose label is not
   `Face-down card`". Translating that label would have made every card look face-up
@@ -295,8 +295,8 @@ Two constraints worth knowing before touching this:
 
 ## Accessibility, briefly
 
-Colour is never the only signal - cards carry shape tokens in every one of the four
-themes, and the log says in words what the animations dramatise. Tap targets are
+Colour is never the only signal - cards carry shape tokens in every theme, and the
+log says in words what the animations dramatise. Tap targets are
 44px, the card-theme controls included. The countdown is a live
 region that only becomes assertive in its last seconds, because a polite update
 every second would queue up behind itself in a screen reader. `prefers-reduced-motion`
@@ -327,6 +327,13 @@ removes the pulse but not the number, because the number carries information.
   in the base rule**, the way `.fx-flash` does; a keyframe's 100% is not a resting
   state unless the fill mode says so. Measured after the animation settles in
   `e2e/game.spec.ts`.
+- **A conditional control in front of a permanent one.** The UNO button was rendered
+  before the control that ends the turn, and `callUno` becomes legal in the middle of a
+  turn - so it appeared under the cursor and slid Draw out from under it, costing a card
+  nobody asked for, under a clock. **Nothing conditional may precede something
+  permanent**, and the first control carries a width floor because it swaps its own label
+  three ways (Draw card / End turn / Take 4) and must not move while the words change.
+  `Table.test.tsx` asserts the order.
 - **Controls at the bottom of a growing column.** The language and card-theme
   preferences ended 372px below a 900px fold once the home screen's left column had
   grown to seven blocks, while the right column held one panel and a screen-high
@@ -336,4 +343,7 @@ removes the pulse but not the number, because the number carries information.
   configuration moved into it, and got the same answer: two columns past 900px, and on a
   phone the points table takes a scroll container while the seats and **Start** stay
   inside the fold. Measured at 390 × 844 in the same file - the seats are what a lobby is
-  for, so they are never what gets capped.
+  for, so they are never what gets capped. Whose turn it is repeats on a plate in the
+  masthead for the same reason: the headline says it far louder, but the columns stack
+  below 1040px and put it a scroll away, and the opponents rail says nothing at all when
+  the seat on turn is the reader, who is not in it.
