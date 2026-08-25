@@ -23,13 +23,24 @@ export async function buildApp(config: Config) {
   logger.level = config.logLevel
 
   /*
-   * One hop, and only when a proxy is declared. Behind Traefik every request
-   * arrives from the proxy's address on the docker network, so without this the
-   * log records the same 172.19.x.x for every visitor.
+   * Trust the header only from a peer whose ADDRESS says it may be a proxy, and
+   * only when a proxy is declared. Behind Traefik every request arrives from the
+   * proxy's address on the docker network, so without this the log records the
+   * same 172.19.x.x for every visitor.
    *
-   * `1` rather than `true`: it trusts the single closest hop, so the address is
-   * the peer the proxy itself saw. Anything further left in X-Forwarded-For came
-   * from the client and stays untrusted.
+   * This was `1` - trust one hop - until fastify 5.12.1 made a numeric hop count
+   * fail closed outright (GHSA-3m5p-2c4r-xxw2, X-Forwarded-* spoofing under
+   * trustProxy hop-count). A hop count cannot validate WHO is talking, so a client
+   * reaching the process directly could pad the header with enough entries to be
+   * believed. The upgrade turned our `1` into the same thing as `false`, silently,
+   * and `http.test.ts` is what caught it.
+   *
+   * Addresses instead of counts, which is the check a hop count could not make:
+   * `loopback` for a proxy on the same host and for `inject()` in the tests,
+   * `uniquelocal` for the private ranges a docker network hands out. A public
+   * client is never trusted, so it cannot spoof whatever it likes, and the address
+   * reported is still the rightmost entry that is not itself a trusted proxy -
+   * which is the peer Traefik actually saw.
    *
    * Tied to BEHIND_TLS because that flag already asserts exactly this shape - a
    * proxy terminating TLS in front of this process. Without it the header is
@@ -38,7 +49,7 @@ export async function buildApp(config: Config) {
    */
   const app = Fastify({
     loggerInstance: logger,
-    trustProxy: config.behindTls ? 1 : false,
+    trustProxy: config.behindTls ? 'loopback,uniquelocal' : false,
   })
 
   await app.register(helmet, {

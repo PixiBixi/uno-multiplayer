@@ -142,12 +142,23 @@ Keyed on the Socket.IO connection, **not** on the client IP. That is what keeps 
 correct behind a reverse proxy where every request arrives from the same address.
 Buckets are forgotten on disconnect, so the map does not grow.
 
-`trustProxy` follows `BEHIND_TLS`, and trusts exactly **one** hop when it is set.
-Behind a proxy every request arrives from the proxy's own address, so without it the
-log records the same container IP for every visitor. One hop rather than `true`
-means the address is the peer the proxy itself saw; anything further left in
-`X-Forwarded-For` came from the client and stays untrusted. Off by default, because
-a directly-exposed server would otherwise believe whatever a client claimed.
+`trustProxy` follows `BEHIND_TLS`, and trusts the header by the peer's **address**
+when it is set: `loopback,uniquelocal`. Behind a proxy every request arrives from the
+proxy's own address, so without it the log records the same container IP for every
+visitor. Off by default, because a directly-exposed server would otherwise believe
+whatever a client claimed.
+
+It said **one hop** until fastify 5.12.1, which made a numeric `trustProxy` fail closed
+outright - GHSA-3m5p-2c4r-xxw2, X-Forwarded-\* spoofing under trustProxy hop-count. The
+reason is worth keeping: a hop count says how many entries to believe and nothing about
+WHO sent them, so a client reaching the process directly could pad the header until it
+was believed. The upgrade turned our `1` into the same thing as `false`, silently, and
+`http.test.ts` is what caught it - in a Dependabot PR, before it shipped.
+
+Addresses are the check a count could not make. `loopback` covers a proxy on the same
+host and `inject()` in the tests, `uniquelocal` the private ranges a docker network hands
+out; a public peer is never trusted. The address reported is still the rightmost entry
+that is not itself a trusted proxy, which is the peer the proxy actually saw.
 
 Note this is safe _in addition_ because the deployed container publishes no ports
 and sits only on the proxy network, so nothing but the proxy can reach it to forge

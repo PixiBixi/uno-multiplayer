@@ -112,7 +112,7 @@ describe('the client IP behind a proxy', () => {
     expect(seenIp).not.toBe('203.0.113.7')
   })
 
-  it('trusts exactly one hop, so a forged entry behind the proxy is not believed', async () => {
+  it('reads the closest entry, so a forged one behind the proxy is not believed', async () => {
     // Traefik appends the peer it saw; anything to its left came from the client.
     const instance = await appWith({ BEHIND_TLS: 'true' })
     await instance.inject({
@@ -121,6 +121,23 @@ describe('the client IP behind a proxy', () => {
       headers: { 'x-forwarded-for': '198.51.100.1, 203.0.113.7' },
     })
     expect(seenIp).toBe('203.0.113.7')
+  })
+
+  /* The property a hop count could not check, and the reason it no longer exists.
+     fastify 5.12.1 made `trustProxy: <number>` fail closed outright, because a count says
+     how many entries to believe and nothing about WHO sent them - so a client reaching
+     this process directly could pad the header until it was believed
+     (GHSA-3m5p-2c4r-xxw2). Trust is by address now, and this asserts the half that
+     matters: a peer that is not a plausible proxy is not believed at all. */
+  it('does not believe a forwarded header from a peer on a public address', async () => {
+    const instance = await appWith({ BEHIND_TLS: 'true' })
+    await instance.inject({
+      method: 'GET',
+      url: '/healthz',
+      remoteAddress: '198.51.100.9',
+      headers: { 'x-forwarded-for': '203.0.113.7' },
+    })
+    expect(seenIp).toBe('198.51.100.9')
   })
 })
 
