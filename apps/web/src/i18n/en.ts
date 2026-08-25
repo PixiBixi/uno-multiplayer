@@ -222,7 +222,7 @@ export const en: Messages = {
     ruleOn: 'on',
     ruleOff: 'off',
     openToCallOut: 'Open to a call-out',
-    youAreExposed: 'You are on one card without an UNO - call it on your next turn to be safe.',
+    youAreExposed: 'You are on one card without an UNO - call it now, before somebody catches you.',
     jumpIn: 'Jump in!',
     endTurn: 'End turn',
     playDrawnCard: 'Play the card you drew, or end your turn',

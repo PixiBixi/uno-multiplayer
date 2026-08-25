@@ -235,7 +235,8 @@ export const fr: Messages = {
     ruleOn: 'activée',
     ruleOff: 'désactivée',
     openToCallOut: 'Contre-UNO possible',
-    youAreExposed: 'Tu es à une carte sans avoir dit UNO - annonce-le à ton prochain tour.',
+    youAreExposed:
+      'Tu es à une carte sans avoir dit UNO - annonce-le tout de suite, avant qu’on te contre.',
     jumpIn: 'Jump-in !',
     endTurn: 'Terminer mon tour',
     playDrawnCard: 'Pose la carte piochée, ou termine ton tour',
