@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.7.4](https://github.com/PixiBixi/uno-multiplayer/compare/8f22c115df1393dbe00963285bbac2a473e70837..v1.7.4) - 2026-08-25
+#### Miscellaneous Chores
+- (**deps**) bump the production-dependencies group across 1 directory with 2 updates (#10) - ([8f22c11](https://github.com/PixiBixi/uno-multiplayer/commit/8f22c115df1393dbe00963285bbac2a473e70837)) - dependabot[bot], dependabot[bot]
+
+- - -
+
 ## [v1.7.3](https://github.com/PixiBixi/uno-multiplayer/compare/a9a076f9530e640dc5fbfce3fcf95b0e2dcb9827..v1.7.3) - 2026-08-25
 #### Bug Fixes
 - (**server**) trust the proxy by address, since a hop count no longer can - ([a9a076f](https://github.com/PixiBixi/uno-multiplayer/commit/a9a076f9530e640dc5fbfce3fcf95b0e2dcb9827)) - Jeremy Delgado
