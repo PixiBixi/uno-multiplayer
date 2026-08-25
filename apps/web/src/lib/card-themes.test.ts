@@ -33,6 +33,7 @@ const FIELDS: (keyof CardThemeSpec)[] = [
   'wild',
   'wildPigment',
   'glow',
+  'layout',
 ]
 
 /**
@@ -47,9 +48,27 @@ const PRINTED_CARD: CardTheme[] = ['classic']
 const CHOSEN: CardTheme[] = CARD_THEMES.filter((theme) => !PRINTED_CARD.includes(theme))
 
 describe('the themes as data', () => {
-  it('defaults to the card everybody already has', () => {
-    expect(DEFAULT_CARD_THEME).toBe('classic')
-    expect(CARD_THEMES[0]).toBe('classic')
+  it('defaults to the poster face, and keeps the printed card on offer', () => {
+    expect(DEFAULT_CARD_THEME).toBe('poster')
+    expect(CARD_THEMES[0]).toBe('poster')
+    expect(CARD_THEMES).toContain('classic')
+  })
+
+  /* The one theme that moves the numeral out of the middle. It is a structural
+     branch in `Card.tsx` rather than a colour, so it has to be a field: a theme
+     that forgets it silently renders the numeral on top of its own corner label. */
+  it('lays the poster numeral in the corner and every other face in the centre', () => {
+    expect(CARD_THEME_SPEC.poster.layout).toBe('corner')
+    for (const theme of CARD_THEMES.filter((candidate) => candidate !== 'poster')) {
+      expect(CARD_THEME_SPEC[theme].layout, theme).toBe('centred')
+    }
+  })
+
+  /* The face that ships by default cannot be the one that fails a contrast floor,
+     which is exactly what the printed card does on yellow. */
+  it('holds the default face to the measured bar, unlike the printed card', () => {
+    expect(PRINTED_CARD).not.toContain(DEFAULT_CARD_THEME)
+    expect(CHOSEN).toContain(DEFAULT_CARD_THEME)
   })
 
   it('gives every theme every field', () => {
@@ -63,6 +82,14 @@ describe('the themes as data', () => {
   it('makes no two themes the same card', () => {
     const shapes = CARD_THEMES.map((theme) => JSON.stringify(CARD_THEME_SPEC[theme]))
     expect(new Set(shapes).size).toBe(CARD_THEMES.length)
+  })
+
+  /* The poster face is the pigment, edge to edge. It inherited a cream stock from the
+     printed card, which drew a pale frame around every card in the hand - on the ink
+     ground that frame was the loudest thing on the felt. */
+  it('gives the poster face no stock of its own, so the pigment reaches the edge', () => {
+    const paints = cardPaints(CARD_THEME_SPEC.poster, pigmentPaint('R'))
+    expect(paints.stock.hex).toBe(paints.ground.hex)
   })
 
   it('keeps a shape token in every theme, because colour is never the only signal', () => {

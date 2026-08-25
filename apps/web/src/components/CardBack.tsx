@@ -1,6 +1,12 @@
 import { useId } from 'react'
 import { useMessages } from '../i18n/index.js'
-import { CARD_THEME_SPEC, legibleInkOn, pigmentPaint, type CardTheme } from '../lib/card-themes.js'
+import {
+  CARD_THEME_SPEC,
+  legibleInkOn,
+  pigmentPaint,
+  stockOf,
+  type CardTheme,
+} from '../lib/card-themes.js'
 import { INK } from '../lib/palette.js'
 import { useCardTheme } from './CardThemeProvider.js'
 
@@ -23,6 +29,9 @@ export function CardBack({ theme }: { theme?: CardTheme } = {}) {
   /* A filled-panel theme keeps the printed black back; a stroked one keeps its own
      stock, because paper stock with a black field would be neither. */
   const ground = spec.ground === 'pigment' ? INK : spec.ground
+  /* A back has no colour of its own, so a face whose stock IS its pigment takes the same
+     ink its ground took: the card is one field, edge to edge. */
+  const stock = stockOf(spec, ground)
   const inset = spec.panel === 'stroke' ? spec.panelStroke / 2 : 0
   const panel = {
     x: 6 + inset,
@@ -56,7 +65,7 @@ export function CardBack({ theme }: { theme?: CardTheme } = {}) {
         </defs>
       )}
 
-      <rect x={0} y={0} width={120} height={168} rx={11} fill={spec.stock.css} data-back-stock="" />
+      <rect x={0} y={0} width={120} height={168} rx={11} fill={stock.css} data-back-stock="" />
       <rect
         {...panel}
         fill={ground.css}

@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { en } from '../i18n/en.js'
 import { fr } from '../i18n/fr.js'
 import { LocaleProvider } from '../i18n/LocaleProvider.js'
-import { CARD_THEMES } from '../lib/card-themes.js'
+import { CARD_THEMES, CARD_THEME_SPEC } from '../lib/card-themes.js'
 import { Card, cardLabel } from './Card.js'
 
 const id = (value: string) => value as CardId
@@ -102,21 +102,36 @@ describe('Card', () => {
     expect(container.querySelectorAll('[data-quadrant]')).toHaveLength(4)
   })
 
-  it('keeps the +4 label inside the card', () => {
-    const { container } = render(<Card card={{ id: id('w4'), kind: 'wild4' }} />)
-    expect(container.querySelector('[data-plusfour]')?.getAttribute('y')).toBe('107')
+  /* The viewBox is 120x168 and the +4 label sits INSIDE the face. Asserted as a bound
+     rather than as one coordinate: every theme places it, and a theme that puts it a
+     few units lower has not broken anything until it leaves the card. */
+  it('keeps the +4 label inside the card, whatever the face', () => {
+    for (const theme of CARD_THEMES) {
+      const { container } = render(<Card card={{ id: id('w4'), kind: 'wild4' }} theme={theme} />)
+      const y = Number(container.querySelector('[data-plusfour]')?.getAttribute('y'))
+      expect(y, theme).toBeGreaterThan(0)
+      expect(y, theme).toBeLessThan(168)
+    }
   })
 
-  it('centres every face glyph on the ellipse rather than guessing a baseline', () => {
-    for (const card of [
-      num(0),
-      num(7),
-      { id: id('d'), kind: 'draw2' as const, color: 'Y' as const },
-    ]) {
-      const { container } = render(<Card card={card} />)
-      const glyph = container.querySelector('text[font-size="66"], text[font-size="46"]')
-      expect(glyph?.getAttribute('dominant-baseline')).toBe('central')
-      expect(glyph?.getAttribute('y')).toBe('84')
+  /* The point of the original guard: the mark is placed against a declared anchor, not
+     a guessed baseline. The corner face moves that anchor, so the assertion follows the
+     theme's own `layout` instead of hard-coding the centred one. */
+  it('anchors every face glyph where its layout says, never on a guessed baseline', () => {
+    for (const theme of CARD_THEMES) {
+      const cornerFace = CARD_THEME_SPEC[theme].layout === 'corner'
+      for (const card of [
+        num(0),
+        num(7),
+        { id: id('d'), kind: 'draw2' as const, color: 'Y' as const },
+      ]) {
+        const { container } = render(<Card card={card} theme={theme} />)
+        const glyph = container.querySelector('[data-numeral]')
+        expect(glyph?.getAttribute('dominant-baseline'), theme).toBe(
+          cornerFace ? 'alphabetic' : 'central',
+        )
+        expect(glyph?.getAttribute('text-anchor'), theme).toBe(cornerFace ? 'start' : 'middle')
+      }
     }
   })
 })

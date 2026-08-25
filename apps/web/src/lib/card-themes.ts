@@ -16,11 +16,18 @@ import { BONE, COLOR_HEX, COLOR_VALUE, INK } from './palette.js'
  * whether the oval is drawn at all, whether the panel is filled or outlined,
  * whether the numeral carries a glow.
  */
-export const CARD_THEMES = ['classic', 'flat', 'letterpress', 'neon'] as const
+export const CARD_THEMES = ['poster', 'classic', 'flat', 'letterpress', 'neon'] as const
 export type CardTheme = (typeof CARD_THEMES)[number]
 
-/** What a player who has never opened this preference sees: today's card. */
-export const DEFAULT_CARD_THEME: CardTheme = 'classic'
+/**
+ * What a player who has never opened this preference sees.
+ *
+ * `poster` rather than `classic`, which is a deliberate reversal. `classic` is the
+ * printed card and its yellow numeral measures 1.67:1 - a fact about the real object,
+ * recorded in the tests, and not something to ship as a default once there is a face
+ * that clears the bar. The printed card stays on offer for anyone who wants it.
+ */
+export const DEFAULT_CARD_THEME: CardTheme = 'poster'
 
 /**
  * A colour in both forms it is needed in: the custom property the browser paints,
@@ -39,8 +46,14 @@ export type Paint = { css: string; hex: string }
 export type InkSource = 'pigment' | 'contrast' | 'light' | 'dark'
 
 export type CardThemeSpec = {
-  /** The card's outer edge - what keeps two overlapping cards apart in a hand. */
-  stock: Paint
+  /**
+   * The card's outer edge - what keeps two cards apart in a hand.
+   *
+   * `'pigment'` for a face that has no edge of its own: the colour runs to the card's
+   * border, and the gap between cards does the separating instead. Same spelling as
+   * `ground` takes, so the two read as the same kind of decision.
+   */
+  stock: Paint | 'pigment'
   /** Whether the card's colour fills the panel or merely outlines it. */
   panel: 'fill' | 'stroke'
   /** Width of that outline in viewBox units. Ignored when the panel is filled. */
@@ -73,6 +86,15 @@ export type CardThemeSpec = {
   wildPigment: Paint
   /** An outer glow behind the central mark, kept out of the glyph itself. */
   glow: { blur: number; opacity: number } | null
+  /**
+   * Where the mark sits: centred on the face, or dropped into the bottom-left corner
+   * at poster scale, bleeding past the padding.
+   *
+   * A structural branch in `Card.tsx` rather than a colour, which is why it is a field
+   * and not a derived value: a corner numeral needs the corner label out of its way,
+   * and a face that guessed would print one on top of the other.
+   */
+  layout: 'centred' | 'corner'
 }
 
 /* Colours that exist only inside a card face. They are not furniture - nothing
@@ -86,6 +108,31 @@ const DARK: Paint = { css: '#0b1114', hex: '#0b1114' }
 const WHITE: Paint = { css: '#ffffff', hex: '#ffffff' }
 
 export const CARD_THEME_SPEC: Record<CardTheme, CardThemeSpec> = {
+  /* The editorial face: the pigment fills the card, the numeral drops into the
+     bottom-left corner at poster scale and bleeds past the padding, and the shape
+     token moves to the top-right where a fanned hand does not cover it. Ink chosen
+     for contrast against the pigment, exactly as flat does, which is what lets the
+     face that ships by default also be one that clears 4.5:1 on all four colours. */
+  poster: {
+    stock: 'pigment',
+    panel: 'fill',
+    panelStroke: 0,
+    ground: 'pigment',
+    oval: null,
+    light: WHITE,
+    dark: INK,
+    font: 'var(--display)',
+    numeral: 118,
+    weight: 400,
+    faceInk: 'contrast',
+    trimInk: 'contrast',
+    tokenInk: 'contrast',
+    tokenOutline: null,
+    wild: 'squares',
+    wildPigment: INK,
+    glow: null,
+    layout: 'corner',
+  },
   /* Today's card, to the pixel. A player who never opens the preference must not be
      able to tell that it exists, which is why this entry describes the face that
      was already there rather than an improved version of it. */
@@ -107,6 +154,7 @@ export const CARD_THEME_SPEC: Record<CardTheme, CardThemeSpec> = {
     wild: 'wheel',
     wildPigment: INK,
     glow: null,
+    layout: 'centred',
   },
   /* No oval, a numeral 40% larger, and every piece of ink chosen for contrast
      against the pigment it sits on. The most legible of the four by measurement. */
@@ -128,6 +176,7 @@ export const CARD_THEME_SPEC: Record<CardTheme, CardThemeSpec> = {
     wild: 'squares',
     wildPigment: INK,
     glow: null,
+    layout: 'centred',
   },
   /* Paper stock and a stroked border instead of a filled panel: the colour is the
      frame, not the field. The tokens keep the pigment and gain an ink outline,
@@ -151,6 +200,7 @@ export const CARD_THEME_SPEC: Record<CardTheme, CardThemeSpec> = {
     wild: 'circles',
     wildPigment: INK,
     glow: null,
+    layout: 'centred',
   },
   /* The one that had to be fixed before it could ship. It was first presented as
      the boldest of the four with an explicit caveat: the glow cost contrast and it
@@ -179,6 +229,7 @@ export const CARD_THEME_SPEC: Record<CardTheme, CardThemeSpec> = {
     wild: 'wheel',
     wildPigment: BONE,
     glow: { blur: 3, opacity: 0.5 },
+    layout: 'centred',
   },
 }
 
@@ -234,12 +285,22 @@ export type CardPaints = {
   legible: Paint
 }
 
+/**
+ * The card's outer edge, with `'pigment'` resolved.
+ *
+ * Exported because a card BACK has no pigment - it takes the ink instead - so it cannot
+ * go through `cardPaints`, and a second copy of "what does 'pigment' mean here" is
+ * exactly the duplication that let two representations of one colour drift apart before.
+ */
+export const stockOf = (spec: CardThemeSpec, pigment: Paint): Paint =>
+  spec.stock === 'pigment' ? pigment : spec.stock
+
 export function cardPaints(spec: CardThemeSpec, pigment: Paint): CardPaints {
   const ground = spec.ground === 'pigment' ? pigment : spec.ground
   const faceGround = spec.oval ?? ground
   return {
     pigment,
-    stock: spec.stock,
+    stock: stockOf(spec, pigment),
     ground,
     oval: spec.oval,
     faceGround,

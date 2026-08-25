@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
-import { CARD_THEMES, CARD_THEME_SPEC } from '../lib/card-themes.js'
+import { CARD_THEMES, CARD_THEME_SPEC, stockOf } from '../lib/card-themes.js'
+import { INK } from '../lib/palette.js'
 import { CardBack } from './CardBack.js'
 import { CardThemeProvider } from './CardThemeProvider.js'
 
@@ -54,7 +55,15 @@ describe('CardBack under every theme', () => {
        taking their edge from the red border instead. Read from the spec so a fifth
        theme lands on the right side of the line by itself. */
     for (const theme of CARD_THEMES) {
-      if (CARD_THEME_SPEC[theme].panel !== 'fill') continue
+      const spec = CARD_THEME_SPEC[theme]
+      if (spec.panel !== 'fill') continue
+      /* Nor a face whose stock IS its pigment: it has no edge of its own by design - the
+         card is one field and the gap between cards does the separating - so "the panel
+         must differ from the stock it sits on" is a distinction that face does not draw.
+         Read from the spec, not from a theme name, so a sixth face lands on the right
+         side of the line by itself. What keeps it from being blank paper is the next
+         test: something drawn over the stock still has to differ from it. */
+      if (spec.stock === 'pigment') continue
       const container = backFor(theme)
       const stock = container.querySelector('[data-back-stock]')?.getAttribute('fill')
       const ground = container.querySelector('[data-back-panel]')?.getAttribute('fill')
@@ -78,7 +87,7 @@ describe('CardBack under every theme', () => {
         container.querySelector('[data-back-word]')?.getAttribute('fill'),
       ].filter((paint): paint is string => paint !== null && paint !== undefined)
 
-      expect(stock, theme).toBe(CARD_THEME_SPEC[theme].stock.css)
+      expect(stock, theme).toBe(stockOf(CARD_THEME_SPEC[theme], INK).css)
       expect(
         marks.some((paint) => paint !== stock),
         theme,
@@ -120,12 +129,14 @@ describe('CardBack under every theme', () => {
 
 describe('CardBack and its provider', () => {
   it('draws a real card with no provider above it at all', () => {
-    /* The context default is the classic face and a setter that does nothing, so an
+    /* The context default is the shipping face and a setter that does nothing, so an
        error-boundary fallback or a stray render outside the tree still draws a card
-       rather than an empty rectangle. */
+       rather than an empty rectangle. Asserted on the word and the panel rather than
+       on the oval badge: whether a face carries one is a property of the theme, and
+       the default no longer does. */
     const { container } = render(<CardBack />)
     expect(container.querySelector('[data-back-word]')?.textContent).toBe('UNO')
-    expect(container.querySelector('[data-back-badge]')).not.toBeNull()
+    expect(container.querySelector('[data-back-panel]')).not.toBeNull()
   })
 
   it('follows the provider when no theme is passed', () => {

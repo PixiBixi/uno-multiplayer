@@ -222,6 +222,13 @@ function FaceMark({
 }) {
   const centred = { textAnchor: 'middle' as const, dominantBaseline: 'central' as const }
   const scale = spec.numeral / BASE_NUMERAL
+  /* The corner face hangs its baseline BELOW the viewBox, so the bottom of the glyph
+     is clipped by the card edge. That crop is the design: a numeral that stops short
+     of the edge reads as a label, and one that runs off it reads as printing. */
+  const corner = spec.layout === 'corner'
+  const mark = corner
+    ? { x: 8, y: 176, textAnchor: 'start' as const, dominantBaseline: 'alphabetic' as const }
+    : { x: 60, y: 84, ...centred }
   const stroke = {
     stroke: fill,
     strokeWidth: 9,
@@ -233,11 +240,15 @@ function FaceMark({
      theme with a bigger numeral scales them about that centre rather than restating
      every path. At scale 1 the transform is omitted entirely: the classic face has
      to stay byte for byte what it was. */
+  const glyphCentre = corner ? { x: 46, y: 116 } : { x: 60, y: 84 }
   const scaled = (children: ReactNode) =>
-    scale === 1 ? (
+    scale === 1 && !corner ? (
       <g {...stroke}>{children}</g>
     ) : (
-      <g {...stroke} transform={`translate(60 84) scale(${String(scale)}) translate(-60 -84)`}>
+      <g
+        {...stroke}
+        transform={`translate(${String(glyphCentre.x)} ${String(glyphCentre.y)}) scale(${String(scale)}) translate(-60 -84)`}
+      >
         {children}
       </g>
     )
@@ -246,9 +257,7 @@ function FaceMark({
     case 'number':
       return (
         <text
-          x={60}
-          y={84}
-          {...centred}
+          {...mark}
           fontSize={spec.numeral}
           fontWeight={spec.weight}
           fill={fill}
@@ -260,9 +269,7 @@ function FaceMark({
     case 'draw2':
       return (
         <text
-          x={60}
-          y={84}
-          {...centred}
+          {...mark}
           fontSize={Math.round(spec.numeral * SMALL_RATIO)}
           fontWeight={spec.weight}
           fill={fill}
@@ -290,17 +297,31 @@ function FaceMark({
         </>,
       )
     case 'wild':
-      return <WildMark kind={spec.wild} cx={60} cy={84} r={26} decorated={decorated} />
+      return (
+        <WildMark
+          kind={spec.wild}
+          cx={glyphCentre.x}
+          cy={glyphCentre.y}
+          r={corner ? 32 : 26}
+          decorated={decorated}
+        />
+      )
     /* The +4 label sits INSIDE the face, in whichever ink survives there. Placed
        below it, ink on ink would make it vanish off the card - and on the neon face
        ink on near-black would do the same. */
     case 'wild4':
       return (
         <>
-          <WildMark kind={spec.wild} cx={60} cy={71} r={19} decorated={decorated} />
+          <WildMark
+            kind={spec.wild}
+            cx={corner ? 46 : 60}
+            cy={corner ? 96 : 71}
+            r={corner ? 26 : 19}
+            decorated={decorated}
+          />
           <text
-            x={60}
-            y={107}
+            x={corner ? 46 : 60}
+            y={corner ? 148 : 107}
             {...centred}
             fontSize={26}
             fontWeight={600}
