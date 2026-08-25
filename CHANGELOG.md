@@ -1,6 +1,22 @@
 # Changelog
 
 - - -
+## [v1.6.2](https://github.com/PixiBixi/uno-multiplayer/compare/75466c08a772364b66b6d9e72e55f4d4f3f7eb1a..v1.6.2) - 2026-08-25
+#### Bug Fixes
+- (**i18n**) the exposed banner points at now, not the next turn - ([36612bb](https://github.com/PixiBixi/uno-multiplayer/commit/36612bbf62286864ba7e108f57b9ab8605dd0b1b)) - Jeremy Delgado
+- (**rules**) let an exposed seat call UNO off turn - ([649ba5b](https://github.com/PixiBixi/uno-multiplayer/commit/649ba5bd03b678c58fd1c39e21226dc6900905ae)) - Jeremy Delgado
+- (**web**) keep the UNO control up while somebody else is on turn - ([78233fa](https://github.com/PixiBixi/uno-multiplayer/commit/78233fa00e36f29bf2ae274d7245bd4568876775)) - Jeremy Delgado
+#### Documentation
+- (**wiki**) the late UNO is reachable while the accusation is - ([60f054e](https://github.com/PixiBixi/uno-multiplayer/commit/60f054e023002db1cd2b1b177e96943320be3006)) - Jeremy Delgado
+- (**wiki**) verify is not the gate CI runs, and the hook that covers the rest - ([de6397f](https://github.com/PixiBixi/uno-multiplayer/commit/de6397f8196284354269e52835b514ed854d222a)) - Jeremy Delgado
+- (**wiki**) the rules the table states, and the chore that cuts a release - ([75466c0](https://github.com/PixiBixi/uno-multiplayer/commit/75466c08a772364b66b6d9e72e55f4d4f3f7eb1a)) - Jeremy Delgado
+#### Continuous Integration
+- (**hooks**) format and lint the staged files before they reach CI - ([a7a2bff](https://github.com/PixiBixi/uno-multiplayer/commit/a7a2bff92e676bfca25ceafd99feef255d4bbd70)) - Jeremy Delgado
+- (**wiki**) drop the local SessionEnd hook, now that it is global - ([f135b58](https://github.com/PixiBixi/uno-multiplayer/commit/f135b5819bfc4c72519d164eb5192a7d9a638fb4)) - Jeremy Delgado
+- (**wiki**) update the wiki when a session ends - ([79840d2](https://github.com/PixiBixi/uno-multiplayer/commit/79840d2fac8e460c796f6e3298a27a894c8133fe)) - Jeremy Delgado
+
+- - -
+
 ## [v1.6.1](https://github.com/PixiBixi/uno-multiplayer/compare/769b7da68db91a4d37a6ad67c036fecd96ab2365..v1.6.1) - 2026-08-23
 #### Continuous Integration
 - (**cog**) let a chore cut its own patch release - ([89d677c](https://github.com/PixiBixi/uno-multiplayer/commit/89d677cd0d344fd3d3da43f01a37fcae67570a68)) - Jeremy Delgado
