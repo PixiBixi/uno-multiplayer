@@ -107,10 +107,19 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
           }
           const mine = entry.seat === mySeat
           return (
-            <div className="msg" key={entry.id}>
+            <div className={mine ? 'msg msg-mine' : 'msg'} key={entry.id}>
               <div
                 className="msg-bubble"
-                style={{ borderInlineStartColor: pigmentForSeat(entry.seat) }}
+                /* The rule moves to the other edge for my own messages, rather than
+                   staying on the left inside a block pushed right - which is what made
+                   the column read as a ragged edge. Mirrored, the two kinds of line have
+                   one clean edge each: what the table did on the left, what I said on the
+                   right. */
+                style={
+                  mine
+                    ? { borderInlineEndColor: pigmentForSeat(entry.seat) }
+                    : { borderInlineStartColor: pigmentForSeat(entry.seat) }
+                }
               >
                 {/* Named on every message, mine included. The name used to be withheld for
                     my own on the grounds that the side of the panel it sat on said so;

@@ -96,6 +96,27 @@ describe('Table', () => {
     expect(onPlay).toHaveBeenCalledWith({ type: 'callUno' })
   })
 
+  /* A missclick guard, not a layout preference. `callUno` becomes legal in the middle of a
+     turn, so a button rendered before the turn-ending control slides that control out from
+     under the cursor - and the cost is a drawn card nobody asked for, under a clock. The
+     rule this asserts is general: nothing conditional may precede something permanent. */
+  it('never puts the UNO control before the control that ends the turn', () => {
+    const { container } = { container: document.body }
+    setup(
+      viewWith({
+        you: {
+          seat: 0,
+          hand: [mine, mine],
+          legalMoves: [{ type: 'draw' }, { type: 'callUno' }],
+        },
+      }),
+    )
+    const buttons = [...container.querySelectorAll('.controls .btn')]
+    const uno = buttons.findIndex((node) => node.classList.contains('btn-uno'))
+    expect(uno, 'the UNO control is rendered').toBeGreaterThan(-1)
+    expect(uno, 'it comes after the turn-ending control').toBeGreaterThan(0)
+  })
+
   it('offers no call-out unless the server put one in the view', () => {
     // The client evaluates no rule: a hand of one card next door means nothing to
     // it until the move arrives.

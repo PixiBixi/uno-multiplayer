@@ -268,6 +268,14 @@ input::placeholder {
   color: var(--ground);
 }
 
+/* A block of the seat's own colour, not a dot: the same mark the rail and the roster put
+   beside a name, at the size a 12px band allows. */
+.plate-pigment {
+  flex: none;
+  width: 10px;
+  height: 1.1em;
+}
+
 .plate-count {
   font-family: var(--display);
   font-size: var(--step-0);
@@ -1360,9 +1368,27 @@ input.switch:checked::before {
   color: var(--text-dim);
 }
 
-.seat-turn .seat-count,
+.seat-turn {
+  background: color-mix(in srgb, var(--text) 10%, transparent);
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  padding-right: 0.6rem;
+}
+
+.seat-turn .seat-count {
+  color: var(--text);
+}
+
 .seat-exposed .seat-count {
   color: var(--accent);
+}
+
+/* Said in a word as well as drawn, like every other state here: a background tint is not
+   something a screen reader can see, and `theirTurn` is already in both catalogues. */
+.seat-turn .seat-note {
+  background: var(--text);
+  color: var(--ground);
+  padding: 0.1rem 0.4rem;
 }
 
 .seat-backs {
@@ -1431,6 +1457,13 @@ input.switch:checked::before {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.6rem;
+}
+
+/* The turn-ending control is the one a player aims at under a clock, and it swaps its own
+   label three ways - Draw card, End turn, Take 4 - so a width floor keeps it still while
+   the words change. Everything that appears and disappears sits to its right. */
+.controls > .btn:first-child {
+  min-width: 11rem;
 }
 
 .drawn-prompt {
@@ -1711,19 +1744,30 @@ input.switch:checked::before {
   margin-top: auto;
 }
 
-/* Every line in the log hangs off the same left edge, chat included. Mirroring one's own
-   messages to the right is the balloon convention, and it was inherited from when these
-   WERE balloons: against a rule down the left edge it puts the rule on the inside of a
-   right-floated block, and the column reads as a ragged edge rather than as a list. Whose
-   message it is comes from the name and the pigment, which is how the log says it too. */
+/* Two edges, one each. What the table did hangs off the left with its rule on the left;
+   what I said hangs off the right with its rule on the right. The first attempt put
+   everything on the left, which lost the distinction; the attempt before that pushed my
+   messages right while leaving the rule on their inner edge, which is what made the
+   column look ragged. Mirroring the whole thing is what the convention actually asks for. */
 .msg {
   display: flex;
 }
 
+.msg-mine {
+  justify-content: flex-end;
+  text-align: right;
+}
+
 .msg-bubble {
-  max-width: 100%;
+  max-width: 82%;
   padding: 0.1rem 0 0.1rem 0.6rem;
   border-inline-start: 3px solid var(--panel-edge);
+}
+
+.msg-mine .msg-bubble {
+  padding: 0.1rem 0.6rem 0.1rem 0;
+  border-inline-start: 0;
+  border-inline-end: 3px solid var(--panel-edge);
 }
 
 .msg-who {

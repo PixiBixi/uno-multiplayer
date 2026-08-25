@@ -15,6 +15,7 @@ import { useCountdown } from '../hooks/useCountdown.js'
 import { useTableSounds } from '../hooks/useTableSounds.js'
 import { nextCardTheme } from '../lib/card-themes.js'
 import { nextColourMode } from '../lib/preferences.js'
+import { pigmentForSeat } from '../lib/palette.js'
 import { useColourMode, useSetColourMode } from '../components/ColourModeProvider.js'
 import { useMessages } from '../i18n/index.js'
 
@@ -129,6 +130,19 @@ export function Table({
                 ? t.over.firstTo(view.match.goal.target)
                 : t.over.roundOf(view.match.round, view.match.goal.count)}
             </span>
+
+            {/* Whose turn it is, in the one band that is on screen at every width. The
+                headline in the middle says it far louder, and below 1040px the columns
+                stack - so the headline is a scroll away, while the rail says nothing at
+                all when the seat on turn is the reader, who is not in it. */}
+            <p className={myTurn ? 'plate plate-turn' : 'plate'} role="status">
+              <span
+                className="plate-pigment"
+                style={{ background: pigmentForSeat(view.currentSeat) }}
+                aria-hidden="true"
+              />
+              <span>{headline}</span>
+            </p>
           </div>
           <div className="table-bar-right">
             <span className="table-code">
@@ -296,18 +310,6 @@ export function Table({
 
           <div className="south-bar">
             <div className="controls">
-              {/* The UNO control only exists when calling it is a legal move. */}
-              {canCallUno && (
-                <button
-                  type="button"
-                  className="btn btn-uno"
-                  onClick={() => {
-                    onPlay({ type: 'callUno' })
-                  }}
-                >
-                  {t.table.callUno}
-                </button>
-              )}
               {acceptDraw !== undefined ? (
                 <button
                   type="button"
@@ -343,6 +345,23 @@ export function Table({
                   }}
                 >
                   {t.table.drawCard}
+                </button>
+              )}
+
+              {/* AFTER the control that ends the turn, never before it. Calling UNO becomes
+                  legal mid-turn, and a button appearing to the left of Draw slid Draw out
+                  from under the cursor - which cost players a drawn card they did not ask
+                  for, under a clock. Nothing conditional may precede something permanent;
+                  `Table.test.tsx` asserts the order. */}
+              {canCallUno && (
+                <button
+                  type="button"
+                  className="btn btn-uno"
+                  onClick={() => {
+                    onPlay({ type: 'callUno' })
+                  }}
+                >
+                  {t.table.callUno}
                 </button>
               )}
 
