@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.8.0](https://github.com/PixiBixi/uno-multiplayer/compare/8c9296a3c700e0b5354d96b330c1f223d6746caa..v1.8.0) - 2026-08-25
+#### Features
+- (**rules**) three seconds to say UNO, instead of two cards on the spot - ([52bd07a](https://github.com/PixiBixi/uno-multiplayer/commit/52bd07ae05225137149346aead57cc00303926d3)) - Jeremy Delgado
+#### Documentation
+- (**wiki**) update client architecture doc for card-theme and layout changes - ([8c9296a](https://github.com/PixiBixi/uno-multiplayer/commit/8c9296a3c700e0b5354d96b330c1f223d6746caa)) - Jeremy Delgado
+
+- - -
+
 ## [v1.7.4](https://github.com/PixiBixi/uno-multiplayer/compare/8f22c115df1393dbe00963285bbac2a473e70837..v1.7.4) - 2026-08-25
 #### Miscellaneous Chores
 - (**deps**) bump the production-dependencies group across 1 directory with 2 updates (#10) - ([8f22c11](https://github.com/PixiBixi/uno-multiplayer/commit/8f22c115df1393dbe00963285bbac2a473e70837)) - dependabot[bot], dependabot[bot]
