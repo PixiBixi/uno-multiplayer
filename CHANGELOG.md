@@ -1,6 +1,13 @@
 # Changelog
 
 - - -
+## [v1.7.2](https://github.com/PixiBixi/uno-multiplayer/compare/bb9d3777560c0d7b82c9c47ad056fec8b5c176ed..v1.7.2) - 2026-08-25
+#### Bug Fixes
+- (**rules**) the host opened every round, and now only opens the match - ([bb9d377](https://github.com/PixiBixi/uno-multiplayer/commit/bb9d3777560c0d7b82c9c47ad056fec8b5c176ed)) - Jeremy Delgado
+- (**web**) stop the draw button moving, and say whose turn it is where it shows - ([b1a2709](https://github.com/PixiBixi/uno-multiplayer/commit/b1a2709cde7d2dbb9ed33e531d30eea55a86401f)) - Jeremy Delgado
+
+- - -
+
 ## [v1.7.1](https://github.com/PixiBixi/uno-multiplayer/compare/90145df5a969194c0774e5d0a5637f960b1043a6..v1.7.1) - 2026-08-25
 #### Bug Fixes
 - (**web**) hang every line of the log off the same left edge - ([90145df](https://github.com/PixiBixi/uno-multiplayer/commit/90145df5a969194c0774e5d0a5637f960b1043a6)) - Jeremy Delgado
