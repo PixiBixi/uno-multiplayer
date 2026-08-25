@@ -145,9 +145,10 @@ describe('Table', () => {
   })
 
   /*
-   * Told to the exposed player too, because calling UNO on your own next turn is how the
-   * rules let you out of it. Derived rather than sent: `callUno` is offered at two cards or
-   * while vulnerable, so at ONE card its presence can only mean vulnerable.
+   * Told to the exposed player too, because calling UNO is how the rules let you out of
+   * it and the control is right there, whoever's turn it is. Derived rather than sent:
+   * `callUno` is offered at two cards or while vulnerable, so at ONE card its presence
+   * can only mean vulnerable.
    */
   it('warns you when you are the one open to a call-out', () => {
     setup(viewWith({ you: { seat: 0, hand: [mine], legalMoves: [{ type: 'callUno' }] } }))
@@ -157,6 +158,20 @@ describe('Table', () => {
   it('does not warn you at two cards, where calling UNO is merely the ordinary moment', () => {
     setup(viewWith({ you: { seat: 0, hand: [mine, mine], legalMoves: [{ type: 'callUno' }] } }))
     expect(screen.queryByRole('alert')).toBeNull()
+  })
+
+  /* The window opens as your own turn ends, so every moment you are accusable is
+     somebody else's turn. A control that only appeared on your turn was an escape you
+     could not reach while it mattered. */
+  it('keeps the UNO control while it is somebody else’s turn', async () => {
+    const { onPlay } = setup(
+      viewWith({
+        currentSeat: 1,
+        you: { seat: 0, hand: [mine], legalMoves: [{ type: 'callUno' }] },
+      }),
+    )
+    await userEvent.click(screen.getByRole('button', { name: /uno/i }))
+    expect(onPlay).toHaveBeenCalledWith({ type: 'callUno' })
   })
 
   it('offers one per vulnerable opponent', () => {

@@ -71,10 +71,11 @@ export function Table({
    * while vulnerable, so at ONE card its presence can only mean vulnerable - had you called
    * it, it would not be on offer at all.
    *
-   * Worth telling you, because calling UNO on your own next turn before playing is how the
-   * rules let you escape. A player who is not told is playing a different game from the one
-   * everybody else can see. It only ever appears on a table with the call-out rule on:
-   * without it, reaching one card uncalled costs two cards immediately instead.
+   * Worth telling you, because calling UNO is how the rules let you escape and the control
+   * beside this banner is live whoever's turn it is. A player who is not told is playing a
+   * different game from the one everybody else can see. It only ever appears on a table
+   * with the call-out rule on: without it, reaching one card uncalled costs two cards
+   * immediately instead.
    */
   const exposedToCallOut = canCallUno && view.you.hand.length === 1
 
