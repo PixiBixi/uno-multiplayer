@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.7.1](https://github.com/PixiBixi/uno-multiplayer/compare/90145df5a969194c0774e5d0a5637f960b1043a6..v1.7.1) - 2026-08-25
+#### Bug Fixes
+- (**web**) hang every line of the log off the same left edge - ([90145df](https://github.com/PixiBixi/uno-multiplayer/commit/90145df5a969194c0774e5d0a5637f960b1043a6)) - Jeremy Delgado
+
+- - -
+
 ## [v1.7.0](https://github.com/PixiBixi/uno-multiplayer/compare/db9c4f7c0a1f9a2a9e115311d9e0a46a7ca83302..v1.7.0) - 2026-08-25
 #### Features
 - (**cards**) a poster face, and a card whose pigment reaches the edge - ([db9c4f7](https://github.com/PixiBixi/uno-multiplayer/commit/db9c4f7c0a1f9a2a9e115311d9e0a46a7ca83302)) - Jeremy Delgado
