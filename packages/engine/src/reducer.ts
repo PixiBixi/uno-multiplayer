@@ -306,14 +306,14 @@ function applyCallOut(
 /**
  * Which moves an off-turn seat is even allowed to attempt.
  *
- * A call-out always, and a play only on a table that opted into `jumpIn`. Whether
- * that play really is a jump-in is left to the single `legalMoves` gate below,
- * which is why a bad one comes back as `illegal_move` rather than `not_your_turn`:
- * on a jump-in table an off-turn play is a category of legal move, so refusing it
- * for being off turn would name the wrong reason.
+ * A call-out and a late UNO always, and a play only on a table that opted into
+ * `jumpIn`. Whether the seat really is vulnerable, or the play really is a jump-in, is
+ * left to the single `legalMoves` gate below - which is why a bad one comes back as
+ * `illegal_move` rather than `not_your_turn`: each is a category of legal off-turn
+ * move, so refusing it for being off turn would name the wrong reason.
  */
 function mayActOffTurn(state: GameState, move: Move): boolean {
-  if (move.type === 'callOut') return true
+  if (move.type === 'callOut' || move.type === 'callUno') return true
   return move.type === 'play' && state.rules.jumpIn
 }
 
@@ -374,9 +374,9 @@ export function applyMove(
          every move the seat on turn had.
 
          Beginning it clears `unoCalled`, which is the whole point: a jumper cannot
-         call UNO (an off-turn seat is offered call-outs and jump-ins, nothing else),
-         so a declaration made on an earlier turn must not quietly cover a card laid
-         down on this one. Landing on one card by jumping in is an uncalled UNO. */
+         declare BEFORE jumping, so a declaration made on an earlier turn must not cover
+         a card laid down on this one. Landing on one card by jumping in is an uncalled
+         UNO - a window the jumper may still shut late, or two cards on a plain table. */
       return applyPlay(
         state.currentSeat === seatIndex ? state : beginTurn(state, seatIndex),
         seatIndex,

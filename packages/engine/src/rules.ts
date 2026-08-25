@@ -177,10 +177,16 @@ export function legalMoves(state: GameState, seatIndex: number): Move[] {
   if (seat === undefined || seat.status !== 'active') return []
 
   /* This early return used to be unconditional: nobody but the seat on turn had
-     anything to do. A call-out was the first exception and a jump-in is the second,
-     so an off-turn seat gets exactly those two and nothing else. */
+     anything to do. A call-out was the first exception, a jump-in the second and the
+     late UNO the third, so an off-turn seat gets exactly those three and nothing else. */
   const callOuts = callOutMoves(state, seatIndex)
-  if (state.currentSeat !== seatIndex) return [...callOuts, ...jumpInMoves(state, seatIndex)]
+  /* Off turn too, and not only when its own turn comes back round: the window opens as
+     that turn ENDS, so waiting left the exposed seat no move at all for every turn it
+     was accusable. A late call counts until somebody catches you, as at a real table. */
+  const lateUno: Move[] = !seat.unoCalled && seat.vulnerable ? [{ type: 'callUno' }] : []
+  if (state.currentSeat !== seatIndex) {
+    return [...callOuts, ...lateUno, ...jumpInMoves(state, seatIndex)]
+  }
 
   const moves: Move[] = []
   if (state.drawnCard !== null) {

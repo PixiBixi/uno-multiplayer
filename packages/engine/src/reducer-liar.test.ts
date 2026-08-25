@@ -285,3 +285,49 @@ describe('the window closes', () => {
     expect(next.seats[0]?.vulnerable).toBe(true)
   })
 })
+
+describe('the late UNO, off turn', () => {
+  /** Seat 0 played down to one uncalled: vulnerable, with seat 1 on turn. */
+  const opened = (): GameState => {
+    const state = stateOf({
+      rules: LIAR,
+      seats: [
+        seatOf(0, [num('a', 'R', 3), num('b', 'R', 0)]),
+        seatOf(1, [num('x', 'R', 9)]),
+        seatOf(2, [num('y', 'R', 4)]),
+      ],
+      drawPile: pile(),
+    })
+    return apply(state, 0, { type: 'play', cardId: cid('a') })
+  }
+
+  it('is offered to a vulnerable seat while somebody else is on turn', () => {
+    const state = opened()
+    expect(state.currentSeat).not.toBe(0)
+    expect(legalMoves(state, 0)).toContainEqual({ type: 'callUno' })
+  })
+
+  it('closes the window there and then, before the accusation can land', () => {
+    const called = apply(opened(), 0, { type: 'callUno' })
+    expect(called.seats[0]?.vulnerable).toBe(false)
+    expect(applyMove(called, 1, { type: 'callOut', target: 0 })).toEqual({
+      okay: false,
+      error: 'illegal_move',
+    })
+  })
+
+  it('leaves the turn exactly where it was', () => {
+    const state = opened()
+    expect(apply(state, 0, { type: 'callUno' }).currentSeat).toBe(state.currentSeat)
+  })
+
+  it('gives an off-turn seat holding two cards nothing: it is not exposed yet', () => {
+    const state = stateOf({
+      rules: LIAR,
+      seats: [seatOf(0, [num('a', 'R', 3), num('b', 'R', 0)]), seatOf(1, [num('x', 'R', 9)])],
+      currentSeat: 1,
+      drawPile: pile(),
+    })
+    expect(legalMoves(state, 0)).not.toContainEqual({ type: 'callUno' })
+  })
+})

@@ -275,6 +275,50 @@ describe('the Liar call-out on the wire', () => {
   )
 
   it(
+    'lets the exposed seat call UNO off turn, and the accusation dies with it',
+    async () => {
+      /* The escape has to be reachable exactly when the accusation is: the window
+         opens as the exposed seat's own turn ends, so every moment it is accusable
+         belongs to somebody else. Offered on its own next turn only, the button the
+         table could see had no counterpart at the seat it threatened. */
+      const { players } = await table({
+        liar: true,
+        sevenZero: false,
+        jumpIn: false,
+        playDrawnCard: false,
+      })
+      const caller = await playUntilOffered(players)
+      const move = callOutOffered(caller)
+      if (move === undefined) throw new Error('no call-out was offered')
+      const exposed = players.find((player) => player.view()?.you.seat === move.target)
+      if (exposed === undefined) throw new Error('the target is not at this table')
+
+      const view = exposed.view()
+      expect(view?.currentSeat).not.toBe(view?.you.seat)
+      expect(view?.you.legalMoves).toContainEqual({ type: 'callUno' })
+
+      const held = view?.you.hand.length ?? 0
+      const before = players.map((player) => player.version())
+      expect(await emit<PlainAck>(exposed, 'game:move', { move: { type: 'callUno' } })).toEqual({
+        ok: true,
+      })
+      await waitFor(
+        () => players.every((player, index) => player.version() > (before[index] ?? 0)),
+        'every view after the late UNO',
+      )
+
+      // Nothing was drawn, and the accusation is no longer on offer to anybody.
+      expect(exposed.view()?.you.hand).toHaveLength(held)
+      for (const player of players) expect(callOutOffered(player)).toBeUndefined()
+      expect(await emit<PlainAck>(caller, 'game:move', { move })).toEqual({
+        ok: false,
+        error: 'illegal_move',
+      })
+    },
+    SOCKET_ROUND_TIMEOUT_MS,
+  )
+
+  it(
     'never offers one on a table that did not ask for the option',
     async () => {
       /* A plain table played the same way: the penalty is charged automatically, so
