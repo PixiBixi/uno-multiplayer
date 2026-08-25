@@ -1,6 +1,13 @@
 # Changelog
 
 - - -
+## [v1.7.0](https://github.com/PixiBixi/uno-multiplayer/compare/db9c4f7c0a1f9a2a9e115311d9e0a46a7ca83302..v1.7.0) - 2026-08-25
+#### Features
+- (**cards**) a poster face, and a card whose pigment reaches the edge - ([db9c4f7](https://github.com/PixiBixi/uno-multiplayer/commit/db9c4f7c0a1f9a2a9e115311d9e0a46a7ca83302)) - Jeremy Delgado
+- (**web**) rebuild the interface on paper and pigment - ([54d855b](https://github.com/PixiBixi/uno-multiplayer/commit/54d855ba5d8bc96c6dcf8e55b3d49d3fbc4ca7de)) - Jeremy Delgado
+
+- - -
+
 ## [v1.6.2](https://github.com/PixiBixi/uno-multiplayer/compare/75466c08a772364b66b6d9e72e55f4d4f3f7eb1a..v1.6.2) - 2026-08-25
 #### Bug Fixes
 - (**i18n**) the exposed banner points at now, not the next turn - ([36612bb](https://github.com/PixiBixi/uno-multiplayer/commit/36612bbf62286864ba7e108f57b9ab8605dd0b1b)) - Jeremy Delgado
