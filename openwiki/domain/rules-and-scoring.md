@@ -65,10 +65,10 @@ With `liar` on, a seat that reaches one card without calling UNO becomes
 
 Three things about it are worth knowing before touching that code:
 
-- **It is the only move legal off turn.** `legalMoves` used to return `[]` for any
+- **It was the first move legal off turn.** `legalMoves` used to return `[]` for any
   seat that is not `currentSeat`; that early return is now conditional, and an
-  off-turn seat gets call-outs and nothing else. `applyMove`'s turn check exempts
-  `callOut` and nothing else.
+  off-turn seat gets call-outs, a late UNO while it is vulnerable, and jump-ins on a
+  table that opted in - nothing else.
 - **The window is bounded to the end of the accused seat's next turn**, and closes
   in `passTurn` - the one place a turn ends. Without a bound a player could be
   accused ten minutes later, which is a trap rather than a game. It is a field on
@@ -78,8 +78,14 @@ Three things about it are worth knowing before touching that code:
   target is genuinely vulnerable. Penalising a bad guess was rejected: it punishes
   paying attention badly instead of rewarding paying attention well.
 - **The turn order is untouched.** A call-out is a side effect on one hand and never
-  ends a round, which keeps it out of the turn-advance logic entirely. The escape is
-  to call UNO on your own next turn, before playing - a late call still counts.
+  ends a round, which keeps it out of the turn-advance logic entirely.
+- **The escape is reachable the whole time the accusation is.** A late `callUno`
+  still counts, and `legalMoves` offers it to a vulnerable seat whoever is on turn.
+  It used to wait for that seat's own next turn, which was unfair by construction:
+  the window opens as its turn ENDS, so every moment it was accusable belonged to
+  somebody else. The table saw a call-out button and the exposed seat was offered an
+  empty move list. Being late is how it works on a real table - saying UNO counts
+  until somebody catches you - so first to act wins, and that race is the rule.
 
 `sameMove` compares the target as well as the type. Without that, a legal call-out
 against one seat would authorise one against any seat - the sort of gap the single
@@ -151,18 +157,18 @@ worth knowing before touching that code:
   Seven-Zero table offers its swap targets. Play continues in the current direction
   from the jumper, and the seats in between simply lose their turn - that is the
   point of the rule.
-- **`applyMove`'s turn check now exempts two moves**, not one: a `callOut` always,
-  and a `play` on a table that opted in. Which of the off-turn plays are real
+- **`applyMove`'s turn check now exempts three moves**, not one: a `callOut` and a
+  `callUno` always, and a `play` on a table that opted in. Which of the off-turn plays are real
   jump-ins is left entirely to the single `legalMoves` gate, so a bad one comes back
   as `illegal_move` and not `not_your_turn` - on a jump-in table an off-turn play is
   a category of legal move, and refusing it for being off turn would name the wrong
   reason.
 - **A jump-in begins the jumper's turn before the card resolves**, which clears
-  `unoCalled`. That is deliberate and it is the rule: an off-turn seat is offered
-  call-outs and jump-ins and nothing else, so a jumper has no moment at which to
-  declare, and a declaration made on an earlier turn must not quietly cover a card
+  `unoCalled`. That is deliberate and it is the rule: a jumper cannot declare before
+  jumping, so a declaration made on an earlier turn must not quietly cover a card
   laid down on this one. Landing on one card by jumping in is an uncalled UNO - two
-  cards, or an open window on a Liar table. It also closes the jumper's own window,
+  cards, or an open window on a Liar table, which the jumper may then shut with a
+  late UNO like any other exposed seat. It also closes the jumper's own window,
   since its turn has just ended, which is the same escape calling UNO gives.
 - **Nothing at all is offered while a draw is pending.** Not even a same-kind card,
   which `isPlayable` would allow: the stacking rule is "strictly the same type", and

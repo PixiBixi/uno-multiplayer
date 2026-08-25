@@ -80,8 +80,9 @@ is the difference between a guard and a decoration:
 - Bypassing the statistics funnel on the move path fails two tally tests.
 - Dropping the chosen table rules on the `room:create` path fails two Liar socket
   tests; making a call-out legal against a seat that is not vulnerable fails twelve
-  across the engine, the room and the wire; and hiding the call-out button while the
-  move is offered fails four in the browser suite.
+  across the engine, the room and the wire; hiding the call-out button while the
+  move is offered fails four in the browser suite; and withholding the late `callUno`
+  from a vulnerable seat off turn fails four across the engine and the wire.
 - Ten mutations were re-run against Seven-Zero. The instructive ones: ignoring
   `swapWith` in `sameMove` fails seven, rotating against `direction` fails five,
   making a departed seat a legal swap target fails six, deriving no hands-moved event
