@@ -439,5 +439,8 @@ test('a long log scrolls inside its panel instead of growing the page', async ({
   expect(measured.pageScrolls).toBe(false)
   expect(measured.composerVisible).toBe(true)
   expect(measured.logScrolls).toBe(true)
-  expect(measured.firstLineText).toBe('line number 0')
+  /* Contained rather than equal: every line names its author now, mine included, so the
+     first line reads "You" and then the message. What is being guarded is which line is
+     reachable at the top of the scroll box, not how it is composed. */
+  expect(measured.firstLineText).toContain('line number 0')
 })

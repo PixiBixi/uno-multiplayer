@@ -107,16 +107,19 @@ export function ChatPanel({ feed, mySeat, nameOf, onSend }: ChatPanelProps) {
           }
           const mine = entry.seat === mySeat
           return (
-            <div className={mine ? 'msg msg-mine' : 'msg'} key={entry.id}>
+            <div className="msg" key={entry.id}>
               <div
                 className="msg-bubble"
                 style={{ borderInlineStartColor: pigmentForSeat(entry.seat) }}
               >
-                {!mine && (
-                  <span className="msg-who" style={{ color: pigmentForSeat(entry.seat) }}>
-                    {entry.name}
-                  </span>
-                )}
+                {/* Named on every message, mine included. The name used to be withheld for
+                    my own on the grounds that the side of the panel it sat on said so;
+                    nothing sits on a side any more, so withholding it left a line with no
+                    author at all. `describeEvent` already says "You" for my own events, so
+                    the two kinds of line now agree. */}
+                <span className="msg-who" style={{ color: pigmentForSeat(entry.seat) }}>
+                  {mine ? messages.table.you : entry.name}
+                </span>
                 <span>{entry.text}</span>
               </div>
             </div>

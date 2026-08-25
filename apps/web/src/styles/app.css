@@ -1711,16 +1711,17 @@ input.switch:checked::before {
   margin-top: auto;
 }
 
+/* Every line in the log hangs off the same left edge, chat included. Mirroring one's own
+   messages to the right is the balloon convention, and it was inherited from when these
+   WERE balloons: against a rule down the left edge it puts the rule on the inside of a
+   right-floated block, and the column reads as a ragged edge rather than as a list. Whose
+   message it is comes from the name and the pigment, which is how the log says it too. */
 .msg {
   display: flex;
 }
 
-.msg-mine {
-  flex-direction: row-reverse;
-}
-
 .msg-bubble {
-  max-width: 82%;
+  max-width: 100%;
   padding: 0.1rem 0 0.1rem 0.6rem;
   border-inline-start: 3px solid var(--panel-edge);
 }
