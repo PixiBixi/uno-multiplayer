@@ -77,6 +77,41 @@ a whole. A client built when `liar` was the only option sends `{ liar }`; reject
 that would break a client that can play perfectly well and is simply asking for a
 table without the newer rule.
 
+### Forgetting UNO, and the three seconds that follow
+
+Reaching one card without having called UNO opens an escapable **window** on every table.
+It used to open one only where `liar` was on, and charge two cards on the spot everywhere
+else - which made the plain table the harsher of the two for no reason anybody chose: the
+call was legal a moment too late to make.
+
+What `liar` decides now is **who shuts the window**:
+
+|          | plain table                  | `liar` on                          |
+| -------- | ---------------------------- | ---------------------------------- |
+| shuts it | a three-second clock         | an opponent, by calling out        |
+| costs    | `UNO_PENALTY`, automatically | `UNO_PENALTY`, if somebody notices |
+| escape   | say UNO within three seconds | say UNO before anybody calls it    |
+
+The clock lives in `RoomManager` beside the turn clock and the between-rounds clock,
+behind the same injectable `Timers`, because **the engine is pure and `Room` is
+synchronous**. The engine's half is `penaliseForgottenUno(state, seat)` - the consequence
+without the deadline - and it is a no-op on a seat that is no longer exposed, which is
+what makes a call arriving in the last millisecond safe against a timer already on its
+way.
+
+`UNO_GRACE_SECONDS` is fixed at 3 rather than offered in the lobby: it is a reflex
+window, not a house rule.
+
+Two consequences worth knowing:
+
+- **`armUnoGrace` is called from `retime`**, not from the move that opens a window. A
+  window also closes on somebody else's move - a call-out, or the exposed seat's own next
+  turn - and the clock has to go away with it.
+- **A seat that goes out inside its own window pays nothing.** `chargeForgottenUno` does
+  nothing once the round is finished. It takes another player's move for the turn to come
+  back round, so this needs a very fast table, and it is the same escape a Liar table
+  already grants when nobody notices in time.
+
 ### The Liar call-out
 
 `liar` is what the flag is called in the engine and on the wire. It is not what the

@@ -355,12 +355,14 @@ describe('a jumper who lands on one card', () => {
       ...over,
     })
 
-  it('pays the automatic penalty, since a jumper cannot call UNO', () => {
-    /* An off-turn seat is offered call-outs and jump-ins and nothing else, so there
-       is no moment at which a jumper could declare. Landing on one card by jumping
-       in is therefore an uncalled UNO, and costs what one always costs. */
+  it('lands exposed, since a jumper cannot declare before jumping', () => {
+    /* A jumper has no moment at which to declare: an off-turn seat is offered call-outs,
+       a late UNO and jump-ins, and none of those is a declaration made in advance.
+       Landing on one card by jumping in is therefore an uncalled UNO - which is a window
+       now rather than two cards, on every table. */
     const next = apply(twoLeft(JUMP), 1, { type: 'play', cardId: cid('twin') })
-    expect(handOf(next, 1)).toHaveLength(1 + UNO_PENALTY)
+    expect(handOf(next, 1)).toHaveLength(1)
+    expect(next.seats[1]?.vulnerable).toBe(true)
   })
 
   it('is not covered by a declaration made on an earlier turn', () => {
@@ -372,9 +374,9 @@ describe('a jumper who lands on one card', () => {
         seatOf(2, [num('z', 'Y', 9)]),
       ],
     })
-    expect(handOf(apply(state, 1, { type: 'play', cardId: cid('twin') }), 1)).toHaveLength(
-      1 + UNO_PENALTY,
-    )
+    const next = apply(state, 1, { type: 'play', cardId: cid('twin') })
+    expect(handOf(next, 1)).toHaveLength(1)
+    expect(next.seats[1]?.vulnerable).toBe(true)
   })
 
   it('becomes vulnerable instead, on a Liar table', () => {

@@ -3,6 +3,7 @@ import { randomInt } from 'node:crypto'
 import { DEFAULT_TABLE_RULES, err, ok, type Result } from '@uno/engine'
 import {
   BETWEEN_ROUNDS_SECONDS,
+  UNO_GRACE_SECONDS,
   MIN_SEATS,
   type ErrorCode,
   type GameEvent,
@@ -39,6 +40,7 @@ export class RoomManager {
   private readonly graceTimers = new Map<string, unknown>()
   private readonly turnTimers = new Map<string, unknown>()
   private readonly roundTimers = new Map<string, unknown>()
+  private readonly unoTimers = new Map<string, unknown>()
   /** When a room last became empty, so purge can tell "gone" from "gone for good". */
   private readonly emptySince = new Map<string, number>()
   private readonly maxRooms: number
@@ -182,6 +184,40 @@ export class RoomManager {
       onExpire(dealt)
     }, ms)
     this.roundTimers.set(room.code, handle)
+  }
+
+  /**
+   * The three seconds a seat has to say UNO after playing down to one card.
+   *
+   * Only on a table WITHOUT call-outs, which is the whole distinction between the two:
+   * there an opponent shuts the window and no deadline is wanted, here nobody is watching
+   * so a clock has to. Re-armed from scratch on every move, like the turn clock, so the
+   * window that is running always belongs to the seat currently exposed.
+   *
+   * The penalty used to be charged by the reducer the instant the card left the hand,
+   * which made the plain table the harsher of the two for no reason anybody chose: the
+   * call was legal a moment too late to make.
+   */
+  armUnoGrace(room: Room, onExpire: (events: GameEvent[]) => void): void {
+    this.cancelUnoGrace(room)
+    if (room.callOutsAllowed || room.exposedSeat() === null) return
+
+    const handle = this.timers.setTimeout(() => {
+      this.unoTimers.delete(room.code)
+      /* Re-checked rather than trusted: `chargeForgottenUno` is a no-op when nobody is
+         exposed any more, which is what makes a call arriving in the last millisecond
+         safe against a timer already on its way. */
+      onExpire(room.chargeForgottenUno())
+    }, UNO_GRACE_SECONDS * 1000)
+    this.unoTimers.set(room.code, handle)
+  }
+
+  cancelUnoGrace(room: Room): void {
+    const handle = this.unoTimers.get(room.code)
+    if (handle !== undefined) {
+      this.timers.clearTimeout(handle)
+      this.unoTimers.delete(room.code)
+    }
   }
 
   cancelNextRound(room: Room): void {

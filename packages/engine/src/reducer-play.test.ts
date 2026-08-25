@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { UNO_PENALTY, applyMove } from './reducer.js'
+import { UNO_PENALTY, applyMove, penaliseForgottenUno } from './reducer.js'
 import { act, cid, handOf, num, seatOf, stateOf, wild } from './test-helpers.js'
 import type { Card, GameState, Move } from './types.js'
 
@@ -117,10 +117,43 @@ describe('wild4', () => {
 })
 
 describe('uno penalty', () => {
-  it('draws two cards when going down to one without calling', () => {
+  /* No longer charged by the reducer, on any table. Reaching one card uncalled opens the
+     escapable window it always opened on a Liar table; what differs is who shuts it -
+     an opponent there, a three-second clock in `RoomManager` here. The engine is pure and
+     timer-free, so it cannot be the thing that charges a penalty on a deadline. */
+  it('opens a window rather than charging, so the call can still be made', () => {
     const state = threeSeats([num('a', 'R', 3), num('b', 'R', 0)])
     const next = apply(state, 0, { type: 'play', cardId: cid('a') })
+    expect(handOf(next, 0)).toHaveLength(1)
+    expect(next.seats[0]?.vulnerable).toBe(true)
+  })
+
+  /* The consequence without the deadline. `RoomManager` holds the three seconds and calls
+     this when they run out; the engine stays pure and knows nothing about clocks. Shutting
+     the window is part of it: a seat that has paid is not still open to a call-out. */
+  it('charges the penalty and shuts the window, when asked to', () => {
+    const state = stateOf({
+      seats: [seatOf(0, [num('a', 'R', 3)], { vulnerable: true }), seatOf(1, [])],
+      drawPile: [num('d1', 'G', 1), num('d2', 'G', 2), num('d3', 'G', 3)],
+    })
+    const next = penaliseForgottenUno(state, 0)
     expect(handOf(next, 0)).toHaveLength(1 + UNO_PENALTY)
+    expect(next.seats[0]?.vulnerable).toBe(false)
+  })
+
+  it('leaves a seat that is not exposed exactly as it was', () => {
+    const state = stateOf({
+      seats: [seatOf(0, [num('a', 'R', 3)]), seatOf(1, [])],
+      drawPile: [num('d1', 'G', 1), num('d2', 'G', 2)],
+    })
+    expect(penaliseForgottenUno(state, 0)).toEqual(state)
+  })
+
+  it('opens no window when uno was called before playing', () => {
+    const state = threeSeats([num('a', 'R', 3), num('b', 'R', 0)])
+    const called = apply(state, 0, { type: 'callUno' })
+    const next = apply(called, 0, { type: 'play', cardId: cid('a') })
+    expect(next.seats[0]?.vulnerable).toBe(false)
   })
 
   it('draws nothing when uno was called first', () => {

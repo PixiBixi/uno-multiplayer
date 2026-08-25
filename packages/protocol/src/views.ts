@@ -31,6 +31,20 @@ export const DEFAULT_TURN_SECONDS = 15
 export const BETWEEN_ROUNDS_SECONDS = 5
 
 /**
+ * How long a seat has to say UNO after playing down to one card, on a table without
+ * call-outs.
+ *
+ * Fixed for the same reason: it is a reflex window, not a house rule, and the lobby
+ * already carries four rules and two dials. Three seconds is long enough to reach a
+ * button that is already on screen and short enough that the table does not wait.
+ *
+ * In the protocol package because both ends may want it, but nothing on the wire carries
+ * a deadline for it yet: the exposed player sees the banner and a live UNO button, not a
+ * countdown. The server remains the only thing that charges anything when it runs out.
+ */
+export const UNO_GRACE_SECONDS = 3
+
+/**
  * How fast a table is played. Independent of MatchGoal, which says how a match
  * ENDS rather than how quickly it runs - hence a separate field and not a third
  * goal variant.

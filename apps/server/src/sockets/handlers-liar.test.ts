@@ -321,8 +321,15 @@ describe('the Liar call-out on the wire', () => {
   it(
     'never offers one on a table that did not ask for the option',
     async () => {
-      /* A plain table played the same way: the penalty is charged automatically, so
-         no seat is ever left open to an accusation and no button ever appears. */
+      /* A plain table played the same way: no seat is ever offered an accusation and no
+         button ever appears.
+
+         What is NOT asserted here is the penalty arriving. A plain table charges it from
+         the three-second grace clock now, and a scripted round plays a great deal faster
+         than three seconds - so waiting for it over a real socket is a race against the
+         round ending, which is the definition of a flaky test. The clock firing, and the
+         penalty it charges, are covered deterministically in `room-uno-grace.test.ts`
+         with the timers injected. */
       const { host, players } = await table({
         liar: false,
         sevenZero: false,
@@ -332,7 +339,6 @@ describe('the Liar call-out on the wire', () => {
       await expect(playUntilOffered(players)).rejects.toThrow(
         /ended before anybody forgot|nobody ever went down/,
       )
-      expect(host.events.some((event) => event.type === 'unoPenalty')).toBe(true)
       expect(host.events.some((event) => event.type === 'calledOut')).toBe(false)
     },
     SOCKET_ROUND_TIMEOUT_MS,

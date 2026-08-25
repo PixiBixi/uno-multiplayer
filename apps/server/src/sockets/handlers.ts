@@ -135,6 +135,12 @@ export function registerSocketHandlers(
     }
     rooms.armTurn(room, afterExpiry)
     rooms.armNextRound(room, afterExpiry)
+    /* Third clock, same shape: the seconds a seat has to say UNO after playing down to
+       one card, on a table where nobody is watching for it. Armed here rather than at
+       the one call site that opens a window, because a window also CLOSES on a move
+       somebody else made - a call-out, or the exposed seat's own next turn - and the
+       clock has to go away with it. */
+    rooms.armUnoGrace(room, afterExpiry)
   }
 
   const broadcastEvents = (room: Room, events: GameEvent[]): void => {

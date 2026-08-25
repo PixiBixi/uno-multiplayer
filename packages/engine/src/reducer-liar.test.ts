@@ -22,15 +22,20 @@ const apply = (state: GameState, seat: number, move: Move): GameState => {
 /** Enough to pay a penalty out of, since stateOf's default pile holds only two. */
 const pile = () => [num('d1', 'G', 1), num('d2', 'G', 2), num('d3', 'G', 3), num('d4', 'G', 4)]
 
-describe('a plain table is untouched', () => {
-  it('still penalises a forgotten UNO automatically', () => {
+describe('a plain table', () => {
+  /* It used to be the harsher of the two tables, which nobody chose: forgetting cost two
+     cards the instant the card left your hand, while a Liar table let you call it late.
+     Both open the same window now. What `liar` decides is who shuts it - an opponent
+     there, a three-second clock in `RoomManager` here - and the reducer charges nothing
+     on either, because a pure engine cannot hold a deadline. */
+  it('opens the same escapable window, and charges nothing itself', () => {
     const state = stateOf({
       seats: [seatOf(0, [num('a', 'R', 3), num('b', 'R', 0)]), seatOf(1, [])],
       drawPile: pile(),
     })
     const next = apply(state, 0, { type: 'play', cardId: cid('a') })
-    expect(handOf(next, 0)).toHaveLength(1 + UNO_PENALTY)
-    expect(next.seats[0]?.vulnerable).toBe(false)
+    expect(handOf(next, 0)).toHaveLength(1)
+    expect(next.seats[0]?.vulnerable).toBe(true)
   })
 
   it('offers no call-out at all, so the option is genuinely opt-in', () => {

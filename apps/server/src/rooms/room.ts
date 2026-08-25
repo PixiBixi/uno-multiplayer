@@ -2,7 +2,9 @@ import { randomUUID } from 'node:crypto'
 import {
   DEFAULT_TABLE_RULES,
   activeCount,
+  UNO_PENALTY,
   applyMove,
+  penaliseForgottenUno,
   applyRound,
   err,
   legalMoves,
@@ -136,6 +138,47 @@ export class Room {
    */
   get decidingOnDrawnCard(): boolean {
     return this.game?.drawnCard != null
+  }
+
+  /**
+   * Whether the table shuts its UNO windows by hand.
+   *
+   * Named for what it decides rather than after the flag: `RoomManager` arms the grace
+   * clock only where nobody is watching, and reading `rules.liar` there would put the
+   * word "liar" in a file whose job is timers.
+   */
+  get callOutsAllowed(): boolean {
+    return this.rules.liar
+  }
+
+  /**
+   * The seat holding one card it never called UNO on, or null when nobody is.
+   *
+   * Exposed as a seat rather than a boolean because the caller has to name it: the
+   * grace clock charges THAT seat, and a room only ever has one window open at a time -
+   * the reducer shuts the old one before it may open a new one.
+   */
+  exposedSeat(): number | null {
+    return this.game?.seats.find((seat) => seat.vulnerable)?.index ?? null
+  }
+
+  /**
+   * Charges the seat that let the window run out, and reports it.
+   *
+   * Called by the grace clock in `RoomManager`, never from a move: `Room` is synchronous
+   * and holds no timers, so the deadline lives outside and only the consequence lives
+   * here. Silent when nobody is exposed any more, which is the normal case - the call
+   * arrived, or a call-out did, or the seat's next turn shut the window first.
+   */
+  chargeForgottenUno(): GameEvent[] {
+    const before = this.game
+    if (before === null || before.phase !== 'playing') return []
+    const seat = this.exposedSeat()
+    if (seat === null) return []
+
+    const after = penaliseForgottenUno(before, seat)
+    this.game = after
+    return this.record([{ type: 'unoPenalty', seat, count: UNO_PENALTY }])
   }
 
   /** A round has ended, the match has not, so another deal is due. */

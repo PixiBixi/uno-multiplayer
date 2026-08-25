@@ -101,6 +101,23 @@ function beginTurn(state: GameState, seatIndex: number): GameState {
 }
 
 /**
+ * Charges the seat that let its UNO window run out, and shuts the window.
+ *
+ * The consequence without the deadline. Reaching one card uncalled opens a window on
+ * every table now, and something outside has to decide when it has been open long
+ * enough - a three-second clock on a plain table, an opponent on a Liar one. This is
+ * the half that belongs to the engine: pure, and knowing nothing about time.
+ *
+ * A no-op on a seat that is not exposed, which is the normal case by the time it is
+ * called: the declaration arrived, or a call-out did, or the seat's own next turn shut
+ * the window first. The caller does not have to check.
+ */
+export function penaliseForgottenUno(state: GameState, seatIndex: number): GameState {
+  if (state.seats[seatIndex]?.vulnerable !== true) return state
+  return closeWindow(drawInto(state, seatIndex, UNO_PENALTY), seatIndex)
+}
+
+/**
  * Closes the Liar window on one seat. Called out, called UNO, or simply out of
  * time - the three ways the window shuts all land here.
  */
@@ -260,10 +277,14 @@ function applyPlay(
 
   if (permuted.length === 0) {
     if (hand.length === 1 && !seat.unoCalled) {
-      /* With `liar` on, forgetting costs nothing until somebody notices; the seat
-         merely becomes open to an accusation. Without it the penalty is automatic,
-         exactly as it always was. */
-      next = state.rules.liar ? openWindow(next, seatIndex) : drawInto(next, seatIndex, UNO_PENALTY)
+      /* A window on every table, and no penalty charged here on any of them.
+         Forgetting used to cost two cards the instant the card left your hand unless
+         the table had opted into `liar`, which made the plain table the harsher of the
+         two for no reason anybody chose: the call was legal a moment too late to make.
+         What differs between the tables is who SHUTS the window - an opponent on a
+         Liar table, a three-second clock in `RoomManager` otherwise. The engine is
+         pure and timer-free, so it cannot be the thing that charges on a deadline. */
+      next = openWindow(next, seatIndex)
     }
   } else if (state.rules.liar) {
     /* Hands moved, so who owes the table an UNO is re-decided from what each seat

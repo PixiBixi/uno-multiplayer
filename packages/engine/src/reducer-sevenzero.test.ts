@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { UNO_PENALTY, applyMove } from './reducer.js'
+import { applyMove } from './reducer.js'
 import { legalMoves } from './rules.js'
 import { act, allCards, cid, handOf, num, seatOf, stateOf } from './test-helpers.js'
 import type { GameState, Move, TableRules } from './types.js'
@@ -459,7 +459,7 @@ describe('a swap and the UNO window', () => {
     expect(next.drawPile).toHaveLength(pile().length)
   })
 
-  it('still charges an ordinary forgotten UNO, since no hand moved', () => {
+  it('opens an ordinary forgotten-UNO window, since no hand moved', () => {
     // The 7 is playable but a plain card is played instead: the option changes
     // nothing about the rest of the game.
     const state = stateOf({
@@ -471,6 +471,7 @@ describe('a swap and the UNO window', () => {
       drawPile: pile(),
     })
     const next = apply(state, 0, { type: 'play', cardId: cid('b') })
-    expect(handOf(next, 0)).toHaveLength(1 + UNO_PENALTY)
+    expect(handOf(next, 0)).toHaveLength(1)
+    expect(next.seats[0]?.vulnerable).toBe(true)
   })
 })

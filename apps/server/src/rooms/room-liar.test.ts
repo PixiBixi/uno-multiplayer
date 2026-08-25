@@ -122,7 +122,7 @@ describe('a room playing with the Liar option', () => {
 })
 
 describe('a room playing plain UNO', () => {
-  it('never offers a call-out, and still charges a forgotten UNO on the spot', () => {
+  it('never offers a call-out, and charges a forgotten UNO once the window runs out', () => {
     const room = new Room('ABC234', 42, { kind: 'rounds', count: 3 })
     room.join('Ana', 'socket-0')
     room.join('Ben', 'socket-1')
@@ -141,9 +141,21 @@ describe('a room playing plain UNO', () => {
       const result = room.move(seat, move)
       if (!result.okay) throw new Error(result.error)
       seen.push(...result.value)
+      /* Stop at the window rather than playing the round out. It used to be safe to run
+         to the end because the penalty rode out of the move that caused it; now it waits
+         on a clock, and a seat that plays its last card is no longer exposed to charge. */
+      if (room.exposedSeat() !== null) break
     }
 
-    expect(seen.some((event) => event.type === 'unoPenalty')).toBe(true)
+    /* The penalty no longer rides out of a move: reaching one card uncalled opens a window
+       on every table now, and a plain table's is shut by a clock that lives in
+       `RoomManager`. `Room` on its own holds no timers, so the charge is asked for
+       explicitly here - which is exactly what the clock does when it fires. */
+    expect(seen.some((event) => event.type === 'unoPenalty')).toBe(false)
     expect(seen.some((event) => event.type === 'calledOut')).toBe(false)
+    expect(room.exposedSeat(), 'somebody forgot, and is still exposed').not.toBeNull()
+    expect(room.chargeForgottenUno()).toContainEqual(
+      expect.objectContaining({ type: 'unoPenalty' }),
+    )
   })
 })
