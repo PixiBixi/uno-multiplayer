@@ -5,6 +5,11 @@ export const MAX_SEATS = 4
 export const MIN_SEATS = 2
 export const MAX_NAME_LENGTH = 20
 export const MAX_CHAT_LENGTH = 200
+/* Bounded because these strings are relayed to another player untouched. A real
+   audio-only offer is a few kilobytes; anything past this is not a session. */
+export const MAX_SDP_LENGTH = 16_384
+export const MAX_CANDIDATE_LENGTH = 512
+export const MAX_SDP_MID_LENGTH = 16
 
 /* Bounds on a match goal, enforced at the socket boundary rather than only in the
    lobby UI: a client can send whatever it likes. A one-round match is a single

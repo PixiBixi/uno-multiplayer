@@ -7,8 +7,11 @@ import {
 } from '@uno/engine'
 import { z } from 'zod'
 import {
+  MAX_CANDIDATE_LENGTH,
   MAX_CHAT_LENGTH,
   MAX_NAME_LENGTH,
+  MAX_SDP_LENGTH,
+  MAX_SDP_MID_LENGTH,
   MAX_SEATS,
   MAX_POINTS_TARGET,
   MAX_ROUNDS,
@@ -166,3 +169,18 @@ export const gameStartSchema = z.object({})
 export const gameNextRoundSchema = z.object({})
 export const gameMoveSchema = z.object({ move: moveSchema })
 export const chatSendSchema = z.object({ text: z.string().trim().min(1).max(MAX_CHAT_LENGTH) })
+
+const voiceSignalSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('offer'), sdp: z.string().min(1).max(MAX_SDP_LENGTH) }),
+  z.object({ kind: z.literal('answer'), sdp: z.string().min(1).max(MAX_SDP_LENGTH) }),
+  z.object({
+    kind: z.literal('candidate'),
+    candidate: z.string().max(MAX_CANDIDATE_LENGTH),
+    sdpMid: z.string().max(MAX_SDP_MID_LENGTH).nullable(),
+    sdpMLineIndex: z.number().int().min(0).max(16).nullable(),
+  }),
+])
+
+export const voiceSignalSendSchema = z.object({ toSeat: seatNumber, signal: voiceSignalSchema })
+
+export const voiceMuteSchema = z.object({ muted: z.boolean() })

@@ -325,6 +325,8 @@ export const en: Messages = {
     server_full: 'The server is at capacity. Try again shortly.',
     round_in_progress: 'This round is still being played.',
     match_over: 'The match is over. Start a new one to keep playing.',
+    voice_not_joined: 'Join voice first.',
+    voice_peer_unavailable: 'That player is not on voice.',
   },
 
   crash: {

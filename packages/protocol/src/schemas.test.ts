@@ -7,6 +7,8 @@ import {
   MIN_POINTS_TARGET,
   MIN_ROUNDS,
   MIN_TURN_SECONDS,
+  MAX_SDP_LENGTH,
+  MAX_SEATS,
 } from './views.js'
 import { describe, expect, it } from 'vitest'
 import {
@@ -17,6 +19,8 @@ import {
   roomCreateSchema,
   roomJoinSchema,
   roomRejoinSchema,
+  voiceMuteSchema,
+  voiceSignalSendSchema,
 } from './schemas.js'
 
 describe('roomCreateSchema', () => {
@@ -362,5 +366,62 @@ describe('gameMoveSchema', () => {
 
   it('rejects a payload with no move', () => {
     expect(gameMoveSchema.safeParse({}).success).toBe(false)
+  })
+})
+
+describe('voiceSignalSendSchema', () => {
+  it('accepts an offer for a legal seat', () => {
+    const parsed = voiceSignalSendSchema.safeParse({
+      toSeat: 2,
+      signal: { kind: 'offer', sdp: 'v=0\r\no=- 1 1 IN IP4 0.0.0.0\r\n' },
+    })
+    expect(parsed.success).toBe(true)
+  })
+
+  it('accepts a candidate with null sdpMid and sdpMLineIndex', () => {
+    const parsed = voiceSignalSendSchema.safeParse({
+      toSeat: 0,
+      signal: {
+        kind: 'candidate',
+        candidate: 'candidate:1 1 udp 2 1.2.3.4 5 typ host',
+        sdpMid: null,
+        sdpMLineIndex: null,
+      },
+    })
+    expect(parsed.success).toBe(true)
+  })
+
+  it('rejects a seat outside the table', () => {
+    const parsed = voiceSignalSendSchema.safeParse({
+      toSeat: MAX_SEATS,
+      signal: { kind: 'offer', sdp: 'v=0' },
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('rejects an sdp large enough to be an attack rather than a session', () => {
+    const parsed = voiceSignalSendSchema.safeParse({
+      toSeat: 1,
+      signal: { kind: 'offer', sdp: 'v'.repeat(MAX_SDP_LENGTH + 1) },
+    })
+    expect(parsed.success).toBe(false)
+  })
+
+  it('rejects an unknown signal kind', () => {
+    const parsed = voiceSignalSendSchema.safeParse({
+      toSeat: 1,
+      signal: { kind: 'renegotiate', sdp: 'v=0' },
+    })
+    expect(parsed.success).toBe(false)
+  })
+})
+
+describe('voiceMuteSchema', () => {
+  it('accepts a boolean', () => {
+    expect(voiceMuteSchema.safeParse({ muted: true }).success).toBe(true)
+  })
+
+  it('rejects a string that merely looks like one', () => {
+    expect(voiceMuteSchema.safeParse({ muted: 'true' }).success).toBe(false)
   })
 })

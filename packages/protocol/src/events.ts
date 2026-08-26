@@ -16,6 +16,8 @@ export type ErrorCode =
   | 'server_full'
   | 'round_in_progress'
   | 'match_over'
+  | 'voice_not_joined'
+  | 'voice_peer_unavailable'
 
 /** Narrative feed used for animations and the in-game log, never for state. */
 export type GameEvent =
@@ -86,6 +88,26 @@ export type TableConfiguration = {
   rules?: TableRules | undefined
 }
 
+/** A seat that has joined the voice session, and whether its own mic is off. */
+export type VoicePeer = { seat: number; muted: boolean }
+
+/** Shaped for `RTCConfiguration.iceServers`, minted per join. */
+export type IceServer = { urls: string[]; username?: string; credential?: string }
+
+/**
+ * What one peer needs to say to another to negotiate. The server validates the
+ * shape and relays it; it never parses the SDP.
+ */
+export type VoiceSignal =
+  | { kind: 'offer'; sdp: string }
+  | { kind: 'answer'; sdp: string }
+  | {
+      kind: 'candidate'
+      candidate: string
+      sdpMid: string | null
+      sdpMLineIndex: number | null
+    }
+
 export type ClientToServer = {
   'room:create': (
     payload: { playerName: string; goal: MatchGoal; pace: MatchPace; rules: TableRules },
@@ -117,6 +139,19 @@ export type ClientToServer = {
   'game:restart': (payload: Empty, ack: Ack) => void
   'game:move': (payload: { move: Move }, ack: Ack) => void
   'chat:send': (payload: { text: string }, ack: Ack) => void
+  /**
+   * Joins the voice session. The client must already hold a microphone stream:
+   * a denied permission has to cost nothing on the server.
+   */
+  'voice:join': (payload: Empty, ack: Ack<{ iceServers: IceServer[]; peers: VoicePeer[] }>) => void
+  'voice:leave': (payload: Empty, ack: Ack) => void
+  /** Relayed verbatim to `toSeat`, which must be in the same room's voice session. */
+  'voice:signal': (payload: { toSeat: number; signal: VoiceSignal }, ack: Ack) => void
+  /**
+   * Own microphone off. Broadcast because a muted mic produces silence that is
+   * indistinguishable from a player who is simply not talking.
+   */
+  'voice:mute': (payload: { muted: boolean }, ack: Ack) => void
 }
 
 export type ServerToClient = {
@@ -124,5 +159,7 @@ export type ServerToClient = {
   'game:view': (view: PlayerView) => void
   'game:event': (event: GameEvent) => void
   'chat:message': (message: { seat: number; name: string; text: string }) => void
+  'voice:peers': (peers: VoicePeer[]) => void
+  'voice:signal': (payload: { fromSeat: number; signal: VoiceSignal }) => void
   error: (payload: { code: ErrorCode; message: string }) => void
 }

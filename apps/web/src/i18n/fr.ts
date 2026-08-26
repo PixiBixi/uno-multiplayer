@@ -345,6 +345,8 @@ export const fr: Messages = {
     server_full: 'Le serveur est plein. Réessaie dans un instant.',
     round_in_progress: 'Cette manche est encore en cours.',
     match_over: 'La partie est terminée. Lances-en une nouvelle pour continuer.',
+    voice_not_joined: 'Rejoins d’abord le salon vocal.',
+    voice_peer_unavailable: 'Ce joueur n’est pas sur le salon vocal.',
   },
 
   crash: {
