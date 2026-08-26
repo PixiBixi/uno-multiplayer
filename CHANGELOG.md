@@ -1,6 +1,32 @@
 # Changelog
 
 - - -
+## [v1.9.0](https://github.com/PixiBixi/uno-multiplayer/compare/826ab0adeef638bd94b807c8b27d147abe1f1a4e..v1.9.0) - 2026-08-26
+#### Features
+- (**protocol**) voice signalling events and schemas - ([4fc4fca](https://github.com/PixiBixi/uno-multiplayer/commit/4fc4fcad5f75d023bdb71e5fef0aee0e09087c05)) - Jeremy Delgado
+- (**server**) relay voice signalling between seats - ([386b89a](https://github.com/PixiBixi/uno-multiplayer/commit/386b89a14add7d5740f2358f73d763c9e4a8598d)) - Jeremy Delgado
+- (**server**) voice session membership kept outside Room - ([7ef8cde](https://github.com/PixiBixi/uno-multiplayer/commit/7ef8cdec39bd1ff3e6729356389b1e9acd6db02a)) - Jeremy Delgado
+- (**server**) mint ephemeral TURN credentials from a shared secret - ([6334e76](https://github.com/PixiBixi/uno-multiplayer/commit/6334e76f446c060b85060e72debbc2c953eee666)) - Jeremy Delgado
+- (**voice**) show your own seat in the session - ([b13a841](https://github.com/PixiBixi/uno-multiplayer/commit/b13a8412a77ce651f51fe3fc02bf0b54c22db5fc)) - Jeremy Delgado
+- (**web**) voice panel with per-player mute and speaking cues - ([fb15cc7](https://github.com/PixiBixi/uno-multiplayer/commit/fb15cc7309f9314506e65f9b192b45e34ce40853)) - Jeremy Delgado
+- (**web**) useVoice hook wiring peers to the socket - ([588dd13](https://github.com/PixiBixi/uno-multiplayer/commit/588dd13ab2fd4f67379c512157b74935b818998c)) - Jeremy Delgado
+- (**web**) detect who is speaking from received audio - ([f22057e](https://github.com/PixiBixi/uno-multiplayer/commit/f22057e963e5d9ab6237b185a42c5a5830720555)) - Jeremy Delgado
+- (**web**) WebRTC peer manager with a deterministic offerer - ([87856e6](https://github.com/PixiBixi/uno-multiplayer/commit/87856e658736965d46f6b8a14cf6de53c7743fe8)) - Jeremy Delgado
+#### Bug Fixes
+- (**voice**) give the panel a place in the layout and a style - ([2327a76](https://github.com/PixiBixi/uno-multiplayer/commit/2327a7699bd5b6f1adbf39eeafb8b7bc67bcb65c)) - Jeremy Delgado
+#### Documentation
+- (**voice**) ship a relay people can actually run - ([b993e3a](https://github.com/PixiBixi/uno-multiplayer/commit/b993e3a1feac22db35770dcc59079d83f9e3446e)) - Jeremy Delgado
+- (**voice**) mark the design as implemented - ([56f445c](https://github.com/PixiBixi/uno-multiplayer/commit/56f445c9a605f2eb9a0327693ca057daf2452b25)) - Jeremy Delgado
+- (**voice**) record what the implementation verified - ([99da6c5](https://github.com/PixiBixi/uno-multiplayer/commit/99da6c577b39ec5099b62447cf71ffcbca105853)) - Jeremy Delgado
+- (**voice**) document the TURN configuration - ([646ce30](https://github.com/PixiBixi/uno-multiplayer/commit/646ce3035ccedbed4cd0b8216d17b3becb2b668c)) - Jeremy Delgado
+- (**voice**) implementation plan for the voice chat - ([ec72149](https://github.com/PixiBixi/uno-multiplayer/commit/ec7214952df0db084f42ab3f1f60226fd3975f03)) - Jeremy Delgado
+- (**voice**) design for mesh WebRTC voice chat - ([826ab0a](https://github.com/PixiBixi/uno-multiplayer/commit/826ab0adeef638bd94b807c8b27d147abe1f1a4e)) - Jeremy Delgado
+- (**wiki**) document the voice chat subsystem - ([c0b17bb](https://github.com/PixiBixi/uno-multiplayer/commit/c0b17bbb78ed3a4c00121d6c06ee3eba1d31e576)) - Jeremy Delgado
+#### Tests
+- (**voice**) end-to-end voice link between two browsers - ([fdfa37b](https://github.com/PixiBixi/uno-multiplayer/commit/fdfa37be5ab3a7ec7253cfb2cb90336b9329cc52)) - Jeremy Delgado
+
+- - -
+
 ## [v1.8.1](https://github.com/PixiBixi/uno-multiplayer/compare/3eb993740bf958c4e15e29f11b69a10a41d4c230..v1.8.1) - 2026-08-26
 #### Bug Fixes
 - (**cards**) one design language per card, and four glyph geometries measured - ([82cd291](https://github.com/PixiBixi/uno-multiplayer/commit/82cd2916b0a14e805f41911c91ce30b5ece5c473)) - Jeremy Delgado
