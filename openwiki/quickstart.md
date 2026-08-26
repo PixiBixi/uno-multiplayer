@@ -15,6 +15,7 @@ is, not only what it does.
 | Work on the browser client                               | [The client](architecture/client.md)                 |
 | Change a rule, scoring, or a table option                | [Rules and scoring](domain/rules-and-scoring.md)     |
 | Touch rooms, seats, timers or reconnection               | [Room lifecycle](domain/room-lifecycle.md)           |
+| Work on the voice chat, WebRTC or TURN                   | [Voice chat](architecture/voice-chat.md)             |
 | Deploy it or change configuration                        | [Deploying](operations/deploying.md)                 |
 | Add or fix tests                                         | [Testing](operations/testing.md)                     |
 

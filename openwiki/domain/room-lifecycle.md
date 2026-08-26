@@ -131,6 +131,11 @@ All three arms are safe to call unconditionally: each clears itself when the roo
 in its state, so a table with no pace ends up with no turn timer and null deadlines, and
 one with call-outs never arms a grace clock at all.
 
+[Voice chat](../architecture/voice-chat.md) has no clock of its own and deliberately no
+grace period. A disconnected socket leaves the voice session at once while its seat is
+still being held: the grace period protects a match in progress, and a peer connection
+that has already dropped is better rebuilt than waited for.
+
 **Arming guards must match dealing guards.** The between-rounds guard was once only
 `betweenRounds`, while dealing also requires two active members. A round ending
 with one player left made the deal fail, changed nothing about the room, and the

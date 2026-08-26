@@ -9,6 +9,11 @@ the game: `App.tsx` picks a screen from `state.connection` and what the server s
 `useGameSocket` returns `{ state, actions }`. Everything below - `Table`, `Hand`,
 `GameOver`, the effect and sound hooks - depends on that shape and nothing else.
 
+It also returns `socketRef`, which is the one exception and is not part of that seam.
+[Voice chat](voice-chat.md) has to ride the same socket, because the server resolves a
+voice member through that socket's presence, and the socket is created inside an effect
+so a ref is the only stable thing to hand out. Nothing else reads it.
+
 That is what would make offline play cheap: a second hook returning the same shape,
 backed by the engine running in the tab. See
 `docs/superpowers/specs/2026-08-09-bot-and-offline-analysis.md`.
