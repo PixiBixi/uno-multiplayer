@@ -17,7 +17,16 @@ import { BONE, COLOR_HEX, COLOR_VALUE, INK } from './palette.js'
  * whether the numeral carries a glow.
  */
 export const CARD_THEMES = ['poster', 'classic', 'flat', 'letterpress', 'neon'] as const
-export type CardTheme = (typeof CARD_THEMES)[number]
+
+/**
+ * Faces that exist but are not offered. Nothing about a hidden face is special at
+ * render time - it carries a full spec like the rest - so the only thing hiding it
+ * is its absence from the list the pickers and the cycler read.
+ */
+export const HIDDEN_CARD_THEMES = ['minuit'] as const
+
+export const ALL_CARD_THEMES = [...CARD_THEMES, ...HIDDEN_CARD_THEMES] as const
+export type CardTheme = (typeof ALL_CARD_THEMES)[number]
 
 /**
  * What a player who has never opened this preference sees.
@@ -215,6 +224,29 @@ export const CARD_THEME_SPEC: Record<CardTheme, CardThemeSpec> = {
      blurred copy *behind* the glyph at half opacity rather than a shadow bleeding
      through it, so the glyph's own colour is what the eye receives; the worst case,
      a cream numeral against a fully lit yellow halo, still measures 5.1:1. */
+  /* The register the set did not occupy: a printed card seen at night. Bone on a
+     dark oval rather than neon's outlined glow, so the two are different faces
+     rather than two settings of one. */
+  minuit: {
+    stock: DARK,
+    panel: 'fill',
+    ground: 'pigment',
+    panelStroke: 0,
+    oval: DARK,
+    light: BONE,
+    dark: INK,
+    font: 'var(--display)',
+    numeral: 74,
+    weight: 400,
+    faceInk: 'light',
+    trimInk: 'light',
+    tokenInk: 'light',
+    tokenOutline: null,
+    wild: 'squares',
+    wildPigment: BONE,
+    glow: null,
+    layout: 'corner',
+  },
   neon: {
     stock: DARK,
     panel: 'stroke',
@@ -317,8 +349,14 @@ export function cardPaints(spec: CardThemeSpec, pigment: Paint): CardPaints {
   }
 }
 
-/** The table's control is a cycler, so the order in `CARD_THEMES` is the order seen. */
-export function nextCardTheme(theme: CardTheme): CardTheme {
-  const at = CARD_THEMES.indexOf(theme)
-  return CARD_THEMES[(at + 1) % CARD_THEMES.length] ?? DEFAULT_CARD_THEME
+/**
+ * The table's control is a cycler, so the order in `CARD_THEMES` is the order seen.
+ * A hidden face joins the end of that order once found, leaving the familiar
+ * sequence untouched, and a player who is not unlocked never lands on one.
+ */
+export function nextCardTheme(theme: CardTheme, unlocked = false): CardTheme {
+  const ring = unlocked ? ALL_CARD_THEMES : CARD_THEMES
+  const at = (ring as readonly CardTheme[]).indexOf(theme)
+  // -1 covers a hidden face held by a player who is no longer unlocked: +1 lands on 0.
+  return ring[(at + 1) % ring.length] ?? DEFAULT_CARD_THEME
 }

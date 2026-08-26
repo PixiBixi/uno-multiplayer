@@ -1,6 +1,7 @@
 import type { Color } from '@uno/engine'
 import { describe, expect, it } from 'vitest'
 import {
+  ALL_CARD_THEMES,
   CARD_THEMES,
   CARD_THEME_SPEC,
   DEFAULT_CARD_THEME,
@@ -176,5 +177,46 @@ describe('measured contrast', () => {
       }),
     )
     expect(Math.min(...neon)).toBeGreaterThanOrEqual(Math.min(...others))
+  })
+})
+
+describe('the hidden face', () => {
+  it('is not in the visible list, so nothing offers it before it is found', () => {
+    expect(CARD_THEMES).not.toContain('minuit')
+    expect(ALL_CARD_THEMES).toContain('minuit')
+  })
+
+  it('still has a full spec, so rendering it is never a special case', () => {
+    expect(CARD_THEME_SPEC.minuit).toBeDefined()
+  })
+
+  it('clears the same contrast floor as every face that ships', () => {
+    const spec = CARD_THEME_SPEC.minuit
+    const ground = spec.oval ?? (spec.ground === 'pigment' ? spec.light : spec.ground)
+    expect(contrastRatio(spec.light.hex, ground.hex)).toBeGreaterThan(4.5)
+  })
+
+  it('is skipped by the cycler until it is unlocked', () => {
+    const seen: CardTheme[] = []
+    let theme: CardTheme = 'poster'
+    for (let step = 0; step < CARD_THEMES.length; step += 1) {
+      theme = nextCardTheme(theme, false)
+      seen.push(theme)
+    }
+    expect(seen).not.toContain('minuit')
+  })
+
+  it('joins the cycle once unlocked, at the end so the familiar order is unchanged', () => {
+    const seen: CardTheme[] = []
+    let theme: CardTheme = 'poster'
+    for (let step = 0; step < ALL_CARD_THEMES.length; step += 1) {
+      theme = nextCardTheme(theme, true)
+      seen.push(theme)
+    }
+    expect(seen).toEqual([...CARD_THEMES.slice(1), 'minuit', 'poster'])
+  })
+
+  it('leaves a locked player who somehow holds it back on a visible face', () => {
+    expect(nextCardTheme('minuit', false)).toBe('poster')
   })
 })

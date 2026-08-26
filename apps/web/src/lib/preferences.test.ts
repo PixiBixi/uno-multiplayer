@@ -1,6 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { DEFAULT_CARD_THEME } from './card-themes.js'
-import { COLOUR_MODES, readColourMode, writeColourMode } from './preferences.js'
+import {
+  COLOUR_MODES,
+  readColourMode,
+  readKonamiUnlocked,
+  writeColourMode,
+  writeKonamiUnlocked,
+} from './preferences.js'
 import { readCardTheme, readHandSort, writeCardTheme, writeHandSort } from './preferences.js'
 
 beforeEach(() => {
@@ -123,5 +129,21 @@ describe('colour mode preference', () => {
     expect(readColourMode()).toBe('system')
 
     if (original !== undefined) Object.defineProperty(window, 'localStorage', original)
+  })
+})
+
+describe('the hidden face unlock', () => {
+  it('starts locked', () => {
+    expect(readKonamiUnlocked()).toBe(false)
+  })
+
+  it('remembers being found', () => {
+    writeKonamiUnlocked(true)
+    expect(readKonamiUnlocked()).toBe(true)
+  })
+
+  it('treats anything but the exact string as locked', () => {
+    window.localStorage.setItem('uno.pref.konami', 'yes')
+    expect(readKonamiUnlocked()).toBe(false)
   })
 })

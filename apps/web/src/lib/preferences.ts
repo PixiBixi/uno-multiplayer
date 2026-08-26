@@ -1,4 +1,4 @@
-import { CARD_THEMES, DEFAULT_CARD_THEME, type CardTheme } from './card-themes.js'
+import { ALL_CARD_THEMES, DEFAULT_CARD_THEME, type CardTheme } from './card-themes.js'
 import { HAND_SORTS, type HandSort } from './sort-hand.js'
 
 const HAND_SORT_KEY = 'uno.pref.handSort'
@@ -58,7 +58,7 @@ export function writeMuted(muted: boolean): void {
 const CARD_THEME_KEY = 'uno.pref.cardTheme'
 
 const isCardTheme = (value: string | null): value is CardTheme =>
-  value !== null && (CARD_THEMES as readonly string[]).includes(value)
+  value !== null && (ALL_CARD_THEMES as readonly string[]).includes(value)
 
 /**
  * Which of the four card faces this player sees. Nobody else is affected: two
@@ -123,3 +123,26 @@ export function writeColourMode(mode: ColourMode): void {
 /** The next mode round the loop. The masthead cycles rather than opening a menu. */
 export const nextColourMode = (mode: ColourMode): ColourMode =>
   COLOUR_MODES[(COLOUR_MODES.indexOf(mode) + 1) % COLOUR_MODES.length] ?? 'system'
+
+const KONAMI_KEY = 'uno.pref.konami'
+
+/**
+ * Whether the hidden face has been found. Kept with the other display preferences
+ * because that is what it is: it unlocks something one player sees, it never
+ * crosses the wire, and losing it costs a player nothing but the sequence again.
+ */
+export function readKonamiUnlocked(): boolean {
+  try {
+    return window.localStorage.getItem(KONAMI_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+export function writeKonamiUnlocked(unlocked: boolean): void {
+  try {
+    window.localStorage.setItem(KONAMI_KEY, unlocked ? 'true' : 'false')
+  } catch {
+    /* Found again next time. */
+  }
+}

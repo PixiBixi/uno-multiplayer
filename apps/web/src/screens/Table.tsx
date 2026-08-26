@@ -1,4 +1,5 @@
 import type { Move } from '@uno/engine'
+import { useState } from 'react'
 import type { LobbyView, PlayerView } from '@uno/protocol'
 import { CentreStack, ColourBand } from '../components/CentreStack.js'
 import { useCardTheme, useSetCardTheme } from '../components/CardThemeProvider.js'
@@ -13,11 +14,12 @@ import { VoicePanel } from '../components/VoicePanel.js'
 import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
 import { useTableEffects } from '../hooks/useTableEffects.js'
 import { useCountdown } from '../hooks/useCountdown.js'
+import { useKonami } from '../hooks/useKonami.js'
 import { useShoutUno } from '../hooks/useShoutUno.js'
 import { useTableSounds } from '../hooks/useTableSounds.js'
 import type { useVoice } from '../hooks/useVoice.js'
 import { nextCardTheme } from '../lib/card-themes.js'
-import { nextColourMode } from '../lib/preferences.js'
+import { nextColourMode, readKonamiUnlocked, writeKonamiUnlocked } from '../lib/preferences.js'
 import { pigmentForSeat } from '../lib/palette.js'
 import { useColourMode, useSetColourMode } from '../components/ColourModeProvider.js'
 import { useMessages } from '../i18n/index.js'
@@ -60,6 +62,17 @@ export function Table({
   const canCallUno = view.you.legalMoves.some((move) => move.type === 'callUno')
   /* Shouting UNO calls it, the way the game is played away from a screen. Armed from
      legalMoves, so this learns no rule the server did not already send. */
+  const [konamiUnlocked, setKonamiUnlocked] = useState(readKonamiUnlocked)
+  const [justUnlocked, setJustUnlocked] = useState(false)
+  /* Wearing it straight away is the reward: a face that has to be cycled to after
+     being found is a preference, not a discovery. */
+  useKonami(() => {
+    writeKonamiUnlocked(true)
+    setKonamiUnlocked(true)
+    setCardTheme('minuit')
+    setJustUnlocked(true)
+  })
+
   useShoutUno({
     armed: canCallUno,
     speaking: voice.speaking[view.you.seat] === true,
@@ -127,7 +140,13 @@ export function Table({
   const headline = myTurn ? t.table.yourMove : t.table.waitingOn(nameOf(view.currentSeat))
 
   return (
-    <main className="table-screen">
+    <main
+      className="table-screen"
+      data-unlocked={justUnlocked ? '' : undefined}
+      onAnimationEnd={() => {
+        setJustUnlocked(false)
+      }}
+    >
       <div className={shaking ? 'table-surface fx-shake' : 'table-surface'}>
         <PlayEffects effects={effects} />
 
@@ -225,7 +244,7 @@ export function Table({
               type="button"
               className="icon-btn icon-btn-framed theme-cycler"
               onClick={() => {
-                setCardTheme(nextCardTheme(cardTheme))
+                setCardTheme(nextCardTheme(cardTheme, konamiUnlocked))
               }}
               aria-label={t.cardTheme.named(t.cardTheme.name[cardTheme])}
               title={t.cardTheme.named(t.cardTheme.name[cardTheme])}

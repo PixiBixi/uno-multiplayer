@@ -2777,3 +2777,43 @@ input.switch:checked::before {
   font-size: 0.72rem;
   color: var(--accent);
 }
+
+/* ---------------------------------------------------------------------------
+   The hidden face, on the moment it is found
+   --------------------------------------------------------------------------- */
+
+/* One sweep of ink across the table, then gone. Deliberately not a glow or a
+   shower of particles: the page is flat colour separated by rules and owns no
+   vocabulary for either, so the reveal borrows the one gesture it does have. */
+@keyframes unlock-sweep {
+  from {
+    opacity: 0.85;
+    clip-path: inset(0 100% 0 0);
+  }
+  60% {
+    opacity: 0.85;
+    clip-path: inset(0 0 0 0);
+  }
+  to {
+    opacity: 0;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.table-screen[data-unlocked]::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  /* Ignores clicks: the reveal must never eat the tap that follows it. */
+  pointer-events: none;
+  background: var(--felt);
+  animation: unlock-sweep 900ms ease-out forwards;
+}
+
+/* Somebody who has asked not to be moved gets the face and no sweep. */
+@media (prefers-reduced-motion: reduce) {
+  .table-screen[data-unlocked]::after {
+    animation-duration: 1ms;
+  }
+}
