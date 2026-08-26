@@ -229,12 +229,25 @@ return 401. Empty `docker logs` is not evidence of health.
   `--use-fake-ui-for-media-stream`, two players reaching `connected`. The only
   test that proves the whole chain holds together.
 
-## To verify during implementation
+## Verified during implementation
 
-- **CSP.** `connect-src` does not govern WebRTC in current browsers and streams
-  are attached via `srcObject` rather than a URL, so `http.ts` most likely needs
-  no change. This must be confirmed in a real browser, not by reading the code.
-- **Permissions-Policy.** helmet does not emit it by default, so the microphone
-  should be allowed. Confirm rather than assume.
-- **iOS Safari.** Historically the weakest WebRTC target. Worth an early manual
-  check before the UI is polished.
+- **CSP: no change needed.** The end-to-end test drives two Chromium contexts
+  against the real server with its real helmet CSP, and the peer connection
+  reaches `connected` with no violation. `connect-src` does not govern WebRTC and
+  streams are attached via `srcObject` rather than a URL, so `http.ts` is
+  untouched. Established over `http://127.0.0.1`, where the CSP is identical
+  except for `upgrade-insecure-requests`, which governs asset URLs and not ICE.
+- **Permissions-Policy: nothing blocks the microphone.** `getUserMedia` resolves
+  in that same run. helmet emits no `Permissions-Policy` by default, and such a
+  header would block capture regardless of how the prompt is answered, so its
+  absence is what the passing test demonstrates.
+
+## Still to verify
+
+- **iOS Safari.** Historically the weakest WebRTC target, and the one platform
+  the suite cannot reach. Worth a manual check on a real phone before anyone is
+  told voice works everywhere.
+- **A relayed call.** The end-to-end test runs on loopback, where ICE succeeds on
+  host candidates and never touches coturn. The relay itself is verified
+  separately (an authenticated allocation with zero loss), but the two have not
+  yet been exercised together by two players on genuinely different networks.
