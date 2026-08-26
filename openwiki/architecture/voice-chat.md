@@ -68,6 +68,25 @@ audio it already has.
 Mute is the exception and does travel, because a closed microphone produces silence
 that is indistinguishable from a player who is simply not talking.
 
+## Shouting UNO calls it
+
+The local speaking level the detector already computes also arms a game intent:
+`useShoutUno` emits `callUno` when this seat makes a sound while the call is available.
+That is how the game is played away from a screen, and it needed no new audio code and
+nothing new on the wire.
+
+Three things keep it honest:
+
+- **`armed` comes from `legalMoves`.** The client learns no rule it was not already
+  sent - the server said the call was legal, and refuses it otherwise, so a sound at
+  the wrong moment costs nothing. See
+  [Server authority](server-authority.md).
+- **It fires once per window, not per rising edge.** A window that opens while its
+  owner is already mid-sentence still catches the shout, and a stuttering level does
+  not emit the same call five times. Leaving the window re-arms it.
+- **A muted microphone produces silence**, so a muted player still uses the button.
+  The button is never removed.
+
 ## TURN credentials
 
 coturn runs with `use-auth-secret`, so there is no static user to leak. The server
@@ -94,6 +113,7 @@ Configuration, the optional `coturn` service and the open-relay trap are in
 | `apps/web/src/lib/voice/speaking-detector.ts` | `AnalyserNode` per stream, own seat included |
 | `apps/web/src/hooks/useVoice.ts`              | Adapts the two to React and to the socket    |
 | `apps/web/src/components/VoicePanel.tsx`      | Join, roster, self and peer rows             |
+| `apps/web/src/hooks/useShoutUno.ts`           | Turns the local speaking level into a call   |
 
 Voice rides the game socket rather than opening its own, because the server resolves a
 voice member through that socket's presence. `useGameSocket` therefore returns its

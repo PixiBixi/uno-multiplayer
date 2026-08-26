@@ -100,9 +100,11 @@ configuration - see below.
 
 ## Card themes
 
-Five faces - poster, classic, flat, letterpress, neon - chosen by **each player**, in
-`localStorage` beside the hand-sort mode, the mute flag and the palette. An unrecognised
-stored value falls back to the default rather than to a hand of blank cards.
+Five faces on offer - poster, classic, flat, letterpress, neon - chosen by **each
+player**, in `localStorage` beside the hand-sort mode, the mute flag and the palette. A
+sixth, `minuit`, exists but is not offered until it is found; see below. An unrecognised
+stored value falls back to the default rather than to a hand of blank cards, and the
+check reads `ALL_CARD_THEMES` so a found face survives a reload.
 
 `poster` is the one that ships: the pigment fills the card edge to edge, the numeral
 drops into the bottom-left corner at poster scale with its baseline BELOW the viewBox so
@@ -128,7 +130,7 @@ branch in the component: whether the oval is drawn, whether the panel is filled 
 outlined, whether the numeral carries a glow. A value that merely differs per theme
 is a table entry.
 
-Three rules constrain a sixth theme somebody adds:
+Three rules constrain any face somebody adds:
 
 - **The shape tokens stay.** Colour is never the only signal here, and a theme does
   not get to opt out. Where a pigment is too pale for its stock, the token keeps the
@@ -178,6 +180,36 @@ cycler on the table has to repaint the hand, the discard pile and the draw pile 
 once. `Card` also takes an optional `theme` prop, which only the home screen's
 previews pass: each preview renders the real `Card` so it cannot drift from the face
 it is offering.
+
+### The face that is found rather than chosen
+
+`minuit` - a printed card seen at night, bone on a dark oval - is in
+`HIDDEN_CARD_THEMES` and unlocked by typing the Konami sequence at the table
+(`hooks/useKonami.ts`). Nothing about it is special at render time: it carries a full
+spec like the rest, and the only thing hiding it is its absence from `CARD_THEMES`,
+which the pickers, the cycler and the contrast tests all read. `ALL_CARD_THEMES` is
+the union and is what the type and the spec record are built from.
+
+Four decisions worth not undoing:
+
+- **The unlock is a display preference**, in `localStorage` under `uno.pref.konami`
+  beside the others. It changes what one player sees, crosses no wire, and losing it
+  costs nothing but typing the sequence again.
+- **Finding it puts it on immediately.** A face that has to be cycled to after being
+  found is a preference, not a discovery.
+- **`nextCardTheme(theme, unlocked)` takes the unlock**, so a locked player never
+  lands on a face they have not found, and a found face joins the _end_ of the ring -
+  the familiar order is untouched. A player holding `minuit` who is somehow no longer
+  unlocked lands back on the first visible face rather than nowhere.
+- **It clears the same measured floor.** Its numeral is bone, not the card's own
+  colour: on this stock red reads 3.82:1 and blue 3.25:1, both under the set's floor,
+  while bone reads 16.87:1. The colour is carried by the whole panel instead, where it
+  cannot be missed. `card-themes.test.ts` asserts the floor, that `CARD_THEMES` does
+  not contain it, and that the cycler skips it while locked.
+
+The reveal is one sweep of ink across the table (`.table-screen[data-unlocked]::after`),
+cleared by `onAnimationEnd` - deliberately not a glow or particles, because the page is
+flat colour separated by rules and owns no vocabulary for either.
 
 ## Sound
 
