@@ -68,6 +68,30 @@ function cornerLabel(card: CardData): string {
   }
 }
 
+/**
+ * The corner mark for a card that has no colour: the four pigments, quartered.
+ *
+ * A wild used to borrow the red circle, which says "red" on the one card in the deck
+ * whose whole point is that it is not any colour yet. Four squares say what it is, and
+ * they are the same four the colour picker offers a moment later.
+ */
+function WildToken({ x, y }: { x: number; y: number }) {
+  const r = 5.5
+  const quarters: [number, number, string][] = [
+    [x - r, y - r, COLOR_VALUE.R],
+    [x, y - r, COLOR_VALUE.B],
+    [x - r, y, COLOR_VALUE.G],
+    [x, y, COLOR_VALUE.Y],
+  ]
+  return (
+    <g data-token="wild">
+      {quarters.map(([qx, qy, paint]) => (
+        <rect key={paint} x={qx} y={qy} width={r} height={r} fill={paint} />
+      ))}
+    </g>
+  )
+}
+
 function ShapeToken({
   color,
   x,
@@ -227,7 +251,7 @@ function FaceMark({
      of the edge reads as a label, and one that runs off it reads as printing. */
   const corner = spec.layout === 'corner'
   const mark = corner
-    ? { x: 8, y: 176, textAnchor: 'start' as const, dominantBaseline: 'alphabetic' as const }
+    ? { x: 10, y: 150, textAnchor: 'start' as const, dominantBaseline: 'alphabetic' as const }
     : { x: 60, y: 84, ...centred }
   const stroke = {
     stroke: fill,
@@ -282,7 +306,7 @@ function FaceMark({
       return scaled(
         <>
           <circle cx={60} cy={84} r={23} />
-          <line x1={43} y1={67} x2={77} y2={101} />
+          <line x1={44} y1={68} x2={76} y2={100} />
         </>,
       )
     /* Two bold opposing arrows, the way the printed card does it. A pair of thin
@@ -312,20 +336,15 @@ function FaceMark({
     case 'wild4':
       return (
         <>
-          <WildMark
-            kind={spec.wild}
-            cx={corner ? 46 : 60}
-            cy={corner ? 96 : 71}
-            r={corner ? 26 : 19}
-            decorated={decorated}
-          />
+          {/* The corner face says "+4" once, at poster scale, below - so the wheel is the
+              only thing in the middle and there is no second label to read. */}
+          {!corner && <WildMark kind={spec.wild} cx={78} cy={74} r={18} decorated={decorated} />}
           <text
-            x={corner ? 46 : 60}
-            y={corner ? 148 : 107}
-            {...centred}
-            fontSize={26}
-            fontWeight={600}
-            fill={paints.legible.css}
+            {...(corner
+              ? { ...mark, fontSize: Math.round(spec.numeral * SMALL_RATIO) }
+              : { x: 40, y: 96, ...centred, fontSize: 26 })}
+            fontWeight={corner ? spec.weight : 600}
+            fill={corner ? fill : paints.legible.css}
             {...(decorated ? { 'data-plusfour': '' } : {})}
           >
             +4
@@ -363,6 +382,9 @@ export function Card({ card, onPlay, disabled = false, theme }: CardProps) {
   const tokenColor: Color = wild ? 'R' : card.color
   const label = cardLabel(card, disabled, messages)
   const corner = cornerLabel(card)
+  /* Named here as well as in `FaceMark`: the layout decides where the mark goes AND
+     whether the trim is mirrored, because those are the same decision. */
+  const cornerFace = spec.layout === 'corner'
 
   const inset = spec.panel === 'stroke' ? spec.panelStroke / 2 : 0
   const outlined =
@@ -447,30 +469,51 @@ export function Card({ card, onPlay, disabled = false, theme }: CardProps) {
         <text x={32} y={26}>
           {corner}
         </text>
-        {/* The bottom-right marks are the top-left marks rotated about the card
-            centre - the way a real card is printed. */}
-        <g transform="rotate(180 60 84)">
-          <text x={32} y={26}>
-            {corner}
-          </text>
-        </g>
+        {/* Twice on a printed face, the second pair rotated about the centre, so the card
+            reads either way up.
+
+            Once on the corner face, and not because the two would overlap - measured, they
+            clear each other by eight units. They are two different languages on one card:
+            a numeral set as a poster in one corner, and the mirrored trim of a printed
+            deck in the next one along. Side by side at the same height they read as two
+            marks competing rather than as one design, which is what a small upside-down
+            digit beside a large upright one looks like. */}
+        {!cornerFace && (
+          <g transform="rotate(180 60 84)">
+            <text x={32} y={26}>
+              {corner}
+            </text>
+          </g>
+        )}
       </g>
-      <ShapeToken
-        color={tokenColor}
-        x={20}
-        y={22}
-        fill={paints.token.css}
-        outline={paints.tokenEdge?.css ?? null}
-      />
-      <g transform="rotate(180 60 84)">
+      {/* Top-RIGHT on the corner face: the label has the top-left corner, the numeral has
+          the bottom, and a fanned hand covers neither. */}
+      {wild ? (
+        <WildToken x={cornerFace ? 100 : 20} y={22} />
+      ) : (
         <ShapeToken
           color={tokenColor}
-          x={20}
+          x={cornerFace ? 100 : 20}
           y={22}
           fill={paints.token.css}
           outline={paints.tokenEdge?.css ?? null}
         />
-      </g>
+      )}
+      {!cornerFace && (
+        <g transform="rotate(180 60 84)">
+          {wild ? (
+            <WildToken x={20} y={22} />
+          ) : (
+            <ShapeToken
+              color={tokenColor}
+              x={20}
+              y={22}
+              fill={paints.token.css}
+              outline={paints.tokenEdge?.css ?? null}
+            />
+          )}
+        </g>
+      )}
     </svg>
   )
 

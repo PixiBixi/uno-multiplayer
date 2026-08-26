@@ -122,7 +122,11 @@ export const CARD_THEME_SPEC: Record<CardTheme, CardThemeSpec> = {
     light: WHITE,
     dark: INK,
     font: 'var(--display)',
-    numeral: 118,
+    /* Wholly inside the card, baseline at 150 of 168. It was 118 with the baseline UNDER
+       the viewBox, which cut the bottom off every digit: a deliberate bleed on an
+       artboard, and a rendering fault to the eye at hand size. Nothing sits in the
+       bottom-right corner on this face, so the numeral has the whole bottom to itself. */
+    numeral: 112,
     weight: 400,
     faceInk: 'contrast',
     trimInk: 'contrast',

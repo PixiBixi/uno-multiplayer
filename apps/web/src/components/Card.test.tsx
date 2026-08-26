@@ -92,9 +92,16 @@ describe('Card', () => {
     expect(new Set([tokenOf('R'), tokenOf('G'), tokenOf('B'), tokenOf('Y')]).size).toBe(4)
   })
 
-  it('repeats the shape token so the card reads either way up', () => {
+  /* At least one, which is the accessibility guarantee: colour is the rule in UNO, so it
+     cannot also be the only way to read a card. How MANY there are depends on the face -
+     a printed one mirrors its corner marks, a poster one cannot - and that count is
+     asserted per layout further down. */
+  /* At least one, which is the accessibility guarantee: colour is the rule in UNO, so it
+     cannot also be the only way to read a card. How many depends on the face, and that
+     count is asserted per layout further down. */
+  it('always draws a shape token, so colour is never the only signal', () => {
     const { container } = render(<Card card={num(7)} />)
-    expect(container.querySelectorAll('[data-token]')).toHaveLength(2)
+    expect(container.querySelectorAll('[data-token]').length).toBeGreaterThan(0)
   })
 
   it('draws four quadrants on a wild', () => {
@@ -111,6 +118,83 @@ describe('Card', () => {
       const y = Number(container.querySelector('[data-plusfour]')?.getAttribute('y'))
       expect(y, theme).toBeGreaterThan(0)
       expect(y, theme).toBeLessThan(168)
+    }
+  })
+
+  /* One design language per card. A printed face carries its corner marks twice, the
+     second pair rotated about the centre so it reads either way up. The corner face
+     carries them once: a poster numeral in one corner and printed trim in the next one
+     along are two languages, and side by side at the same height they read as two marks
+     competing rather than as one card. Not an overlap - measured, they cleared each other
+     by eight units, and it still looked wrong. */
+  it('mirrors the corner marks only on a face that is not already a poster', () => {
+    for (const theme of CARD_THEMES) {
+      const cornerFace = CARD_THEME_SPEC[theme].layout === 'corner'
+      const { container } = render(<Card card={num(7)} theme={theme} />)
+      // The size lives on the group that wraps them, so the group is what to look inside.
+      const trim = container.querySelector('g[font-size="17"]')
+      expect([...(trim?.querySelectorAll('text') ?? [])], `${theme} labels`).toHaveLength(
+        cornerFace ? 1 : 2,
+      )
+      expect(container.querySelectorAll('[data-token]'), `${theme} tokens`).toHaveLength(
+        cornerFace ? 1 : 2,
+      )
+    }
+  })
+
+  /* The bar of a skip poked out of its own ring: it ended 1 unit past the ring's centre
+     line and a 9-unit round cap added 4.5 more, so both tips showed outside the circle.
+     Asserted as containment rather than as coordinates - the cap is what made it visible,
+     and a future nudge to the radius has to keep the arithmetic true. */
+  it('keeps the skip bar inside its ring, cap included', () => {
+    const { container } = render(
+      <Card card={{ id: id('s'), kind: 'skip', color: 'G' }} theme="flat" />,
+    )
+    const ring = container.querySelector('circle')
+    const bar = container.querySelector('line')
+    const at = (node: Element | null, name: string) => Number(node?.getAttribute(name))
+    const cx = at(ring, 'cx')
+    const cy = at(ring, 'cy')
+    const r = at(ring, 'r')
+    const stroke = 9
+    const tips: [number, number][] = [
+      [at(bar, 'x1'), at(bar, 'y1')],
+      [at(bar, 'x2'), at(bar, 'y2')],
+    ]
+    for (const [ax, ay] of tips) {
+      const reach = Math.hypot(ax - cx, ay - cy) + stroke / 2
+      expect(reach, 'bar tip plus its cap stays within the ring').toBeLessThanOrEqual(
+        r + stroke / 2,
+      )
+    }
+  })
+
+  /* "+4" was printed twice on the poster face - once as the corner label, once under the
+     wheel - which is the one card in the deck that can least afford to look uncertain. */
+  it('says +4 once on the poster face, and drops the wheel that duplicated it', () => {
+    const { container } = render(<Card card={{ id: id('w4'), kind: 'wild4' }} theme="poster" />)
+    expect(container.querySelectorAll('[data-plusfour]')).toHaveLength(1)
+    expect(container.querySelectorAll('[data-quadrant]'), 'no centre wheel').toHaveLength(0)
+  })
+
+  /* A wild has no colour, so borrowing the red circle told the player something false
+     about the one card whose colour is still a choice. */
+  it('marks a wild with all four pigments rather than one of them', () => {
+    for (const kind of ['wild', 'wild4'] as const) {
+      const { container } = render(<Card card={{ id: id(kind), kind }} theme="poster" />)
+      const token = container.querySelector('[data-token]')
+      expect(token?.getAttribute('data-token'), kind).toBe('wild')
+      expect(token?.querySelectorAll('rect'), kind).toHaveLength(4)
+    }
+  })
+
+  /* The clipping, which was the actual defect behind two rounds of guessing at the marks. */
+  it('keeps the corner numeral inside the card it is printed on', () => {
+    for (const theme of CARD_THEMES) {
+      if (CARD_THEME_SPEC[theme].layout !== 'corner') continue
+      const { container } = render(<Card card={num(7)} theme={theme} />)
+      const baseline = Number(container.querySelector('[data-numeral]')?.getAttribute('y'))
+      expect(baseline, `${theme} baseline inside the 168-unit viewBox`).toBeLessThanOrEqual(168)
     }
   })
 
@@ -181,10 +265,10 @@ describe('Card under each theme', () => {
     }
   })
 
-  it('carries both shape tokens in every theme', () => {
+  it('carries a shape token in every theme, whatever the face does with it', () => {
     for (const theme of CARD_THEMES) {
       const { container } = render(<Card card={num(7)} theme={theme} />)
-      expect(container.querySelectorAll('[data-token]')).toHaveLength(2)
+      expect(container.querySelectorAll('[data-token]').length, theme).toBeGreaterThan(0)
     }
   })
 
