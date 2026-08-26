@@ -2651,3 +2651,129 @@ input.switch:checked::before {
     transform: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Voice panel
+   --------------------------------------------------------------------------- */
+
+/* Voice and chat share the third grid cell. table-body is a three-column grid,
+   so a fourth child wraps onto a new row instead of sitting in the rail. */
+.rail-talk {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.rail-talk > .chat-panel {
+  /* Voice takes its content height; the log takes the rest. */
+  flex: 1 1 auto;
+}
+
+.voice-panel {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  background: var(--ground);
+  border: 1px solid var(--panel-edge);
+  border-bottom: 0;
+  color: var(--text);
+}
+
+@media (min-width: 1040px) {
+  .voice-panel {
+    border: 0;
+    border-left: 1px solid var(--panel-edge);
+    border-bottom: 1px solid var(--panel-edge);
+  }
+}
+
+.voice-head {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.7rem 0.9rem;
+  font-family: var(--body);
+  font-size: var(--step--1);
+  font-weight: 700;
+  letter-spacing: var(--track-wide);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+/* Pushes the controls to the far edge, matching the chat header. */
+.voice-head > span {
+  margin-right: auto;
+}
+
+.voice-note {
+  margin: 0;
+  padding: 0 0.9rem 0.9rem;
+  font-size: var(--step--1);
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.voice-join {
+  /* 48px is right for the controls band under the table; in a rail strip it
+     dominates the panel it sits in. */
+  min-height: 38px;
+  margin: 0 0.9rem 0.9rem;
+  font-size: var(--step--1);
+}
+
+.voice-peers {
+  list-style: none;
+  margin: 0;
+  padding: 0 0.9rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* Same left rule in the seat pigment the log lines use, so a player is the same
+   colour wherever they appear. */
+.voice-peer {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.15rem 0 0.15rem 0.6rem;
+  border-inline-start: 3px solid var(--panel-edge);
+  font-size: var(--step--1);
+  color: var(--text-dim);
+}
+
+/* Speaking is the name going to full ink, not a glow: this page is flat colour
+   separated by rules, and it has no shadow vocabulary to borrow from. */
+.voice-peer[data-speaking='true'] {
+  color: var(--text);
+}
+
+.voice-peer-name {
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.voice-peer[data-speaking='true'] .voice-peer-name {
+  font-weight: 700;
+}
+
+.voice-peer-mute {
+  margin-left: auto;
+  /* 44px next to a 22px row would set the row height on its own. */
+  width: 28px;
+  height: 28px;
+}
+
+.voice-tag {
+  display: inline-grid;
+  place-items: center;
+  color: var(--text-dim);
+}
+
+.voice-broken {
+  font-size: 0.72rem;
+  color: var(--accent);
+}

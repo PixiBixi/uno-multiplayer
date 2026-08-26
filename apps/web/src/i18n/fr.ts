@@ -296,6 +296,7 @@ export const fr: Messages = {
     leave: 'Quitter le vocal',
     mute: 'Couper mon micro',
     unmute: 'Rouvrir mon micro',
+    alone: 'En attente d’un autre joueur sur le vocal.',
     noMicrophone: 'Pas de micro. Tu entendras quand même les autres.',
     peerMuted: (name) => `${name} a coupé son micro`,
     muted: 'micro coupé',

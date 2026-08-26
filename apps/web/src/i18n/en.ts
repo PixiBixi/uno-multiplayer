@@ -279,6 +279,7 @@ export const en: Messages = {
     leave: 'Leave voice',
     mute: 'Mute',
     unmute: 'Unmute',
+    alone: 'Waiting for someone else to join voice.',
     noMicrophone: 'No microphone. You can still hear the others once they join.',
     peerMuted: (name) => `${name} has muted their microphone`,
     muted: 'muted',

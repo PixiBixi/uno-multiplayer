@@ -298,12 +298,16 @@ export function Table({
             </div>
           </section>
 
-          <ChatPanel feed={feed} mySeat={view.you.seat} nameOf={nameOf} onSend={onSend} />
-          <VoicePanel
-            voice={voice}
-            seatNames={[0, 1, 2, 3].map((seat) => nameOf(seat))}
-            selfSeat={view.you.seat}
-          />
+          {/* One grid cell, two panels. table-body is a three-column grid and a
+              fourth child wraps onto a new row instead of sharing the rail. */}
+          <div className="rail-talk">
+            <VoicePanel
+              voice={voice}
+              seatNames={[0, 1, 2, 3].map((seat) => nameOf(seat))}
+              selfSeat={view.you.seat}
+            />
+            <ChatPanel feed={feed} mySeat={view.you.seat} nameOf={nameOf} onSend={onSend} />
+          </div>
         </div>
 
         <div className="table-south">

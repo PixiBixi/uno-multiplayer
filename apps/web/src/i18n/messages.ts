@@ -354,6 +354,7 @@ export type Messages = {
     leave: string
     mute: string
     unmute: string
+    alone: string
     noMicrophone: string
     peerMuted: (name: string) => string
     muted: string
