@@ -75,7 +75,37 @@ surface later as confusing runtime behaviour.
 | `MOVE_BURST` / `MOVE_PER_SECOND`     | `20` / `2`              | Move rate limit, sized for a human                                                                                             |
 | `CHAT_BURST` / `CHAT_PER_SECOND`     | `5` / `0.5`             | Chat rate limit, tighter                                                                                                       |
 | `CREATE_BURST` / `CREATE_PER_SECOND` | `3` / `0.1`             | Room creation, tighter still - a room costs a seat, a deck and up to three timers                                              |
+| `TURN_URL`                           | empty                   | TURN relay for voice chat, e.g. `turn:turn.example.com:3478`. Empty leaves voice on STUN alone                                 |
+| `TURN_SECRET`                        | empty                   | Must equal coturn's `static-auth-secret`. Empty disables TURN                                                                  |
+| `TURN_TTL_SECONDS`                   | `86400`                 | Lifetime of a minted credential. Refuses anything under 60                                                                     |
+| `STUN_URL`                           | empty                   | STUN server. Worth setting even with TURN, since coturn serves both and a relay that is down takes its STUN with it            |
 | `LOG_LEVEL`                          | `info`                  | pino level                                                                                                                     |
+
+## Voice chat and TURN
+
+The server mints ephemeral TURN credentials rather than shipping a static user:
+the username carries its own expiry and coturn validates it against the shared
+secret, so `TURN_SECRET` is the only thing the two services have in common. It is
+not a network coupling - the app never connects to coturn, it computes an HMAC.
+
+**Voice needs HTTPS.** `getUserMedia` exists only in a secure context, and
+`localhost` is the sole exemption. A deployment reached at `http://192.168.1.20:5050`
+plays normally and has no microphone.
+
+**coturn falls back to an unauthenticated open relay when it cannot read its config
+file.** It logs a warning and starts anyway, and the official image runs as `nobody`
+(uid 65534), so a root-owned `600` config produces exactly that. After any config
+change, verify the config was actually loaded rather than trusting the process:
+
+```bash
+# Must list the public IP only. Docker bridge addresses mean the config was ignored.
+ss -lunp | grep turnserver
+# Must answer 401 with the configured realm, never a successful allocation.
+turnutils_uclient -W "$TURN_SECRET" -u probe -n 2 -c -y <public-ip>
+```
+
+An empty `docker logs` is not evidence of health: a `syslog` directive in the config
+sends the log elsewhere, and no config at all is also quiet.
 
 `CREATE_BURST` is keyed by socket id, so it stops a double-tapped Create and a script
 reusing one connection - not one that reconnects, which gets a fresh allowance each time.

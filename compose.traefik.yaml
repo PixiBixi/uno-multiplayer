@@ -24,6 +24,12 @@ services:
       GRACE_PERIOD_MS: '60000'
       MAX_ROOMS: '500'
       LOG_LEVEL: 'info'
+      # Voice chat. TURN_SECRET must equal coturn's static-auth-secret; it is the
+      # only coupling between the two, and it is not a network one. Empty leaves
+      # voice on STUN alone, which still works for most players.
+      TURN_URL: '${TURN_URL:-}'
+      TURN_SECRET: '${TURN_SECRET:-}'
+      STUN_URL: '${STUN_URL:-}'
     # No `ports:` on purpose. Traefik reaches the container over the shared
     # network; publishing 5050 on the host would expose a plain-HTTP way in that
     # bypasses TLS entirely.

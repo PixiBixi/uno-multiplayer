@@ -87,6 +87,12 @@ two processes would each hold half the rooms and neither would know about the ot
 A restart drops games in progress. At a few concurrent tables that is a deliberate
 trade for having no datastore to run, back up, or pay for.
 
+**Voice chat needs HTTPS.** `getUserMedia` only exists in a secure context, and
+`localhost` is the only exemption. A LAN deployment reached at
+`http://192.168.1.20:5050` plays fine and simply has no microphone. Set `TURN_URL`
+and `TURN_SECRET` to the same secret your coturn uses; without them the game still
+runs and only loses the players whose NAT needs a relay.
+
 Environment variables, `BEHIND_TLS` and why it defaults to false, rollback by SHA tag
 and probing a live instance are in [Deploying](openwiki/operations/deploying.md).
 
