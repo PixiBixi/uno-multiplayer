@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.8.1](https://github.com/PixiBixi/uno-multiplayer/compare/3eb993740bf958c4e15e29f11b69a10a41d4c230..v1.8.1) - 2026-08-26
+#### Bug Fixes
+- (**cards**) one design language per card, and four glyph geometries measured - ([82cd291](https://github.com/PixiBixi/uno-multiplayer/commit/82cd2916b0a14e805f41911c91ce30b5ece5c473)) - Jeremy Delgado
+#### Documentation
+- (**wiki**) document the third UNO grace clock and forgotten-UNO timing - ([3eb9937](https://github.com/PixiBixi/uno-multiplayer/commit/3eb993740bf958c4e15e29f11b69a10a41d4c230)) - Jeremy Delgado
+
+- - -
+
 ## [v1.8.0](https://github.com/PixiBixi/uno-multiplayer/compare/8c9296a3c700e0b5354d96b330c1f223d6746caa..v1.8.0) - 2026-08-25
 #### Features
 - (**rules**) three seconds to say UNO, instead of two cards on the spot - ([52bd07a](https://github.com/PixiBixi/uno-multiplayer/commit/52bd07ae05225137149346aead57cc00303926d3)) - Jeremy Delgado
