@@ -13,6 +13,7 @@ import { VoicePanel } from '../components/VoicePanel.js'
 import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
 import { useTableEffects } from '../hooks/useTableEffects.js'
 import { useCountdown } from '../hooks/useCountdown.js'
+import { useShoutUno } from '../hooks/useShoutUno.js'
 import { useTableSounds } from '../hooks/useTableSounds.js'
 import type { useVoice } from '../hooks/useVoice.js'
 import { nextCardTheme } from '../lib/card-themes.js'
@@ -57,6 +58,13 @@ export function Table({
   const canDraw = view.you.legalMoves.some((move) => move.type === 'draw')
   const acceptDraw = view.you.legalMoves.find((move) => move.type === 'acceptDraw')
   const canCallUno = view.you.legalMoves.some((move) => move.type === 'callUno')
+  /* Shouting UNO calls it, the way the game is played away from a screen. Armed from
+     legalMoves, so this learns no rule the server did not already send. */
+  useShoutUno({
+    armed: canCallUno,
+    speaking: voice.speaking[view.you.seat] === true,
+    onCall: () => onPlay({ type: 'callUno' }),
+  })
   /* A pass is offered only while this seat is holding a card it has just drawn and may
      still lay down, which is the one moment a turn does not end by itself. Read from
      `legalMoves` like everything else here: the client is told, never works it out. */
