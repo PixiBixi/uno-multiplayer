@@ -48,6 +48,28 @@ services:
     deploy:
       replicas: 1
 
+  # Optional. Only players behind a symmetric NAT (mobile data, CGNAT, some
+  # corporate wifi) need a relay; everyone else pairs on STUN alone. Delete this
+  # service and leave TURN_URL empty if you would rather not run it.
+  #
+  # Host networking is deliberate: a relay needs a wide UDP range, and publishing
+  # it through docker-proxy costs a process per port and hides the real source IP
+  # from coturn's own quota accounting.
+  #
+  # The config must be READABLE BY UID 65534. The image runs as `nobody`, and
+  # coturn logs a warning and falls back to an UNAUTHENTICATED OPEN RELAY when it
+  # cannot read its config, so a root-owned 600 file quietly publishes a relay to
+  # the internet. After any change, check that `ss -lunp | grep turnserver` shows
+  # the public IP alone and that an unauthenticated ALLOCATE is refused with 401.
+  coturn:
+    image: coturn/coturn:4.7
+    container_name: coturn
+    network_mode: host
+    volumes:
+      - ./coturn/turnserver.conf:/etc/coturn/turnserver.conf:ro
+    command: ['-c', '/etc/coturn/turnserver.conf']
+    restart: unless-stopped
+
 networks:
   traefik:
     # The network your Traefik already watches. `external: true` means compose

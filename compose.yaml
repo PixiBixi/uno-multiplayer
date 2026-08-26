@@ -14,6 +14,13 @@ services:
       GRACE_PERIOD_MS: '60000'
       MAX_ROOMS: '500'
       LOG_LEVEL: 'info'
+      # Voice chat. Empty is right for localhost: peers on one machine pair on
+      # host candidates and never reach a relay. It is also the only place voice
+      # works over plain http - getUserMedia needs a secure context, and
+      # localhost is the sole exemption, so a LAN address has no microphone.
+      TURN_URL: '${TURN_URL:-}'
+      TURN_SECRET: '${TURN_SECRET:-}'
+      STUN_URL: '${STUN_URL:-}'
     restart: unless-stopped
     # State lives in memory: never scale this past one replica. Two replicas
     # would each hold half the rooms and neither would know about the other.

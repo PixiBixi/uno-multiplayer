@@ -12,6 +12,12 @@ six-character code or the link, and everyone joins from a browser.
 Each player picks their own card face and whether the page is paper or ink; neither
 crosses the wire, so two people at the same table can run different ones.
 
+There is voice chat at the table, over a WebRTC mesh. Audio goes straight between
+players and never touches the server, which relays only the handful of messages
+needed to introduce them. It is an amenity and never a prerequisite: a refused
+microphone, an unsupported browser or a failed connection costs you voice with one
+person and nothing else.
+
 ## Why this exists
 
 This is a ground-up rewrite. The predecessor was a two-player prototype where the
@@ -89,9 +95,13 @@ trade for having no datastore to run, back up, or pay for.
 
 **Voice chat needs HTTPS.** `getUserMedia` only exists in a secure context, and
 `localhost` is the only exemption. A LAN deployment reached at
-`http://192.168.1.20:5050` plays fine and simply has no microphone. Set `TURN_URL`
-and `TURN_SECRET` to the same secret your coturn uses; without them the game still
-runs and only loses the players whose NAT needs a relay.
+`http://192.168.1.20:5050` plays fine and simply has no microphone.
+
+Most players pair on STUN alone. Only someone behind a symmetric NAT - mobile data,
+CGNAT, some corporate wifi - needs a relay, and `compose.traefik.yaml` carries an
+optional `coturn` service for that; copy `coturn/turnserver.conf.example`, fill in
+the three `REPLACE` values, and set `TURN_SECRET` to the same secret. Leave them
+empty and the game still runs, losing only those players' voice.
 
 Environment variables, `BEHIND_TLS` and why it defaults to false, rollback by SHA tag
 and probing a live instance are in [Deploying](openwiki/operations/deploying.md).

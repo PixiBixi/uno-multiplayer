@@ -41,6 +41,18 @@ self-hosted for a small group.
 - A stale `dist/` means a new client talking to an old server.
 - `card.kind === 'wild' || card.kind === 'wild4'` written inline does not narrow the
   union. Use `isWild`.
+- **`table-body` is a three-column grid.** A fourth child does not join the rail, it
+  wraps onto a new row under the table. Panels that share a column go in a wrapper.
+- **A user-facing string added to a component needs three edits**, and the compiler
+  only catches two: `messages.ts` for the type, then `en.ts` and `fr.ts`.
+  `no-english.test.ts` is what catches a literal left in the component itself.
+- **coturn starts as an unauthenticated open relay when it cannot read its config.**
+  It logs a warning and carries on, and the image runs as `nobody` (uid 65534), so a
+  root-owned `600` config publishes a relay to the internet. Empty `docker logs` is
+  not health: verify `ss -lunp | grep turnserver` lists the public IP alone and that
+  an unauthenticated ALLOCATE is refused with 401.
+- **`tcpdump` block-buffers its stdout when it is not a tty.** Grepping the file
+  while it runs shows nothing and reads as "the packets never arrived". Use `-U`.
 
 ## OpenWiki
 

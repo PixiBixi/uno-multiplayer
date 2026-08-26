@@ -1,0 +1,49 @@
+# coturn for the voice chat. Copy to turnserver.conf, set the three values marked
+# REPLACE, and mount it read-only into the container.
+#
+# The realm is cosmetic; the secret is not. Generate one with:
+#   openssl rand -hex 32
+
+listening-port=3478
+# The public address clients reach. Leaving this unset makes coturn offer every
+# interface it can find, including the Docker bridges, as a relay address.
+listening-ip=REPLACE_PUBLIC_IP
+relay-ip=REPLACE_PUBLIC_IP
+realm=REPLACE.example.com
+
+fingerprint
+lt-cred-mech
+# Ephemeral HMAC credentials, no static user. The app mints them with the same
+# secret; it never connects here.
+use-auth-secret
+static-auth-secret=REPLACE_WITH_openssl_rand_hex_32
+stale-nonce=600
+
+# Bounded relay range, and it must match the ports published in compose. Four
+# players need a handful; a wide range is surface for nothing.
+min-port=49160
+max-port=49200
+
+# Abuse containment. Without denied-peer-ip the relay reaches your private
+# network and every other container on the host. Do NOT remove these.
+no-multicast-peers
+no-tcp-relay
+denied-peer-ip=0.0.0.0-0.255.255.255
+denied-peer-ip=10.0.0.0-10.255.255.255
+denied-peer-ip=100.64.0.0-100.127.255.255
+denied-peer-ip=127.0.0.0-127.255.255.255
+denied-peer-ip=169.254.0.0-169.254.255.255
+denied-peer-ip=172.16.0.0-172.31.255.255
+denied-peer-ip=192.168.0.0-192.168.255.255
+denied-peer-ip=224.0.0.0-239.255.255.255
+denied-peer-ip=240.0.0.0-255.255.255.255
+denied-peer-ip=::1
+denied-peer-ip=fc00::-fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+denied-peer-ip=fe80::-febf:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+
+user-quota=12
+total-quota=60
+
+no-cli
+log-file=stdout
+simple-log
