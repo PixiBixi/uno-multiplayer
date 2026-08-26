@@ -1,5 +1,6 @@
 import { Toaster } from './components/Toaster.js'
 import { useGameSocket } from './hooks/useGameSocket.js'
+import { useVoice } from './hooks/useVoice.js'
 import { useMessages } from './i18n/index.js'
 import { readRoomCodeFromUrl } from './lib/room-url.js'
 import { Home } from './screens/Home.js'
@@ -11,7 +12,10 @@ import { Table } from './screens/Table.js'
  * navigation state that could fall out of step with the game.
  */
 export function App() {
-  const { state, actions } = useGameSocket()
+  const { state, actions, socketRef } = useGameSocket()
+  /* Called here rather than in Table: Table is presentational and holds no
+     socket, and voice must ride the same one the game uses. */
+  const voice = useVoice({ socketRef, selfSeat: state.seat ?? 0 })
   const t = useMessages()
 
   if (state.connection === 'lost') {
@@ -40,6 +44,7 @@ export function App() {
         onLeave={actions.leave}
         onSend={actions.sendChat}
         onDismissToast={actions.dismissToast}
+        voice={voice}
       />
     )
   }

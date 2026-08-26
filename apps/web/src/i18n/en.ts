@@ -272,6 +272,21 @@ export const en: Messages = {
     seat: (n) => `Seat ${String(n)}`,
   },
 
+  voice: {
+    label: 'Voice chat',
+    join: 'Join voice',
+    joining: 'Joining…',
+    leave: 'Leave voice',
+    mute: 'Mute',
+    unmute: 'Unmute',
+    noMicrophone: 'No microphone. You can still hear the others once they join.',
+    peerMuted: (name) => `${name} has muted their microphone`,
+    muted: 'muted',
+    unavailableWith: (name) => `Voice unavailable with ${name}`,
+    muteThem: (name) => `Mute ${name}`,
+    unmuteThem: (name) => `Unmute ${name}`,
+  },
+
   over: {
     roundAbandoned: 'Round abandoned',
     needsTwo: 'A game needs two players, so this one ends with no winner.',

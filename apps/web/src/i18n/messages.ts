@@ -346,6 +346,22 @@ export type Messages = {
     seat: (n: number) => string
   }
 
+  /** Voice chat. Every peer-facing string takes the player's name, never a seat number. */
+  voice: {
+    label: string
+    join: string
+    joining: string
+    leave: string
+    mute: string
+    unmute: string
+    noMicrophone: string
+    peerMuted: (name: string) => string
+    muted: string
+    unavailableWith: (name: string) => string
+    muteThem: (name: string) => string
+    unmuteThem: (name: string) => string
+  }
+
   over: {
     roundAbandoned: string
     needsTwo: string

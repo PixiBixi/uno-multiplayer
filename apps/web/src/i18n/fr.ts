@@ -289,6 +289,21 @@ export const fr: Messages = {
     seat: (n) => `Siège ${String(n)}`,
   },
 
+  voice: {
+    label: 'Salon vocal',
+    join: 'Rejoindre le vocal',
+    joining: 'Connexion…',
+    leave: 'Quitter le vocal',
+    mute: 'Couper mon micro',
+    unmute: 'Rouvrir mon micro',
+    noMicrophone: 'Pas de micro. Tu entendras quand même les autres.',
+    peerMuted: (name) => `${name} a coupé son micro`,
+    muted: 'micro coupé',
+    unavailableWith: (name) => `Vocal indisponible avec ${name}`,
+    muteThem: (name) => `Couper ${name}`,
+    unmuteThem: (name) => `Réactiver ${name}`,
+  },
+
   over: {
     roundAbandoned: 'Manche abandonnée',
     needsTwo: 'Il faut deux joueurs, donc celle-ci se termine sans vainqueur.',

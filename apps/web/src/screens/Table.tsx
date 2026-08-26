@@ -9,10 +9,12 @@ import { PlayEffects } from '../components/PlayEffects.js'
 import { RulesInPlay } from '../components/RulesInPlay.js'
 import { Seat } from '../components/Seat.js'
 import { Toaster } from '../components/Toaster.js'
+import { VoicePanel } from '../components/VoicePanel.js'
 import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
 import { useTableEffects } from '../hooks/useTableEffects.js'
 import { useCountdown } from '../hooks/useCountdown.js'
 import { useTableSounds } from '../hooks/useTableSounds.js'
+import type { useVoice } from '../hooks/useVoice.js'
 import { nextCardTheme } from '../lib/card-themes.js'
 import { nextColourMode } from '../lib/preferences.js'
 import { pigmentForSeat } from '../lib/palette.js'
@@ -30,6 +32,7 @@ type TableProps = {
   onLeave: () => void
   onSend: (text: string) => void
   onDismissToast: (id: number) => void
+  voice: ReturnType<typeof useVoice>
 }
 
 export function Table({
@@ -43,6 +46,7 @@ export function Table({
   onLeave,
   onSend,
   onDismissToast,
+  voice,
 }: TableProps) {
   const t = useMessages()
   const cardTheme = useCardTheme()
@@ -295,6 +299,11 @@ export function Table({
           </section>
 
           <ChatPanel feed={feed} mySeat={view.you.seat} nameOf={nameOf} onSend={onSend} />
+          <VoicePanel
+            voice={voice}
+            seatNames={[0, 1, 2, 3].map((seat) => nameOf(seat))}
+            selfSeat={view.you.seat}
+          />
         </div>
 
         <div className="table-south">

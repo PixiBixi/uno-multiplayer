@@ -43,6 +43,18 @@ const viewWith = (overrides: Partial<PlayerView> = {}): PlayerView => ({
   ...overrides,
 })
 
+const idleVoice = {
+  status: 'idle' as const,
+  peers: [],
+  streams: {},
+  speaking: {},
+  connectionStates: {},
+  muted: false,
+  join: () => Promise.resolve(),
+  leave: () => {},
+  toggleMute: () => {},
+}
+
 const setup = (view: PlayerView) => {
   const props = {
     view,
@@ -55,6 +67,7 @@ const setup = (view: PlayerView) => {
     onLeave: vi.fn(),
     onSend: vi.fn(),
     onDismissToast: vi.fn(),
+    voice: idleVoice,
   }
   render(<Table {...props} />)
   return props
@@ -377,6 +390,7 @@ describe('Table', () => {
         onLeave={vi.fn()}
         onSend={vi.fn()}
         onDismissToast={vi.fn()}
+        voice={idleVoice}
       />,
     )
     // Opponent hands are face-down backs only; the sole named card is your own.
@@ -403,6 +417,7 @@ describe('the card theme cycler', () => {
           onLeave={vi.fn()}
           onSend={vi.fn()}
           onDismissToast={vi.fn()}
+          voice={idleVoice}
         />
       </CardThemeProvider>,
     )
@@ -428,6 +443,7 @@ describe('the card theme cycler', () => {
           onLeave={vi.fn()}
           onSend={vi.fn()}
           onDismissToast={vi.fn()}
+          voice={idleVoice}
         />
       </CardThemeProvider>,
     )
@@ -471,6 +487,7 @@ describe('the card theme cycler', () => {
           onLeave={vi.fn()}
           onSend={vi.fn()}
           onDismissToast={vi.fn()}
+          voice={idleVoice}
         />
       </CardThemeProvider>,
     )
