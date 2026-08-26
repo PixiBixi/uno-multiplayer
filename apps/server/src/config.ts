@@ -30,6 +30,16 @@ const envSchema = z.object({
   /** Chat is tighter: flooding it costs everyone else attention. */
   CHAT_BURST: z.coerce.number().int().min(1).default(5),
   CHAT_PER_SECOND: z.coerce.number().min(0.1).default(0.5),
+  /**
+   * WebRTC voice. Empty disables the part it configures rather than failing the
+   * boot: a table with no TURN still plays, it just loses the players whose NAT
+   * needs a relay.
+   */
+  TURN_URL: z.string().default(''),
+  /** Shared with coturn's `static-auth-secret`. The only coupling between them. */
+  TURN_SECRET: z.string().default(''),
+  TURN_TTL_SECONDS: z.coerce.number().int().min(60).default(86_400),
+  STUN_URL: z.string().default(''),
   /*
    * Tighter still, because a room costs far more than a message: it holds a seat, a deck
    * and up to three timers until somebody leaves it. Three in a burst then one every ten
@@ -63,6 +73,10 @@ export type Config = {
   chatPerSecond: number
   createBurst: number
   createPerSecond: number
+  turnUrl: string | null
+  turnSecret: string | null
+  turnTtlSeconds: number
+  stunUrl: string | null
   logLevel: LogLevel
 }
 
@@ -89,6 +103,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     chatPerSecond: parsed.CHAT_PER_SECOND,
     createBurst: parsed.CREATE_BURST,
     createPerSecond: parsed.CREATE_PER_SECOND,
+    turnUrl: parsed.TURN_URL.trim().length > 0 ? parsed.TURN_URL.trim() : null,
+    turnSecret: parsed.TURN_SECRET.length > 0 ? parsed.TURN_SECRET : null,
+    turnTtlSeconds: parsed.TURN_TTL_SECONDS,
+    stunUrl: parsed.STUN_URL.trim().length > 0 ? parsed.STUN_URL.trim() : null,
     logLevel: parsed.LOG_LEVEL,
   }
 }

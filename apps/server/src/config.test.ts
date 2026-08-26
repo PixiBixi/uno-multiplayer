@@ -41,3 +41,27 @@ describe('loadConfig', () => {
     expect(loadConfig({ GRACE_PERIOD_MS: '0' }).gracePeriodMs).toBe(0)
   })
 })
+
+describe('voice configuration', () => {
+  it('defaults every voice setting to disabled', () => {
+    const config = loadConfig({ NODE_ENV: 'test' })
+    expect(config.turnUrl).toBeNull()
+    expect(config.turnSecret).toBeNull()
+    expect(config.stunUrl).toBeNull()
+    expect(config.turnTtlSeconds).toBe(86_400)
+  })
+
+  it('reads a configured relay', () => {
+    const config = loadConfig({
+      NODE_ENV: 'test',
+      TURN_URL: 'turn:turn.example.com:3478',
+      TURN_SECRET: 'shhh',
+    })
+    expect(config.turnUrl).toBe('turn:turn.example.com:3478')
+    expect(config.turnSecret).toBe('shhh')
+  })
+
+  it('refuses a ttl short enough to expire mid-match', () => {
+    expect(() => loadConfig({ NODE_ENV: 'test', TURN_TTL_SECONDS: '30' })).toThrow()
+  })
+})
