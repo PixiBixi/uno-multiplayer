@@ -1,7 +1,7 @@
 # Voice chat design
 
 Date: 2026-08-26
-Status: approved, not implemented
+Status: implemented (see docs/superpowers/plans/2026-08-26-voice-chat.md)
 
 ## Goal
 
