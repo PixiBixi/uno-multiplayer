@@ -208,6 +208,10 @@ export function useGameSocket() {
 
   return {
     state,
+    /* Handed out so voice can ride the same socket: the server resolves a voice
+       member through this socket's presence. A ref, because it is created inside
+       an effect and is null on the first render. */
+    socketRef,
     actions: {
       createRoom,
       configureRoom,
