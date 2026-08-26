@@ -20,7 +20,24 @@ export default defineConfig({
     baseURL: external ?? `http://127.0.0.1:${PORT}`,
     trace: 'on-first-retry',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        permissions: ['microphone'],
+        launchOptions: {
+          /* Without a fake device, getUserMedia has nothing to return in CI and
+             every voice assertion fails for a reason unrelated to the code. */
+          args: [
+            '--use-fake-device-for-media-stream',
+            '--use-fake-ui-for-media-stream',
+            '--autoplay-policy=no-user-gesture-required',
+          ],
+        },
+      },
+    },
+  ],
   /* The real server serving the real client build. A dev server would exercise a
      different artefact from the one that ships. */
   ...(external === undefined
