@@ -78,10 +78,15 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
           setConnectionStates((current) => ({ ...current, [seat]: state })),
       })
       managerRef.current = manager
-      detectorRef.current = createSpeakingDetector({
+      const detector = createSpeakingDetector({
         onChange: (seat, isSpeaking) =>
           setSpeaking((current) => ({ ...current, [seat]: isSpeaking })),
       })
+      detectorRef.current = detector
+      /* Own seat included: without it there is no feedback that the microphone is
+         picking anything up, which is the first thing anyone checks. Muting sets
+         track.enabled false, so the indicator goes dark on its own. */
+      detector?.watch(selfSeat, localStream)
       setStatus('joined')
       for (const peer of result.peers) void manager.connect(peer.seat)
     })

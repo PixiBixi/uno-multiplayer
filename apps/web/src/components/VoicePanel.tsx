@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import type { VoicePeer } from '@uno/protocol'
 import type { useVoice } from '../hooks/useVoice.js'
 import { useMessages } from '../i18n/index.js'
 import { pigmentForSeat } from '../lib/palette.js'
@@ -45,6 +46,92 @@ function PeerAudio({ stream, muted }: { stream: MediaStream; muted: boolean }) {
   return <audio ref={ref} autoPlay muted={muted} />
 }
 
+/** Your own row. No audio element and no connection state: there is neither. */
+function SelfRow({ voice, seat, name }: { voice: VoiceState; seat: number; name: string }) {
+  const t = useMessages()
+  return (
+    <li
+      className="voice-peer voice-peer-self"
+      data-speaking={voice.speaking[seat] === true}
+      style={{ borderInlineStartColor: pigmentForSeat(seat) }}
+    >
+      <span className="voice-peer-name">{name}</span>
+      <button
+        type="button"
+        className="icon-btn voice-peer-mute"
+        onClick={voice.toggleMute}
+        aria-label={voice.muted ? t.voice.unmute : t.voice.mute}
+        aria-pressed={voice.muted}
+      >
+        <MicIcon off={voice.muted} />
+      </button>
+    </li>
+  )
+}
+
+function PeerRow({
+  voice,
+  peer,
+  name,
+  silenced,
+  onToggleMute,
+}: {
+  voice: VoiceState
+  peer: VoicePeer
+  name: string
+  silenced: boolean
+  onToggleMute: () => void
+}) {
+  const t = useMessages()
+  const state = voice.connectionStates[peer.seat]
+  const stream = voice.streams[peer.seat]
+  const broken = state === 'failed' || state === 'disconnected'
+
+  return (
+    <li
+      className="voice-peer"
+      data-voice-state={state ?? 'new'}
+      data-speaking={voice.speaking[peer.seat] === true}
+      style={{ borderInlineStartColor: pigmentForSeat(peer.seat) }}
+    >
+      <span className="voice-peer-name">{name}</span>
+
+      {peer.muted && (
+        <span className="voice-tag" aria-label={t.voice.peerMuted(name)}>
+          <MicIcon off />
+        </span>
+      )}
+
+      {broken && <span className="voice-broken">{t.voice.unavailableWith(name)}</span>}
+
+      <button
+        type="button"
+        className="icon-btn voice-peer-mute"
+        onClick={onToggleMute}
+        aria-label={silenced ? t.voice.unmuteThem(name) : t.voice.muteThem(name)}
+        aria-pressed={silenced}
+      >
+        <svg
+          width={16}
+          height={16}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={2.2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M11 5 6 9H3v6h3l5 4V5Z" />
+          {silenced ? <path d="m17 9 4 6m0-6-4 6" /> : <path d="M15.5 8.5a5 5 0 0 1 0 7" />}
+        </svg>
+      </button>
+
+      {stream !== undefined && <PeerAudio stream={stream} muted={silenced} />}
+    </li>
+  )
+}
+
 export function VoicePanel({ voice, seatNames, selfSeat }: VoicePanelProps) {
   const t = useMessages()
   /* Muting someone is local and never broadcast: who I decline to listen to is
@@ -82,21 +169,15 @@ export function VoicePanel({ voice, seatNames, selfSeat }: VoicePanelProps) {
     )
   }
 
+  /* Everyone, own seat included: without your own row there is no feedback that
+     your microphone is being heard, which is the first thing anyone checks. */
   const others = voice.peers.filter((peer) => peer.seat !== selfSeat)
+  const nameFor = (seat: number): string => seatNames[seat] ?? String(seat)
 
   return (
     <section className="voice-panel" aria-label={t.voice.label}>
       <header className="voice-head">
         <span>{t.voice.label}</span>
-        <button
-          type="button"
-          className="icon-btn"
-          onClick={voice.toggleMute}
-          aria-label={voice.muted ? t.voice.unmute : t.voice.mute}
-          aria-pressed={voice.muted}
-        >
-          <MicIcon off={voice.muted} />
-        </button>
         <button type="button" className="icon-btn" onClick={voice.leave} aria-label={t.voice.leave}>
           <svg
             width={16}
@@ -119,59 +200,25 @@ export function VoicePanel({ voice, seatNames, selfSeat }: VoicePanelProps) {
       {others.length === 0 && <p className="voice-note">{t.voice.alone}</p>}
 
       <ul className="voice-peers">
-        {others.map((peer) => {
-          const name = seatNames[peer.seat] ?? String(peer.seat)
-          const state = voice.connectionStates[peer.seat]
-          const stream = voice.streams[peer.seat]
-          const silenced = locallyMuted[peer.seat] === true
-          const broken = state === 'failed' || state === 'disconnected'
-          return (
-            <li
+        {voice.peers.map((peer) =>
+          peer.seat === selfSeat ? (
+            <SelfRow key={peer.seat} voice={voice} seat={peer.seat} name={nameFor(peer.seat)} />
+          ) : (
+            <PeerRow
               key={peer.seat}
-              className="voice-peer"
-              data-voice-state={state ?? 'new'}
-              data-speaking={voice.speaking[peer.seat] === true}
-              style={{ borderInlineStartColor: pigmentForSeat(peer.seat) }}
-            >
-              <span className="voice-peer-name">{name}</span>
-
-              {peer.muted && (
-                <span className="voice-tag" aria-label={t.voice.peerMuted(name)}>
-                  <MicIcon off />
-                </span>
-              )}
-
-              {broken && <span className="voice-broken">{t.voice.unavailableWith(name)}</span>}
-
-              <button
-                type="button"
-                className="icon-btn voice-peer-mute"
-                onClick={() =>
-                  setLocallyMuted((current) => ({ ...current, [peer.seat]: !silenced }))
-                }
-                aria-label={silenced ? t.voice.unmuteThem(name) : t.voice.muteThem(name)}
-                aria-pressed={silenced}
-              >
-                <svg
-                  width={16}
-                  height={16}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={2.2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M11 5 6 9H3v6h3l5 4V5Z" />
-                  {silenced ? <path d="m17 9 4 6m0-6-4 6" /> : <path d="M15.5 8.5a5 5 0 0 1 0 7" />}
-                </svg>
-              </button>
-
-              {stream !== undefined && <PeerAudio stream={stream} muted={silenced} />}
-            </li>
-          )
-        })}
+              voice={voice}
+              peer={peer}
+              name={nameFor(peer.seat)}
+              silenced={locallyMuted[peer.seat] === true}
+              onToggleMute={() =>
+                setLocallyMuted((current) => ({
+                  ...current,
+                  [peer.seat]: current[peer.seat] !== true,
+                }))
+              }
+            />
+          ),
+        )}
       </ul>
     </section>
   )

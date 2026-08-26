@@ -61,7 +61,7 @@ describe('VoicePanel', () => {
     expect(screen.getByText('Bo')).toBeTruthy()
   })
 
-  it('does not list the player looking at it', () => {
+  it('lists the player looking at it, so they can see their own mic', () => {
     render(
       <VoicePanel
         voice={{
@@ -76,7 +76,46 @@ describe('VoicePanel', () => {
         selfSeat={0}
       />,
     )
-    expect(screen.queryByText('Ana')).toBeNull()
+    expect(screen.getByText('Ana')).toBeTruthy()
+  })
+
+  it('gives your own row the mic toggle and no local-mute control', () => {
+    render(
+      <VoicePanel
+        voice={{
+          ...baseVoice,
+          status: 'joined',
+          peers: [
+            { seat: 0, muted: false },
+            { seat: 1, muted: false },
+          ],
+        }}
+        seatNames={names}
+        selfSeat={0}
+      />,
+    )
+    expect(screen.getByRole('button', { name: /^mute$/i })).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /mute ana/i })).toBeNull()
+  })
+
+  it('marks your own row as speaking without a connection state', () => {
+    const { container } = render(
+      <VoicePanel
+        voice={{
+          ...baseVoice,
+          status: 'joined',
+          peers: [{ seat: 0, muted: false }],
+          speaking: { 0: true },
+        }}
+        seatNames={names}
+        selfSeat={0}
+      />,
+    )
+    const self = container.querySelector('.voice-peer-self')
+    expect(self?.getAttribute('data-speaking')).toBe('true')
+    /* The end-to-end test polls the first [data-voice-state] in the document. Your
+       own row carrying one would shadow the real peer and never reach connected. */
+    expect(self?.hasAttribute('data-voice-state')).toBe(false)
   })
 
   it('marks a peer whose own mic is off', () => {
