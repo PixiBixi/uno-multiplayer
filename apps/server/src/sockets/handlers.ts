@@ -6,26 +6,18 @@ import {
   roomCreateSchema,
   roomJoinSchema,
   roomRejoinSchema,
-  type ClientToServer,
-  type ErrorCode,
   type GameEvent,
-  type ServerToClient,
 } from '@uno/protocol'
-import { Server, type Socket } from 'socket.io'
+import { Server } from 'socket.io'
 import { z, type ZodType } from 'zod'
 import type { Config } from '../config.js'
 import { logger } from '../logger.js'
 import type { RoomManager } from '../rooms/room-manager.js'
 import type { Room } from '../rooms/room.js'
 import { createRateLimiter } from '../security/rate-limit.js'
-
-type TypedServer = Server<ClientToServer, ServerToClient>
-type TypedSocket = Socket<ClientToServer, ServerToClient>
-
-type AckFailure = { ok: false; error: ErrorCode }
-
-/** Which room and seat a live socket belongs to. */
-type Presence = { room: Room; seat: number }
+import type { AckFailure, Presence, TypedServer, TypedSocket } from './types.js'
+import { createVoiceRooms } from './voice-room.js'
+import { leaveVoice, registerVoiceHandlers, type VoiceContext } from './voice.js'
 
 /** socket.io may deliver `undefined` when the client sends no payload object. */
 const emptyPayloadSchema = z.union([z.object({}), z.undefined(), z.null()]).transform(() => ({}))
@@ -98,6 +90,17 @@ export function registerSocketHandlers(
     capacity: config.createBurst,
     refillPerSecond: config.createPerSecond,
   })
+  const voiceRooms = createVoiceRooms()
+  /* One join in a four-player mesh emits an offer, an answer and a dozen or so
+     candidates per pair. Generous for that burst, hostile to a signal flood. */
+  const voiceLimiter = createRateLimiter({ capacity: 120, refillPerSecond: 10 })
+  const voiceContext: VoiceContext = {
+    io,
+    voiceRooms,
+    config,
+    limiter: voiceLimiter,
+    presenceOf: (socketId: string) => presences.get(socketId),
+  }
 
   /** Pushes every connected seat its own redacted view. */
   const broadcastViews = (room: Room): void => {
@@ -162,6 +165,8 @@ export function registerSocketHandlers(
   const release = (socket: TypedSocket): void => {
     const presence = presences.get(socket.id)
     if (presence === undefined) return
+    // Before `presences.delete` below: leaveVoice resolves the room through it.
+    leaveVoice(voiceContext, socket)
 
     const { room } = presence
     const result = room.disconnect(socket.id)
@@ -301,6 +306,13 @@ export function registerSocketHandlers(
       }
       return presence
     }
+
+    registerVoiceHandlers(voiceContext, socket, {
+      attempt,
+      parsePayload,
+      emptyPayloadSchema,
+      seated,
+    })
 
     socket.on('room:leave', (payload, ack) => {
       attempt(ack, () => {
@@ -461,6 +473,8 @@ export function registerSocketHandlers(
 
     socket.on('disconnect', () => {
       attempt(undefined, () => {
+        // Before `presences.delete` below: leaveVoice resolves the room through it.
+        leaveVoice(voiceContext, socket)
         moveLimiter.forget(socket.id)
         chatLimiter.forget(socket.id)
         /* Only here, and deliberately not in `release`: the socket is genuinely gone, so
