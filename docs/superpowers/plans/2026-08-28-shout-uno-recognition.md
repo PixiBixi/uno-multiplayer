@@ -356,24 +356,7 @@ describe('shout listener', () => {
     expect(onDenied).toHaveBeenCalledTimes(1)
   })
 
-  it('stops for good on stop, pending restart included', () => {
-    const { factory, made, last } = fakeRecognition()
-    const listener = createShoutListener({
-      locale: 'fr',
-      mode: 'local',
-      onShout: vi.fn(),
-      factory,
-    })
-    listener?.start()
-    const first = last()
-    first.onend?.()
-    listener?.stop()
-    vi.advanceTimersByTime(10_000)
-    expect(made).toHaveLength(1)
-    expect(first.abort).toHaveBeenCalled()
-  })
-
-  it('survives a start that throws because it is already listening', () => {
+  it('aborts the recogniser it is holding on stop', () => {
     const { factory, last } = fakeRecognition()
     const listener = createShoutListener({
       locale: 'fr',
@@ -382,13 +365,50 @@ describe('shout listener', () => {
       factory,
     })
     listener?.start()
-    vi.mocked(last().start).mockImplementation(() => {
-      throw new Error('InvalidStateError')
+    const first = last()
+    listener?.stop()
+    expect(first.abort).toHaveBeenCalled()
+  })
+
+  it('cancels a restart that was already scheduled', () => {
+    const { factory, made, last } = fakeRecognition()
+    const listener = createShoutListener({
+      locale: 'fr',
+      mode: 'local',
+      onShout: vi.fn(),
+      factory,
     })
+    listener?.start()
+    // onend clears the held recogniser, so only the pending timer is left to cancel.
+    last().onend?.()
+    listener?.stop()
+    vi.advanceTimersByTime(10_000)
+    expect(made).toHaveLength(1)
+  })
+
+  it('survives a start that throws because it is already listening', () => {
+    const { factory, made, last } = fakeRecognition()
+    /* Every instance refuses to start, which is what InvalidStateError looks like
+       from here. Mocking one instance would not do it: the restart builds a new one. */
+    const throwing = (): SpeechRecognitionLike => {
+      const instance = factory()
+      instance.start = vi.fn(() => {
+        throw new Error('InvalidStateError')
+      })
+      return instance
+    }
+    const listener = createShoutListener({
+      locale: 'fr',
+      mode: 'local',
+      onShout: vi.fn(),
+      factory: throwing,
+    })
+    expect(() => listener?.start()).not.toThrow()
     expect(() => {
       last().onend?.()
       vi.advanceTimersByTime(300)
     }).not.toThrow()
+    expect(made).toHaveLength(2)
   })
 
   it('starting twice does not stack recognisers', () => {
@@ -605,7 +625,7 @@ export function createShoutListener(options: {
 - [ ] **Step 4: Run the test and watch it pass**
 
 Run: `npx vitest run apps/web/src/lib/voice/shout-listener.test.ts`
-Expected: PASS, 14 tests.
+Expected: PASS, 15 tests.
 
 - [ ] **Step 5: Verify and commit**
 
@@ -786,11 +806,10 @@ const setup = (initial: Partial<Props> = {}, availability: ShoutAvailability = '
 
 describe('useShoutUno', () => {
   it('calls when the word is heard while the call is legal', async () => {
-    const { onCall, hear, view, props } = setup({ armed: true })
+    const { onCall, hear, view } = setup({ armed: true })
     await waitFor(() => expect(view.result.current.availability).toBe('local'))
     hear()
     expect(onCall).toHaveBeenCalledTimes(1)
-    view.rerender(props)
   })
 
   it('stays quiet while the call is not legal, however clearly it is shouted', async () => {
