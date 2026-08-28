@@ -138,6 +138,12 @@ describe('shout listener', () => {
     expect(made).toHaveLength(2)
     vi.advanceTimersByTime(300)
     expect(made).toHaveLength(3)
+    last().onend?.()
+    vi.advanceTimersByTime(600)
+    // The third wait is 1200ms, so 600 is not yet enough.
+    expect(made).toHaveLength(3)
+    vi.advanceTimersByTime(600)
+    expect(made).toHaveLength(4)
   })
 
   it('forgets the backoff after a session that lasted', () => {
@@ -145,9 +151,12 @@ describe('shout listener', () => {
     createShoutListener({ locale: 'fr', mode: 'local', onShout: vi.fn(), factory })?.start()
     last().onend?.()
     vi.advanceTimersByTime(300)
+    // A session that runs its course is a normal timeout, not a failure: it
+    // restarts with no delay at all, unlike the 300ms backoff above.
     vi.advanceTimersByTime(5000)
     last().onend?.()
-    vi.advanceTimersByTime(300)
+    expect(made).toHaveLength(2)
+    vi.advanceTimersByTime(0)
     expect(made).toHaveLength(3)
   })
 

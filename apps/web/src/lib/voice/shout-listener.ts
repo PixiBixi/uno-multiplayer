@@ -140,10 +140,14 @@ export function createShoutListener(options: {
     recognition.onend = () => {
       current = null
       if (!wanted || refused) return
-      /* A continuous recogniser ends by itself on silence or a network blip, with
-         nothing a player can see. Without this restart the feature dies quietly a
-         few seconds into the first game. Do not remove it. */
-      if (Date.now() - startedAt >= STABLE_MS) failures = 0
+      /* A session that ran its course is a normal silence timeout, not a failure.
+         Restart at once: every millisecond deaf is a shout that can be lost. */
+      if (Date.now() - startedAt >= STABLE_MS) {
+        failures = 0
+        timer = setTimeout(launch, 0)
+        return
+      }
+      /* Ends that come straight back are a real failure loop, and only those. */
       const wait = BACKOFF_MS[Math.min(failures, BACKOFF_MS.length - 1)] ?? 5000
       failures += 1
       timer = setTimeout(launch, wait)
