@@ -1,10 +1,15 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { VoicePanel, type ShoutControls } from './VoicePanel.js'
 import type { useVoice } from '../hooks/useVoice.js'
 import { fr } from '../i18n/fr.js'
 import { LocaleContext } from '../i18n/index.js'
+
+/* The panel calls installShout itself: it needs the click gesture, so it cannot be
+   handed in as a prop. Mocked here to drive what the browser answered. */
+const speech = vi.hoisted(() => ({ installShout: vi.fn(() => Promise.resolve(true)) }))
+vi.mock('../lib/voice/shout-listener.js', () => speech)
 
 const baseVoice: ReturnType<typeof useVoice> = {
   status: 'idle',
@@ -249,5 +254,43 @@ describe('VoicePanel shout row', () => {
     renderJoined({ shout: shoutControls({ availability: 'probing' }) })
     expect(screen.queryByText(fr.voice.shoutListening)).toBeNull()
     expect(screen.queryByRole('checkbox')).toBeNull()
+  })
+})
+
+describe('VoicePanel offline pack download', () => {
+  beforeEach(() => {
+    speech.installShout.mockReset()
+    speech.installShout.mockResolvedValue(true)
+  })
+
+  it('asks for the pack in the locale on screen', async () => {
+    renderJoined({ shout: shoutControls({ availability: 'downloadable' }) })
+    await userEvent.click(screen.getByRole('button', { name: fr.voice.shoutInstall }))
+    expect(speech.installShout).toHaveBeenCalledWith('fr')
+  })
+
+  it('disables the button while the pack is in flight, so it cannot be asked twice', async () => {
+    let settle: (started: boolean) => void = () => undefined
+    speech.installShout.mockReturnValue(
+      new Promise<boolean>((resolve) => {
+        settle = resolve
+      }),
+    )
+    const onInstalled = vi.fn()
+    renderJoined({ shout: shoutControls({ availability: 'downloadable', onInstalled }) })
+    await userEvent.click(screen.getByRole('button', { name: fr.voice.shoutInstall }))
+
+    const pending = screen.getByRole('button', { name: fr.voice.shoutInstalling })
+    expect((pending as HTMLButtonElement).disabled).toBe(true)
+    expect(onInstalled).not.toHaveBeenCalled()
+
+    await act(async () => {
+      settle(true)
+      await Promise.resolve()
+    })
+    // The re-probe is what turns a landed pack into 'local' without a reload.
+    await waitFor(() => expect(onInstalled).toHaveBeenCalled())
+    const done = screen.getByRole('button', { name: fr.voice.shoutInstall })
+    expect((done as HTMLButtonElement).disabled).toBe(false)
   })
 })

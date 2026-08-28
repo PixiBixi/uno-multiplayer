@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createShoutListener, probeShout, type SpeechRecognitionLike } from './shout-listener.js'
+import {
+  createShoutListener,
+  installShout,
+  probeShout,
+  type SpeechRecognitionLike,
+} from './shout-listener.js'
 
 /** A recogniser that records how it was configured and fires its handlers on demand. */
 const fakeRecognition = () => {
@@ -281,6 +286,55 @@ describe('probeShout with a recogniser present', () => {
   it('falls back to cloud when the probe itself rejects', async () => {
     const restore = withRecognition(() => Promise.reject(new Error('boom')))
     await expect(probeShout('fr')).resolves.toBe('cloud')
+    restore()
+  })
+})
+
+describe('installShout', () => {
+  const withCtor = (extras: Record<string, unknown>) => {
+    const scope = globalThis as unknown as { SpeechRecognition?: unknown }
+    const previous = scope.SpeechRecognition
+    scope.SpeechRecognition = Object.assign(function Fake() {}, extras)
+    return () => {
+      scope.SpeechRecognition = previous
+    }
+  }
+
+  it('refuses when there is no recogniser at all', async () => {
+    await expect(installShout('fr')).resolves.toBe(false)
+  })
+
+  it('refuses on a recogniser that cannot install packs, rather than throwing', async () => {
+    const restore = withCtor({})
+    await expect(installShout('fr')).resolves.toBe(false)
+    restore()
+  })
+
+  it('asks for the locale pack on device and passes on what the browser answered', async () => {
+    const install = vi.fn(() => Promise.resolve(true))
+    const restore = withCtor({ install })
+    await expect(installShout('fr')).resolves.toBe(true)
+    expect(install).toHaveBeenCalledWith({ langs: ['fr-FR'], processLocally: true })
+    restore()
+  })
+
+  it('asks for the English pack in the English locale', async () => {
+    const install = vi.fn(() => Promise.resolve(true))
+    const restore = withCtor({ install })
+    await installShout('en')
+    expect(install).toHaveBeenCalledWith({ langs: ['en-US'], processLocally: true })
+    restore()
+  })
+
+  it('reports false when the install rejects', async () => {
+    const restore = withCtor({ install: () => Promise.reject(new Error('boom')) })
+    await expect(installShout('fr')).resolves.toBe(false)
+    restore()
+  })
+
+  it('reports false when the browser declines the download', async () => {
+    const restore = withCtor({ install: () => Promise.resolve(false) })
+    await expect(installShout('fr')).resolves.toBe(false)
     restore()
   })
 })
