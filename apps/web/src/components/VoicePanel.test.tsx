@@ -226,6 +226,12 @@ describe('VoicePanel shout row', () => {
     expect((consent as HTMLInputElement).checked).toBe(false)
   })
 
+  it('shows the checkbox ticked once consent has already been given', () => {
+    renderJoined({ shout: shoutControls({ availability: 'cloud', cloudAllowed: true }) })
+    const consent = screen.getByRole('checkbox', { name: fr.voice.shoutCloud })
+    expect((consent as HTMLInputElement).checked).toBe(true)
+  })
+
   it('reports a consent change to its owner', async () => {
     const onCloudAllowed = vi.fn()
     renderJoined({ shout: shoutControls({ availability: 'cloud', onCloudAllowed }) })
@@ -236,5 +242,6 @@ describe('VoicePanel shout row', () => {
   it('shows nothing at all while the probe is still running', () => {
     renderJoined({ shout: shoutControls({ availability: 'probing' }) })
     expect(screen.queryByText(fr.voice.shoutListening)).toBeNull()
+    expect(screen.queryByRole('checkbox')).toBeNull()
   })
 })
