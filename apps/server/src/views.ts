@@ -1,4 +1,4 @@
-import { legalMoves, type GameState } from '@uno/engine'
+import { legalMoves, turnOrder, type GameState } from '@uno/engine'
 import type { MatchProgress, PlayerView } from '@uno/protocol'
 
 /**
@@ -44,6 +44,7 @@ export function redactFor(
     pendingDraw: state.pendingDraw,
     currentSeat: state.currentSeat,
     direction: state.direction,
+    turnOrder: turnOrder(state),
     drawPileCount: state.drawPile.length,
     phase: state.phase,
     winner: state.winner,

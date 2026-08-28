@@ -28,6 +28,7 @@ const viewWith = (overrides: Partial<PlayerView> = {}): PlayerView => ({
   pendingDraw: null,
   currentSeat: 0,
   direction: 1,
+  turnOrder: [1, 2, 3],
   drawPileCount: 20,
   phase: 'playing',
   winner: null,

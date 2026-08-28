@@ -1,4 +1,4 @@
-import { initGame, legalMoves } from '@uno/engine'
+import { initGame, legalMoves, turnOrder } from '@uno/engine'
 import { describe, expect, it } from 'vitest'
 import { DEFAULT_MATCH_GOAL, type MatchProgress } from '@uno/protocol'
 import { redactFor } from './views.js'
@@ -72,6 +72,13 @@ describe('redactFor', () => {
     expect(view?.pendingDraw).toBeNull()
     expect(view?.phase).toBe('playing')
     expect(view?.winner).toBeNull()
+  })
+
+  it('carries the order of play, the seat on turn excluded', () => {
+    const state = game()
+    const view = redactFor(state, 2, progress)
+    expect(view?.turnOrder).toEqual(turnOrder(state))
+    expect(view?.turnOrder).not.toContain(state.currentSeat)
   })
 
   it('hands out a copy, so a caller cannot mutate engine state', () => {

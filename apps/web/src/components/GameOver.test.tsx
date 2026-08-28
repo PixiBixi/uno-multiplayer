@@ -42,6 +42,7 @@ const finished = (winner: number | null, match: MatchBits = {}): PlayerView => (
   pendingDraw: null,
   currentSeat: 0,
   direction: 1,
+  turnOrder: [1, 2],
   drawPileCount: 10,
   phase: 'finished',
   winner,

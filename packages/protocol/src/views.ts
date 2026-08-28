@@ -93,6 +93,18 @@ export type PlayerView = {
   pendingDraw: { amount: number; kind: 'draw2' | 'wild4' } | null
   currentSeat: number
   direction: 1 | -1
+  /**
+   * Who plays after `currentSeat`, and after them, in the direction of play. Active
+   * seats only, `currentSeat` excluded, so the length is 0 to 3.
+   *
+   * Sent rather than derived client-side from `direction` and the opponent statuses,
+   * because working out who comes next is a rule and the client holds none.
+   *
+   * It is the order "if the seat on turn lays a plain card": a skip, a reverse, a +2
+   * or a 7/0 rewrites it the moment it is played. Whatever renders it says "up next"
+   * and never promises a next player.
+   */
+  turnOrder: number[]
   drawPileCount: number
   phase: GamePhase
   winner: number | null
