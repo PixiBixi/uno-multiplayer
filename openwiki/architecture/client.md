@@ -98,6 +98,37 @@ same reason the card faces carry shape tokens.
 Card theme and language stayed on the home screen, because they are not table
 configuration - see below.
 
+## Whose turn it is, and who is next
+
+Two questions, answered in one place - the middle of the table, beside the discard.
+
+**Whose turn** is told by shape, not by wording. Your own turn is a slab of ink with
+the words knocked out of it (`.turn-headline-mine`); somebody else's is bare dimmed
+text behind that seat's colour block. "Your move" set in the same type as "Ben to
+play" was the previous version, and players read the wrong one - two states told
+apart only by which words they contain have to be read before they can be told
+apart. In ink rather than a fifth colour, for the reason the plates give: the four
+pigments mean the four suits.
+
+The lit ring around the south bar (`.south-live`) says the same thing a second time,
+around the cards you are about to touch, because that is where the eyes are once a
+game gets going. It is drawn on a `::after` over the hand, so it carries
+`pointer-events: none` - without it the ring eats every card click.
+
+**Who is next** comes from `view.turnOrder` and renders in `TurnOrder.tsx`. The
+opponents rail cannot answer it: the rail is in seat order and it never contains the
+reader, who is very often the one up next. The heading is "Up next" and never "next
+player" - the order is the seating, and a skip, a reverse, a +2 or a 7/0 rewrites it
+the moment it is played.
+
+The queue puts a player's name on screen twice, once in the rail and once here. That
+broke an `e2e` selector and a unit test the first time - both now scope to
+`.seat-name`. Any assertion on a player's name has to say which of the two it means.
+
+Both states are measured in a real browser in `e2e/layout.spec.ts`: that the slab is
+actually filled and the bare headline is not, that the queue is laid out under the
+headline it answers, and that a click on a card still reaches the card.
+
 ## Card themes
 
 Five faces on offer - poster, classic, flat, letterpress, neon - chosen by **each

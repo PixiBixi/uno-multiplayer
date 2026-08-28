@@ -164,6 +164,11 @@ engine and both move together. There is nothing to catch, which is the point.
 - **Screenshots taken mid-animation.** A sort control looked wrong in a screenshot
   and was correct; measuring computed styles after transitions settle showed no bug
   existed. Measure, and measure at a moment you chose.
+- **An infinite animation never resolves `finished`.** `e2e/layout.spec.ts` settles
+  the page by awaiting `document.getAnimations()` before it measures anything. Two
+  animations on the table loop forever, the urgent clock and the lit south bar, and
+  awaiting theirs hangs the spec rather than failing it. `settle` filters
+  `iterations === Infinity` out; neither of those moves layout.
 - **jsdom is not a browser.** No `localStorage` (there is a shim in `test-setup.ts`),
   no Web Audio, and `select()` does not move focus the way a real browser does - a
   difference that surfaced a genuine implicit dependency in the clipboard fallback.

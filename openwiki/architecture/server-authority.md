@@ -21,9 +21,22 @@ type PlayerView = {
   rules: TableRules
   discardTop: Card
   currentColor: Color
+  currentSeat: number
+  direction: 1 | -1
+  turnOrder: number[]
   // ... plus match standings and, on a Blazing table, deadlines
 }
 ```
+
+`turnOrder` is the reason this list has a field a client could have computed. Who
+plays after the seat on turn is derivable from `direction` and the opponent
+statuses - and deriving it would be a rule living in the client, which is the one
+thing this design does not allow. So `turnOrder(state)` lives in the engine
+(`packages/engine/src/rules.ts`) and the answer travels in the view.
+
+It is the order **if the seat on turn lays a plain card**. A skip, a reverse, a +2
+or a 7/0 rewrites it the moment it is played, which is why the table renders it
+under the heading "Up next" and never as a next player.
 
 The client renders that and emits intents. It never evaluates a rule. Three
 properties follow directly:
