@@ -40,6 +40,9 @@ export function useShoutUno(options: {
   const [availability, setAvailability] = useState<ShoutAvailability | 'probing'>('probing')
   const [attempt, setAttempt] = useState(0)
   const firedRef = useRef(false)
+  /* A refusal is final for the session, like the listener's own. A later probe still
+     reports the browser capable, and letting it win would claim to be listening. */
+  const deniedRef = useRef(false)
   const armedRef = useRef(armed)
   armedRef.current = armed
   const callRef = useRef(onCall)
@@ -48,9 +51,10 @@ export function useShoutUno(options: {
   const refresh = useCallback(() => setAttempt((count) => count + 1), [])
 
   useEffect(() => {
+    if (deniedRef.current) return
     let live = true
     void probe(locale).then((result) => {
-      if (live) setAvailability(result)
+      if (live && !deniedRef.current) setAvailability(result)
     })
     return () => {
       live = false
@@ -79,6 +83,12 @@ export function useShoutUno(options: {
         if (!armedRef.current || firedRef.current) return
         firedRef.current = true
         callRef.current()
+      },
+      /* From the player's side a refused microphone is a browser that cannot hear:
+         same fallback, same words, and the panel must stop saying it listens. */
+      onDenied: () => {
+        deniedRef.current = true
+        setAvailability('unsupported')
       },
     })
     if (listener === null) return

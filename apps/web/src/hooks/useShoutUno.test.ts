@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from '@testing-library/react'
+import { act, renderHook, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { useShoutUno } from './useShoutUno.js'
 import type { ShoutAvailability, ShoutListener } from '../lib/voice/shout-listener.js'
@@ -8,17 +8,19 @@ type Props = { armed: boolean; prewarm: boolean; enabled: boolean; cloudAllowed:
 /** A listener whose "heard it" can be fired by the test. */
 const fakeListener = () => {
   let shout: () => void = () => undefined
+  let denied: () => void = () => undefined
   const listener: ShoutListener = { start: vi.fn(), stop: vi.fn(), destroy: vi.fn() }
-  const create = vi.fn((options: { onShout: () => void }) => {
+  const create = vi.fn((options: { onShout: () => void; onDenied?: () => void }) => {
     shout = options.onShout
+    denied = options.onDenied ?? ((): void => undefined)
     return listener
   })
-  return { create, listener, hear: () => shout() }
+  return { create, listener, hear: () => shout(), deny: () => denied() }
 }
 
 const setup = (initial: Partial<Props> = {}, availability: ShoutAvailability = 'local') => {
   const onCall = vi.fn()
-  const { create, listener, hear } = fakeListener()
+  const { create, listener, hear, deny } = fakeListener()
   const probe = vi.fn(() => Promise.resolve(availability))
   const props: Props = {
     armed: false,
@@ -38,7 +40,7 @@ const setup = (initial: Partial<Props> = {}, availability: ShoutAvailability = '
       }),
     { initialProps: props },
   )
-  return { onCall, create, listener, hear, view, props }
+  return { onCall, create, listener, hear, deny, probe, view, props }
 }
 
 describe('useShoutUno', () => {
@@ -193,5 +195,37 @@ describe('useShoutUno while a language pack downloads', () => {
     }
     expect(probe.mock.calls.length).toBe(callsAtLocal)
     vi.useRealTimers()
+  })
+})
+
+describe('useShoutUno when the microphone is refused', () => {
+  it('points at the button instead of claiming to listen', async () => {
+    const { deny, view } = setup({ armed: true })
+    await waitFor(() => expect(view.result.current.availability).toBe('local'))
+    act(() => deny())
+    await waitFor(() => expect(view.result.current.availability).toBe('unsupported'))
+  })
+
+  it('drops the listener it was holding', async () => {
+    const { deny, listener } = setup({ armed: true })
+    await waitFor(() => expect(listener.start).toHaveBeenCalled())
+    act(() => deny())
+    await waitFor(() => expect(listener.destroy).toHaveBeenCalled())
+  })
+
+  it('stays refused through a re-probe, which still reports the browser capable', async () => {
+    const { deny, probe, view } = setup({ armed: true })
+    await waitFor(() => expect(view.result.current.availability).toBe('local'))
+    act(() => deny())
+    await waitFor(() => expect(view.result.current.availability).toBe('unsupported'))
+    const probes = probe.mock.calls.length
+    /* The panel re-probes after a pack install, and the probe cannot see a refusal:
+       it would answer 'local' again and put the shout back on screen. */
+    await act(async () => {
+      view.result.current.refresh()
+      await Promise.resolve()
+    })
+    expect(probe).toHaveBeenCalledTimes(probes)
+    expect(view.result.current.availability).toBe('unsupported')
   })
 })
