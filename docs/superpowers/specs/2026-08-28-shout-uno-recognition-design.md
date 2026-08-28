@@ -128,6 +128,19 @@ cards, or while vulnerable at one, and both are under three.
 The alternative, running it for the whole game, was rejected: in cloud mode it
 would stream the microphone to the vendor from the first deal to the last card.
 
+### Mute stops the recogniser
+
+`toggleMute` sets `track.enabled = false` on the WebRTC track. The recogniser
+holds a separate capture, so it would carry on listening to a player who has
+just closed their microphone.
+
+That has to not happen. Pressing mute means "stop listening to me", and a
+feature that keeps transcribing afterwards breaks that promise - in cloud mode
+it would keep sending audio to the vendor after the player asked for silence.
+
+So the recogniser runs only while voice is joined **and** not muted. A muted
+player uses the button, exactly as they did under the amplitude trigger.
+
 ### Restarting is the feature
 
 A continuous recogniser stops on its own. Chrome ends the session after a few
