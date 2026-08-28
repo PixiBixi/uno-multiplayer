@@ -146,3 +146,27 @@ export function writeKonamiUnlocked(unlocked: boolean): void {
     /* Found again next time. */
   }
 }
+
+const SHOUT_CLOUD_KEY = 'uno.pref.shoutCloud'
+
+/**
+ * Whether cloud speech recognition was accepted. Off unless the exact string
+ * 'true' is stored, so a half-written value never reads as consent: on-device
+ * recognition needs none because nothing leaves the machine, and the cloud path
+ * sends the microphone to the browser vendor, which nothing else here does.
+ */
+export function readShoutCloudAllowed(): boolean {
+  try {
+    return window.localStorage.getItem(SHOUT_CLOUD_KEY) === 'true'
+  } catch {
+    return false
+  }
+}
+
+export function writeShoutCloudAllowed(allowed: boolean): void {
+  try {
+    window.localStorage.setItem(SHOUT_CLOUD_KEY, allowed ? 'true' : 'false')
+  } catch {
+    /* The choice will not survive a reload, and defaults back to off. */
+  }
+}
