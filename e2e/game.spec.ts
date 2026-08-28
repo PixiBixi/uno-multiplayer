@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test'
+import { settle } from './settle.js'
 
 /** One player is one browser context: its own localStorage, its own socket. */
 async function openPlayer(browser: Browser): Promise<Page> {
@@ -292,10 +293,12 @@ test('the draw pile is still a card once the draw ghost has finished', async ({ 
   await expect(host.locator('.pile-draw')).toBeAttached()
   await expect(host.locator('.hand-card')).toHaveCount(8)
 
-  const measured = await host.evaluate(async () => {
-    await Promise.allSettled(document.getAnimations().map((animation) => animation.finished))
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
+  /* Shared helper, and it skips animations that loop forever. Awaiting every animation
+     here is what this line used to do, and the lit south bar - which is up whenever the
+     move is yours, as it is right after a draw - timed the spec out. */
+  await settle(host)
 
+  const measured = await host.evaluate(() => {
     const pile = document.querySelector('.pile-draw')
     const back = pile?.querySelector('[data-back-word]')
     if (pile === null || back === null || back === undefined) {

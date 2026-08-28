@@ -1,4 +1,5 @@
 import { expect, test, type Browser, type Page } from '@playwright/test'
+import { settle } from './settle.js'
 
 /**
  * Layout, measured rather than looked at.
@@ -13,24 +14,6 @@ const DESKTOP = { width: 1440, height: 900 }
 const PHONE = { width: 430, height: 940 }
 /** An iPhone 13, the viewport the hand-below-the-fold defect was measured on. */
 const SMALL_PHONE = { width: 390, height: 844 }
-
-/**
- * Nothing is measured while it is still moving.
- *
- * Infinite animations are excluded rather than awaited. The table has two - the urgent
- * clock and the lit south bar - and their `finished` promise never resolves, so waiting
- * on it hangs the test rather than failing it. Neither moves layout: they breathe an
- * opacity and a scale.
- */
-async function settle(page: Page): Promise<void> {
-  await page.evaluate(async () => {
-    const finite = document
-      .getAnimations()
-      .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
-    await Promise.allSettled(finite.map((animation) => animation.finished))
-    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
-  })
-}
 
 type Box = { top: number; bottom: number; left: number; right: number; width: number }
 
@@ -311,6 +294,26 @@ test('the seat on turn and the seat waiting are laid out as two different things
   }
   expect(slab.right, 'the slab stays inside the centre column').toBeLessThanOrEqual(
     centre.right + 1,
+  )
+  /* And it hugs the words rather than filling the block it sits in. Measured against
+     `.turn-block` and not against the centre column: a stretched slab is still only
+     about half the centre, so comparing with the wider box passes on the very layout
+     that shipped. `.turn-block` is a flex column, the headline was a stretched flex
+     item, and `inline-block` did nothing about it. It read as a banner. */
+  const block = await boxOf(onTurn, '.turn-block')
+  expect(slab.width, 'the slab hugs its words').toBeLessThan(block.width - 8)
+
+  /* Its box is tall enough for the ink it holds. Every heading here carries
+     `line-height: 0.92`, which sliced the accent off a capital À at the top edge - a
+     crop no bounding box reports, so the line height is what gets asserted. */
+  const slabType = await onTurn.evaluate(() => {
+    const node = document.querySelector('.turn-headline-mine')
+    if (node === null) throw new Error('no slab')
+    const style = getComputedStyle(node)
+    return { size: parseFloat(style.fontSize), leading: parseFloat(style.lineHeight) }
+  })
+  expect(slabType.leading, 'the slab leaves room for an accented capital').toBeGreaterThan(
+    slabType.size,
   )
 
   // The queue is a row of names, not an empty heading.
