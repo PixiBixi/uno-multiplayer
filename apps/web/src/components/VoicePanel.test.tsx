@@ -293,4 +293,23 @@ describe('VoicePanel offline pack download', () => {
     const done = screen.getByRole('button', { name: fr.voice.shoutInstall })
     expect((done as HTMLButtonElement).disabled).toBe(false)
   })
+
+  /* The message shares its paragraph with the button, so it is read off that
+     paragraph rather than matched as a whole element. */
+  const shoutNote = (): string =>
+    screen.getByRole('button', { name: fr.voice.shoutInstall }).closest('p')?.textContent ?? ''
+
+  it('says so when the download never started, rather than a click that does nothing', async () => {
+    speech.installShout.mockResolvedValue(false)
+    renderJoined({ shout: shoutControls({ availability: 'downloadable' }) })
+    await userEvent.click(screen.getByRole('button', { name: fr.voice.shoutInstall }))
+    await waitFor(() => expect(shoutNote()).toContain(fr.voice.shoutInstallFailed))
+  })
+
+  it('keeps quiet about a failure that has not happened', async () => {
+    renderJoined({ shout: shoutControls({ availability: 'downloadable' }) })
+    await userEvent.click(screen.getByRole('button', { name: fr.voice.shoutInstall }))
+    await waitFor(() => expect(speech.installShout).toHaveBeenCalled())
+    expect(shoutNote()).not.toContain(fr.voice.shoutInstallFailed)
+  })
 })

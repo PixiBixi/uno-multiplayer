@@ -381,6 +381,7 @@ export type Messages = {
     shoutOffline: string
     shoutInstall: string
     shoutInstalling: string
+    shoutInstallFailed: string
     shoutCloud: string
   }
 

@@ -311,6 +311,8 @@ export const fr: Messages = {
     shoutOffline: 'Crier « uno » demande un pack de langue hors ligne.',
     shoutInstall: 'Le télécharger',
     shoutInstalling: 'Téléchargement…',
+    shoutInstallFailed:
+      'Le téléchargement n’a pas démarré. Tu peux toujours utiliser le bouton UNO.',
     shoutCloud:
       'Annoncer UNO en le criant. Ce navigateur n’a pas de reconnaissance hors ligne, ton micro part donc chez son éditeur quand ta main touche à sa fin.',
   },

@@ -147,6 +147,7 @@ function ShoutRow({ shout }: { shout: ShoutControls }) {
   const t = useMessages()
   const locale = useLocale()
   const [installing, setInstalling] = useState(false)
+  const [installFailed, setInstallFailed] = useState(false)
 
   if (shout.availability === 'probing') return null
   if (shout.availability === 'local') return <p className="voice-note">{t.voice.shoutListening}</p>
@@ -159,7 +160,9 @@ function ShoutRow({ shout }: { shout: ShoutControls }) {
   if (shout.availability === 'downloadable')
     return (
       <p className="voice-note">
-        {t.voice.shoutOffline}{' '}
+        {/* A refused install lands back on this same button, so the swapped lead is
+            the only thing telling the player their click did anything at all. */}
+        {installFailed ? t.voice.shoutInstallFailed : t.voice.shoutOffline}{' '}
         <button
           type="button"
           className="btn-link"
@@ -167,8 +170,10 @@ function ShoutRow({ shout }: { shout: ShoutControls }) {
           onClick={() => {
             // install() needs the gesture, so it is a button and never an effect.
             setInstalling(true)
-            void installShout(locale).then(() => {
+            setInstallFailed(false)
+            void installShout(locale).then((started) => {
               setInstalling(false)
+              setInstallFailed(!started)
               shout.onInstalled()
             })
           }}

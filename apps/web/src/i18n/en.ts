@@ -294,6 +294,7 @@ export const en: Messages = {
     shoutOffline: 'Shouting "uno" needs an offline language pack.',
     shoutInstall: 'Download it',
     shoutInstalling: 'Downloading…',
+    shoutInstallFailed: 'The download did not start. You can still use the UNO button.',
     shoutCloud:
       'Call UNO by shouting it. This browser has no offline recognition, so your microphone goes to its maker while your hand is nearly done.',
   },
