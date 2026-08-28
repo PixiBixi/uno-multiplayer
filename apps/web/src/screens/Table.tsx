@@ -10,6 +10,7 @@ import { PlayEffects } from '../components/PlayEffects.js'
 import { RulesInPlay } from '../components/RulesInPlay.js'
 import { Seat } from '../components/Seat.js'
 import { Toaster } from '../components/Toaster.js'
+import { TurnOrder } from '../components/TurnOrder.js'
 import { VoicePanel } from '../components/VoicePanel.js'
 import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
 import { useTableEffects } from '../hooks/useTableEffects.js'
@@ -304,7 +305,21 @@ export function Table({
             <div className="centre-row">
               <CentreStack view={view} drawNonce={drawNonce} />
               <div className="turn-block">
-                <h2 className="turn-headline">{headline}</h2>
+                {/* Two different objects, not one object in two colours: your own turn is a
+                    slab of ink with the words knocked out of it, somebody else's is bare
+                    text behind their seat colour. A player glancing back at the tab reads
+                    which of the two it is before reading a single word. */}
+                <h2 className={myTurn ? 'turn-headline turn-headline-mine' : 'turn-headline'}>
+                  {!myTurn && (
+                    <span
+                      className="turn-headline-pigment"
+                      style={{ background: pigmentForSeat(view.currentSeat) }}
+                      aria-hidden="true"
+                    />
+                  )}
+                  {headline}
+                </h2>
+                <TurnOrder seats={view.turnOrder} nameOf={nameOf} />
                 {secondsLeft !== null && (
                   /* A live region so the number is announced as it falls, and urgent
                      only at the end - a polite update every second would queue up
@@ -337,7 +352,10 @@ export function Table({
           </div>
         </div>
 
-        <div className="table-south">
+        {/* Lit while the move is yours. The headline says it in words and this says it
+            around the cards you are about to touch, which is where the eyes already are
+            once a game gets going. */}
+        <div className={myTurn ? 'table-south south-live' : 'table-south'}>
           {exposedToCallOut && (
             /* Assertive, unlike the countdown next door: this is a state you can act on
                and it expires at the end of your next turn, so a polite queue behind

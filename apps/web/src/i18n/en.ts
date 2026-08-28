@@ -222,6 +222,7 @@ export const en: Messages = {
     waitingOn: (name) => `${name} to play`,
     yourTurn: 'your turn',
     theirTurn: 'their turn',
+    upNext: 'Up next',
     drawCard: 'Draw card',
     take: (n) => `Take ${String(n)}`,
     callUno: 'UNO!',

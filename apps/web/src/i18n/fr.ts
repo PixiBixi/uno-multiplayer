@@ -238,6 +238,7 @@ export const fr: Messages = {
     waitingOn: (name) => `Au tour de ${name}`,
     yourTurn: 'à toi',
     theirTurn: 'à eux',
+    upNext: 'Ensuite',
     drawCard: 'Piocher',
     take: (n) => `Prendre ${String(n)}`,
     callUno: 'UNO !',

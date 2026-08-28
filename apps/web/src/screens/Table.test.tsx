@@ -77,7 +77,10 @@ const setup = (view: PlayerView) => {
 describe('Table', () => {
   it('shows every opponent', () => {
     setup(viewWith())
-    for (const name of ['Ben', 'Cleo', 'Dan']) expect(screen.getByText(name)).toBeTruthy()
+    /* Scoped to the rail: a name is now on screen twice, once here and once in the
+       up-next queue, so an unscoped getByText is ambiguous. */
+    const railNames = [...document.querySelectorAll('.seat-name')].map((node) => node.textContent)
+    for (const name of ['Ben', 'Cleo', 'Dan']) expect(railNames).toContain(name)
   })
 
   it('plays a card from your hand', async () => {
@@ -497,5 +500,47 @@ describe('the card theme cycler', () => {
     expect(container.querySelectorAll('ellipse')).toHaveLength(0)
     await userEvent.click(screen.getByRole('button', { name: /card theme/i }))
     expect(container.querySelectorAll('ellipse').length).toBeGreaterThan(0)
+  })
+})
+
+describe('whose turn it is', () => {
+  const headline = () => document.querySelector('.turn-headline')
+
+  it('inks the headline into a slab when the turn is yours', () => {
+    setup(viewWith())
+    expect(headline()?.className).toContain('turn-headline-mine')
+  })
+
+  it("leaves the headline bare and marks the seat when the turn is somebody else's", () => {
+    setup(viewWith({ currentSeat: 1, you: { seat: 0, hand: [mine], legalMoves: [] } }))
+    expect(headline()?.className).not.toContain('turn-headline-mine')
+    expect(document.querySelector('.turn-headline-pigment')).toBeTruthy()
+  })
+
+  it('lights the south bar only on your own turn', () => {
+    setup(viewWith())
+    expect(document.querySelector('.table-south')?.className).toContain('south-live')
+  })
+
+  it("leaves the south bar unlit on somebody else's turn", () => {
+    setup(viewWith({ currentSeat: 1, you: { seat: 0, hand: [mine], legalMoves: [] } }))
+    expect(document.querySelector('.table-south')?.className).not.toContain('south-live')
+  })
+
+  it('says who is up next, in the order the view sent', () => {
+    setup(viewWith({ currentSeat: 3, turnOrder: [0, 1, 2] }))
+    const names = [...document.querySelectorAll('.up-next-name')].map((node) => node.textContent)
+    expect(names).toEqual(['You', 'Ben', 'Cleo'])
+  })
+
+  it('names you in the queue, since the rail never does', () => {
+    setup(viewWith({ currentSeat: 1, turnOrder: [2, 3, 0] }))
+    const names = [...document.querySelectorAll('.up-next-name')].map((node) => node.textContent)
+    expect(names).toEqual(['Cleo', 'Dan', 'You'])
+  })
+
+  it('renders no queue on a table down to one active player', () => {
+    setup(viewWith({ turnOrder: [] }))
+    expect(document.querySelector('.up-next')).toBeNull()
   })
 })

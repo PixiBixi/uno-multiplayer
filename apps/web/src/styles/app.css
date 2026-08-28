@@ -1312,9 +1312,79 @@ input.switch:checked::before {
 }
 
 /* The single loudest thing on the page. It says the one fact a player opens the tab to
-   find, in the one size that cannot be scanned past. */
+   find, in the one size that cannot be scanned past.
+
+   Dimmed here because this is the default state - somebody else's turn - and the state
+   that matters is the other one. `.turn-headline-mine` takes it back to full ink. */
 .turn-headline {
   font-size: clamp(2rem, 4.4vw, 3.875rem);
+  color: var(--text-dim);
+}
+
+/* Your turn, as a different object rather than the same object in another colour: a slab
+   of ink with the words knocked out of it. Two states told apart by shape are read before
+   they are read, which is what "Your move" next to "Ben to play" never managed.
+
+   In ink and not in a fifth colour, for the reason `.plate-turn` gives: the four pigments
+   mean the four suits, so whose turn it is has to be said in the one colour that means
+   nothing else. `inline-block` so the slab hugs the words instead of running the width of
+   the column, and `box-decoration-break` so a wrapped headline stays one slab. */
+.turn-headline-mine {
+  display: inline-block;
+  padding: 0.1em 0.4em;
+  background: var(--text);
+  color: var(--ground);
+  box-decoration-break: clone;
+}
+
+/* Whose turn it is, in their own colour, at the size a 3rem line allows. Same mark as the
+   rail and the plates, indexed by seat. */
+.turn-headline-pigment {
+  display: inline-block;
+  width: 0.22em;
+  height: 0.62em;
+  margin-inline-end: 0.28em;
+  vertical-align: baseline;
+}
+
+/* ---------- Up next ---------- */
+
+/* The order of play, under the headline. It is the rail that cannot answer this: the rail
+   is in seat order and it never contains the reader, who is very often the one up next. */
+.up-next {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  margin: 0;
+}
+
+.up-next-seat {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* A chevron, not a word: the line has to read as a sequence and a glyph belongs to no
+   language. On the second seat onwards, so the first one is not preceded by nothing. */
+.up-next-seat + .up-next-seat::before {
+  content: '\203A';
+  margin-inline-end: 0.25rem;
+  color: var(--text-dim);
+}
+
+.up-next-pigment {
+  flex: none;
+  width: 8px;
+  height: 1em;
+}
+
+.up-next-name {
+  font-family: var(--display);
+  font-size: var(--step-0);
+  letter-spacing: var(--track-tight);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
 }
 
 .turn-note {
@@ -1433,6 +1503,40 @@ input.switch:checked::before {
   gap: 0.7rem clamp(0.75rem, 2vw, 1.5rem);
   padding: 0.9rem clamp(0.75rem, 2vw, 1.5rem) 1.1rem;
   border-top: 3px solid var(--text);
+}
+
+/* Lit while the move is yours, around the cards you are about to touch - which is where
+   the eyes are once a game gets going, not on the headline three columns up. In ink for
+   the same reason the headline slab is: the pigments are spoken for. */
+.south-live {
+  position: relative;
+  border-top-width: 6px;
+}
+
+.south-live::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* The hand sits under this. Without it the ring eats every card click. */
+  pointer-events: none;
+  border: 3px solid var(--text);
+  border-top: 0;
+  animation: south-live-breathe 2.6s ease-in-out infinite;
+}
+
+@keyframes south-live-breathe {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* The ring carries the state; the breathing does not. Solid rather than off, unlike the
+   clock pulse next door - there the number was the information and the pulse decoration,
+   here the ring is the information. */
+@media (prefers-reduced-motion: reduce) {
+  .south-live::after {
+    animation: none;
+  }
 }
 
 .table-south > .banner,

@@ -33,8 +33,9 @@ test('two players reach a connected voice link', async ({ browser }) => {
   await host.getByRole('button', { name: 'Join voice' }).click()
   await guest.getByRole('button', { name: 'Join voice' }).click()
 
-  // The roster is server state and settles first.
-  await expect(host.getByText('Bo')).toBeVisible()
+  /* The roster is server state and settles first. Scoped to the rail: a name is on
+     screen twice now, once there and once in the up-next queue. */
+  await expect(host.locator('.seat-name').getByText('Bo')).toBeVisible()
 
   /* The connection state is the assertion that matters: it proves ICE completed
      between two real browsers, which no unit test can establish. */

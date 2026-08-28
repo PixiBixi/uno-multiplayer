@@ -252,6 +252,12 @@ export type Messages = {
     waitingOn: (name: string) => string
     yourTurn: string
     theirTurn: string
+    /**
+     * Heading over the order of play. "Up next" and never "next player": a skip, a
+     * reverse, a +2 or a 7/0 rewrites the order the moment it is played, so the line
+     * is a reading of the seating and not a promise.
+     */
+    upNext: string
     drawCard: string
     take: (n: number) => string
     callUno: string

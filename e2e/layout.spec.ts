@@ -14,10 +14,20 @@ const PHONE = { width: 430, height: 940 }
 /** An iPhone 13, the viewport the hand-below-the-fold defect was measured on. */
 const SMALL_PHONE = { width: 390, height: 844 }
 
-/** Nothing is measured while it is still moving. */
+/**
+ * Nothing is measured while it is still moving.
+ *
+ * Infinite animations are excluded rather than awaited. The table has two - the urgent
+ * clock and the lit south bar - and their `finished` promise never resolves, so waiting
+ * on it hangs the test rather than failing it. Neither moves layout: they breathe an
+ * opacity and a scale.
+ */
 async function settle(page: Page): Promise<void> {
   await page.evaluate(async () => {
-    await Promise.allSettled(document.getAnimations().map((animation) => animation.finished))
+    const finite = document
+      .getAnimations()
+      .filter((animation) => animation.effect?.getComputedTiming().iterations !== Infinity)
+    await Promise.allSettled(finite.map((animation) => animation.finished))
     await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)))
   })
 }
@@ -252,4 +262,91 @@ test('the home screen no longer runs two and a half phone screens tall', async (
   expect(measured.controls).toBeLessThan(16)
   // Reachable without scrolling, which it was not.
   expect(measured.codeFieldTop).toBeLessThan(measured.innerHeight)
+})
+
+/**
+ * The two turn states, measured on the table rather than looked at.
+ *
+ * They have to be told apart at a glance, which is a claim about geometry: the inked slab
+ * has to be a different shape from the bare headline, the up-next queue has to be laid out
+ * rather than merely present, and the lit south bar must not swallow the cards under it.
+ */
+test('the seat on turn and the seat waiting are laid out as two different things', async ({
+  page,
+  browser,
+}) => {
+  await page.setViewportSize(DESKTOP)
+  const guest = await openLobby(page, browser)
+  await page.getByRole('button', { name: 'Start game' }).click()
+  await expect(page.locator('.hand-card')).toHaveCount(7)
+  await expect(guest.locator('.hand-card')).toHaveCount(7)
+  await settle(page)
+  await settle(guest)
+
+  /* Whoever the deal put on turn. Read from the DOM rather than assumed: the host is not
+     always seat 0's turn once a reverse or a skip has been dealt as the first card. */
+  const onTurn = (await page.locator('.turn-headline-mine').count()) > 0 ? page : guest
+  const waiting = onTurn === page ? guest : page
+
+  const slab = await boxOf(onTurn, '.turn-headline-mine')
+  const bare = await boxOf(waiting, '.turn-headline')
+
+  // The slab is painted, which is the whole point: a bare headline has no background.
+  const slabInk = await onTurn.evaluate(
+    () => getComputedStyle(document.querySelector('.turn-headline-mine')!).backgroundColor,
+  )
+  const bareInk = await waiting.evaluate(
+    () => getComputedStyle(document.querySelector('.turn-headline')!).backgroundColor,
+  )
+  expect(slabInk, 'the slab is filled').not.toBe(bareInk)
+  expect(bareInk, 'the waiting headline is not').toBe('rgba(0, 0, 0, 0)')
+
+  // Both are actually laid out, and neither runs off the column it sits in.
+  const centre = await boxOf(onTurn, '.table-centre')
+  for (const [name, box] of [
+    ['the slab', slab],
+    ['the bare headline', bare],
+  ] as const) {
+    expect(box.width, `${name} is laid out`).toBeGreaterThan(0)
+  }
+  expect(slab.right, 'the slab stays inside the centre column').toBeLessThanOrEqual(
+    centre.right + 1,
+  )
+
+  // The queue is a row of names, not an empty heading.
+  const queue = await boxOf(waiting, '.up-next')
+  expect(queue.width).toBeGreaterThan(0)
+  expect(await waiting.locator('.up-next-name').count()).toBeGreaterThan(0)
+  const headlineBox = await boxOf(waiting, '.turn-headline')
+  expect(queue.top, 'the queue sits under the headline it answers').toBeGreaterThanOrEqual(
+    headlineBox.bottom - 1,
+  )
+
+  /* The lit ring is drawn over the hand, so it has to be transparent to a click. A ring
+     that eats card clicks is a table that has stopped responding. */
+  const ringPassesClicks = await onTurn.evaluate(() => {
+    const ring = document.querySelector('.south-live')
+    if (ring === null) return 'no lit south bar'
+    return getComputedStyle(ring, '::after').pointerEvents
+  })
+  expect(ringPassesClicks).toBe('none')
+
+  // And the cards under it are still the thing a click lands on.
+  const card = onTurn.locator('.hand-card').first()
+  const point = await card.evaluate((node) => {
+    const rect = node.getBoundingClientRect()
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 }
+  })
+  const hit = await onTurn.evaluate(
+    ({ x, y }) => document.elementFromPoint(x, y)?.closest('.hand-card') !== null,
+    point,
+  )
+  expect(hit, 'a card is what a click on a card reaches').toBe(true)
+
+  // Nothing new pushes the table sideways at a desktop width.
+  const sideways = await onTurn.evaluate(() => ({
+    scrollWidth: document.documentElement.scrollWidth,
+    innerWidth: window.innerWidth,
+  }))
+  expect(sideways.scrollWidth).toBeLessThanOrEqual(sideways.innerWidth + 1)
 })
