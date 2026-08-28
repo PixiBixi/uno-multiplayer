@@ -1,6 +1,32 @@
 # Changelog
 
 - - -
+## [v1.10.0](https://github.com/PixiBixi/uno-multiplayer/compare/63acaa1b66a295570950ca940e1506e2f0adb964..v1.10.0) - 2026-08-28
+#### Features
+- (**cards**) a sixth face, found rather than chosen - ([8a27816](https://github.com/PixiBixi/uno-multiplayer/commit/8a2781659cf34e91c9b63806af2579fdcc8d7727)) - Jeremy Delgado
+- (**engine**) expose the order of play after the seat on turn - ([99b0d9f](https://github.com/PixiBixi/uno-multiplayer/commit/99b0d9ff79759b39c38df9bccf4e06d3af395df4)) - Jeremy Delgado
+- (**protocol**) ship the order of play in every player view - ([100618c](https://github.com/PixiBixi/uno-multiplayer/commit/100618cda56f426379391219bc434fd8abfeefad)) - Jeremy Delgado
+- (**voice**) call UNO by shouting it - ([63acaa1](https://github.com/PixiBixi/uno-multiplayer/commit/63acaa1b66a295570950ca940e1506e2f0adb964)) - Jeremy Delgado
+- (**web**) tell two turn states apart by shape, and say who is up next - ([a6b24ad](https://github.com/PixiBixi/uno-multiplayer/commit/a6b24addb44c693d93fdf64cea954c749cbd9980)) - Jeremy Delgado
+#### Bug Fixes
+- (**web**) take the unplayable-card fade down to its floor - ([54f3b21](https://github.com/PixiBixi/uno-multiplayer/commit/54f3b21dcfdc3311f02410bc2c3ad85503aa5515)) - Jeremy Delgado
+- (**web**) paint the turn slab per line, and put "À toi de jouer" back - ([f02ba22](https://github.com/PixiBixi/uno-multiplayer/commit/f02ba2250a2ca70eae839942bd85d4dead949e29)) - Jeremy Delgado
+- (**web**) fade an unplayable card again, but only as far as it stays readable - ([d3ddd74](https://github.com/PixiBixi/uno-multiplayer/commit/d3ddd74c798ca255867a388ba79d1248c5d0bd08)) - Jeremy Delgado
+- (**web**) tell a card's state by elevation instead of fading its pigment - ([f2b46d8](https://github.com/PixiBixi/uno-multiplayer/commit/f2b46d8feb7dc72942f8239195a57f3ccb05e2fa)) - Jeremy Delgado
+- (**web**) make the turn slab hug its words instead of banding the table - ([96f610b](https://github.com/PixiBixi/uno-multiplayer/commit/96f610b78cb89e6ee2f98680e827deb605f9a885)) - Jeremy Delgado
+#### Documentation
+- (**wiki**) the card fade sits at 0.71 now, its floor - ([6921ed4](https://github.com/PixiBixi/uno-multiplayer/commit/6921ed4439643d5bddde97ebe4ab9aed2f73caa3)) - Jeremy Delgado
+- (**wiki**) explain why the slab is an inline box - ([e5dda5b](https://github.com/PixiBixi/uno-multiplayer/commit/e5dda5bc0a29afd81032b0e9714e677f066bfc6e)) - Jeremy Delgado
+- (**wiki**) note the fade is back, with the floor it now has - ([c26cb5b](https://github.com/PixiBixi/uno-multiplayer/commit/c26cb5b42e63c3b3f507d43cb8d4ea428e00dfb9)) - Jeremy Delgado
+- (**wiki**) record the contrast the card fade was costing - ([57bdf5e](https://github.com/PixiBixi/uno-multiplayer/commit/57bdf5ea286c60a204f57bf53bcb735b61f0e790)) - Jeremy Delgado
+- (**wiki**) record what the turn slab needs and why settle is shared - ([cdad9d4](https://github.com/PixiBixi/uno-multiplayer/commit/cdad9d443468a265741adb9dac67dd31aee1c077)) - Jeremy Delgado
+- (**wiki**) document the two turn states and the up-next queue - ([aec2a84](https://github.com/PixiBixi/uno-multiplayer/commit/aec2a84056df9fe66f88aa8d271225f720a9aef4)) - Jeremy Delgado
+- (**wiki**) document the hidden card face and shout-to-call-UNO - ([e650e3d](https://github.com/PixiBixi/uno-multiplayer/commit/e650e3d03de35917f5095736686564672f7abd76)) - Jeremy Delgado
+#### Refactoring
+- (**e2e**) share one settle helper instead of two copies - ([53d6165](https://github.com/PixiBixi/uno-multiplayer/commit/53d616560783ace37f5a410b9eec0d0d4080d173)) - Jeremy Delgado
+
+- - -
+
 ## [v1.9.0](https://github.com/PixiBixi/uno-multiplayer/compare/826ab0adeef638bd94b807c8b27d147abe1f1a4e..v1.9.0) - 2026-08-26
 #### Features
 - (**protocol**) voice signalling events and schemas - ([4fc4fca](https://github.com/PixiBixi/uno-multiplayer/commit/4fc4fcad5f75d023bdb71e5fef0aee0e09087c05)) - Jeremy Delgado
