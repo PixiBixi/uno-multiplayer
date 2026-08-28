@@ -1,6 +1,39 @@
 # Changelog
 
 - - -
+## [v1.11.0](https://github.com/PixiBixi/uno-multiplayer/compare/b99950cd506820677ddd04b807067d245d0b5efa..v1.11.0) - 2026-08-28
+#### Features
+- (**web**) call UNO by shouting the word, not by making a sound - ([7c215ed](https://github.com/PixiBixi/uno-multiplayer/commit/7c215edd55e8c38de24e01c107eea78d3461ef2e)) - Jeremy Delgado
+- (**web**) surface the shout state and ask before using a cloud recogniser - ([e10ec02](https://github.com/PixiBixi/uno-multiplayer/commit/e10ec02dc3c97d8310c872e8ef700fc5026ec562)) - Jeremy Delgado
+- (**web**) trigger the UNO shout on the word, not on any sound - ([f370fdc](https://github.com/PixiBixi/uno-multiplayer/commit/f370fdc89d90f2fcc916a61f3361767062de4fb7)) - Jeremy Delgado
+- (**web**) store whether cloud speech recognition was accepted - ([53f388b](https://github.com/PixiBixi/uno-multiplayer/commit/53f388bad8aacdcf6c4a14e4f2e7398f1d91114e)) - Jeremy Delgado
+- (**web**) add the shout listener over the Web Speech API - ([515d0aa](https://github.com/PixiBixi/uno-multiplayer/commit/515d0aa6b5f964e6a0479784bdfd6ceb8d775c65)) - Jeremy Delgado
+- (**web**) add the pure matcher for a shouted "uno" - ([3e41918](https://github.com/PixiBixi/uno-multiplayer/commit/3e419184f6e8f95aee747fd7a77509da3c691c14)) - Jeremy Delgado
+#### Bug Fixes
+- (**web**) say so when the pack download never starts - ([b0734aa](https://github.com/PixiBixi/uno-multiplayer/commit/b0734aaba743bea879dec3e72abd1a067df46f0c)) - Jeremy Delgado
+- (**web**) stop the shout recogniser once the game is over - ([0010f46](https://github.com/PixiBixi/uno-multiplayer/commit/0010f466d79b083594b724f6daa200e66e4ec0ec)) - Jeremy Delgado
+- (**web**) fall back to the UNO button when the microphone is refused - ([162b668](https://github.com/PixiBixi/uno-multiplayer/commit/162b66837eacb9e8355abbc62837e51471ef6c07)) - Jeremy Delgado
+- (**web**) restore the hook's JSDoc placement and tighten the no-button test - ([3bdd98f](https://github.com/PixiBixi/uno-multiplayer/commit/3bdd98fb9d6e801cd502b5fff21de1c0142ba73c)) - Jeremy Delgado
+- (**web**) let the shout availability converge while the pack downloads - ([fbf0b48](https://github.com/PixiBixi/uno-multiplayer/commit/fbf0b48ee9402aab51efcf181cca21dfe54d9d45)) - Jeremy Delgado
+- (**web**) style the shout download button and cover the checked cloud checkbox - ([368310a](https://github.com/PixiBixi/uno-multiplayer/commit/368310af545933398ed11d6b124e561da2337d93)) - Jeremy Delgado
+- (**web**) ignore results from a shout recogniser already dropped - ([43dda95](https://github.com/PixiBixi/uno-multiplayer/commit/43dda950e6c331604aca0a6d1f125bc5cac74a3e)) - Jeremy Delgado
+#### Documentation
+- (**plans**) fix three tests the pre-flight scan found unable to fail - ([79e6f49](https://github.com/PixiBixi/uno-multiplayer/commit/79e6f49f5ed04574bbcf2be7fd2f5aab761faca3)) - Jeremy Delgado
+- (**plans**) implementation plan for the UNO word recognition - ([be13dbe](https://github.com/PixiBixi/uno-multiplayer/commit/be13dbe3f0ee6c3ed3bebc213c4eb45c7b50f449)) - Jeremy Delgado
+- (**specs**) stop the shout recogniser while the microphone is muted - ([f4a3458](https://github.com/PixiBixi/uno-multiplayer/commit/f4a345875c0d7348d52b740af8d0909f8b4ba7d1)) - Jeremy Delgado
+- (**specs**) design real "uno" word recognition for the shout trigger - ([98b6619](https://github.com/PixiBixi/uno-multiplayer/commit/98b6619a0a39698898b82fea1a64478b134f1f67)) - Jeremy Delgado
+- (**web**) tighten the HEARD comment to three lines - ([f5ce6cb](https://github.com/PixiBixi/uno-multiplayer/commit/f5ce6cbe4fc9deb4690becf8133c0e5720416375)) - Jeremy Delgado
+- (**wiki**) the shout stops at the end screen and on a refusal - ([c5acf4d](https://github.com/PixiBixi/uno-multiplayer/commit/c5acf4da7dd021943584c3e9d8c0be0df20ccc52)) - Jeremy Delgado
+- (**wiki**) the shout listens for the word, not for a level - ([03f6b59](https://github.com/PixiBixi/uno-multiplayer/commit/03f6b59811dc9ebaed2b13f4c62fe472a40108a2)) - Jeremy Delgado
+- (**wiki**) explain the turn-order lap walk and fix a stray em dash - ([b99950c](https://github.com/PixiBixi/uno-multiplayer/commit/b99950cd506820677ddd04b807067d245d0b5efa)) - Jeremy Delgado
+#### Tests
+- (**web**) cover installShout and the download button - ([5c1cffc](https://github.com/PixiBixi/uno-multiplayer/commit/5c1cffca5ac1e6129f1e02a64bd2675dabfef58c)) - Jeremy Delgado
+- (**web**) assert the shout listener is not reopened once voice leaves - ([35778b1](https://github.com/PixiBixi/uno-multiplayer/commit/35778b1ab831cb48460ccef609e33fbb378c6265)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**lint**) let tests assert on mocked methods - ([15fd781](https://github.com/PixiBixi/uno-multiplayer/commit/15fd781588dc5a44bfb4672b60d1c8b88b5c7cb6)) - Jeremy Delgado
+
+- - -
+
 ## [v1.10.0](https://github.com/PixiBixi/uno-multiplayer/compare/63acaa1b66a295570950ca940e1506e2f0adb964..v1.10.0) - 2026-08-28
 #### Features
 - (**cards**) a sixth face, found rather than chosen - ([8a27816](https://github.com/PixiBixi/uno-multiplayer/commit/8a2781659cf34e91c9b63806af2579fdcc8d7727)) - Jeremy Delgado
