@@ -34,6 +34,11 @@ statuses - and deriving it would be a rule living in the client, which is the on
 thing this design does not allow. So `turnOrder(state)` lives in the engine
 (`packages/engine/src/rules.ts`) and the answer travels in the view.
 
+It walks one full lap of the ring rather than taking `activeCount` steps of
+`advance`. A disconnected seat can be on turn for a moment - `skipDisconnectedTurn`
+moves play off it - and such a seat is not in `activeCount`, so counting steps
+dropped the last player off the list.
+
 It is the order **if the seat on turn lays a plain card**. A skip, a reverse, a +2
 or a 7/0 rewrites it the moment it is played, which is why the table renders it
 under the heading "Up next" and never as a next player.
@@ -48,7 +53,7 @@ properties follow directly:
   card contents, and a move is only accepted if it appears in the server's own
   `legalMoves`.
 
-The cost is one network round trip per move, 30–100 ms, which is imperceptible in
+The cost is one network round trip per move, 30-100 ms, which is imperceptible in
 a turn-based card game.
 
 `apps/server/src/views.ts` is where redaction happens. It is a pure function of a
