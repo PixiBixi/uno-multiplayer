@@ -1,10 +1,9 @@
 import type { Locale } from '../../i18n/messages.js'
 
 /**
- * What recognisers return for a shouted "uno". Per locale because the mistakes
- * differ: a French engine offers "ou no", an English one does not. "you know" is
- * deliberately absent - it is the closest English homophone and one of the most
- * common fillers in the language, so accepting it rebuilds the bug this replaced.
+ * What recognisers return for a shouted "uno", per locale: a French engine offers
+ * "ou no", an English one does not. "you know" is absent on purpose - the closest
+ * English homophone is also a common filler, and taking it rebuilds the old bug.
  */
 const HEARD: Record<Locale, readonly string[]> = {
   en: ['uno', 'una', 'oono', 'u no'],
