@@ -100,12 +100,13 @@ configuration - see below.
 
 ## Playable and unplayable, told by elevation
 
-A playable card sits 10px above the row and casts a hard shadow; an unplayable one lies
-flat. Both keep their full pigment.
+A playable card sits 10px above the row and casts a hard shadow. An unplayable one lies
+flat, casts none, and is faded to `opacity: 0.8`. Three channels, and the fade is the
+weakest of them on purpose.
 
-That is the correction to `opacity: 0.34` on the whole button, which faded the pigment
-and the numeral together. Measured with `lib/contrast.ts` against the ground each theme
-actually paints:
+That is the correction to `opacity: 0.34` on the whole button, which was the only channel
+and faded the pigment and the numeral together. Measured with `lib/contrast.ts` against
+the ground each theme actually paints:
 
 | Pigment | Playable | Faded at 0.34 |
 | ------- | -------- | ------------- |
@@ -114,15 +115,19 @@ actually paints:
 | Blue    | 5.20:1   | 1.66:1        |
 | Yellow  | 10.05:1  | 1.85:1        |
 
-The floor for large text is 3:1. Raising the opacity is not the fix either: 0.71 is what
-the worst pigment needs to clear 3:1, and **4.5:1 is unreachable at any opacity below
-1**. Opacity is simply the wrong channel - the pigment is what says which card it is, so
-the card's state has to be told somewhere else.
+The floor for large text is 3:1, and 4.5:1 is unreachable at any opacity below 1. So the
+fade has a floor of its own: **0.8** is the strongest that keeps every pigment over 3:1,
+at 3.44:1 on the light ground and 3.86:1 on the dark. 0.71 is the hard limit, at 3.01:1
+and 3.28:1. Do not lower it without running the numbers.
+
+One value for both themes, where there used to be two. At this depth the ground barely
+moves the result, and a single rule cannot drift apart from its twin.
 
 Two things fall out of elevation that the fade got wrong:
 
-- When it is not your turn every card is unplayable, so the whole row lies flat and
-  nothing is degraded. The fade dimmed all seven to say nothing at all.
+- When it is not your turn every card is unplayable, so the whole row lies flat. It is
+  still faded, which costs nothing: the row is uniform either way, and the elevation is
+  what carries the comparison when there is one to make.
 - Under `prefers-reduced-motion` the hover returns to the **resting lift**, not to
   `transform: none`. The lift is state, not motion; only the extra travel under the
   cursor is.
@@ -131,9 +136,9 @@ In dark mode the shadow is cream at 22% rather than ink - there is nothing darke
 near-black ground, so a raised card is rim-lit. Same inversion the hover shadow already
 used.
 
-`e2e/layout.spec.ts` drives a game to a hand holding both kinds and asserts no card is
-faded in either state, that the playable ones sit higher, and that only they carry a
-shadow.
+`e2e/layout.spec.ts` drives a game to a hand holding both kinds and asserts that a
+playable card is never faded, that an unplayable one is faded but never past 0.71, that
+the playable ones sit higher, and that only they carry a shadow.
 
 ## Whose turn it is, and who is next
 
