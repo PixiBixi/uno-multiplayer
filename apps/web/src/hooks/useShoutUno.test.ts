@@ -109,6 +109,17 @@ describe('useShoutUno', () => {
     await waitFor(() => expect(create).toHaveBeenCalled())
   })
 
+  it('asks the browser nothing until voice is joined', async () => {
+    /* The probe reaches the Web Speech API. A player who never joins voice must
+       never touch it, so the whole app does not depend on that API being sound. */
+    const { probe, view, props } = setup({ enabled: false })
+    await waitFor(() => expect(view.result.current.availability).toBe('probing'))
+    expect(probe).not.toHaveBeenCalled()
+    view.rerender({ ...props, enabled: true })
+    await waitFor(() => expect(probe).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(view.result.current.availability).toBe('local'))
+  })
+
   it('opens nothing at all on a browser that cannot listen', async () => {
     const { create, view } = setup({}, 'unsupported')
     await waitFor(() => expect(view.result.current.availability).toBe('unsupported'))

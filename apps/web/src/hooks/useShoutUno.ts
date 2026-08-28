@@ -50,8 +50,11 @@ export function useShoutUno(options: {
 
   const refresh = useCallback(() => setAttempt((count) => count + 1), [])
 
+  /* Gated on `enabled` so the speech API is only touched once voice is joined: the
+     panel shows the shout row in that branch alone, so nothing is lost by waiting,
+     and a player who never joins never loads a recogniser at all. */
   useEffect(() => {
-    if (deniedRef.current) return
+    if (deniedRef.current || !enabled) return
     let live = true
     void probe(locale).then((result) => {
       if (live && !deniedRef.current) setAvailability(result)
@@ -59,7 +62,7 @@ export function useShoutUno(options: {
     return () => {
       live = false
     }
-  }, [locale, probe, attempt])
+  }, [enabled, locale, probe, attempt])
 
   useEffect(() => {
     if (availability !== 'downloading') return
