@@ -1331,10 +1331,18 @@ input.switch:checked::before {
    the column, and `box-decoration-break` so a wrapped headline stays one slab. */
 .turn-headline-mine {
   display: inline-block;
-  padding: 0.1em 0.4em;
+  /* `inline-block` is not enough: `.turn-block` is a flex column, so a stretched flex
+     item ran the slab the whole width of the centre and it read as a banner rather than
+     as a phrase. This is the line that makes it hug the words. */
+  align-self: flex-start;
+  padding: 0.12em 0.36em;
   background: var(--text);
   color: var(--ground);
   box-decoration-break: clone;
+  /* Its own, overriding the 0.92 every heading here carries. At 0.92 the box is
+     shorter than the ink it holds and an accented capital had its accent sliced off
+     by the top edge. */
+  line-height: 1.06;
 }
 
 /* Whose turn it is, in their own colour, at the size a 3rem line allows. Same mark as the
