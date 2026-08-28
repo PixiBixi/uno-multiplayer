@@ -361,8 +361,8 @@ test('the seat on turn and the seat waiting are laid out as two different things
  * `opacity: 0.34` on the whole button was the previous answer, and it put the cream
  * numeral on a red card at 1.67:1 against its own pigment where a playable one measures
  * 4.42:1 - every pigment landed between 1.53 and 1.85, under the 3:1 floor for large
- * text. No opacity below 1 reaches 4.5:1, which is why the state is told by elevation
- * instead. `lib/contrast.test.ts` guards the pigments; this guards the state.
+ * text. The state is told by elevation first and a shallow fade second, and the fade has
+ * a floor. `lib/contrast.test.ts` guards the pigments; this guards the state.
  */
 test('an unplayable card keeps its pigment and says so by lying flat', async ({
   page,
@@ -408,8 +408,16 @@ test('an unplayable card keeps its pigment and says so by lying flat', async ({
     }),
   )
 
-  // Nothing is faded, in either state. This is the assertion that was worth the test.
-  for (const card of cards) expect(card.opacity, 'a card is never faded').toBe(1)
+  /* A playable card is never faded, and an unplayable one is faded only as far as its
+     numerals survive. 0.71 is where the worst pigment hits exactly 3:1, so anything
+     below it is the old defect coming back. This is the assertion worth the test. */
+  for (const card of cards.filter((each) => each.live)) {
+    expect(card.opacity, 'a playable card is never faded').toBe(1)
+  }
+  for (const card of cards.filter((each) => !each.live)) {
+    expect(card.opacity, 'an unplayable card is faded').toBeLessThan(1)
+    expect(card.opacity, 'but not past the contrast floor').toBeGreaterThanOrEqual(0.71)
+  }
 
   const live = cards.filter((card) => card.live)
   const dead = cards.filter((card) => !card.live)

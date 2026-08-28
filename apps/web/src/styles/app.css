@@ -400,10 +400,23 @@ input::placeholder {
     filter 180ms ease;
 }
 
+/*
+ * Flat, shadowless and slightly faded. Three channels rather than one, because the fade
+ * alone cannot carry it: see the ratios above.
+ *
+ * 0.8 is the strongest fade that keeps every pigment over the 3:1 floor for large text -
+ * 3.44:1 on the light ground, 3.86:1 on the dark one. 0.71 is the hard limit (3.01:1 and
+ * 3.28:1) and below it the numerals stop being readable. Do NOT lower this without
+ * running the numbers; it was 0.34, which put red at 1.67:1.
+ *
+ * One value for both themes, where there used to be two. At this depth the ground barely
+ * matters, and a single rule cannot drift apart from its twin.
+ */
 .card-button:disabled {
   cursor: not-allowed;
   transform: none;
   filter: none;
+  opacity: 0.8;
 }
 
 .card-button:hover:not(:disabled),
