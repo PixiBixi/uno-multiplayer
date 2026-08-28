@@ -23,7 +23,7 @@ import { nextCardTheme } from '../lib/card-themes.js'
 import { nextColourMode, readKonamiUnlocked, writeKonamiUnlocked } from '../lib/preferences.js'
 import { pigmentForSeat } from '../lib/palette.js'
 import { useColourMode, useSetColourMode } from '../components/ColourModeProvider.js'
-import { useMessages } from '../i18n/index.js'
+import { useLocale, useMessages } from '../i18n/index.js'
 
 type TableProps = {
   view: PlayerView
@@ -53,6 +53,7 @@ export function Table({
   voice,
 }: TableProps) {
   const t = useMessages()
+  const locale = useLocale()
   const cardTheme = useCardTheme()
   const setCardTheme = useSetCardTheme()
   const colourMode = useColourMode()
@@ -76,7 +77,10 @@ export function Table({
 
   useShoutUno({
     armed: canCallUno,
-    speaking: voice.speaking[view.you.seat] === true,
+    prewarm: view.you.hand.length <= 3,
+    enabled: voice.status === 'joined' && !voice.muted,
+    locale,
+    cloudAllowed: false,
     onCall: () => onPlay({ type: 'callUno' }),
   })
   /* A pass is offered only while this seat is holding a card it has just drawn and may
