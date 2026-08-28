@@ -110,6 +110,20 @@ apart only by which words they contain have to be read before they can be told
 apart. In ink rather than a fifth colour, for the reason the plates give: the four
 pigments mean the four suits.
 
+Two things the slab needs, and it shipped once without either:
+
+- `align-self: flex-start`. `.turn-block` is a flex column, so the headline is a flex
+  item and stretches to the column - `display: inline-block` does nothing about it.
+  Without this the slab is a cream banner the width of the centre.
+- A `line-height` of its own. Every heading here carries `0.92`, which is shorter than
+  the ink it holds, and the accent on a capital À was sliced off by the top edge.
+
+And `yourMove` has to stay **short**. It was written and judged at nine characters in
+English; the French "À toi de jouer" is fourteen and filled the column even once the
+flex bug was fixed. It is "Ton tour" / "Your move" now. Neither may contain
+"your turn" / "à toi" - that is `yourTurn`, on the same screen, and a second copy
+makes every selector for it ambiguous.
+
 The lit ring around the south bar (`.south-live`) says the same thing a second time,
 around the cards you are about to touch, because that is where the eyes are once a
 game gets going. It is drawn on a `::after` over the hand, so it carries
@@ -126,8 +140,15 @@ broke an `e2e` selector and a unit test the first time - both now scope to
 `.seat-name`. Any assertion on a player's name has to say which of the two it means.
 
 Both states are measured in a real browser in `e2e/layout.spec.ts`: that the slab is
-actually filled and the bare headline is not, that the queue is laid out under the
-headline it answers, and that a click on a card still reaches the card.
+actually filled and the bare headline is not, that it hugs its words rather than
+filling `.turn-block`, that its line height leaves room for an accented capital, that
+the queue is laid out under the headline it answers, and that a click on a card still
+reaches the card.
+
+The width assertion is worth reading before adding another. It first compared the slab
+with `.table-centre`, and passed on the banner: a stretched slab is only about half
+that box, because `.turn-block` sits beside the piles inside it. Measure against the
+box the element is actually a child of.
 
 ## Card themes
 
