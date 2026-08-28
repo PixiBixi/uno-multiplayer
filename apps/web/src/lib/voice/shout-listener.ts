@@ -112,6 +112,9 @@ export function createShoutListener(options: {
     if (options.mode === 'local') recognition.processLocally = true
 
     recognition.onresult = (event) => {
+      // A stopped listener has no microphone: a late event from an abandoned
+      // recogniser must not shout.
+      if (!wanted || refused) return
       /* From resultIndex only: the transcript grows across interim results, so
          reading all of it matches a word already acted on, over and over. */
       for (let index = event.resultIndex; index < event.results.length; index += 1) {

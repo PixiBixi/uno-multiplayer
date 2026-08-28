@@ -101,6 +101,17 @@ describe('shout listener', () => {
     expect(onShout).not.toHaveBeenCalled()
   })
 
+  it('stays quiet when a dropped recogniser reports late', () => {
+    const onShout = vi.fn()
+    const { factory, last } = fakeRecognition()
+    const listener = createShoutListener({ locale: 'fr', mode: 'local', onShout, factory })
+    listener?.start()
+    const dropped = last()
+    listener?.stop()
+    dropped.onresult?.(resultEvent(0, [['uno']]))
+    expect(onShout).not.toHaveBeenCalled()
+  })
+
   it('starts again after the recogniser ends on its own', () => {
     const { factory, made, last } = fakeRecognition()
     createShoutListener({ locale: 'fr', mode: 'local', onShout: vi.fn(), factory })?.start()
@@ -138,18 +149,22 @@ describe('shout listener', () => {
   it('gives up for good when the microphone is refused', () => {
     const onDenied = vi.fn()
     const { factory, made, last } = fakeRecognition()
-    createShoutListener({
+    const listener = createShoutListener({
       locale: 'fr',
       mode: 'local',
       onShout: vi.fn(),
       onDenied,
       factory,
-    })?.start()
+    })
+    listener?.start()
     last().onerror?.({ error: 'not-allowed' })
     last().onend?.()
     vi.advanceTimersByTime(10_000)
     expect(made).toHaveLength(1)
     expect(onDenied).toHaveBeenCalledTimes(1)
+    // A refusal is final: arming it again must not reach for the microphone.
+    listener?.start()
+    expect(made).toHaveLength(1)
   })
 
   it('aborts the recogniser it is holding on stop', () => {
@@ -177,7 +192,11 @@ describe('shout listener', () => {
     listener?.start()
     // onend clears the held recogniser, so only the pending timer is left to cancel.
     last().onend?.()
+    expect(vi.getTimerCount()).toBe(1)
     listener?.stop()
+    // Counting the timer is the point: a leaked one is invisible in `made`, since
+    // the restart it fires bails on `wanted` anyway.
+    expect(vi.getTimerCount()).toBe(0)
     vi.advanceTimersByTime(10_000)
     expect(made).toHaveLength(1)
   })
