@@ -116,9 +116,11 @@ to already be listening or it misses it.
 continuous recogniser stops itself: Chrome ends the session after a few seconds of
 silence, and a network blip ends it too. Neither surfaces as anything a player can
 see. Without the restart, the shout works for the first twenty seconds of a game and
-then dies silently, which is worse than never shipping it. Repeated immediate ends
-back off (300ms up to a 5s cap) so a bad run does not spin the CPU; a session that
-lasted more than five seconds resets the backoff.
+then dies silently, which is worse than never shipping it. A session that lasted
+`STABLE_MS` (5s) or more is a normal silence timeout, not a failure: it resets the
+backoff and restarts at once, with no gap where a shout can be lost. Only a session
+that ends straight away is treated as a real failure loop, and repeated immediate
+ends back off (300ms up to a 5s cap) so that loop does not spin the CPU.
 
 **Mute stops the recogniser.** `SpeechRecognition` opens its own capture rather than
 reusing the `MediaStream` that `useVoice` already holds, so `track.enabled = false`
