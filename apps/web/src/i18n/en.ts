@@ -289,6 +289,13 @@ export const en: Messages = {
     unavailableWith: (name) => `Voice unavailable with ${name}`,
     muteThem: (name) => `Mute ${name}`,
     unmuteThem: (name) => `Unmute ${name}`,
+    shoutListening: 'Shout "uno" to call it.',
+    shoutUnsupported: 'This browser cannot recognise the word. Use the UNO button.',
+    shoutOffline: 'Shouting "uno" needs an offline language pack.',
+    shoutInstall: 'Download it',
+    shoutInstalling: 'Downloading…',
+    shoutCloud:
+      'Call UNO by shouting it. This browser has no offline recognition, so your microphone goes to its maker while your hand is nearly done.',
   },
 
   over: {

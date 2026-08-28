@@ -2924,6 +2924,13 @@ input.switch:checked::before {
   color: var(--accent);
 }
 
+.voice-shout-cloud {
+  display: flex;
+  gap: 0.4rem;
+  align-items: start;
+  cursor: pointer;
+}
+
 /* ---------------------------------------------------------------------------
    The hidden face, on the moment it is found
    --------------------------------------------------------------------------- */

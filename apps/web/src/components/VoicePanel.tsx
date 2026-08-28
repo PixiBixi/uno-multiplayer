@@ -1,15 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
 import type { VoicePeer } from '@uno/protocol'
 import type { useVoice } from '../hooks/useVoice.js'
-import { useMessages } from '../i18n/index.js'
+import { useLocale, useMessages } from '../i18n/index.js'
+import { installShout, type ShoutAvailability } from '../lib/voice/shout-listener.js'
 import { pigmentForSeat } from '../lib/palette.js'
 
 type VoiceState = ReturnType<typeof useVoice>
+
+export type ShoutControls = {
+  availability: ShoutAvailability | 'probing'
+  cloudAllowed: boolean
+  onCloudAllowed: (allowed: boolean) => void
+  /** Re-probes after a language pack lands, which turns cloud into local. */
+  onInstalled: () => void
+}
 
 type VoicePanelProps = {
   voice: VoiceState
   seatNames: string[]
   selfSeat: number
+  shout: ShoutControls
 }
 
 function MicIcon({ off }: { off: boolean }) {
@@ -132,7 +142,52 @@ function PeerRow({
   )
 }
 
-export function VoicePanel({ voice, seatNames, selfSeat }: VoicePanelProps) {
+/** What the shout can do here, and what it needs from the player to do it. */
+function ShoutRow({ shout }: { shout: ShoutControls }) {
+  const t = useMessages()
+  const locale = useLocale()
+  const [installing, setInstalling] = useState(false)
+
+  if (shout.availability === 'probing') return null
+  if (shout.availability === 'local') return <p className="voice-note">{t.voice.shoutListening}</p>
+  if (shout.availability === 'unsupported')
+    return <p className="voice-note">{t.voice.shoutUnsupported}</p>
+
+  if (shout.availability === 'downloadable')
+    return (
+      <p className="voice-note">
+        {t.voice.shoutOffline}{' '}
+        <button
+          type="button"
+          className="btn-link"
+          disabled={installing}
+          onClick={() => {
+            // install() needs the gesture, so it is a button and never an effect.
+            setInstalling(true)
+            void installShout(locale).then(() => {
+              setInstalling(false)
+              shout.onInstalled()
+            })
+          }}
+        >
+          {installing ? t.voice.shoutInstalling : t.voice.shoutInstall}
+        </button>
+      </p>
+    )
+
+  return (
+    <label className="voice-note voice-shout-cloud">
+      <input
+        type="checkbox"
+        checked={shout.cloudAllowed}
+        onChange={(event) => shout.onCloudAllowed(event.target.checked)}
+      />
+      {t.voice.shoutCloud}
+    </label>
+  )
+}
+
+export function VoicePanel({ voice, seatNames, selfSeat, shout }: VoicePanelProps) {
   const t = useMessages()
   /* Muting someone is local and never broadcast: who I decline to listen to is
      nobody else's business. */
@@ -220,6 +275,8 @@ export function VoicePanel({ voice, seatNames, selfSeat }: VoicePanelProps) {
           ),
         )}
       </ul>
+
+      <ShoutRow shout={shout} />
     </section>
   )
 }
