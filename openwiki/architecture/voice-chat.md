@@ -88,12 +88,17 @@ accepting it would reopen the exact bug this design replaced.
 
 **Four availability states, one per browser reality:**
 
-| State          | Meaning                                        | What the player gets                                                                |
-| -------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `local`        | On-device recognition is installed             | On by default, no consent asked - nothing leaves the machine                        |
-| `downloadable` | The on-device model can be installed but isn't | A button in `VoicePanel.tsx` that calls `installShout`, from a user gesture         |
-| `cloud`        | Only the vendor's cloud engine is available    | Off until the player ticks the box, which names the browser vendor as the recipient |
-| `unsupported`  | No `SpeechRecognition` at all (Firefox today)  | Nothing; the UNO button remains, exactly as for a player with no microphone         |
+| State          | Meaning                                         | What the player gets                                                                |
+| -------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `local`        | On-device recognition is installed              | On by default, no consent asked - nothing leaves the machine                        |
+| `downloadable` | The on-device model can be installed but isn't  | A button in `VoicePanel.tsx` that calls `installShout`, from a user gesture         |
+| `cloud`        | Only the vendor's cloud engine is available     | Off until the player ticks the box, which names the browser vendor as the recipient |
+| `unsupported`  | No `SpeechRecognition`, or a refused microphone | Nothing; the UNO button remains, exactly as for a player with no microphone         |
+
+A refused microphone lands on `unsupported` too. `createShoutListener` stops for good
+on `not-allowed` and calls `onDenied`, which `useShoutUno` turns into `unsupported`:
+same outcome for the player, same fallback, and the panel stops claiming to listen. The
+refusal outlives a re-probe, which would otherwise still report the browser capable.
 
 On-device is preferred wherever it exists: the rest of voice chat keeps audio inside
 the mesh, and a cloud engine sends the microphone to the browser vendor, which is the
@@ -120,6 +125,12 @@ reusing the `MediaStream` that `useVoice` already holds, so `track.enabled = fal
 does not touch it - a muted player would otherwise still be transcribed. `useShoutUno`
 only runs the listener while voice is joined **and** not muted, so pressing mute keeps
 its old meaning: stop listening to me.
+
+**The end of a round stops it too.** `Table` stays mounted under the `GameOver` overlay
+and the winner holds no cards, so the hand-length window alone would leave the
+recogniser running through the whole post-game chat. The prewarm therefore also checks
+`view.phase === 'playing'`. In cloud mode that gap is microphone audio going to the
+browser vendor outside anything the consent covers.
 
 **`armed` still comes from `legalMoves`, unchanged.** The client learns no rule it was
 not already sent - the server said the call was legal, and refuses it otherwise, so a
