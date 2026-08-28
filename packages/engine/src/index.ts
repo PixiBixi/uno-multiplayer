@@ -1,7 +1,7 @@
 export { buildDeck, takeFromTop } from './deck.js'
 export { MAX_PLAYERS, MIN_PLAYERS, initGame, type InitError } from './init.js'
 export { UNO_PENALTY, applyMove, penaliseForgottenUno, skipDisconnectedTurn } from './reducer.js'
-export { activeCount, advance, isPlayable, legalMoves } from './rules.js'
+export { activeCount, advance, isPlayable, legalMoves, turnOrder } from './rules.js'
 export { applyRound, cardPoints, matchWinners, roundPoints, startMatch } from './match.js'
 export { markSeatLeft, setSeatStatus } from './seats.js'
 export { nextInt, nextRandom, shuffle } from './rng.js'

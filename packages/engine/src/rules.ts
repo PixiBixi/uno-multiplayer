@@ -49,6 +49,28 @@ export function advance(state: GameState, from: number, steps: number): number {
 }
 
 /**
+ * Who plays after the seat on turn, and after them, in the direction of play.
+ * Active seats only, the current seat excluded, so the length is 0 to 3.
+ *
+ * It is the order "if the seat on turn lays a plain card": a skip, a reverse, a +2
+ * or a 7/0 rewrites it the moment it is played. Anything rendering this must say
+ * "up next" and never promise a next player.
+ */
+export function turnOrder(state: GameState): number[] {
+  const size = state.seats.length
+  const order: number[] = []
+  /* One lap of the ring rather than `activeCount` steps of `advance`: a disconnected
+     seat can be on turn for a moment - see `skipDisconnectedTurn` - and it is not in
+     that count, which dropped the last player off the list. */
+  for (let step = 1; step <= size; step++) {
+    const index = (((state.currentSeat + step * state.direction) % size) + size) % size
+    if (index === state.currentSeat) continue
+    if (state.seats[index]?.status === 'active') order.push(index)
+  }
+  return order
+}
+
+/**
  * One call-out per seat currently open to one, or nothing at all on a table that
  * did not opt into `liar`.
  *

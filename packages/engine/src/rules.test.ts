@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { activeCount, advance, isPlayable, legalMoves } from './rules.js'
+import { activeCount, advance, isPlayable, legalMoves, turnOrder } from './rules.js'
 import { act, cid, num, seatOf, stateOf, wild } from './test-helpers.js'
 
 describe('isPlayable without a debt', () => {
@@ -193,5 +193,69 @@ describe('activeCount and advance', () => {
   it('returns to the same seat on a two-step advance with two players', () => {
     const state = stateOf({ seats: [seatOf(0, []), seatOf(1, [])] })
     expect(advance(state, 0, 2)).toBe(0)
+  })
+})
+
+describe('turnOrder', () => {
+  it('lists the seats after the current one, clockwise', () => {
+    const state = stateOf({
+      seats: [seatOf(0, []), seatOf(1, []), seatOf(2, []), seatOf(3, [])],
+      currentSeat: 1,
+    })
+    expect(turnOrder(state)).toEqual([2, 3, 0])
+  })
+
+  it('follows the direction rather than the seat order', () => {
+    const state = stateOf({
+      seats: [seatOf(0, []), seatOf(1, []), seatOf(2, []), seatOf(3, [])],
+      currentSeat: 1,
+      direction: -1,
+    })
+    expect(turnOrder(state)).toEqual([0, 3, 2])
+  })
+
+  it('omits seats that are not active', () => {
+    const state = stateOf({
+      seats: [
+        seatOf(0, []),
+        seatOf(1, [], { status: 'disconnected' }),
+        seatOf(2, []),
+        seatOf(3, [], { status: 'left' }),
+      ],
+      currentSeat: 0,
+    })
+    expect(turnOrder(state)).toEqual([2])
+  })
+
+  it('names the single opponent at a two-player table', () => {
+    const state = stateOf({ seats: [seatOf(0, []), seatOf(1, [])], currentSeat: 0 })
+    expect(turnOrder(state)).toEqual([1])
+  })
+
+  it('is empty when the current seat is the only active one', () => {
+    const state = stateOf({
+      seats: [seatOf(0, []), seatOf(1, [], { status: 'left' })],
+      currentSeat: 0,
+    })
+    expect(turnOrder(state)).toEqual([])
+  })
+
+  it('lists every other active seat when the current seat is itself inactive', () => {
+    /* `skipDisconnectedTurn` exists, so a seat that dropped can be on turn for a
+       moment. Counting active seats to size the walk lost a player here. */
+    const state = stateOf({
+      seats: [seatOf(0, [], { status: 'disconnected' }), seatOf(1, []), seatOf(2, [])],
+      currentSeat: 0,
+    })
+    expect(turnOrder(state)).toEqual([1, 2])
+  })
+
+  it('never repeats a seat', () => {
+    const state = stateOf({
+      seats: [seatOf(0, []), seatOf(1, []), seatOf(2, [])],
+      currentSeat: 2,
+    })
+    const order = turnOrder(state)
+    expect(new Set(order).size).toBe(order.length)
   })
 })
