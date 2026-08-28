@@ -6,6 +6,11 @@ import {
   type ShoutAvailability,
 } from '../lib/voice/shout-listener.js'
 
+/* Chrome answers 'downloading' while the pack lands, and install() resolves before
+   it is usable. Without this retry the panel offers a download that does nothing
+   and never reaches 'local' short of a page reload. Do not remove it. */
+const DOWNLOAD_POLL_MS = 2000
+
 /**
  * Calls UNO by shouting it, which is how the game is played away from a screen.
  *
@@ -16,11 +21,6 @@ import {
  * milliseconds to start and the shout arrives exactly as the window opens, so it has
  * to already be listening. Do not narrow it to `armed`.
  */
-/* Chrome answers 'downloading' while the pack lands, and install() resolves before
-   it is usable. Without this retry the panel offers a download that does nothing
-   and never reaches 'local' short of a page reload. Do not remove it. */
-const DOWNLOAD_POLL_MS = 2000
-
 export function useShoutUno(options: {
   armed: boolean
   /** Short enough a hand that the call is about to matter. */
