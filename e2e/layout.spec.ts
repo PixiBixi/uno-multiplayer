@@ -15,6 +15,23 @@ const PHONE = { width: 430, height: 940 }
 /** An iPhone 13, the viewport the hand-below-the-fold defect was measured on. */
 const SMALL_PHONE = { width: 390, height: 844 }
 
+/**
+ * The widest single line of an inline box.
+ *
+ * `getBoundingClientRect` unions every line box, so a wrapped inline reports the width of
+ * its container and a "does it hug its words" assertion passes on the very layout it is
+ * there to catch. `getClientRects` gives one rect per line.
+ */
+async function widestLine(page: Page, selector: string): Promise<number> {
+  return page.evaluate((query) => {
+    const node = document.querySelector(query)
+    if (node === null) throw new Error(`nothing matched ${query}`)
+    const rects = [...node.getClientRects()]
+    if (rects.length === 0) throw new Error(`${query} is not laid out`)
+    return Math.max(...rects.map((rect) => rect.width))
+  }, selector)
+}
+
 type Box = { top: number; bottom: number; left: number; right: number; width: number }
 
 async function boxOf(page: Page, selector: string): Promise<Box> {
@@ -271,12 +288,14 @@ test('the seat on turn and the seat waiting are laid out as two different things
   const onTurn = (await page.locator('.turn-headline-mine').count()) > 0 ? page : guest
   const waiting = onTurn === page ? guest : page
 
-  const slab = await boxOf(onTurn, '.turn-headline-mine')
+  const slab = await boxOf(onTurn, '.turn-headline-mine .turn-headline-ink')
   const bare = await boxOf(waiting, '.turn-headline')
 
   // The slab is painted, which is the whole point: a bare headline has no background.
   const slabInk = await onTurn.evaluate(
-    () => getComputedStyle(document.querySelector('.turn-headline-mine')!).backgroundColor,
+    () =>
+      getComputedStyle(document.querySelector('.turn-headline-mine .turn-headline-ink')!)
+        .backgroundColor,
   )
   const bareInk = await waiting.evaluate(
     () => getComputedStyle(document.querySelector('.turn-headline')!).backgroundColor,
@@ -298,16 +317,16 @@ test('the seat on turn and the seat waiting are laid out as two different things
   /* And it hugs the words rather than filling the block it sits in. Measured against
      `.turn-block` and not against the centre column: a stretched slab is still only
      about half the centre, so comparing with the wider box passes on the very layout
-     that shipped. `.turn-block` is a flex column, the headline was a stretched flex
-     item, and `inline-block` did nothing about it. It read as a banner. */
+     that shipped. Per line, because the slab is an inline box now. */
   const block = await boxOf(onTurn, '.turn-block')
-  expect(slab.width, 'the slab hugs its words').toBeLessThan(block.width - 8)
+  const slabLine = await widestLine(onTurn, '.turn-headline-mine .turn-headline-ink')
+  expect(slabLine, 'the slab hugs its words').toBeLessThan(block.width - 8)
 
   /* Its box is tall enough for the ink it holds. Every heading here carries
      `line-height: 0.92`, which sliced the accent off a capital À at the top edge - a
      crop no bounding box reports, so the line height is what gets asserted. */
   const slabType = await onTurn.evaluate(() => {
-    const node = document.querySelector('.turn-headline-mine')
+    const node = document.querySelector('.turn-headline-mine .turn-headline-ink')
     if (node === null) throw new Error('no slab')
     const style = getComputedStyle(node)
     return { size: parseFloat(style.fontSize), leading: parseFloat(style.lineHeight) }
@@ -436,4 +455,40 @@ test('an unplayable card keeps its pigment and says so by lying flat', async ({
     dead.some((card) => card.filtered),
     'an unplayable card casts none',
   ).toBe(false)
+})
+
+/**
+ * The same slab, measured on the longest string either catalogue holds.
+ *
+ * "Your move" is nine characters and "À toi de jouer" is fourteen, and the French one is
+ * what was blamed when the slab ran the whole column - the cause was a missing
+ * `align-self`, but the belt-and-braces fix was to shorten the phrase. The phrase came
+ * back, so the geometry that lets it come back is asserted rather than assumed.
+ */
+test('the turn slab hugs its words in French too, on the longer phrase', async ({ browser }) => {
+  const context = await browser.newContext({ locale: 'fr-FR', viewport: DESKTOP })
+  const page = await context.newPage()
+  await page.goto('/')
+  await page.getByLabel('Ton prénom').fill('Ana')
+  await page.getByRole('button', { name: 'Créer une partie' }).click()
+  const code = ((await page.locator('.code-display').textContent()) ?? '').trim()
+
+  const guest = await (await browser.newContext({ locale: 'fr-FR', viewport: DESKTOP })).newPage()
+  await guest.goto('/')
+  await guest.getByLabel('Ton prénom').fill('Ben')
+  await guest.getByLabel('Code de la partie').fill(code)
+  await guest.getByRole('button', { name: 'Rejoindre' }).click()
+  await expect(page.locator('.roster').getByText('Ben')).toBeVisible()
+  await page.getByRole('button', { name: /Lancer/ }).click()
+  for (const each of [page, guest]) await expect(each.locator('.hand-card')).toHaveCount(7)
+
+  const onTurn = (await page.locator('.turn-headline-mine').count()) > 0 ? page : guest
+  await settle(onTurn)
+
+  await expect(onTurn.locator('.turn-headline-mine .turn-headline-ink')).toHaveText(
+    'À toi de jouer',
+  )
+  const block = await boxOf(onTurn, '.turn-block')
+  const slabLine = await widestLine(onTurn, '.turn-headline-mine .turn-headline-ink')
+  expect(slabLine, 'the French slab hugs its words').toBeLessThan(block.width - 8)
 })

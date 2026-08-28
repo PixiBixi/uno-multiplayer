@@ -1342,20 +1342,33 @@ input.switch:checked::before {
    mean the four suits, so whose turn it is has to be said in the one colour that means
    nothing else. `inline-block` so the slab hugs the words instead of running the width of
    the column, and `box-decoration-break` so a wrapped headline stays one slab. */
+/*
+ * The slab lives on the inline box inside the heading, not on the heading.
+ *
+ * Two earlier attempts are worth knowing about. On the heading with `display: block` it
+ * ran the full width of the centre column, because a flex item stretches. Pinned with
+ * `align-self: flex-start` it hugged - until the phrase wrapped, and "À toi de jouer" is
+ * four pixels too wide for the block at a desktop width, so it wrapped immediately and
+ * the slab became a rectangle the width of the block with two lines inside it.
+ *
+ * An inline box with `box-decoration-break: clone` paints one slab per line, each hugging
+ * its own words. It is what makes the phrase's length a question of taste rather than of
+ * layout.
+ */
 .turn-headline-mine {
-  display: inline-block;
-  /* `inline-block` is not enough: `.turn-block` is a flex column, so a stretched flex
-     item ran the slab the whole width of the centre and it read as a banner rather than
-     as a phrase. This is the line that makes it hug the words. */
-  align-self: flex-start;
-  padding: 0.12em 0.36em;
+  /* Room for two stacked slabs. Every heading here carries 0.92, which overlapped them
+     and also cropped the accent off a capital À. */
+  line-height: 1.34;
+}
+
+.turn-headline-mine .turn-headline-ink {
+  /* Inline, not inline-block: an inline-block is one box and cannot break per line. */
+  display: inline;
+  padding: 0.1em 0.3em;
   background: var(--text);
   color: var(--ground);
+  -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
-  /* Its own, overriding the 0.92 every heading here carries. At 0.92 the box is
-     shorter than the ink it holds and an accented capital had its accent sliced off
-     by the top edge. */
-  line-height: 1.06;
 }
 
 /* Whose turn it is, in their own colour, at the size a 3rem line allows. Same mark as the

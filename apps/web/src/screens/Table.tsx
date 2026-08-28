@@ -317,7 +317,11 @@ export function Table({
                       aria-hidden="true"
                     />
                   )}
-                  {headline}
+                  {/* The words in their own inline box, which is what carries the slab.
+                      On the heading itself the slab was a rectangle the width of the
+                      block as soon as the phrase wrapped - an inline box paints one
+                      slab per line instead, each hugging its own words. */}
+                  <span className="turn-headline-ink">{headline}</span>
                 </h2>
                 <TurnOrder seats={view.turnOrder} nameOf={nameOf} />
                 {secondsLeft !== null && (

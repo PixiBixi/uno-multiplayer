@@ -248,12 +248,14 @@ export type Messages = {
      * name. `yourTurn` and `theirTurn` stay: they are the short marks on a plate, and a
      * plate is read while scanning, not while deciding what to do next.
      *
-     * `yourMove` is set in a filled slab, so it has to stay SHORT - three words filled
-     * the whole column and read as a banner rather than as a phrase. It was written and
-     * judged in English at nine characters; the French "À toi de jouer" is fourteen and
-     * that is how the wall got shipped. Neither may contain "your turn" / "à toi": those
-     * are `yourTurn`, already on the same screen, and a second copy makes every selector
-     * for it ambiguous.
+     * `yourMove` is set in a filled slab, and the slab hugs its words - so length is a
+     * matter of taste here, not of layout. It once looked like the opposite: the slab
+     * ran the whole column and the long French phrase was blamed for it, when the cause
+     * was a missing `align-self` against a flex column. See `.turn-headline-mine`.
+     *
+     * The one hard rule is that neither may contain "your turn" / "à toi". Those are
+     * `yourTurn`, already on the same screen, and a second copy makes every selector for
+     * it ambiguous.
      */
     yourMove: string
     waitingOn: (name: string) => string

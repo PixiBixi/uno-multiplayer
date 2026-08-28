@@ -234,7 +234,7 @@ export const fr: Messages = {
   table: {
     opponents: 'Adversaires',
     discardPile: 'Talon',
-    yourMove: 'Ton tour',
+    yourMove: 'À toi de jouer',
     waitingOn: (name) => `Au tour de ${name}`,
     yourTurn: 'à toi',
     theirTurn: 'à eux',
