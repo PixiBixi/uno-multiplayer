@@ -152,19 +152,25 @@ apart only by which words they contain have to be read before they can be told
 apart. In ink rather than a fifth colour, for the reason the plates give: the four
 pigments mean the four suits.
 
-Two things the slab needs, and it shipped once without either:
+**The slab is on an inline box inside the heading, not on the heading.** Two earlier
+attempts are the reason:
 
-- `align-self: flex-start`. `.turn-block` is a flex column, so the headline is a flex
-  item and stretches to the column - `display: inline-block` does nothing about it.
-  Without this the slab is a cream banner the width of the centre.
-- A `line-height` of its own. Every heading here carries `0.92`, which is shorter than
-  the ink it holds, and the accent on a capital À was sliced off by the top edge.
+- On the heading as a block it ran the full width of the centre column, because a flex
+  item stretches and `display: inline-block` does nothing about that.
+- Pinned with `align-self: flex-start` it hugged - until the phrase wrapped. "À toi de
+  jouer" is four pixels too wide for `.turn-block` at a desktop width, so it wrapped
+  immediately and the slab became a rectangle the width of the block with two lines
+  inside it.
 
-And `yourMove` has to stay **short**. It was written and judged at nine characters in
-English; the French "À toi de jouer" is fourteen and filled the column even once the
-flex bug was fixed. It is "Ton tour" / "Your move" now. Neither may contain
-"your turn" / "à toi" - that is `yourTurn`, on the same screen, and a second copy
-makes every selector for it ambiguous.
+An inline box with `box-decoration-break: clone` paints **one slab per line**, each
+hugging its own words, so the French phrase reads as two stacked bars rather than as a
+banner. `.turn-headline-mine` carries a `line-height` of 1.34 to stack them without
+overlap - the 0.92 every heading here inherits both overlapped them and cropped the
+accent off a capital À.
+
+That is what makes `yourMove`'s length a question of taste rather than of layout. The one
+hard rule on it is that it may not contain "your turn" / "à toi" - that is `yourTurn`, on
+the same screen, and a second copy makes every selector for it ambiguous.
 
 The lit ring around the south bar (`.south-live`) says the same thing a second time,
 around the cards you are about to touch, because that is where the eyes are once a
@@ -187,10 +193,19 @@ filling `.turn-block`, that its line height leaves room for an accented capital,
 the queue is laid out under the headline it answers, and that a click on a card still
 reaches the card.
 
-The width assertion is worth reading before adding another. It first compared the slab
-with `.table-centre`, and passed on the banner: a stretched slab is only about half
-that box, because `.turn-block` sits beside the piles inside it. Measure against the
-box the element is actually a child of.
+The width assertions are worth reading before adding another, because both of them first
+passed on the layout they exist to catch:
+
+- Comparing the slab with `.table-centre` passed on the banner. A stretched slab is only
+  about half that box, because `.turn-block` sits beside the piles inside it. Measure
+  against the box the element is a child of.
+- `getBoundingClientRect` unions every line box, so a wrapped inline reports its
+  container's width. `widestLine` in that spec reads `getClientRects` and takes the widest
+  line instead.
+
+And the French phrase gets its own test. It is the longest string either catalogue holds
+and the one that wrapped, so the geometry that lets it be used is asserted rather than
+assumed.
 
 ## Card themes
 
