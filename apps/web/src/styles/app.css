@@ -367,6 +367,23 @@ input::placeholder {
 
 /* ---------- Cards ---------- */
 
+/*
+ * Playable is lifted off the row and casts a shadow; unplayable lies flat. Elevation,
+ * because the state a card is in must not be told in the one channel the card itself
+ * needs.
+ *
+ * This was `opacity: 0.34` on the whole button, and a fade cannot be made legible: the
+ * pigment and the numeral wash out together, so the cream numeral on a red card measured
+ * 1.67:1 against its own pigment where a playable one measures 4.42:1. Every pigment sat
+ * between 1.53 and 1.85. Raising the opacity does not fix it either - 0.71 is what the
+ * worst pigment needs to reach 3:1, and 4.5:1 is unreachable at any opacity below 1. See
+ * `lib/contrast.ts`, which is where those numbers come from.
+ *
+ * A card therefore keeps its full pigment in every state. The pigment IS the card.
+ *
+ * The rest lift also falls out correctly when it is nobody's turn but yours to wait:
+ * every card is unplayable, so the whole row lies flat and nothing is faded.
+ */
 .card-button {
   appearance: none;
   background: none;
@@ -376,40 +393,23 @@ input::placeholder {
   width: 100%;
   border-radius: var(--r-card);
   cursor: pointer;
+  transform: translateY(-10px);
+  filter: drop-shadow(6px 6px 0 color-mix(in srgb, var(--text) 22%, transparent));
   transition:
     transform 180ms ease,
     filter 180ms ease;
 }
 
-.card-button:hover:not(:disabled),
-.card-button:focus-visible:not(:disabled) {
-  transform: translateY(-8px);
-  filter: drop-shadow(8px 8px 0 color-mix(in srgb, var(--text) 14%, transparent));
-}
-
-/* Faded, not desaturated. Greying a card destroys the pigment, which is the one thing
-   that says which card it is - a player scanning an unplayable hand still has to be able
-   to read it. */
 .card-button:disabled {
   cursor: not-allowed;
-  opacity: 0.34;
+  transform: none;
+  filter: none;
 }
 
-/* Fading toward near-black turns a pigment muddy rather than faint, and four muddy cards
-   are harder to tell apart than four pale ones. Measured against the ground it actually
-   sits on, like the accent and the card inks. */
-@media (prefers-color-scheme: dark) {
-  .card-button:disabled {
-    opacity: 0.52;
-  }
-}
-
-:root[data-theme='dark'] .card-button:disabled {
-  opacity: 0.52;
-}
-
-:root[data-theme='light'] .card-button:disabled {
-  opacity: 0.34;
+.card-button:hover:not(:disabled),
+.card-button:focus-visible:not(:disabled) {
+  transform: translateY(-18px);
+  filter: drop-shadow(10px 10px 0 color-mix(in srgb, var(--text) 26%, transparent));
 }
 
 /* ---------- Home ---------- */
@@ -1670,7 +1670,9 @@ input.switch:checked::before {
   justify-content: flex-start;
   flex-wrap: wrap;
   gap: 0.75rem;
-  padding-top: 0.25rem;
+  /* Headroom for the lift. A playable card sits 10px up and rises to 18px under the
+     cursor; without this the row clipped its own top edge. */
+  padding-top: 1.4rem;
 }
 
 .hand-card {
@@ -2456,8 +2458,13 @@ input.switch:checked::before {
     animation-duration: 0.01ms !important;
   }
 
+  /* Back to the resting lift, not to nothing: the lift is what says the card is
+     playable, and only the extra travel under the cursor is motion. */
   .card-button:hover:not(:disabled),
-  .card-button:focus-visible:not(:disabled),
+  .card-button:focus-visible:not(:disabled) {
+    transform: translateY(-10px);
+  }
+
   .swatch:hover {
     transform: none;
   }

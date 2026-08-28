@@ -353,3 +353,79 @@ test('the seat on turn and the seat waiting are laid out as two different things
   }))
   expect(sideways.scrollWidth).toBeLessThanOrEqual(sideways.innerWidth + 1)
 })
+
+/**
+ * A card says which card it is with its pigment, so nothing about its state may spend
+ * that pigment.
+ *
+ * `opacity: 0.34` on the whole button was the previous answer, and it put the cream
+ * numeral on a red card at 1.67:1 against its own pigment where a playable one measures
+ * 4.42:1 - every pigment landed between 1.53 and 1.85, under the 3:1 floor for large
+ * text. No opacity below 1 reaches 4.5:1, which is why the state is told by elevation
+ * instead. `lib/contrast.test.ts` guards the pigments; this guards the state.
+ */
+test('an unplayable card keeps its pigment and says so by lying flat', async ({
+  page,
+  browser,
+}) => {
+  await page.setViewportSize(DESKTOP)
+  const guest = await openLobby(page, browser)
+  await page.getByRole('button', { name: 'Start game' }).click()
+  for (const each of [page, guest]) await expect(each.locator('.hand-card')).toHaveCount(7)
+
+  /* Driven to a hand holding both, which is the only state elevation has to
+     communicate. The deal is not seeded from the UI, so it is reached rather than
+     assumed - drawing until a card is playable guarantees the live half. */
+  const handOf = (each: Page) => ({
+    live: each.locator('.hand-card button:not([disabled])'),
+    dead: each.locator('.hand-card button[disabled]'),
+  })
+  let mixed: Page | null = null
+  for (let move = 0; move < 20 && mixed === null; move++) {
+    const onTurn = (await page.locator('.turn-headline-mine').count()) > 0 ? page : guest
+    const { live, dead } = handOf(onTurn)
+    const [liveCount, deadCount] = [await live.count(), await dead.count()]
+    if (liveCount > 0 && deadCount > 0) mixed = onTurn
+    else if (liveCount > 0) await live.first().click()
+    else
+      await onTurn
+        .getByRole('button', { name: /Draw card|End turn/ })
+        .first()
+        .click()
+  }
+  if (mixed === null) throw new Error('never reached a hand with a playable and an unplayable card')
+  await settle(mixed)
+
+  const cards = await mixed.evaluate(() =>
+    [...document.querySelectorAll('.hand-card button')].map((node) => {
+      const style = getComputedStyle(node)
+      return {
+        live: !(node as HTMLButtonElement).disabled,
+        top: node.getBoundingClientRect().top,
+        opacity: Number(style.opacity),
+        filtered: style.filter !== 'none',
+      }
+    }),
+  )
+
+  // Nothing is faded, in either state. This is the assertion that was worth the test.
+  for (const card of cards) expect(card.opacity, 'a card is never faded').toBe(1)
+
+  const live = cards.filter((card) => card.live)
+  const dead = cards.filter((card) => !card.live)
+  expect(live.length).toBeGreaterThan(0)
+  expect(dead.length).toBeGreaterThan(0)
+
+  // Playable sits above the row and casts a shadow; unplayable does neither.
+  const lowestLive = Math.max(...live.map((card) => card.top))
+  const highestDead = Math.min(...dead.map((card) => card.top))
+  expect(lowestLive, 'a playable card sits above an unplayable one').toBeLessThan(highestDead - 4)
+  expect(
+    live.every((card) => card.filtered),
+    'a playable card casts a shadow',
+  ).toBe(true)
+  expect(
+    dead.some((card) => card.filtered),
+    'an unplayable card casts none',
+  ).toBe(false)
+})
