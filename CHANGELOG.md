@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.11.2](https://github.com/PixiBixi/uno-multiplayer/compare/8925163fdf894c5422d126332652890484d30d57..v1.11.2) - 2026-08-28
+#### Bug Fixes
+- (**web**) restart the shout listener at once after a normal timeout - ([8925163](https://github.com/PixiBixi/uno-multiplayer/commit/8925163fdf894c5422d126332652890484d30d57)) - Jeremy Delgado
+#### Documentation
+- (**wiki**) a healthy shout session restarts immediately now - ([553fc11](https://github.com/PixiBixi/uno-multiplayer/commit/553fc11b93014843e0056b8dd12f88dd84c0d2e9)) - Jeremy Delgado
+
+- - -
+
 ## [v1.11.1](https://github.com/PixiBixi/uno-multiplayer/compare/c84e0d7be5b50f616c47200fa427893431d9d25a..v1.11.1) - 2026-08-28
 #### Bug Fixes
 - (**web**) probe for speech only once voice is joined - ([c84e0d7](https://github.com/PixiBixi/uno-multiplayer/commit/c84e0d7be5b50f616c47200fa427893431d9d25a)) - Jeremy Delgado
