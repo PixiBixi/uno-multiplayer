@@ -84,10 +84,14 @@ describe('useShoutUno', () => {
   })
 
   it('stops listening when voice is left or the microphone is muted', async () => {
-    const { listener, view, props } = setup({ prewarm: true, enabled: true })
+    const { create, listener, view, props } = setup({ prewarm: true, enabled: true })
     await waitFor(() => expect(listener.start).toHaveBeenCalled())
+    const opened = create.mock.calls.length
     view.rerender({ ...props, enabled: false })
     await waitFor(() => expect(listener.destroy).toHaveBeenCalled())
+    /* destroy alone proves nothing: any change to a dependency runs the cleanup.
+       What the guard buys is that nothing is opened again afterwards. */
+    expect(create).toHaveBeenCalledTimes(opened)
   })
 
   it('never opens a cloud recogniser without consent', async () => {
