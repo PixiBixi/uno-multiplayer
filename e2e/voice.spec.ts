@@ -1,8 +1,17 @@
 import { expect, test, type Browser, type Page } from '@playwright/test'
 
+/* Playwright's bundled Chromium crashes its renderer inside
+   SpeechRecognition.available({ processLocally: true }); real Chrome does not. Removing
+   the API here keeps this spec on voice chat instead of the test browser's speech stack. */
+const HIDE_SPEECH_API = `
+  delete window.SpeechRecognition
+  delete window.webkitSpeechRecognition
+`
+
 /** One player is one browser context: its own localStorage, its own socket. */
 async function openPlayer(browser: Browser): Promise<Page> {
   const context = await browser.newContext({ permissions: ['microphone'] })
+  await context.addInitScript(HIDE_SPEECH_API)
   return context.newPage()
 }
 
