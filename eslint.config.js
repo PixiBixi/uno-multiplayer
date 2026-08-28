@@ -35,6 +35,9 @@ export default tseslint.config(
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-non-null-assertion': 'off',
+      // Asserting on a mocked method means passing it unbound to expect(). The
+      // rule guards against a lost `this`, which a vi.fn() spy does not have.
+      '@typescript-eslint/unbound-method': 'off',
     },
   },
   {
