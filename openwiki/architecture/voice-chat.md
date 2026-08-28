@@ -70,22 +70,72 @@ that is indistinguishable from a player who is simply not talking.
 
 ## Shouting UNO calls it
 
-The local speaking level the detector already computes also arms a game intent:
-`useShoutUno` emits `callUno` when this seat makes a sound while the call is available.
-That is how the game is played away from a screen, and it needed no new audio code and
-nothing new on the wire.
+Saying the word "uno" calls it. `apps/web/src/lib/voice/shout-listener.ts` runs a
+`SpeechRecognition` instance on the local microphone; `apps/web/src/lib/voice/hears-uno.ts`
+is a pure function that decides whether a transcript counts. The listener does not
+know what `armed` means, it only reports that the microphone heard the word, and
+`useShoutUno` decides whether that fires `callUno`. That split is what lets the
+recogniser's lifecycle be tested without a game view, and the matching rules be
+tested as a plain table of strings.
 
-Three things keep it honest:
+**The matcher excludes the one word that would rebuild the bug.** `hearsUno`
+normalises a transcript (lowercase, accents stripped, punctuation collapsed to
+spaces) and checks it against a per-locale list of what recognisers actually return
+for a shouted "uno" - `una`, `oono`, `u no` in English; `ouno`, `ou no`, `juno` and
+more in French. "you know" is deliberately absent from the English list: it is the
+closest homophone and also one of the most common fillers in English speech, so
+accepting it would reopen the exact bug this design replaced.
 
-- **`armed` comes from `legalMoves`.** The client learns no rule it was not already
-  sent - the server said the call was legal, and refuses it otherwise, so a sound at
-  the wrong moment costs nothing. See
-  [Server authority](server-authority.md).
-- **It fires once per window, not per rising edge.** A window that opens while its
-  owner is already mid-sentence still catches the shout, and a stuttering level does
-  not emit the same call five times. Leaving the window re-arms it.
-- **A muted microphone produces silence**, so a muted player still uses the button.
-  The button is never removed.
+**Four availability states, one per browser reality:**
+
+| State          | Meaning                                         | What the player gets                                                                |
+| -------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `local`        | On-device recognition is installed              | On by default, no consent asked - nothing leaves the machine                        |
+| `downloadable` | The on-device model can be installed but isn't  | A button in `VoicePanel.tsx` that calls `installShout`, from a user gesture         |
+| `cloud`        | Only the vendor's cloud engine is available     | Off until the player ticks the box, which names the browser vendor as the recipient |
+| `unsupported`  | No `SpeechRecognition`, or a refused microphone | Nothing; the UNO button remains, exactly as for a player with no microphone         |
+
+A refused microphone lands on `unsupported` too. `createShoutListener` stops for good
+on `not-allowed` and calls `onDenied`, which `useShoutUno` turns into `unsupported`:
+same outcome for the player, same fallback, and the panel stops claiming to listen. The
+refusal outlives a re-probe, which would otherwise still report the browser capable.
+
+On-device is preferred wherever it exists: the rest of voice chat keeps audio inside
+the mesh, and a cloud engine sends the microphone to the browser vendor, which is the
+one thing nothing else in this feature does. That is why cloud only turns on when the
+player explicitly opts in, never by default.
+
+**The recogniser warms up at three cards, wider than the armed window.** `armed`
+comes from `legalMoves` and opens at two cards, or at one while vulnerable; the
+recogniser itself starts at `SHOUT_PREWARM_CARDS` (three) in `Table.tsx`. Starting it
+exactly on `armed` would be tighter, but in cloud mode `start()` costs a few hundred
+milliseconds and the shout arrives right as the window opens, so the recogniser has
+to already be listening or it misses it.
+
+**The restart on `onend` is the feature, not an edge case - do not remove it.** A
+continuous recogniser stops itself: Chrome ends the session after a few seconds of
+silence, and a network blip ends it too. Neither surfaces as anything a player can
+see. Without the restart, the shout works for the first twenty seconds of a game and
+then dies silently, which is worse than never shipping it. Repeated immediate ends
+back off (300ms up to a 5s cap) so a bad run does not spin the CPU; a session that
+lasted more than five seconds resets the backoff.
+
+**Mute stops the recogniser.** `SpeechRecognition` opens its own capture rather than
+reusing the `MediaStream` that `useVoice` already holds, so `track.enabled = false`
+does not touch it - a muted player would otherwise still be transcribed. `useShoutUno`
+only runs the listener while voice is joined **and** not muted, so pressing mute keeps
+its old meaning: stop listening to me.
+
+**The end of a round stops it too.** `Table` stays mounted under the `GameOver` overlay
+and the winner holds no cards, so the hand-length window alone would leave the
+recogniser running through the whole post-game chat. The prewarm therefore also checks
+`view.phase === 'playing'`. In cloud mode that gap is microphone audio going to the
+browser vendor outside anything the consent covers.
+
+**`armed` still comes from `legalMoves`, unchanged.** The client learns no rule it was
+not already sent - the server said the call was legal, and refuses it otherwise, so a
+shout at the wrong moment costs nothing. See
+[Server authority](server-authority.md).
 
 ## TURN credentials
 
@@ -107,13 +157,15 @@ Configuration, the optional `coturn` service and the open-relay trap are in
 
 ## The client
 
-| File                                          | Responsibility                               |
-| --------------------------------------------- | -------------------------------------------- |
-| `apps/web/src/lib/voice/peer-manager.ts`      | Every `RTCPeerConnection`; the offerer rule  |
-| `apps/web/src/lib/voice/speaking-detector.ts` | `AnalyserNode` per stream, own seat included |
-| `apps/web/src/hooks/useVoice.ts`              | Adapts the two to React and to the socket    |
-| `apps/web/src/components/VoicePanel.tsx`      | Join, roster, self and peer rows             |
-| `apps/web/src/hooks/useShoutUno.ts`           | Turns the local speaking level into a call   |
+| File                                          | Responsibility                                                                |
+| --------------------------------------------- | ----------------------------------------------------------------------------- |
+| `apps/web/src/lib/voice/peer-manager.ts`      | Every `RTCPeerConnection`; the offerer rule                                   |
+| `apps/web/src/lib/voice/speaking-detector.ts` | `AnalyserNode` per stream, own seat included                                  |
+| `apps/web/src/hooks/useVoice.ts`              | Adapts the two to React and to the socket                                     |
+| `apps/web/src/components/VoicePanel.tsx`      | Join, roster, self and peer rows                                              |
+| `apps/web/src/lib/voice/hears-uno.ts`         | Pure match: does this transcript count as "uno"                               |
+| `apps/web/src/lib/voice/shout-listener.ts`    | Owns the `SpeechRecognition` instance and its restart/backoff                 |
+| `apps/web/src/hooks/useShoutUno.ts`           | Arms the window from `legalMoves`, prewarms the listener, fires the call once |
 
 Voice rides the game socket rather than opening its own, because the server resolves a
 voice member through that socket's presence. `useGameSocket` therefore returns its

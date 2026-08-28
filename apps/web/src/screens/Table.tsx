@@ -20,10 +20,21 @@ import { useShoutUno } from '../hooks/useShoutUno.js'
 import { useTableSounds } from '../hooks/useTableSounds.js'
 import type { useVoice } from '../hooks/useVoice.js'
 import { nextCardTheme } from '../lib/card-themes.js'
-import { nextColourMode, readKonamiUnlocked, writeKonamiUnlocked } from '../lib/preferences.js'
+import {
+  nextColourMode,
+  readKonamiUnlocked,
+  readShoutCloudAllowed,
+  writeKonamiUnlocked,
+  writeShoutCloudAllowed,
+} from '../lib/preferences.js'
 import { pigmentForSeat } from '../lib/palette.js'
 import { useColourMode, useSetColourMode } from '../components/ColourModeProvider.js'
-import { useMessages } from '../i18n/index.js'
+import { useLocale, useMessages } from '../i18n/index.js'
+
+/* The recogniser is warm before the window opens, because a cloud start costs a few
+   hundred milliseconds and the shout arrives with the window. Wider than callUno on
+   purpose: that is offered at two cards, or at one while vulnerable. */
+const SHOUT_PREWARM_CARDS = 3
 
 type TableProps = {
   view: PlayerView
@@ -53,6 +64,7 @@ export function Table({
   voice,
 }: TableProps) {
   const t = useMessages()
+  const locale = useLocale()
   const cardTheme = useCardTheme()
   const setCardTheme = useSetCardTheme()
   const colourMode = useColourMode()
@@ -74,9 +86,17 @@ export function Table({
     setJustUnlocked(true)
   })
 
-  useShoutUno({
+  const [shoutCloudAllowed, setShoutCloudAllowed] = useState(readShoutCloudAllowed)
+  const shout = useShoutUno({
     armed: canCallUno,
-    speaking: voice.speaking[view.you.seat] === true,
+    /* Stops at the end screen. Table stays mounted under GameOver and the winner
+       holds no cards, so without the phase the recogniser runs through the chat. */
+    prewarm: view.phase === 'playing' && view.you.hand.length <= SHOUT_PREWARM_CARDS,
+    /* Mute means stop listening to me. The recogniser holds its own capture, so
+       without this it would keep transcribing a closed microphone. */
+    enabled: voice.status === 'joined' && !voice.muted,
+    locale,
+    cloudAllowed: shoutCloudAllowed,
     onCall: () => onPlay({ type: 'callUno' }),
   })
   /* A pass is offered only while this seat is holding a card it has just drawn and may
@@ -351,6 +371,15 @@ export function Table({
               voice={voice}
               seatNames={[0, 1, 2, 3].map((seat) => nameOf(seat))}
               selfSeat={view.you.seat}
+              shout={{
+                availability: shout.availability,
+                cloudAllowed: shoutCloudAllowed,
+                onCloudAllowed: (allowed) => {
+                  writeShoutCloudAllowed(allowed)
+                  setShoutCloudAllowed(allowed)
+                },
+                onInstalled: shout.refresh,
+              }}
             />
             <ChatPanel feed={feed} mySeat={view.you.seat} nameOf={nameOf} onSend={onSend} />
           </div>

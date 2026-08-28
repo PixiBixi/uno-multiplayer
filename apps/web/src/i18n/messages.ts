@@ -376,6 +376,13 @@ export type Messages = {
     unavailableWith: (name: string) => string
     muteThem: (name: string) => string
     unmuteThem: (name: string) => string
+    shoutListening: string
+    shoutUnsupported: string
+    shoutOffline: string
+    shoutInstall: string
+    shoutInstalling: string
+    shoutInstallFailed: string
+    shoutCloud: string
   }
 
   over: {

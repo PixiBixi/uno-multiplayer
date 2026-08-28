@@ -2924,6 +2924,31 @@ input.switch:checked::before {
   color: var(--accent);
 }
 
+.voice-shout-cloud {
+  display: flex;
+  gap: 0.4rem;
+  align-items: start;
+  cursor: pointer;
+}
+
+/* Reads as text, not as a control: sits inline inside a `.voice-note` sentence,
+   so it takes that paragraph's own font and colour rather than the platform's
+   button chrome. Focus still gets the shared `:focus-visible` outline above. */
+.btn-link {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.btn-link:disabled {
+  cursor: not-allowed;
+}
+
 /* ---------------------------------------------------------------------------
    The hidden face, on the moment it is found
    --------------------------------------------------------------------------- */

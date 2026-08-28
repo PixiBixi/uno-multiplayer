@@ -1,37 +1,105 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import type { Locale } from '../i18n/messages.js'
+import {
+  createShoutListener,
+  probeShout,
+  type ShoutAvailability,
+} from '../lib/voice/shout-listener.js'
+
+/* Chrome answers 'downloading' while the pack lands, and install() resolves before
+   it is usable. Without this retry the panel offers a download that does nothing
+   and never reaches 'local' short of a page reload. Do not remove it. */
+const DOWNLOAD_POLL_MS = 2000
 
 /**
  * Calls UNO by shouting it, which is how the game is played away from a screen.
  *
- * `armed` comes from `legalMoves`, so the client learns nothing about the rules it
- * did not already receive: the server said the call was legal, and refuses it
- * otherwise. A sound at the wrong moment therefore costs nothing.
+ * `armed` comes from `legalMoves`, so the client learns no rule it was not already
+ * sent: the server said the call was legal, and refuses it otherwise.
  *
- * `speaking` is the local level the voice detector already computes. A muted
- * microphone produces silence, so a muted player still uses the button.
+ * `prewarm` is wider than `armed` on purpose. A cloud recogniser takes a few hundred
+ * milliseconds to start and the shout arrives exactly as the window opens, so it has
+ * to already be listening. Do not narrow it to `armed`.
  */
 export function useShoutUno(options: {
   armed: boolean
-  speaking: boolean
+  /** Short enough a hand that the call is about to matter. */
+  prewarm: boolean
+  /** Voice joined and the microphone open. */
+  enabled: boolean
+  locale: Locale
+  cloudAllowed: boolean
   onCall: () => void
-}): void {
-  const { armed, speaking, onCall } = options
+  create?: typeof createShoutListener
+  probe?: typeof probeShout
+}): { availability: ShoutAvailability | 'probing'; refresh: () => void } {
+  const { armed, prewarm, enabled, locale, cloudAllowed, onCall } = options
+  const create = options.create ?? createShoutListener
+  const probe = options.probe ?? probeShout
+
+  const [availability, setAvailability] = useState<ShoutAvailability | 'probing'>('probing')
+  const [attempt, setAttempt] = useState(0)
   const firedRef = useRef(false)
+  /* A refusal is final for the session, like the listener's own. A later probe still
+     reports the browser capable, and letting it win would claim to be listening. */
+  const deniedRef = useRef(false)
+  const armedRef = useRef(armed)
+  armedRef.current = armed
   const callRef = useRef(onCall)
   callRef.current = onCall
 
-  useEffect(() => {
-    // Leaving the window re-arms it for the next card that drops to one.
-    if (!armed) {
-      firedRef.current = false
-      return
-    }
-    if (!speaking || firedRef.current) return
+  const refresh = useCallback(() => setAttempt((count) => count + 1), [])
 
-    /* Once per window rather than per rising edge: a window that opens while its
-       owner is already mid-sentence should still catch the shout, and a stuttering
-       level should not emit the same call five times. */
-    firedRef.current = true
-    callRef.current()
-  }, [armed, speaking])
+  useEffect(() => {
+    if (deniedRef.current) return
+    let live = true
+    void probe(locale).then((result) => {
+      if (live && !deniedRef.current) setAvailability(result)
+    })
+    return () => {
+      live = false
+    }
+  }, [locale, probe, attempt])
+
+  useEffect(() => {
+    if (availability !== 'downloading') return
+    const timer = setTimeout(() => setAttempt((count) => count + 1), DOWNLOAD_POLL_MS)
+    return () => clearTimeout(timer)
+  }, [availability, attempt])
+
+  /* Cloud is a mode the player has to ask for: it sends the microphone to the
+     browser vendor, which nothing else in this feature does. */
+  const mode =
+    availability === 'local' ? 'local' : availability === 'cloud' && cloudAllowed ? 'cloud' : null
+
+  useEffect(() => {
+    if (!enabled || !prewarm || mode === null) return
+    const listener = create({
+      locale,
+      mode,
+      onShout: () => {
+        /* Once per window rather than per utterance: a recogniser emits interim
+           results, and a window is one call however many times the word lands. */
+        if (!armedRef.current || firedRef.current) return
+        firedRef.current = true
+        callRef.current()
+      },
+      /* From the player's side a refused microphone is a browser that cannot hear:
+         same fallback, same words, and the panel must stop saying it listens. */
+      onDenied: () => {
+        deniedRef.current = true
+        setAvailability('unsupported')
+      },
+    })
+    if (listener === null) return
+    listener.start()
+    return () => listener.destroy()
+  }, [enabled, prewarm, mode, locale, create])
+
+  // Leaving the window re-arms it for the next card that drops to one.
+  useEffect(() => {
+    if (!armed) firedRef.current = false
+  }, [armed])
+
+  return { availability, refresh }
 }

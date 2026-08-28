@@ -1,8 +1,15 @@
-import { render, screen } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it, vi } from 'vitest'
-import { VoicePanel } from './VoicePanel.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { VoicePanel, type ShoutControls } from './VoicePanel.js'
 import type { useVoice } from '../hooks/useVoice.js'
+import { fr } from '../i18n/fr.js'
+import { LocaleContext } from '../i18n/index.js'
+
+/* The panel calls installShout itself: it needs the click gesture, so it cannot be
+   handed in as a prop. Mocked here to drive what the browser answered. */
+const speech = vi.hoisted(() => ({ installShout: vi.fn(() => Promise.resolve(true)) }))
+vi.mock('../lib/voice/shout-listener.js', () => speech)
 
 const baseVoice: ReturnType<typeof useVoice> = {
   status: 'idle',
@@ -18,27 +25,67 @@ const baseVoice: ReturnType<typeof useVoice> = {
 
 const names = ['Ana', 'Bo', 'Cy', 'Di']
 
+const shoutControls = (over: Partial<ShoutControls> = {}): ShoutControls => ({
+  availability: 'local',
+  cloudAllowed: false,
+  onCloudAllowed: vi.fn(),
+  onInstalled: vi.fn(),
+  ...over,
+})
+
+/** The joined branch, in French: the shout row's strings only exist in the catalogues. */
+const renderJoined = (overrides: { shout: ShoutControls }) =>
+  render(
+    <LocaleContext.Provider value={{ locale: 'fr', messages: fr, setLocale: () => undefined }}>
+      <VoicePanel
+        voice={{ ...baseVoice, status: 'joined', peers: [{ seat: 0, muted: false }] }}
+        seatNames={names}
+        selfSeat={0}
+        {...overrides}
+      />
+    </LocaleContext.Provider>,
+  )
+
 describe('VoicePanel', () => {
   it('offers to join when idle', () => {
-    render(<VoicePanel voice={baseVoice} seatNames={names} selfSeat={0} />)
+    render(<VoicePanel voice={baseVoice} seatNames={names} selfSeat={0} shout={shoutControls()} />)
     expect(screen.getByRole('button', { name: /join voice/i })).toBeTruthy()
   })
 
   it('calls join when clicked', async () => {
     const join = vi.fn(() => Promise.resolve())
-    render(<VoicePanel voice={{ ...baseVoice, join }} seatNames={names} selfSeat={0} />)
+    render(
+      <VoicePanel
+        voice={{ ...baseVoice, join }}
+        seatNames={names}
+        selfSeat={0}
+        shout={shoutControls()}
+      />,
+    )
     await userEvent.click(screen.getByRole('button', { name: /join voice/i }))
     expect(join).toHaveBeenCalled()
   })
 
   it('explains a denied microphone instead of failing silently', () => {
-    render(<VoicePanel voice={{ ...baseVoice, status: 'denied' }} seatNames={names} selfSeat={0} />)
+    render(
+      <VoicePanel
+        voice={{ ...baseVoice, status: 'denied' }}
+        seatNames={names}
+        selfSeat={0}
+        shout={shoutControls()}
+      />,
+    )
     expect(screen.getByText(/microphone/i)).toBeTruthy()
   })
 
   it('renders nothing at all when the browser cannot do voice', () => {
     const { container } = render(
-      <VoicePanel voice={{ ...baseVoice, status: 'unsupported' }} seatNames={names} selfSeat={0} />,
+      <VoicePanel
+        voice={{ ...baseVoice, status: 'unsupported' }}
+        seatNames={names}
+        selfSeat={0}
+        shout={shoutControls()}
+      />,
     )
     expect(container.innerHTML).toBe('')
   })
@@ -56,6 +103,7 @@ describe('VoicePanel', () => {
         }}
         seatNames={names}
         selfSeat={0}
+        shout={shoutControls()}
       />,
     )
     expect(screen.getByText('Bo')).toBeTruthy()
@@ -74,6 +122,7 @@ describe('VoicePanel', () => {
         }}
         seatNames={names}
         selfSeat={0}
+        shout={shoutControls()}
       />,
     )
     expect(screen.getByText('Ana')).toBeTruthy()
@@ -92,6 +141,7 @@ describe('VoicePanel', () => {
         }}
         seatNames={names}
         selfSeat={0}
+        shout={shoutControls()}
       />,
     )
     expect(screen.getByRole('button', { name: /^mute$/i })).toBeTruthy()
@@ -109,6 +159,7 @@ describe('VoicePanel', () => {
         }}
         seatNames={names}
         selfSeat={0}
+        shout={shoutControls()}
       />,
     )
     const self = container.querySelector('.voice-peer-self')
@@ -131,6 +182,7 @@ describe('VoicePanel', () => {
         }}
         seatNames={names}
         selfSeat={0}
+        shout={shoutControls()}
       />,
     )
     expect(screen.getByLabelText(/Bo has muted their microphone/i)).toBeTruthy()
@@ -150,8 +202,114 @@ describe('VoicePanel', () => {
         }}
         seatNames={names}
         selfSeat={0}
+        shout={shoutControls()}
       />,
     )
     expect(screen.getByText(/unavailable/i)).toBeTruthy()
+  })
+})
+
+describe('VoicePanel shout row', () => {
+  it('says the shout is live when recognition runs on the device', () => {
+    renderJoined({ shout: shoutControls({ availability: 'local' }) })
+    expect(screen.getByText(fr.voice.shoutListening)).toBeTruthy()
+  })
+
+  it('points at the button when the browser cannot recognise anything', () => {
+    renderJoined({ shout: shoutControls({ availability: 'unsupported' }) })
+    expect(screen.getByText(fr.voice.shoutUnsupported)).toBeTruthy()
+  })
+
+  it('offers the download when a language pack would make it local', () => {
+    renderJoined({ shout: shoutControls({ availability: 'downloadable' }) })
+    expect(screen.getByRole('button', { name: fr.voice.shoutInstall })).toBeTruthy()
+  })
+
+  it('says the pack is downloading and offers no button while it is in flight', () => {
+    renderJoined({ shout: shoutControls({ availability: 'downloading' }) })
+    expect(screen.getByText(fr.voice.shoutInstalling)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: fr.voice.shoutInstall })).toBeNull()
+  })
+
+  it('asks before opening a cloud recogniser, and says where the audio goes', () => {
+    renderJoined({ shout: shoutControls({ availability: 'cloud' }) })
+    const consent = screen.getByRole('checkbox', { name: fr.voice.shoutCloud })
+    expect((consent as HTMLInputElement).checked).toBe(false)
+  })
+
+  it('shows the checkbox ticked once consent has already been given', () => {
+    renderJoined({ shout: shoutControls({ availability: 'cloud', cloudAllowed: true }) })
+    const consent = screen.getByRole('checkbox', { name: fr.voice.shoutCloud })
+    expect((consent as HTMLInputElement).checked).toBe(true)
+  })
+
+  it('reports a consent change to its owner', async () => {
+    const onCloudAllowed = vi.fn()
+    renderJoined({ shout: shoutControls({ availability: 'cloud', onCloudAllowed }) })
+    await userEvent.click(screen.getByRole('checkbox', { name: fr.voice.shoutCloud }))
+    expect(onCloudAllowed).toHaveBeenCalledWith(true)
+  })
+
+  it('shows nothing at all while the probe is still running', () => {
+    renderJoined({ shout: shoutControls({ availability: 'probing' }) })
+    expect(screen.queryByText(fr.voice.shoutListening)).toBeNull()
+    expect(screen.queryByRole('checkbox')).toBeNull()
+  })
+})
+
+describe('VoicePanel offline pack download', () => {
+  beforeEach(() => {
+    speech.installShout.mockReset()
+    speech.installShout.mockResolvedValue(true)
+  })
+
+  it('asks for the pack in the locale on screen', async () => {
+    renderJoined({ shout: shoutControls({ availability: 'downloadable' }) })
+    await userEvent.click(screen.getByRole('button', { name: fr.voice.shoutInstall }))
+    expect(speech.installShout).toHaveBeenCalledWith('fr')
+  })
+
+  it('disables the button while the pack is in flight, so it cannot be asked twice', async () => {
+    let settle: (started: boolean) => void = () => undefined
+    speech.installShout.mockReturnValue(
+      new Promise<boolean>((resolve) => {
+        settle = resolve
+      }),
+    )
+    const onInstalled = vi.fn()
+    renderJoined({ shout: shoutControls({ availability: 'downloadable', onInstalled }) })
+    await userEvent.click(screen.getByRole('button', { name: fr.voice.shoutInstall }))
+
+    const pending = screen.getByRole('button', { name: fr.voice.shoutInstalling })
+    expect((pending as HTMLButtonElement).disabled).toBe(true)
+    expect(onInstalled).not.toHaveBeenCalled()
+
+    await act(async () => {
+      settle(true)
+      await Promise.resolve()
+    })
+    // The re-probe is what turns a landed pack into 'local' without a reload.
+    await waitFor(() => expect(onInstalled).toHaveBeenCalled())
+    const done = screen.getByRole('button', { name: fr.voice.shoutInstall })
+    expect((done as HTMLButtonElement).disabled).toBe(false)
+  })
+
+  /* The message shares its paragraph with the button, so it is read off that
+     paragraph rather than matched as a whole element. */
+  const shoutNote = (): string =>
+    screen.getByRole('button', { name: fr.voice.shoutInstall }).closest('p')?.textContent ?? ''
+
+  it('says so when the download never started, rather than a click that does nothing', async () => {
+    speech.installShout.mockResolvedValue(false)
+    renderJoined({ shout: shoutControls({ availability: 'downloadable' }) })
+    await userEvent.click(screen.getByRole('button', { name: fr.voice.shoutInstall }))
+    await waitFor(() => expect(shoutNote()).toContain(fr.voice.shoutInstallFailed))
+  })
+
+  it('keeps quiet about a failure that has not happened', async () => {
+    renderJoined({ shout: shoutControls({ availability: 'downloadable' }) })
+    await userEvent.click(screen.getByRole('button', { name: fr.voice.shoutInstall }))
+    await waitFor(() => expect(speech.installShout).toHaveBeenCalled())
+    expect(shoutNote()).not.toContain(fr.voice.shoutInstallFailed)
   })
 })

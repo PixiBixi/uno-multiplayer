@@ -4,8 +4,10 @@ import {
   COLOUR_MODES,
   readColourMode,
   readKonamiUnlocked,
+  readShoutCloudAllowed,
   writeColourMode,
   writeKonamiUnlocked,
+  writeShoutCloudAllowed,
 } from './preferences.js'
 import { readCardTheme, readHandSort, writeCardTheme, writeHandSort } from './preferences.js'
 
@@ -145,5 +147,28 @@ describe('the hidden face unlock', () => {
   it('treats anything but the exact string as locked', () => {
     window.localStorage.setItem('uno.pref.konami', 'yes')
     expect(readKonamiUnlocked()).toBe(false)
+  })
+})
+
+describe('shout cloud consent', () => {
+  it('is off until it is turned on', () => {
+    window.localStorage.clear()
+    expect(readShoutCloudAllowed()).toBe(false)
+  })
+
+  it('round-trips a yes', () => {
+    writeShoutCloudAllowed(true)
+    expect(readShoutCloudAllowed()).toBe(true)
+  })
+
+  it('round-trips a no', () => {
+    writeShoutCloudAllowed(true)
+    writeShoutCloudAllowed(false)
+    expect(readShoutCloudAllowed()).toBe(false)
+  })
+
+  it('treats a corrupted value as no rather than as consent', () => {
+    window.localStorage.setItem('uno.pref.shoutCloud', 'yes')
+    expect(readShoutCloudAllowed()).toBe(false)
   })
 })
