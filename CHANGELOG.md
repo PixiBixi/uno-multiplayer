@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.11.1](https://github.com/PixiBixi/uno-multiplayer/compare/c84e0d7be5b50f616c47200fa427893431d9d25a..v1.11.1) - 2026-08-28
+#### Bug Fixes
+- (**web**) probe for speech only once voice is joined - ([c84e0d7](https://github.com/PixiBixi/uno-multiplayer/commit/c84e0d7be5b50f616c47200fa427893431d9d25a)) - Jeremy Delgado
+#### Tests
+- (**e2e**) hide the speech API from Playwright's Chromium - ([dd2d00a](https://github.com/PixiBixi/uno-multiplayer/commit/dd2d00a03391f2a28474c1fe537f2c2f6f6d422d)) - Jeremy Delgado
+
+- - -
+
 ## [v1.11.0](https://github.com/PixiBixi/uno-multiplayer/compare/b99950cd506820677ddd04b807067d245d0b5efa..v1.11.0) - 2026-08-28
 #### Features
 - (**web**) call UNO by shouting the word, not by making a sound - ([7c215ed](https://github.com/PixiBixi/uno-multiplayer/commit/7c215edd55e8c38de24e01c107eea78d3461ef2e)) - Jeremy Delgado
