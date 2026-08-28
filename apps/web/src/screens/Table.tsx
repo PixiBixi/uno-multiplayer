@@ -89,7 +89,9 @@ export function Table({
   const [shoutCloudAllowed, setShoutCloudAllowed] = useState(readShoutCloudAllowed)
   const shout = useShoutUno({
     armed: canCallUno,
-    prewarm: view.you.hand.length <= SHOUT_PREWARM_CARDS,
+    /* Stops at the end screen. Table stays mounted under GameOver and the winner
+       holds no cards, so without the phase the recogniser runs through the chat. */
+    prewarm: view.phase === 'playing' && view.you.hand.length <= SHOUT_PREWARM_CARDS,
     /* Mute means stop listening to me. The recogniser holds its own capture, so
        without this it would keep transcribing a closed microphone. */
     enabled: voice.status === 'joined' && !voice.muted,

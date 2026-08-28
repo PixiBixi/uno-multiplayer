@@ -1,12 +1,21 @@
 import { DEFAULT_TABLE_RULES, type Card, type CardId } from '@uno/engine'
 import { DEFAULT_MATCH_GOAL, type PlayerView } from '@uno/protocol'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CardThemeProvider } from '../components/CardThemeProvider.js'
 import { CARD_THEMES, DEFAULT_CARD_THEME } from '../lib/card-themes.js'
 import { readCardTheme } from '../lib/preferences.js'
 import { Table } from './Table.js'
+
+/* The shout recogniser reaches the real Web Speech API, which jsdom has none of.
+   Mocked at the module so the tests can watch when a listener is opened. */
+const speech = vi.hoisted(() => ({
+  createShoutListener: vi.fn(() => ({ start: vi.fn(), stop: vi.fn(), destroy: vi.fn() })),
+  probeShout: vi.fn(() => Promise.resolve('local')),
+  installShout: vi.fn(() => Promise.resolve(false)),
+}))
+vi.mock('../lib/voice/shout-listener.js', () => speech)
 
 const top: Card = { id: 'top' as CardId, kind: 'number', color: 'R', value: 3 }
 const mine: Card = { id: 'mine' as CardId, kind: 'number', color: 'R', value: 5 }
@@ -542,5 +551,52 @@ describe('whose turn it is', () => {
   it('renders no queue on a table down to one active player', () => {
     setup(viewWith({ turnOrder: [] }))
     expect(document.querySelector('.up-next')).toBeNull()
+  })
+})
+
+describe('the shout recogniser', () => {
+  const joinedVoice = {
+    ...idleVoice,
+    status: 'joined' as const,
+    peers: [{ seat: 0, muted: false }],
+  }
+
+  const renderWith = (view: PlayerView) =>
+    render(
+      <Table
+        view={view}
+        lobby={null}
+        feed={[]}
+        toasts={[]}
+        onPlay={vi.fn()}
+        onNextRound={vi.fn()}
+        onRestart={vi.fn()}
+        onLeave={vi.fn()}
+        onSend={vi.fn()}
+        onDismissToast={vi.fn()}
+        voice={joinedVoice}
+      />,
+    )
+
+  beforeEach(() => {
+    speech.createShoutListener.mockClear()
+  })
+
+  it('listens while the hand is short and the game is running', async () => {
+    renderWith(viewWith())
+    await waitFor(() => expect(speech.createShoutListener).toHaveBeenCalled())
+  })
+
+  it('stops at the end screen, which Table stays mounted behind', async () => {
+    /* The winner holds no cards, so the hand-length window is wide open. Without the
+       phase the microphone would run through the whole post-game chat. */
+    renderWith(
+      viewWith({ phase: 'finished', winner: 0, you: { seat: 0, hand: [], legalMoves: [] } }),
+    )
+    /* Waiting on the panel note, not on the probe: the probe is called on mount and
+       a listener is only opened once it resolves, so probeShout settles too early
+       to prove anything. */
+    await screen.findByText(/shout "uno"/i)
+    expect(speech.createShoutListener).not.toHaveBeenCalled()
   })
 })
