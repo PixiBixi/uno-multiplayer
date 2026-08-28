@@ -153,6 +153,9 @@ function ShoutRow({ shout }: { shout: ShoutControls }) {
   if (shout.availability === 'unsupported')
     return <p className="voice-note">{t.voice.shoutUnsupported}</p>
 
+  if (shout.availability === 'downloading')
+    return <p className="voice-note">{t.voice.shoutInstalling}</p>
+
   if (shout.availability === 'downloadable')
     return (
       <p className="voice-note">

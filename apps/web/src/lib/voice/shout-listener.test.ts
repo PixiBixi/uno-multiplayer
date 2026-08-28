@@ -243,3 +243,44 @@ describe('shout listener', () => {
     await expect(probeShout('fr')).resolves.toBe('unsupported')
   })
 })
+
+describe('probeShout with a recogniser present', () => {
+  const withRecognition = (available: () => Promise<string>) => {
+    const scope = globalThis as unknown as { SpeechRecognition?: unknown }
+    const previous = scope.SpeechRecognition
+    scope.SpeechRecognition = Object.assign(function Fake() {}, { available })
+    return () => {
+      scope.SpeechRecognition = previous
+    }
+  }
+
+  it('maps an installed pack to local', async () => {
+    const restore = withRecognition(() => Promise.resolve('available'))
+    await expect(probeShout('fr')).resolves.toBe('local')
+    restore()
+  })
+
+  it('maps an offerable pack to downloadable', async () => {
+    const restore = withRecognition(() => Promise.resolve('downloadable'))
+    await expect(probeShout('fr')).resolves.toBe('downloadable')
+    restore()
+  })
+
+  it('maps a pack in flight to downloading, distinct from downloadable', async () => {
+    const restore = withRecognition(() => Promise.resolve('downloading'))
+    await expect(probeShout('fr')).resolves.toBe('downloading')
+    restore()
+  })
+
+  it('maps an unavailable pack to cloud', async () => {
+    const restore = withRecognition(() => Promise.resolve('unavailable'))
+    await expect(probeShout('fr')).resolves.toBe('cloud')
+    restore()
+  })
+
+  it('falls back to cloud when the probe itself rejects', async () => {
+    const restore = withRecognition(() => Promise.reject(new Error('boom')))
+    await expect(probeShout('fr')).resolves.toBe('cloud')
+    restore()
+  })
+})

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { VoicePanel, type ShoutControls } from './VoicePanel.js'
@@ -218,6 +218,12 @@ describe('VoicePanel shout row', () => {
   it('offers the download when a language pack would make it local', () => {
     renderJoined({ shout: shoutControls({ availability: 'downloadable' }) })
     expect(screen.getByRole('button', { name: fr.voice.shoutInstall })).toBeTruthy()
+  })
+
+  it('says the pack is downloading and offers no button while it is in flight', () => {
+    renderJoined({ shout: shoutControls({ availability: 'downloading' }) })
+    const note = screen.getByText(fr.voice.shoutInstalling)
+    expect(within(note).queryByRole('button')).toBeNull()
   })
 
   it('asks before opening a cloud recogniser, and says where the audio goes', () => {

@@ -21,7 +21,7 @@ export type SpeechResultLike = {
   results: ArrayLike<ArrayLike<{ transcript: string }>>
 }
 
-export type ShoutAvailability = 'unsupported' | 'downloadable' | 'local' | 'cloud'
+export type ShoutAvailability = 'unsupported' | 'downloadable' | 'downloading' | 'local' | 'cloud'
 
 export type ShoutListener = {
   start(): void
@@ -62,7 +62,8 @@ export async function probeShout(locale: Locale): Promise<ShoutAvailability> {
   try {
     const state = await Recognition.available({ langs: [TAGS[locale]], processLocally: true })
     if (state === 'available') return 'local'
-    if (state === 'downloadable' || state === 'downloading') return 'downloadable'
+    if (state === 'downloadable') return 'downloadable'
+    if (state === 'downloading') return 'downloading'
     return 'cloud'
   } catch {
     // A probe that throws says nothing about the cloud path, which predates it.

@@ -109,3 +109,85 @@ describe('useShoutUno', () => {
     expect(create).not.toHaveBeenCalled()
   })
 })
+
+describe('useShoutUno while a language pack downloads', () => {
+  it('opens no listener while the probe answers downloading', async () => {
+    const { create, view } = setup({ armed: true }, 'downloading')
+    await waitFor(() => expect(view.result.current.availability).toBe('downloading'))
+    expect(create).not.toHaveBeenCalled()
+  })
+
+  it('reaches local on its own once the pack lands, with no reload and no user action', async () => {
+    vi.useFakeTimers()
+    const onCall = vi.fn()
+    const { create, hear } = fakeListener()
+    let calls = 0
+    // Two rounds of 'downloading' in a row before 'local': a single retry would
+    // not be enough to prove the poll survives an unchanged availability value.
+    const probe = vi.fn((): Promise<ShoutAvailability> =>
+      Promise.resolve(calls++ < 2 ? 'downloading' : 'local'),
+    )
+    const view = renderHook(() =>
+      useShoutUno({
+        armed: true,
+        prewarm: true,
+        enabled: true,
+        cloudAllowed: false,
+        locale: 'fr',
+        onCall,
+        create,
+        probe,
+      }),
+    )
+    await vi.waitFor(() => expect(view.result.current.availability).toBe('downloading'))
+    expect(create).not.toHaveBeenCalled()
+
+    // First poll: still 'downloading', same value as before.
+    await vi.advanceTimersByTimeAsync(2000)
+    await vi.waitFor(() => expect(probe).toHaveBeenCalledTimes(2))
+    expect(view.result.current.availability).toBe('downloading')
+    expect(create).not.toHaveBeenCalled()
+
+    // Second poll: now resolves to 'local'.
+    await vi.advanceTimersByTimeAsync(2000)
+    await vi.waitFor(() => expect(view.result.current.availability).toBe('local'))
+    expect(create).toHaveBeenCalled()
+
+    hear()
+    expect(onCall).toHaveBeenCalledTimes(1)
+    vi.useRealTimers()
+  })
+
+  it('stops polling once it reaches local, so it does not keep asking Chrome forever', async () => {
+    vi.useFakeTimers()
+    let calls = 0
+    const probe = vi.fn((): Promise<ShoutAvailability> =>
+      Promise.resolve(calls++ === 0 ? 'downloading' : 'local'),
+    )
+    const view = renderHook(() =>
+      useShoutUno({
+        armed: false,
+        prewarm: true,
+        enabled: true,
+        cloudAllowed: false,
+        locale: 'fr',
+        onCall: vi.fn(),
+        create: fakeListener().create,
+        probe,
+      }),
+    )
+    await vi.waitFor(() => expect(view.result.current.availability).toBe('downloading'))
+    await vi.advanceTimersByTimeAsync(2000)
+    await vi.waitFor(() => expect(view.result.current.availability).toBe('local'))
+    const callsAtLocal = probe.mock.calls.length
+
+    // Ten separate advances rather than one big jump: each `await` lets the
+    // fake-timer engine flush a real event-loop tick, which is what actually
+    // reveals a poll that a broken guard would keep rescheduling.
+    for (let round = 0; round < 10; round += 1) {
+      await vi.advanceTimersByTimeAsync(2000)
+    }
+    expect(probe.mock.calls.length).toBe(callsAtLocal)
+    vi.useRealTimers()
+  })
+})
