@@ -1,6 +1,20 @@
 # Changelog
 
 - - -
+## [v1.11.3](https://github.com/PixiBixi/uno-multiplayer/compare/9cbef8193678033a0d0acdf617ee40367e80a581..v1.11.3) - 2026-09-01
+#### Documentation
+- (**security**) add a security policy - ([49e7937](https://github.com/PixiBixi/uno-multiplayer/commit/49e79376a86ff7b0745e1b06ebb77d97e21531e1)) - Jeremy Delgado
+#### Tests
+- (**jumpin**) deal further rounds so the drive stops failing on a shuffle - ([a80cbac](https://github.com/PixiBixi/uno-multiplayer/commit/a80cbacd17bb698bd1241ecf81f1e5d935a565c4)) - Jeremy Delgado
+#### Continuous Integration
+- (**hardening**) audit runner egress and maintain the pinned SHAs - ([9cbef81](https://github.com/PixiBixi/uno-multiplayer/commit/9cbef8193678033a0d0acdf617ee40367e80a581)) - Jeremy Delgado
+- (**renovate**) move dependency updates from Dependabot to Renovate - ([030604e](https://github.com/PixiBixi/uno-multiplayer/commit/030604e3a1ecf0bd687c10ba0dc32d4e5de35219)) - Jeremy Delgado
+- (**renovate**) drop the config, Dependabot already owns this repo - ([3496e18](https://github.com/PixiBixi/uno-multiplayer/commit/3496e188df6ec9e66592c7468eacb257dde771dd)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**deps-dev**) bump the dev-dependencies group with 5 updates (#11) - ([6a55b73](https://github.com/PixiBixi/uno-multiplayer/commit/6a55b731e2aee4373c530e2cba72e34ad05e38e4)) - dependabot[bot], dependabot[bot]
+
+- - -
+
 ## [v1.11.2](https://github.com/PixiBixi/uno-multiplayer/compare/8925163fdf894c5422d126332652890484d30d57..v1.11.2) - 2026-08-28
 #### Bug Fixes
 - (**web**) restart the shout listener at once after a normal timeout - ([8925163](https://github.com/PixiBixi/uno-multiplayer/commit/8925163fdf894c5422d126332652890484d30d57)) - Jeremy Delgado
