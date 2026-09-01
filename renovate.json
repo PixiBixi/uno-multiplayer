@@ -1,0 +1,46 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "labels": ["dependencies"],
+  "assignees": ["PixiBixi"],
+  "semanticCommits": "enabled",
+  "pinDigests": true,
+  "prConcurrentLimit": 5,
+  "packageRules": [
+    {
+      "description": "Cooldown before automerge picks up a release: a hijacked package is usually spotted and yanked within days. digest is in here because a digest-only update means an upstream tag moved onto another commit. vulnerabilityAlerts overrides this, so CVE fixes still land at once",
+      "matchUpdateTypes": ["major", "minor", "patch", "digest"],
+      "minimumReleaseAge": "5 days"
+    },
+    {
+      "description": "Automerge all safe updates (minor/patch/digest) via PR once CI passes",
+      "matchUpdateTypes": ["minor", "patch", "digest"],
+      "automerge": true,
+      "automergeType": "pr"
+    },
+    {
+      "description": "One PR per group keeps the review load sane on a small project",
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["devDependencies"],
+      "groupName": "dev-dependencies"
+    },
+    {
+      "description": "One PR per group keeps the review load sane on a small project",
+      "matchManagers": ["npm"],
+      "matchDepTypes": ["dependencies"],
+      "groupName": "production-dependencies"
+    },
+    {
+      "description": "typescript-eslint peers on typescript <6.1.0, so TypeScript 7 fails npm ci outright and takes the whole dev group down with it: every other bump in the group is held hostage. Drop this the day typescript-eslint accepts 7",
+      "matchPackageNames": ["typescript"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "Actions do not ship in the built image -> group them into one chore PR, no release. They are pinned by SHA, so what moves here is the digest behind a tag and the version comment on the same line",
+      "matchManagers": ["github-actions"],
+      "groupName": "github-actions",
+      "semanticCommitType": "chore"
+    }
+  ]
+}
