@@ -380,11 +380,26 @@ describe('jump-in on the wire', () => {
       /* Checked over the wire because the view is what the client obeys. A stacked
          +2/+4 has strict same-type answer rules of its own, and a jump-in interleaved
          with them would make "strictly same type" mean nothing. */
-      const { players } = await table(JUMP)
+      const { players, host } = await table(JUMP)
       let stacked = 0
-      for (let turn = 0; turn < 400 && stacked < 3; turn += 1) {
+      /* Deals further rounds rather than giving up at the end of one, for the same
+         reason as the jump-in drive above: whether a +2 or +4 is ever stacked is a
+         property of the deal, and a test that fails on an unlucky shuffle is a test
+         nobody can read. */
+      for (let turn = 0; turn < 1200 && stacked < 3; turn += 1) {
         const view = players[0]?.view()
-        if (view == null || view.phase === 'finished') break
+        if (view == null) break
+        if (view.phase === 'finished') {
+          if (view.match.winners !== null) break
+          const dealtBefore = players.map((p) => p.version())
+          const dealt = await emit<PlainAck>(host, 'game:nextRound', {})
+          if (!dealt.ok) throw new Error(`could not deal another round: ${dealt.error}`)
+          await waitFor(
+            () => players.every((p, index) => p.version() > (dealtBefore[index] ?? 0)),
+            'every view after a fresh deal',
+          )
+          continue
+        }
 
         if (view.pendingDraw !== null) {
           stacked += 1
