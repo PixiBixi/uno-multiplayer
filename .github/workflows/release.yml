@@ -31,6 +31,10 @@ jobs:
       bumped: ${{ steps.bump.outputs.bumped }}
       tag_name: ${{ steps.bump.outputs.tag_name }}
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
       # The credential is kept on purpose: cog bumps, commits and pushes the tag
       # from this clone, so dropping it would leave nothing able to push.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 # zizmor: ignore[artipacked]
@@ -102,6 +106,10 @@ jobs:
       id-token: write # keyless identity used to sign the provenance attestation
       attestations: write # store the attestation on the repo
     steps:
+      - name: Harden the runner
+        uses: step-security/harden-runner@e14015d583714f6e62063499dc959a02595150a1 # v2.21.1
+        with:
+          egress-policy: audit
       # Through env: rather than inline. `inputs.tag` is free text typed into the
       # dispatch form, and an inline ${{ }} would be substituted before bash parses
       # the line, turning `$(...)` in that field into a command.
