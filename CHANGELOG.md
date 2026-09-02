@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.11.4](https://github.com/PixiBixi/uno-multiplayer/compare/b8e0b2caf490ee7bbb135af6d7a8befa59b37469..v1.11.4) - 2026-09-02
+#### Miscellaneous Chores
+- (**codeowners**) declare a single owner for every path - ([b8e0b2c](https://github.com/PixiBixi/uno-multiplayer/commit/b8e0b2caf490ee7bbb135af6d7a8befa59b37469)) - Jeremy Delgado
+
+- - -
+
 ## [v1.11.3](https://github.com/PixiBixi/uno-multiplayer/compare/9cbef8193678033a0d0acdf617ee40367e80a581..v1.11.3) - 2026-09-01
 #### Documentation
 - (**security**) add a security policy - ([49e7937](https://github.com/PixiBixi/uno-multiplayer/commit/49e79376a86ff7b0745e1b06ebb77d97e21531e1)) - Jeremy Delgado
