@@ -1,4 +1,4 @@
-# syntax=docker/dockerfile:1
+# syntax=docker/dockerfile:1@sha256:ecfaec9ed6d810b56388c508f4121597bfbba70d41a6dfeee4d8cad5f295fc32
 
 # Both stages track .nvmrc, not the `engines` floor in package.json. The floor is what
 # this code still runs on; .nvmrc is the version CI actually lints, covers and runs the
@@ -7,7 +7,7 @@
 # step now fails if these two lines and .nvmrc disagree.
 
 # ---- build ----
-FROM node:26-alpine AS build
+FROM node:26-alpine@sha256:2d984a15c9b54fd0aeb608b8e0d0d83529eb34d2966db27a1fb4f1edc3d298a3 AS build
 WORKDIR /app
 
 # Manifests first: the dependency layer then survives source-only changes.
@@ -33,7 +33,7 @@ RUN find . -name '*.tsbuildinfo' -not -path './node_modules/*' -delete \
 RUN npm prune --omit=dev
 
 # ---- runtime ----
-FROM node:26-alpine AS runtime
+FROM node:26-alpine@sha256:2d984a15c9b54fd0aeb608b8e0d0d83529eb34d2966db27a1fb4f1edc3d298a3 AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production \
