@@ -62,7 +62,7 @@ services:
   # the internet. After any change, check that `ss -lunp | grep turnserver` shows
   # the public IP alone and that an unauthenticated ALLOCATE is refused with 401.
   coturn:
-    image: coturn/coturn:4.7@sha256:a00afb5b4890de4df22bbe70379c6b316685dffee297d53cac1271dcb91fab93
+    image: coturn/coturn:4.17@sha256:aa68aab64a3b929d57fc2924c98ea447bf996cf8dade2508e7b71eaf23f1f14e
     container_name: coturn
     network_mode: host
     volumes:
