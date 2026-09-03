@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.11.6](https://github.com/PixiBixi/uno-multiplayer/compare/3f56ddf81092d031a505442dcd1f55648806fb27..v1.11.6) - 2026-09-03
+#### Miscellaneous Chores
+- (**deps**) update coturn/coturn docker tag to v4.17 (#18) - ([3f56ddf](https://github.com/PixiBixi/uno-multiplayer/commit/3f56ddf81092d031a505442dcd1f55648806fb27)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.11.5](https://github.com/PixiBixi/uno-multiplayer/compare/1986956344b5fc593cfb3309d7c7fa54bf343e1e..v1.11.5) - 2026-09-03
 #### Miscellaneous Chores
 - (**deps**) pin dependencies - ([1986956](https://github.com/PixiBixi/uno-multiplayer/commit/1986956344b5fc593cfb3309d7c7fa54bf343e1e)) - renovate[bot]
