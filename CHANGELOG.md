@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.11.5](https://github.com/PixiBixi/uno-multiplayer/compare/1986956344b5fc593cfb3309d7c7fa54bf343e1e..v1.11.5) - 2026-09-03
+#### Miscellaneous Chores
+- (**deps**) pin dependencies - ([1986956](https://github.com/PixiBixi/uno-multiplayer/commit/1986956344b5fc593cfb3309d7c7fa54bf343e1e)) - renovate[bot]
+
+- - -
+
 ## [v1.11.4](https://github.com/PixiBixi/uno-multiplayer/compare/b8e0b2caf490ee7bbb135af6d7a8befa59b37469..v1.11.4) - 2026-09-02
 #### Miscellaneous Chores
 - (**codeowners**) declare a single owner for every path - ([b8e0b2c](https://github.com/PixiBixi/uno-multiplayer/commit/b8e0b2caf490ee7bbb135af6d7a8befa59b37469)) - Jeremy Delgado
