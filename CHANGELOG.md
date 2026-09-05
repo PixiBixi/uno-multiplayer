@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.11.7](https://github.com/PixiBixi/uno-multiplayer/compare/75ce7edb79a5b39a9496e02aac05ea8efece6827..v1.11.7) - 2026-09-05
+#### Miscellaneous Chores
+- (**deps**) update zizmorcore/zizmor-action action to v0.6.3 (#20) - ([75ce7ed](https://github.com/PixiBixi/uno-multiplayer/commit/75ce7edb79a5b39a9496e02aac05ea8efece6827)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.11.6](https://github.com/PixiBixi/uno-multiplayer/compare/3f56ddf81092d031a505442dcd1f55648806fb27..v1.11.6) - 2026-09-03
 #### Miscellaneous Chores
 - (**deps**) update coturn/coturn docker tag to v4.17 (#18) - ([3f56ddf](https://github.com/PixiBixi/uno-multiplayer/commit/3f56ddf81092d031a505442dcd1f55648806fb27)) - renovate[bot], renovate[bot]
