@@ -168,10 +168,10 @@ Versions come from **cocogitto**, which reads the Conventional Commit history: a
 Two profiles are added in `cog.toml` because the defaults leave real releases untagged:
 `perf:` bumps a patch, since out of the box it bumps nothing and a release made only of
 performance work would produce no tag; `chore:` bumps a patch too, because dependency
-bumps are most of what lands here, they change the image that ships, and Dependabot now
-runs daily - waiting for an unrelated `fix:` to carry them out is how a shipped change
-goes untagged. `cog check` runs in CI, so a malformed commit message fails before it can
-reach a changelog.
+bumps are most of what lands here, they change the image that ships, and they arrive
+continuously from Renovate - waiting for an unrelated `fix:` to carry them out is how a
+shipped change goes untagged. `cog check` runs in CI, so a malformed commit message fails
+before it can reach a changelog.
 
 So a deployment is a pull rather than a build on the server:
 
@@ -212,6 +212,37 @@ from an old commit.
 Publishing needs no secret - `GITHUB_TOKEN` covers GHCR for the repository's own
 owner - and it only ever happens from a push to `main`, never from a pull request,
 so a fork cannot publish.
+
+## Where the image's inputs come from
+
+`renovate.json` owns every dependency update. `.github/dependabot.yml` is gone, and
+running both would have meant duplicate PRs on the same package. The move was not a
+preference: Dependabot only maintains SHAs already written, so an action added as `@v4`
+stayed unpinned forever, while Renovate's `pinDigests` performs the conversion. Four
+properties of that config decide what reaches `latest`:
+
+- **Digests, not tags.** `pinDigests` and `helpers:pinGitHubActionDigests` are why
+  `node:26-alpine` in the `Dockerfile`, coturn in `compose.traefik.yaml` and every
+  action reference carry a `@sha256:`. A tag moved onto another commit upstream then
+  surfaces as a `digest` PR instead of silently changing a build.
+- **A five-day cooldown** on majors, minors, patches and digests, because a hijacked
+  package is usually spotted and yanked within days. `vulnerabilityAlerts` overrides it,
+  so CVE fixes still land at once.
+- **Minor, patch and digest updates automerge** once CI is green, so the gate on what
+  ships is the suite in `ci.yml`, not a human review. Majors stay manual.
+- **TypeScript majors are held**, matching the `typescript-eslint` peer range explained
+  in the [quickstart](../quickstart.md).
+
+Actions are grouped into one `chore(deps)` PR because they never ship inside the image,
+so there is nothing to release; npm bumps do ship, which is what the `chore:` profile in
+`cog.toml` is for.
+
+Every workflow job starts with `step-security/harden-runner` in **audit** mode, which
+records each job's outbound calls so a dependency that starts talking to a new host
+becomes visible. Audit and not block, on purpose: the community tier's block mode was
+bypassable over DNS-over-HTTPS and DNS-over-TCP before v2.16.0, and GitHub's own hosts
+vary between runs, so a static allowlist fails on infrastructure rather than on an
+attack. `zizmor` lints the workflow files themselves in `github-actions.yml`.
 
 ## Building the image locally
 
