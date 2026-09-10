@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.11.12](https://github.com/PixiBixi/uno-multiplayer/compare/eb1e4acb0db8ddbd09269f0f3fd54bd11ef41d44..v1.11.12) - 2026-09-10
+#### Documentation
+- (**wiki**) document Renovate migration and harden-runner audit mode - ([eb1e4ac](https://github.com/PixiBixi/uno-multiplayer/commit/eb1e4acb0db8ddbd09269f0f3fd54bd11ef41d44)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**deps**) update dependency @playwright/test to v1.63.0 (#25) - ([9d17f9b](https://github.com/PixiBixi/uno-multiplayer/commit/9d17f9b7b7d388d0f9ab027ad841d2b9bfe43987)) - renovate[bot]
+
+- - -
+
 ## [v1.11.11](https://github.com/PixiBixi/uno-multiplayer/compare/e9d082af457dd1d6c9527211de00a20ffdfeb19c..v1.11.11) - 2026-09-09
 #### Miscellaneous Chores
 - (**deps**) update dev-dependencies to v5 - ([e9d082a](https://github.com/PixiBixi/uno-multiplayer/commit/e9d082af457dd1d6c9527211de00a20ffdfeb19c)) - renovate[bot]
