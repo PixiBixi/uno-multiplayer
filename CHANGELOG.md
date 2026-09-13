@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.11.13](https://github.com/PixiBixi/uno-multiplayer/compare/9e6d47455a23f08b9b0502fe32d1386eeaa10da8..v1.11.13) - 2026-09-13
+#### Miscellaneous Chores
+- (**deps**) update dev-dependencies (#26) - ([9e6d474](https://github.com/PixiBixi/uno-multiplayer/commit/9e6d47455a23f08b9b0502fe32d1386eeaa10da8)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.11.12](https://github.com/PixiBixi/uno-multiplayer/compare/eb1e4acb0db8ddbd09269f0f3fd54bd11ef41d44..v1.11.12) - 2026-09-10
 #### Documentation
 - (**wiki**) document Renovate migration and harden-runner audit mode - ([eb1e4ac](https://github.com/PixiBixi/uno-multiplayer/commit/eb1e4acb0db8ddbd09269f0f3fd54bd11ef41d44)) - Jeremy Delgado
