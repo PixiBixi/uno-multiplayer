@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.11.16](https://github.com/PixiBixi/uno-multiplayer/compare/b3d219ff51aa94a32beb26eb8d7fb26e41c21b98..v1.11.16) - 2026-09-14
+#### Miscellaneous Chores
+- (**deps**) update dependency @types/node to v26.5.1 (#29) - ([b3d219f](https://github.com/PixiBixi/uno-multiplayer/commit/b3d219ff51aa94a32beb26eb8d7fb26e41c21b98)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.11.15](https://github.com/PixiBixi/uno-multiplayer/compare/895457170d49e2f815debbc3e158e35ba42752c3..v1.11.15) - 2026-09-14
 #### Miscellaneous Chores
 - (**deps**) update zizmorcore/zizmor-action action to v0.6.4 (#28) - ([8954571](https://github.com/PixiBixi/uno-multiplayer/commit/895457170d49e2f815debbc3e158e35ba42752c3)) - renovate[bot], renovate[bot]
