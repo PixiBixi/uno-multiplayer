@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.1](https://github.com/PixiBixi/uno-multiplayer/compare/b0943d8f3411b55aa1becb2efbefbdf5a42d62df..v1.12.1) - 2026-09-15
+#### Bug Fixes
+- (**deps**) patch the four fast-uri advisories (#32) - ([b0943d8](https://github.com/PixiBixi/uno-multiplayer/commit/b0943d8f3411b55aa1becb2efbefbdf5a42d62df)) - Jérémy
+
+- - -
+
 ## [v1.12.0](https://github.com/PixiBixi/uno-multiplayer/compare/9542c19381ca2b49c4de1ebaecc16de651dd2800..v1.12.0) - 2026-09-15
 #### Features
 - (**web**) call UNO from the keyboard (#31) - ([9542c19](https://github.com/PixiBixi/uno-multiplayer/commit/9542c19381ca2b49c4de1ebaecc16de651dd2800)) - Jérémy
