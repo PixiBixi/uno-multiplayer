@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CardThemeProvider } from '../components/CardThemeProvider.js'
 import { CARD_THEMES, DEFAULT_CARD_THEME } from '../lib/card-themes.js'
 import { readCardTheme } from '../lib/preferences.js'
+import { CALL_UNO_KEY } from '../hooks/useCallUnoKey.js'
 import { Table } from './Table.js'
 
 /* The shout recogniser reaches the real Web Speech API, which jsdom has none of.
@@ -120,6 +121,37 @@ describe('Table', () => {
     )
     await userEvent.click(screen.getByRole('button', { name: /uno/i }))
     expect(onPlay).toHaveBeenCalledWith({ type: 'callUno' })
+  })
+
+  it('calls UNO from the keyboard when the move is offered', async () => {
+    const { onPlay } = setup(
+      viewWith({ you: { seat: 0, hand: [mine, mine], legalMoves: [{ type: 'callUno' }] } }),
+    )
+    await userEvent.keyboard(CALL_UNO_KEY)
+    expect(onPlay).toHaveBeenCalledWith({ type: 'callUno' })
+  })
+
+  it('does not call UNO from the keyboard when the move is not offered', async () => {
+    const { onPlay } = setup(viewWith())
+    await userEvent.keyboard(CALL_UNO_KEY)
+    expect(onPlay).not.toHaveBeenCalledWith({ type: 'callUno' })
+  })
+
+  /* The chat sits on the same screen, so the shortcut has to lose to it. Written
+     against the real chat field rather than a synthetic event: the guard is only
+     worth anything if it survives what a player actually types into. */
+  it('does not call UNO while the letter is typed into the chat', async () => {
+    const { onPlay } = setup(
+      viewWith({ you: { seat: 0, hand: [mine, mine], legalMoves: [{ type: 'callUno' }] } }),
+    )
+    await userEvent.type(screen.getByRole('textbox', { name: /message/i }), CALL_UNO_KEY)
+    expect(onPlay).not.toHaveBeenCalledWith({ type: 'callUno' })
+  })
+
+  it('names the shortcut on the UNO control, which is the only place it is discoverable', () => {
+    setup(viewWith({ you: { seat: 0, hand: [mine, mine], legalMoves: [{ type: 'callUno' }] } }))
+    const uno = screen.getByRole('button', { name: /uno/i })
+    expect(uno.getAttribute('aria-label')).toMatch(new RegExp(CALL_UNO_KEY, 'i'))
   })
 
   /* A missclick guard, not a layout preference. `callUno` becomes legal in the middle of a

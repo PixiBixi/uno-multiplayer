@@ -242,6 +242,7 @@ export const fr: Messages = {
     drawCard: 'Piocher',
     take: (n) => `Prendre ${String(n)}`,
     callUno: 'UNO !',
+    callUnoWithKey: (key) => `Appeler UNO, raccourci ${key}`,
     /* « Contre-UNO » et non « Menteur » : oublier n'est pas mentir, et le terme courant
        dit ce que le bouton fait plutôt que d'accuser quelqu'un de mauvaise foi. */
     callOut: 'Contre-UNO !',
