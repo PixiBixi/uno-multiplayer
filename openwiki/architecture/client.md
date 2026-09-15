@@ -207,6 +207,35 @@ And the French phrase gets its own test. It is the longest string either catalog
 and the one that wrapped, so the geometry that lets it be used is asserted rather than
 assumed.
 
+## Three ways to call UNO
+
+The button, [the shout](voice-chat.md#shouting-uno-calls-it), and the `U` key
+(`hooks/useCallUnoKey.ts`). They differ in how they are reached and in nothing else:
+`Table.tsx` builds one `callUno` callback and hands the same one to all three. All three
+are armed from `canCallUno`, which comes from `legalMoves`, so a third entrance teaches
+the client no rule the server did not already send.
+
+`U`, and deliberately not the space bar that was asked for first. Space activates whatever
+button holds the focus and the controls row is a wall of them, so bound there it fires Draw
+and the call together for anyone who had just clicked Draw - the same missclick the control
+order exists to prevent, reached through the keyboard instead. It also scrolls the page.
+
+Two guards are the whole hook:
+
+- **The listener loses to anything a player types into**, which the chat on the same screen
+  makes mandatory: without it a message holding the letter calls UNO once per keystroke.
+  `isContentEditable` is checked through the attribute as well, because jsdom does not
+  implement the property and a test-only guard would pass against a browser that ignores it.
+  Modifiers and `isComposing` are skipped too, leaving Ctrl+U to the browser and an IME to
+  its word.
+- **Both inputs live in refs and the listener attaches once.** In the dependency list they
+  would tear the listener down and rebuild it on every render of the table, which is every
+  move anybody makes.
+
+The button wears the shortcut in a `kbd`, `aria-hidden` and hidden under `(hover: none)`
+since a touchscreen cannot reach it; the button's `aria-label` is what states that the
+lone letter is a shortcut at all.
+
 ## Card themes
 
 Five faces on offer - poster, classic, flat, letterpress, neon - chosen by **each
