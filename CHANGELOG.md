@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.0](https://github.com/PixiBixi/uno-multiplayer/compare/9542c19381ca2b49c4de1ebaecc16de651dd2800..v1.12.0) - 2026-09-15
+#### Features
+- (**web**) call UNO from the keyboard (#31) - ([9542c19](https://github.com/PixiBixi/uno-multiplayer/commit/9542c19381ca2b49c4de1ebaecc16de651dd2800)) - Jérémy
+
+- - -
+
 ## [v1.11.16](https://github.com/PixiBixi/uno-multiplayer/compare/b3d219ff51aa94a32beb26eb8d7fb26e41c21b98..v1.11.16) - 2026-09-14
 #### Miscellaneous Chores
 - (**deps**) update dependency @types/node to v26.5.1 (#29) - ([b3d219f](https://github.com/PixiBixi/uno-multiplayer/commit/b3d219ff51aa94a32beb26eb8d7fb26e41c21b98)) - renovate[bot], renovate[bot]
