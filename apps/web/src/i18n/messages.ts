@@ -270,6 +270,8 @@ export type Messages = {
     drawCard: string
     take: (n: number) => string
     callUno: string
+    /** Its accessible name, which is the only place the shortcut is spelled out. */
+    callUnoWithKey: (key: string) => string
     /** The button itself, short enough to sit beside a seat. */
     callOut: string
     /** Its accessible name, which has to say who is being accused. */

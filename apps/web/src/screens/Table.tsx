@@ -1,5 +1,5 @@
 import type { Move } from '@uno/engine'
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import type { LobbyView, PlayerView } from '@uno/protocol'
 import { CentreStack, ColourBand } from '../components/CentreStack.js'
 import { useCardTheme, useSetCardTheme } from '../components/CardThemeProvider.js'
@@ -14,6 +14,7 @@ import { TurnOrder } from '../components/TurnOrder.js'
 import { VoicePanel } from '../components/VoicePanel.js'
 import type { FeedEntry, Toast } from '../hooks/game-reducer.js'
 import { useTableEffects } from '../hooks/useTableEffects.js'
+import { CALL_UNO_KEY, useCallUnoKey } from '../hooks/useCallUnoKey.js'
 import { useCountdown } from '../hooks/useCountdown.js'
 import { useKonami } from '../hooks/useKonami.js'
 import { useShoutUno } from '../hooks/useShoutUno.js'
@@ -86,6 +87,13 @@ export function Table({
     setJustUnlocked(true)
   })
 
+  /* One callback for the three ways into the same move: the button below, the shout
+     and the keyboard. They differ in how they are reached and in nothing else. */
+  const callUno = useCallback(() => {
+    onPlay({ type: 'callUno' })
+  }, [onPlay])
+  useCallUnoKey({ armed: canCallUno, onCall: callUno })
+
   const [shoutCloudAllowed, setShoutCloudAllowed] = useState(readShoutCloudAllowed)
   const shout = useShoutUno({
     armed: canCallUno,
@@ -97,7 +105,7 @@ export function Table({
     enabled: voice.status === 'joined' && !voice.muted,
     locale,
     cloudAllowed: shoutCloudAllowed,
-    onCall: () => onPlay({ type: 'callUno' }),
+    onCall: callUno,
   })
   /* A pass is offered only while this seat is holding a card it has just drawn and may
      still lay down, which is the one moment a turn does not end by itself. Read from
@@ -448,11 +456,15 @@ export function Table({
                 <button
                   type="button"
                   className="btn btn-uno"
-                  onClick={() => {
-                    onPlay({ type: 'callUno' })
-                  }}
+                  /* The glyph shows the shortcut; the label is what says it IS one, and is
+                     the only thing a screen reader gets out of a lone letter. */
+                  aria-label={t.table.callUnoWithKey(CALL_UNO_KEY.toUpperCase())}
+                  onClick={callUno}
                 >
                   {t.table.callUno}
+                  <kbd className="btn-key" aria-hidden="true">
+                    {CALL_UNO_KEY.toUpperCase()}
+                  </kbd>
                 </button>
               )}
 

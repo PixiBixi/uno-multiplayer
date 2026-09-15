@@ -226,6 +226,7 @@ export const en: Messages = {
     drawCard: 'Draw card',
     take: (n) => `Take ${String(n)}`,
     callUno: 'UNO!',
+    callUnoWithKey: (key) => `Call UNO, shortcut ${key}`,
     /* "Caught", the word the published rules use, rather than "Liar": forgetting is not
        lying, and the button's job is to catch an omission, not to allege bad faith. */
     callOut: 'Caught!',
