@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.12.2](https://github.com/PixiBixi/uno-multiplayer/compare/85ab2112335e12c94f9f74ce39349ffdbfbd4559..v1.12.2) - 2026-09-18
+#### Documentation
+- (**wiki**) document the three UNO call paths and the U key choice - ([85ab211](https://github.com/PixiBixi/uno-multiplayer/commit/85ab2112335e12c94f9f74ce39349ffdbfbd4559)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**deps**) update node.js to ef24c50 (#30) - ([d30dad0](https://github.com/PixiBixi/uno-multiplayer/commit/d30dad0cb2410e5b2a1e79f08d74c048b15cdfac)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.1](https://github.com/PixiBixi/uno-multiplayer/compare/b0943d8f3411b55aa1becb2efbefbdf5a42d62df..v1.12.1) - 2026-09-15
 #### Bug Fixes
 - (**deps**) patch the four fast-uri advisories (#32) - ([b0943d8](https://github.com/PixiBixi/uno-multiplayer/commit/b0943d8f3411b55aa1becb2efbefbdf5a42d62df)) - Jérémy
