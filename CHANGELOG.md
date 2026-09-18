@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.3](https://github.com/PixiBixi/uno-multiplayer/compare/be1ec74ddd5505fd7e74bbfa85ad8c463375d51f..v1.12.3) - 2026-09-18
+#### Miscellaneous Chores
+- (**deps**) update dependency fast-check to v4.10.0 (#33) - ([be1ec74](https://github.com/PixiBixi/uno-multiplayer/commit/be1ec74ddd5505fd7e74bbfa85ad8c463375d51f)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.2](https://github.com/PixiBixi/uno-multiplayer/compare/85ab2112335e12c94f9f74ce39349ffdbfbd4559..v1.12.2) - 2026-09-18
 #### Documentation
 - (**wiki**) document the three UNO call paths and the U key choice - ([85ab211](https://github.com/PixiBixi/uno-multiplayer/commit/85ab2112335e12c94f9f74ce39349ffdbfbd4559)) - Jeremy Delgado
