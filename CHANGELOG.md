@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.6](https://github.com/PixiBixi/uno-multiplayer/compare/e2da06fba0480627c410906eed6539ec7318d147..v1.12.6) - 2026-09-20
+#### Miscellaneous Chores
+- (**deps**) update dependency @types/node to v26.6.0 (#36) - ([e2da06f](https://github.com/PixiBixi/uno-multiplayer/commit/e2da06fba0480627c410906eed6539ec7318d147)) - renovate[bot]
+
+- - -
+
 ## [v1.12.5](https://github.com/PixiBixi/uno-multiplayer/compare/a00c2d3b734ee4eefa1da2f84e4df36cb93141aa..v1.12.5) - 2026-09-20
 #### Miscellaneous Chores
 - (**deps**) update github-actions (#35) - ([a00c2d3](https://github.com/PixiBixi/uno-multiplayer/commit/a00c2d3b734ee4eefa1da2f84e4df36cb93141aa)) - renovate[bot]
