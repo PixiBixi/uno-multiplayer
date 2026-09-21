@@ -1,6 +1,13 @@
 # Changelog
 
 - - -
+## [v1.12.8](https://github.com/PixiBixi/uno-multiplayer/compare/ab58432cbb8a73841821ee00005c8bdbd1f41939..v1.12.8) - 2026-09-21
+#### Miscellaneous Chores
+- (**deps**) update docker/setup-buildx-action action to v4.4.1 (#39) - ([52f8099](https://github.com/PixiBixi/uno-multiplayer/commit/52f8099a7174e30ef20be48d496db401bece775c)) - renovate[bot]
+- (**deps**) update dependency prettier to v3.9.7 (#38) - ([ab58432](https://github.com/PixiBixi/uno-multiplayer/commit/ab58432cbb8a73841821ee00005c8bdbd1f41939)) - renovate[bot]
+
+- - -
+
 ## [v1.12.7](https://github.com/PixiBixi/uno-multiplayer/compare/88c14774b44624549fac9051fcdb66e00425e0d8..v1.12.7) - 2026-09-21
 #### Miscellaneous Chores
 - (**deps**) update dev-dependencies (#37) - ([88c1477](https://github.com/PixiBixi/uno-multiplayer/commit/88c14774b44624549fac9051fcdb66e00425e0d8)) - renovate[bot]
