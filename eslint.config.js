@@ -2,7 +2,8 @@ import js from '@eslint/js'
 import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/dist-types/**', '**/coverage/**'] },
+  // .claude/ holds agent worktrees: full checkouts whose scratch files are not ours to lint.
+  { ignores: ['**/dist/**', '**/dist-types/**', '**/coverage/**', '.claude/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
