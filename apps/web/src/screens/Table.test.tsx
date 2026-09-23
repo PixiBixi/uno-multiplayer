@@ -1,12 +1,13 @@
 import { DEFAULT_TABLE_RULES, type Card, type CardId } from '@uno/engine'
 import { DEFAULT_MATCH_GOAL, type PlayerView } from '@uno/protocol'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { CardThemeProvider } from '../components/CardThemeProvider.js'
 import { CARD_THEMES, DEFAULT_CARD_THEME } from '../lib/card-themes.js'
 import { readCardTheme } from '../lib/preferences.js'
 import { CALL_UNO_KEY } from '../hooks/useCallUnoKey.js'
+import { KONAMI } from '../hooks/useKonami.js'
 import { Table } from './Table.js'
 
 /* The shout recogniser reaches the real Web Speech API, which jsdom has none of.
@@ -444,6 +445,39 @@ describe('Table', () => {
     )
     expect(named.filter((label) => label === 'Face-down card').length).toBeGreaterThan(0)
     expect(named.filter((label) => label === 'Red 5')).toHaveLength(1)
+  })
+})
+
+describe('the Konami unlock flash', () => {
+  const typeKonami = () => {
+    act(() => {
+      for (const key of KONAMI) window.dispatchEvent(new KeyboardEvent('keydown', { key }))
+    })
+  }
+
+  /* `onAnimationEnd` sits on `<main>` but the flash is its own `::after`, so any
+     card burst or shake ending underneath it bubbles the same native event. Only
+     the flash's own end, target === currentTarget and on `::after`, may clear it.
+     jsdom has no `AnimationEvent` global, so React falls back to the vendor-
+     prefixed `webkitAnimationEnd` DOM event here - that is the one to dispatch. */
+  it('ignores a bubbled animationend from a descendant, and clears only for its own', () => {
+    setup(viewWith())
+    typeKonami()
+    const main = document.querySelector('.table-screen') as HTMLElement
+    expect(main.hasAttribute('data-unlocked')).toBe(true)
+
+    const surface = document.querySelector('.table-surface') as HTMLElement
+    act(() => {
+      surface.dispatchEvent(new Event('webkitAnimationEnd', { bubbles: true }))
+    })
+    expect(main.hasAttribute('data-unlocked')).toBe(true)
+
+    const flashEnd = new Event('webkitAnimationEnd', { bubbles: true })
+    Object.defineProperty(flashEnd, 'pseudoElement', { value: '::after' })
+    act(() => {
+      main.dispatchEvent(flashEnd)
+    })
+    expect(main.hasAttribute('data-unlocked')).toBe(false)
   })
 })
 

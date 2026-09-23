@@ -36,7 +36,7 @@ export function useTableEffects({ discardTop, currentColor, feed }: UseTableEffe
   const lastCardId = useRef(discardTop.id)
   const lastFeedId = useRef(highestFeedId(feed))
 
-  const timers = useRef<ReturnType<typeof setTimeout>[]>([])
+  const timers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set())
   const nextKey = useRef(0)
 
   const push = useCallback((kind: EffectKind, color?: Color) => {
@@ -45,8 +45,9 @@ export function useTableEffects({ discardTop, currentColor, feed }: UseTableEffe
     setEffects((current) => [...current, { key, kind, ...(color === undefined ? {} : { color }) }])
     const timer = setTimeout(() => {
       setEffects((current) => current.filter((effect) => effect.key !== key))
+      timers.current.delete(timer)
     }, EFFECT_DURATION_MS[kind])
-    timers.current.push(timer)
+    timers.current.add(timer)
   }, [])
 
   // Pending timers would otherwise keep firing into a component that is gone,
@@ -54,7 +55,7 @@ export function useTableEffects({ discardTop, currentColor, feed }: UseTableEffe
   useEffect(
     () => () => {
       for (const timer of timers.current) clearTimeout(timer)
-      timers.current = []
+      timers.current.clear()
     },
     [],
   )

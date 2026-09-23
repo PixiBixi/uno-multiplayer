@@ -75,14 +75,14 @@ export function useTableSounds({ feed, isMyTurn, mySeat }: UseTableSounds) {
   }, [isMyTurn, play])
 
   const toggleMuted = useCallback(() => {
-    setMuted((current) => {
-      const next = !current
-      writeMuted(next)
-      // Unmuting is itself the gesture that can unlock a context which was never
-      // unlocked, for a player who muted before ever hearing anything.
-      if (!next) engine.current?.unlock()
-      return next
-    })
+    // Side effects live here, not in the setMuted updater: StrictMode calls an
+    // updater twice to catch impurity, which would write and unlock twice.
+    const next = !mutedRef.current
+    writeMuted(next)
+    // Unmuting is itself the gesture that can unlock a context which was never
+    // unlocked, for a player who muted before ever hearing anything.
+    if (!next) engine.current?.unlock()
+    setMuted(next)
   }, [])
 
   return { muted, toggleMuted }

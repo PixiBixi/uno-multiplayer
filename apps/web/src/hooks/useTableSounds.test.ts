@@ -1,6 +1,7 @@
 import type { Card, CardId } from '@uno/engine'
 import type { GameEvent } from '@uno/protocol'
 import { act, renderHook } from '@testing-library/react'
+import { StrictMode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { SoundName } from '../lib/sounds.js'
 import { useTableSounds } from './useTableSounds.js'
@@ -158,5 +159,18 @@ describe('useTableSounds', () => {
     })
 
     expect(unlocked.count).toBeGreaterThan(before)
+  })
+
+  it('runs the toggle side effects once, even though StrictMode double-invokes the updater', () => {
+    window.localStorage.setItem('uno.pref.muted', 'true')
+    const { result } = renderHook(() => useTableSounds({ feed: [], isMyTurn: false, mySeat: 0 }), {
+      wrapper: StrictMode,
+    })
+
+    act(() => {
+      result.current.toggleMuted()
+    })
+
+    expect(unlocked.count).toBe(1)
   })
 })
