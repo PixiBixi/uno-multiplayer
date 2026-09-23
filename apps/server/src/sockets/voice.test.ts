@@ -36,14 +36,20 @@ const voiceHarness = () => {
     on: (event: string, handler: Handler) => handlers.set(event, handler),
   } as unknown as TypedSocket
 
+  const parsed = <T>(schema: ZodType<T>, payload: unknown): T | null => {
+    const result = schema.safeParse(payload)
+    return result.success ? result.data : null
+  }
   registerVoiceHandlers(context, socket, {
     attempt: (_ack, run) => run(),
-    parsePayload: <T>(schema: ZodType<T>, payload: unknown): T | null => {
-      const parsed = schema.safeParse(payload)
-      return parsed.success ? parsed.data : null
-    },
     emptyPayloadSchema: z.object({}),
-    seated: () => presence,
+    parsed,
+    // Always seated, and the limiter charged the way the real admit charges it.
+    admit: (schema, payload, _ack, limiter) => {
+      const data = parsed(schema, payload)
+      if (data === null || (limiter !== undefined && !limiter.allow(socket.id))) return null
+      return { data, presence }
+    },
   })
 
   const send = (event: string, payload: unknown): unknown => {
