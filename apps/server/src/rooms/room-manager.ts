@@ -43,6 +43,8 @@ export class RoomManager {
   private readonly unoTimers = new Map<string, unknown>()
   /** When a room last became empty, so purge can tell "gone" from "gone for good". */
   private readonly emptySince = new Map<string, number>()
+  /** Told the code of each purged room, so the socket layer can drop what it keeps per room. */
+  private readonly purgeListeners: ((code: string) => void)[] = []
   private readonly maxRooms: number
   private readonly gracePeriodMs: number
   private readonly timers: Timers
@@ -87,6 +89,10 @@ export class RoomManager {
 
   get(code: string): Room | null {
     return this.rooms.get(code.toUpperCase()) ?? null
+  }
+
+  onPurge(listener: (code: string) => void): void {
+    this.purgeListeners.push(listener)
   }
 
   scheduleGrace(room: Room, seat: number, onExpire: (events: GameEvent[]) => void): void {
@@ -261,6 +267,7 @@ export class RoomManager {
       this.cancelUnoGrace(room)
       this.rooms.delete(code)
       this.emptySince.delete(code)
+      for (const listener of this.purgeListeners) listener(code)
       removed++
     }
     return removed

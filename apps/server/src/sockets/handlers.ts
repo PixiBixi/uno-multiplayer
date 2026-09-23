@@ -17,7 +17,7 @@ import type { Room } from '../rooms/room.js'
 import { createRateLimiter } from '../security/rate-limit.js'
 import type { AckFailure, Presence, TypedServer, TypedSocket } from './types.js'
 import { createVoiceRooms } from './voice-room.js'
-import { leaveVoice, registerVoiceHandlers, type VoiceContext } from './voice.js'
+import { forgetVoiceSocket, leaveVoice, registerVoiceHandlers, type VoiceContext } from './voice.js'
 
 /** socket.io may deliver `undefined` when the client sends no payload object. */
 const emptyPayloadSchema = z.union([z.object({}), z.undefined(), z.null()]).transform(() => ({}))
@@ -91,6 +91,8 @@ export function registerSocketHandlers(
     refillPerSecond: config.createPerSecond,
   })
   const voiceRooms = createVoiceRooms()
+  // A purged room's code can be handed out again; its voice session must not survive it.
+  rooms.onPurge((code) => voiceRooms.drop(code))
   /* One join in a four-player mesh emits an offer, an answer and a dozen or so
      candidates per pair. Generous for that burst, hostile to a signal flood. */
   const voiceLimiter = createRateLimiter({ capacity: 120, refillPerSecond: 10 })
@@ -493,7 +495,7 @@ export function registerSocketHandlers(
     socket.on('disconnect', () => {
       attempt(undefined, () => {
         // Before `presences.delete` below: leaveVoice resolves the room through it.
-        leaveVoice(voiceContext, socket)
+        forgetVoiceSocket(voiceContext, socket)
         moveLimiter.forget(socket.id)
         chatLimiter.forget(socket.id)
         /* Only here, and deliberately not in `release`: the socket is genuinely gone, so

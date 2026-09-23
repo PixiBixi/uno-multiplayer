@@ -23,9 +23,9 @@ type VoiceHelpers = {
 
 /** Pushes the current roster to every socket in the room, sender included. */
 function broadcastPeers(context: VoiceContext, presence: Presence): void {
-  context.io
-    .to(presence.room.code)
-    .emit('voice:peers', context.voiceRooms.in(presence.room.code).peers())
+  // `get`, not `in`: after the last seat leaves, a lookup here recreated the dropped entry.
+  const peers = context.voiceRooms.get(presence.room.code)?.peers() ?? []
+  context.io.to(presence.room.code).emit('voice:peers', peers)
 }
 
 /**
@@ -38,13 +38,23 @@ function broadcastPeers(context: VoiceContext, presence: Presence): void {
 export function leaveVoice(context: VoiceContext, socket: TypedSocket): void {
   const presence = context.presenceOf(socket.id)
   if (presence === undefined) return
-  const room = context.voiceRooms.in(presence.room.code)
-  if (!room.has(presence.seat)) return
+  const room = context.voiceRooms.get(presence.room.code)
+  if (room === undefined || !room.has(presence.seat)) return
 
   room.leave(presence.seat)
   context.limiter.forget(socket.id)
   if (room.size() === 0) context.voiceRooms.drop(presence.room.code)
   broadcastPeers(context, presence)
+}
+
+/**
+ * Everything voice holds for a socket that is gone for good. The bucket is forgotten
+ * unconditionally: a seat can signal without ever joining, and `leaveVoice` only
+ * forgets the bucket of a seat that was in voice.
+ */
+export function forgetVoiceSocket(context: VoiceContext, socket: TypedSocket): void {
+  leaveVoice(context, socket)
+  context.limiter.forget(socket.id)
 }
 
 export function registerVoiceHandlers(
@@ -98,8 +108,8 @@ export function registerVoiceHandlers(
         return
       }
 
-      const room = context.voiceRooms.in(presence.room.code)
-      if (!room.has(presence.seat)) {
+      const room = context.voiceRooms.get(presence.room.code)
+      if (room === undefined || !room.has(presence.seat)) {
         ack({ ok: false, error: 'voice_not_joined' })
         return
       }
@@ -133,8 +143,8 @@ export function registerVoiceHandlers(
       const presence = seated(ack)
       if (presence === null) return
 
-      const room = context.voiceRooms.in(presence.room.code)
-      if (!room.has(presence.seat)) {
+      const room = context.voiceRooms.get(presence.room.code)
+      if (room === undefined || !room.has(presence.seat)) {
         ack({ ok: false, error: 'voice_not_joined' })
         return
       }

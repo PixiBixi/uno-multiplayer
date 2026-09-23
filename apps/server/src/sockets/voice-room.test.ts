@@ -60,4 +60,12 @@ describe('voice rooms', () => {
     rooms.drop('AAAAAA')
     expect(rooms.size()).toBe(1)
   })
+
+  it('looks a room up without creating one', () => {
+    const rooms = createVoiceRooms()
+    expect(rooms.get('ABCDEF')).toBeUndefined()
+    expect(rooms.size()).toBe(0)
+    const room = rooms.in('ABCDEF')
+    expect(rooms.get('ABCDEF')).toBe(room)
+  })
 })

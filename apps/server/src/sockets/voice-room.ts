@@ -11,7 +11,10 @@ export type VoiceRoom = {
 }
 
 export type VoiceRooms = {
+  /** Creates the session on first use: only for a seat that is joining. */
   in(roomCode: string): VoiceRoom
+  /** Every other read goes through here, so a stray event cannot leave an entry behind. */
+  get(roomCode: string): VoiceRoom | undefined
   drop(roomCode: string): void
   size(): number
 }
@@ -55,6 +58,7 @@ export function createVoiceRooms(): VoiceRooms {
       rooms.set(roomCode, created)
       return created
     },
+    get: (roomCode) => rooms.get(roomCode),
     drop(roomCode) {
       rooms.delete(roomCode)
     },
