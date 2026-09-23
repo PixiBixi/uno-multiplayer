@@ -114,6 +114,13 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
       const manager = managerRef.current
       if (manager === null) return
       const present = new Set(roster.map((peer) => peer.seat))
+      /* Our own seat gone means the server took us out (the table was left, or another
+         tab took the seat): nothing will call `leave`, so release the microphone here. */
+      if (!present.has(selfSeat)) {
+        teardown()
+        setStatus('idle')
+        return
+      }
       // A seat that left the roster takes its peer connection with it.
       for (const seat of manager.seats()) {
         if (present.has(seat)) continue
