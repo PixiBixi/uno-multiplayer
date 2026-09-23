@@ -11,6 +11,7 @@ class FakeConnection {
   addedTracks: unknown[] = []
   connectionState = 'new'
   closed = false
+  iceRestarts = 0
   onicecandidate: ((event: { candidate: RTCIceCandidate | null }) => void) | null = null
   ontrack: ((event: { streams: MediaStream[] }) => void) | null = null
   onconnectionstatechange: (() => void) | null = null
@@ -19,6 +20,9 @@ class FakeConnection {
     FakeConnection.instances.push(this)
   }
 
+  restartIce(): void {
+    this.iceRestarts += 1
+  }
   addTrack(track: unknown): void {
     this.addedTracks.push(track)
   }
@@ -154,6 +158,58 @@ describe('peer manager negotiation', () => {
     connection.connectionState = 'failed'
     connection.onconnectionstatechange?.()
     expect(onStateChange).toHaveBeenCalledWith(2, 'failed')
+  })
+
+  it('restarts ICE and re-offers when a connection it offered fails', async () => {
+    // Without this a failed seat stays in the map and every later connect() is a no-op.
+    const { manager, sendSignal } = build(0)
+    await manager.connect(2)
+    await manager.accept(2, { kind: 'answer', sdp: 'THEIR-ANSWER' })
+    sendSignal.mockClear()
+    const connection = FakeConnection.instances[0]
+    if (connection === undefined) throw new Error('expected a connection')
+    connection.connectionState = 'failed'
+    connection.onconnectionstatechange?.()
+    await vi.waitFor(() =>
+      expect(sendSignal).toHaveBeenCalledWith(2, { kind: 'offer', sdp: 'FAKE-OFFER' }),
+    )
+    expect(connection.iceRestarts).toBe(1)
+    expect(FakeConnection.instances).toHaveLength(1)
+  })
+
+  it('leaves the restart to the offering seat when a connection it answered fails', async () => {
+    // Both ends offering at once is glare; the answering side waits for the restart offer.
+    const { manager, sendSignal } = build(3)
+    await manager.accept(1, { kind: 'offer', sdp: 'THEIR-OFFER' })
+    sendSignal.mockClear()
+    const connection = FakeConnection.instances[0]
+    if (connection === undefined) throw new Error('expected a connection')
+    connection.connectionState = 'failed'
+    connection.onconnectionstatechange?.()
+    await Promise.resolve()
+    expect(connection.iceRestarts).toBe(0)
+    expect(sendSignal).not.toHaveBeenCalled()
+  })
+
+  it('answers a restart offer on the connection it already has', async () => {
+    const { manager, sendSignal } = build(3)
+    await manager.accept(1, { kind: 'offer', sdp: 'THEIR-OFFER' })
+    await manager.accept(1, { kind: 'offer', sdp: 'THEIR-RESTART-OFFER' })
+    expect(FakeConnection.instances).toHaveLength(1)
+    expect(sendSignal).toHaveBeenLastCalledWith(1, { kind: 'answer', sdp: 'FAKE-ANSWER' })
+  })
+
+  it('drops the seat when the restart offer cannot be made', async () => {
+    // A closed seat can be connected again by the next roster; a wedged one never can.
+    const { manager } = build(0)
+    await manager.connect(2)
+    const connection = FakeConnection.instances[0]
+    if (connection === undefined) throw new Error('expected a connection')
+    connection.createOffer = () => Promise.reject(new Error('InvalidStateError'))
+    connection.connectionState = 'failed'
+    connection.onconnectionstatechange?.()
+    await vi.waitFor(() => expect(manager.seats()).toEqual([]))
+    expect(connection.closed).toBe(true)
   })
 
   it('reuses one connection per seat', async () => {

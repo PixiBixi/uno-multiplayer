@@ -24,6 +24,30 @@ export function createPeerManager(options: PeerManagerOptions): PeerManager {
     options.createConnection ?? ((config: RTCConfiguration) => new RTCPeerConnection(config))
   const connections = new Map<number, RTCPeerConnection>()
 
+  const disconnect = (seat: number): void => {
+    connections.get(seat)?.close()
+    connections.delete(seat)
+  }
+
+  const offer = async (seat: number, connection: RTCPeerConnection): Promise<void> => {
+    const description = await connection.createOffer()
+    await connection.setLocalDescription(description)
+    options.sendSignal(seat, { kind: 'offer', sdp: description.sdp ?? '' })
+  }
+
+  /*
+   * Only the offering seat restarts, over the same offer/answer path, so glare stays
+   * impossible. A restart that cannot even be offered drops the seat, so the next
+   * roster connects it afresh instead of finding it wedged in the map.
+   */
+  const recover = (seat: number, connection: RTCPeerConnection): void => {
+    if (options.selfSeat > seat) return
+    connection.restartIce()
+    offer(seat, connection).catch(() => {
+      if (connections.get(seat) === connection) disconnect(seat)
+    })
+  }
+
   const open = (seat: number): RTCPeerConnection => {
     const existing = connections.get(seat)
     if (existing !== undefined) return existing
@@ -48,6 +72,7 @@ export function createPeerManager(options: PeerManagerOptions): PeerManager {
     }
     connection.onconnectionstatechange = () => {
       options.onStateChange(seat, connection.connectionState)
+      if (connection.connectionState === 'failed') recover(seat, connection)
     }
     connections.set(seat, connection)
     return connection
@@ -56,17 +81,14 @@ export function createPeerManager(options: PeerManagerOptions): PeerManager {
   return {
     /*
      * The lower seat number offers, the higher one answers. Seat numbers are
-     * already stable and agreed by everyone, so glare cannot happen and there is
-     * no recovery path to get wrong. Do NOT make this symmetric.
+     * already stable and agreed by everyone, so glare cannot happen, and an ICE
+     * restart follows the same rule. Do NOT make this symmetric.
      */
     async connect(seat) {
       if (connections.has(seat)) return
       const connection = open(seat)
       if (options.selfSeat > seat) return
-
-      const offer = await connection.createOffer()
-      await connection.setLocalDescription(offer)
-      options.sendSignal(seat, { kind: 'offer', sdp: offer.sdp ?? '' })
+      await offer(seat, connection)
     },
 
     async accept(fromSeat, signal) {
@@ -87,10 +109,7 @@ export function createPeerManager(options: PeerManagerOptions): PeerManager {
       options.sendSignal(fromSeat, { kind: 'answer', sdp: answer.sdp ?? '' })
     },
 
-    disconnect(seat) {
-      connections.get(seat)?.close()
-      connections.delete(seat)
-    },
+    disconnect,
 
     destroy() {
       for (const connection of connections.values()) connection.close()
