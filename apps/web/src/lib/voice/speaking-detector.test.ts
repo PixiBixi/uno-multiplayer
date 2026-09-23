@@ -64,15 +64,40 @@ describe('speaking detector', () => {
     expect(onChange).toHaveBeenCalledTimes(1)
   })
 
-  it('reports the fall back to silence', () => {
+  it('reports the fall back to silence once it has lasted the hold', () => {
     const onChange = vi.fn()
-    const { context } = scriptedContext([40, 1])
-    const detector = createSpeakingDetector({ onChange, threshold: 10, context, autoStart: false })
+    const { context } = scriptedContext([40, 1, 1])
+    const detector = createSpeakingDetector({
+      onChange,
+      threshold: 10,
+      holdSamples: 2,
+      context,
+      autoStart: false,
+    })
     if (detector === null) throw new Error('expected a detector')
     detector.watch(1, fakeStream)
     detector.sample()
     detector.sample()
+    expect(onChange).toHaveBeenCalledTimes(1)
+    detector.sample()
     expect(onChange).toHaveBeenNthCalledWith(2, 1, false)
+  })
+
+  it('rides over the gaps between syllables', () => {
+    // Each flip re-renders the whole table, so a dip shorter than the hold must not flip.
+    const onChange = vi.fn()
+    const { context } = scriptedContext([40, 1, 40, 1, 40])
+    const detector = createSpeakingDetector({
+      onChange,
+      threshold: 10,
+      holdSamples: 2,
+      context,
+      autoStart: false,
+    })
+    if (detector === null) throw new Error('expected a detector')
+    detector.watch(1, fakeStream)
+    for (let i = 0; i < 5; i++) detector.sample()
+    expect(onChange).toHaveBeenCalledTimes(1)
   })
 
   it('disconnects the source it created when a seat stops being watched', () => {
