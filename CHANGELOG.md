@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.12](https://github.com/PixiBixi/uno-multiplayer/compare/436685446e87eff2a59c7a90a03197bb981f8d2e..v1.12.12) - 2026-09-23
+#### Miscellaneous Chores
+- (**deps**) update dev-dependencies (#44) - ([4366854](https://github.com/PixiBixi/uno-multiplayer/commit/436685446e87eff2a59c7a90a03197bb981f8d2e)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.11](https://github.com/PixiBixi/uno-multiplayer/compare/009f81556506d3ff2443e59757358ddba61f7e53..v1.12.11) - 2026-09-23
 #### Bug Fixes
 - (**server**) hardening from the code review (#43) - ([215c3c2](https://github.com/PixiBixi/uno-multiplayer/commit/215c3c266b1812c6bc0bdfc6d85c6be07e1bf20c)) - Jérémy
