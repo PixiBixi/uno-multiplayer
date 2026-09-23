@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import type { VoicePeer } from '@uno/protocol'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { createPeerManager } from '../lib/voice/peer-manager.js'
+import { beforeEach, describe, expect, it, vi, type Mock } from 'vitest'
+import type { createPeerManager, PeerManager } from '../lib/voice/peer-manager.js'
 import type { createSpeakingDetector } from '../lib/voice/speaking-detector.js'
 import { useVoice } from './useVoice.js'
 
@@ -13,9 +13,9 @@ const voice = vi.hoisted(() => ({
   manager: null as ManagerOptions | null,
   detector: null as DetectorOptions | null,
   seats: new Set<number>(),
-  connect: null as unknown as ReturnType<typeof vi.fn>,
-  accept: null as unknown as ReturnType<typeof vi.fn>,
-  disconnect: null as unknown as ReturnType<typeof vi.fn>,
+  connect: null as unknown as Mock<PeerManager['connect']>,
+  accept: null as unknown as Mock<PeerManager['accept']>,
+  disconnect: null as unknown as Mock<PeerManager['disconnect']>,
 }))
 
 vi.mock('../lib/voice/peer-manager.js', () => ({
@@ -65,12 +65,14 @@ beforeEach(() => {
   voice.manager = null
   voice.detector = null
   voice.seats.clear()
-  voice.connect = vi.fn((seat: number) => {
+  voice.connect = vi.fn<PeerManager['connect']>((seat) => {
     voice.seats.add(seat)
     return Promise.resolve()
   })
-  voice.accept = vi.fn(() => Promise.resolve())
-  voice.disconnect = vi.fn((seat: number) => voice.seats.delete(seat))
+  voice.accept = vi.fn<PeerManager['accept']>(() => Promise.resolve())
+  voice.disconnect = vi.fn<PeerManager['disconnect']>((seat) => {
+    voice.seats.delete(seat)
+  })
   getUserMedia = vi.fn(() => Promise.resolve(fakeStream))
   vi.stubGlobal('navigator', { mediaDevices: { getUserMedia } })
 })
@@ -164,6 +166,42 @@ describe('useVoice', () => {
     await waitFor(() => expect(result.current.streams).not.toHaveProperty('1'))
     expect(result.current.speaking).not.toHaveProperty('1')
     expect(result.current.connectionStates).not.toHaveProperty('1')
+  })
+
+  it('drops a seat whose offer is rejected instead of leaking the rejection', async () => {
+    // e.g. setLocalDescription on a connection closed mid-negotiation.
+    voice.connect.mockImplementation((seat: number) => {
+      voice.seats.add(seat)
+      return Promise.reject(new DOMException('closed', 'InvalidStateError'))
+    })
+    const socket = fakeSocket()
+    const { result } = renderHook(() => useVoice({ socketRef: refTo(socket), selfSeat: 0 }))
+    await act(async () => {
+      await result.current.join()
+    })
+    act(() =>
+      socket.deliver('voice:peers', [
+        { seat: 0, muted: false },
+        { seat: 1, muted: false },
+      ] as never),
+    )
+    await waitFor(() => expect(voice.disconnect).toHaveBeenCalledWith(1))
+  })
+
+  it('drops a seat whose signal cannot be applied', async () => {
+    voice.accept.mockRejectedValue(new DOMException('closed', 'InvalidStateError'))
+    const socket = fakeSocket()
+    const { result } = renderHook(() => useVoice({ socketRef: refTo(socket), selfSeat: 0 }))
+    await act(async () => {
+      await result.current.join()
+    })
+    act(() =>
+      socket.deliver('voice:signal', {
+        fromSeat: 2,
+        signal: { kind: 'offer', sdp: 'THEIR-OFFER' },
+      } as never),
+    )
+    await waitFor(() => expect(voice.disconnect).toHaveBeenCalledWith(2))
   })
 
   it('emits voice:leave and returns to idle', async () => {

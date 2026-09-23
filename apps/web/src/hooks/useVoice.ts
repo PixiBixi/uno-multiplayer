@@ -55,6 +55,17 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
     setConnectionStates(without)
   }, [])
 
+  /* A negotiation step rejects when its connection closes under it. Dropping the seat
+     lets the next roster connect it afresh; skipped if voice was torn down meanwhile. */
+  const settle = useCallback(
+    (manager: PeerManager, seat: number, step: Promise<void>) => {
+      step.catch(() => {
+        if (managerRef.current === manager) dropSeat(manager, seat)
+      })
+    },
+    [dropSeat],
+  )
+
   // Every place that gives up on voice tears it down and drops back to idle together.
   const reset = useCallback(() => {
     teardown()
@@ -107,9 +118,9 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
          track.enabled false, so the indicator goes dark on its own. */
       detector?.watch(selfSeat, localStream)
       setStatus('joined')
-      for (const peer of result.peers) void manager.connect(peer.seat)
+      for (const peer of result.peers) settle(manager, peer.seat, manager.connect(peer.seat))
     })
-  }, [selfSeat, socketRef, reset])
+  }, [selfSeat, socketRef, reset, settle])
 
   const leave = useCallback(() => {
     socketRef.current?.emit('voice:leave', {}, () => {})
@@ -144,12 +155,14 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
         dropSeat(manager, seat)
       }
       for (const peer of roster) {
-        if (peer.seat !== selfSeat) void manager.connect(peer.seat)
+        if (peer.seat !== selfSeat) settle(manager, peer.seat, manager.connect(peer.seat))
       }
     }
 
     const onSignal = (payload: { fromSeat: number; signal: VoiceSignal }): void => {
-      void managerRef.current?.accept(payload.fromSeat, payload.signal)
+      const manager = managerRef.current
+      if (manager === null) return
+      settle(manager, payload.fromSeat, manager.accept(payload.fromSeat, payload.signal))
     }
 
     // A dropped socket takes the peers with it; the client rejoins explicitly.
@@ -165,7 +178,7 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
       socket.off('voice:signal', onSignal)
       socket.off('disconnect', onDisconnect)
     }
-  }, [selfSeat, socketRef, reset, dropSeat])
+  }, [selfSeat, socketRef, reset, dropSeat, settle])
 
   useEffect(() => teardown, [teardown])
 
