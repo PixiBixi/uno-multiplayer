@@ -39,7 +39,7 @@ import {
 import { redactFor } from '../views.js'
 import { emptyStatsFor, tally } from './stats.js'
 
-export type Member = {
+type Member = {
   seat: number
   name: string
   /** The player's identity across reconnections. Never the socket id. */
@@ -48,7 +48,7 @@ export type Member = {
   status: SeatStatus
 }
 
-export type RoomPhase = 'lobby' | 'playing' | 'finished'
+type RoomPhase = 'lobby' | 'playing' | 'finished'
 
 /**
  * One room: a lobby, then a game. Deliberately synchronous and timer-free - it

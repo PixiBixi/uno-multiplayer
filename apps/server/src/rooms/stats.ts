@@ -11,7 +11,7 @@ import type { GameEvent, SeatStats } from '@uno/protocol'
  *
  * Pure, so the whole thing is testable without a room, a socket or a clock.
  */
-export const emptyStats = (): SeatStats => ({
+const emptyStats = (): SeatStats => ({
   cardsPlayed: 0,
   wild4Played: 0,
   draw2Played: 0,
