@@ -39,7 +39,9 @@ const clients: Socket[] = []
 
 beforeEach(async () => {
   const config = loadConfig({ NODE_ENV: 'test', LOG_LEVEL: 'silent' })
-  rooms = new RoomManager({ maxRooms: 10, gracePeriodMs: 50 })
+  /* Long enough that a rejoin on a loaded machine lands inside it: at 50 ms the
+     seat sometimes went 'left' first and the rejoin test flaked. */
+  rooms = new RoomManager({ maxRooms: 10, gracePeriodMs: 1000 })
   httpServer = createServer()
   ioServer = registerSocketHandlers(httpServer, rooms, config)
   await new Promise<void>((resolve) => httpServer.listen(0, resolve))
