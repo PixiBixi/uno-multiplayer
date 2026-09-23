@@ -129,8 +129,11 @@ export function registerSocketHandlers(
    * Called after anything that can change whose turn it is. Both arms are safe to
    * call unconditionally: each clears itself when the room is not in its state, so
    * a table with no pace simply ends up with no timers and null deadlines.
+   *
+   * `presence` is for a seat arriving or going without a move being made: the turn
+   * clock keeps running unless the turn itself moved.
    */
-  const retime = (room: Room): void => {
+  const retime = (room: Room, cause: 'move' | 'presence' = 'move'): void => {
     const afterExpiry = (events: GameEvent[]): void => {
       if (events.length > 0) broadcastEvents(room, events)
       // Re-timed before broadcasting, so the deadline every player receives is
@@ -138,7 +141,8 @@ export function registerSocketHandlers(
       retime(room)
       broadcastViews(room)
     }
-    rooms.armTurn(room, afterExpiry)
+    if (cause === 'presence') rooms.keepTurn(room, afterExpiry)
+    else rooms.armTurn(room, afterExpiry)
     rooms.armNextRound(room, afterExpiry)
     /* Third clock, same shape: the seconds a seat has to say UNO after playing down to
        one card, on a table where nobody is watching for it. Armed here rather than at
@@ -180,7 +184,7 @@ export function registerSocketHandlers(
     if (result === null) return
     room.expireGrace(result.seat)
     broadcastEvents(room, [...result.events, { type: 'seatLeft', seat: result.seat }])
-    retime(room)
+    retime(room, 'presence')
     broadcastLobby(room)
     // The people still playing need a fresh view too, not just a fresh lobby: a seat
     // going away can change whose turn it is.
@@ -300,7 +304,7 @@ export function registerSocketHandlers(
         ack({ ok: true, seat: rejoined.value.seat })
         broadcastLobby(room)
         broadcastEvents(room, [{ type: 'seatReconnected', seat: rejoined.value.seat }])
-        retime(room)
+        retime(room, 'presence')
         broadcastViews(room)
       })
     })
@@ -514,13 +518,13 @@ export function registerSocketHandlers(
         broadcastEvents(room, result.events)
         // A disconnection moves the turn past the seat that left, so the clock
         // now belongs to somebody else.
-        retime(room)
+        retime(room, 'presence')
         broadcastLobby(room)
         broadcastViews(room)
 
         rooms.scheduleGrace(room, result.seat, (events) => {
           broadcastEvents(room, events)
-          retime(room)
+          retime(room, 'presence')
           broadcastLobby(room)
           broadcastViews(room)
         })

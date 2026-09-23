@@ -279,6 +279,41 @@ describe('reconnection over sockets', () => {
     expect(await emit<PlainAck>(second, 'chat:send', { text: 'still here' })).toEqual({ ok: true })
   })
 
+  /* Every rejoin used to re-arm the turn clock, so the seat on turn could stall a paced
+     table for as long as it liked by re-emitting room:rejoin before its time ran out. */
+  it('keeps the running turn clock when the seat on turn rejoins', async () => {
+    const host = newClient()
+    const created = await emit<CreateAck>(host, 'room:create', {
+      playerName: 'Ana',
+      goal: DEFAULT_MATCH_GOAL,
+      pace: { turnSeconds: 60 },
+    })
+    if (!created.ok) throw new Error('room:create failed')
+    const guest = newClient()
+    const joined = await emit<JoinAck>(guest, 'room:join', {
+      roomCode: created.roomCode,
+      playerName: 'Ben',
+    })
+    if (!joined.ok) throw new Error('join failed')
+
+    const dealt = nextView(host)
+    await emit<PlainAck>(host, 'game:start', {})
+    const before = await dealt
+    expect(before.turnDeadline).not.toBeNull()
+
+    const onTurn = before.currentSeat === 0 ? host : guest
+    const token = before.currentSeat === 0 ? created.sessionToken : joined.sessionToken
+    // Long enough for Date.now() to move, so a re-armed clock shows a later deadline.
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    const after = nextView(host)
+    const ack = await emit<PlainAck>(onTurn, 'room:rejoin', {
+      roomCode: created.roomCode,
+      sessionToken: token,
+    })
+    expect(ack.ok).toBe(true)
+    expect((await after).turnDeadline).toBe(before.turnDeadline)
+  })
+
   it('refuses a rejoin with an unknown token', async () => {
     const created = await createRoom(newClient())
     expect(
