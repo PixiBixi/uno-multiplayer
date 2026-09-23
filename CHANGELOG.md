@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.16](https://github.com/PixiBixi/uno-multiplayer/compare/92363443fd463104bcf8f19b8709b78b3b741b9e..v1.12.16) - 2026-09-23
+#### Bug Fixes
+- (**web**) voice peer lifecycle from the code review (#47) - ([9236344](https://github.com/PixiBixi/uno-multiplayer/commit/92363443fd463104bcf8f19b8709b78b3b741b9e)) - Jérémy
+
+- - -
+
 ## [v1.12.15](https://github.com/PixiBixi/uno-multiplayer/compare/f9c5df46fba5ca5b8ccf4e9876cf6e87d413e1d5..v1.12.15) - 2026-09-23
 #### Bug Fixes
 - (**web**) three small client fixes from the code review (#48) - ([f9c5df4](https://github.com/PixiBixi/uno-multiplayer/commit/f9c5df46fba5ca5b8ccf4e9876cf6e87d413e1d5)) - Jérémy
