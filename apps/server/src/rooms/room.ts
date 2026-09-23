@@ -227,16 +227,24 @@ export class Room {
 
   join(name: string, socketId: string): Result<{ seat: number; sessionToken: string }, ErrorCode> {
     if (this.phase !== 'lobby') return err('game_already_started')
-    if (this.members.length >= MAX_SEATS) return err('room_full')
+    // Idempotent per socket: a double tap otherwise seats a ghost that never disconnects.
+    const already = this.members.find((m) => m.socketId === socketId)
+    if (already !== undefined) return ok({ seat: already.seat, sessionToken: already.sessionToken })
+
+    /* A seat left in the lobby is handed on rather than kept: nothing has been dealt or
+       scored, so seat == engine index still holds, and keeping it would make three
+       departures fill the table. */
+    const vacant = this.members.find((m) => m.status === 'left')
+    if (vacant === undefined && this.members.length >= MAX_SEATS) return err('room_full')
 
     const member: Member = {
-      seat: this.members.length,
+      seat: vacant?.seat ?? this.members.length,
       name,
       sessionToken: randomUUID(),
       socketId,
       status: 'active',
     }
-    this.members.push(member)
+    this.members[member.seat] = member
     return ok({ seat: member.seat, sessionToken: member.sessionToken })
   }
 
