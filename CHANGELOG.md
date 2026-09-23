@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.14](https://github.com/PixiBixi/uno-multiplayer/compare/b2b98389a3d012d8391f1b4954dfdffb43b9feda..v1.12.14) - 2026-09-23
+#### Miscellaneous Chores
+- (**test**) run the web project on the vmThreads pool (#46) - ([b2b9838](https://github.com/PixiBixi/uno-multiplayer/commit/b2b98389a3d012d8391f1b4954dfdffb43b9feda)) - Jérémy
+
+- - -
+
 ## [v1.12.13](https://github.com/PixiBixi/uno-multiplayer/compare/903d74f3e0f1a8fc8b6318f6c4457fef45a7f46d..v1.12.13) - 2026-09-23
 #### Bug Fixes
 - (**server**) keep the round pause and UNO window across presence changes (#45) - ([903d74f](https://github.com/PixiBixi/uno-multiplayer/commit/903d74f3e0f1a8fc8b6318f6c4457fef45a7f46d)) - Jérémy
