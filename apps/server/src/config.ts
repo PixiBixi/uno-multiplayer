@@ -53,6 +53,9 @@ const envSchema = z.object({
    */
   CREATE_BURST: z.coerce.number().int().min(1).default(3),
   CREATE_PER_SECOND: z.coerce.number().min(0.01).default(0.1),
+  /** Lobby and match control (configure, start, next round, restart, rejoin), one shared bucket. */
+  CONTROL_BURST: z.coerce.number().int().min(1).default(20),
+  CONTROL_PER_SECOND: z.coerce.number().min(0.1).default(2),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 })
 
@@ -73,6 +76,8 @@ export type Config = {
   chatPerSecond: number
   createBurst: number
   createPerSecond: number
+  controlBurst: number
+  controlPerSecond: number
   turnUrl: string | null
   turnSecret: string | null
   turnTtlSeconds: number
@@ -103,6 +108,8 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     chatPerSecond: parsed.CHAT_PER_SECOND,
     createBurst: parsed.CREATE_BURST,
     createPerSecond: parsed.CREATE_PER_SECOND,
+    controlBurst: parsed.CONTROL_BURST,
+    controlPerSecond: parsed.CONTROL_PER_SECOND,
     turnUrl: parsed.TURN_URL.trim().length > 0 ? parsed.TURN_URL.trim() : null,
     turnSecret: parsed.TURN_SECRET.length > 0 ? parsed.TURN_SECRET : null,
     turnTtlSeconds: parsed.TURN_TTL_SECONDS,

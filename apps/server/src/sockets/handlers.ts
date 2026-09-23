@@ -90,6 +90,12 @@ export function registerSocketHandlers(
     capacity: config.createBurst,
     refillPerSecond: config.createPerSecond,
   })
+  /* Configure, start, next round, restart and rejoin each re-broadcast the table and some
+     re-deal it. One shared bucket, so alternating between them buys no extra allowance. */
+  const controlLimiter = createRateLimiter({
+    capacity: config.controlBurst,
+    refillPerSecond: config.controlPerSecond,
+  })
   const voiceRooms = createVoiceRooms()
   // A purged room's code can be handed out again; its voice session must not survive it.
   rooms.onPurge((code) => voiceRooms.drop(code))
@@ -288,6 +294,10 @@ export function registerSocketHandlers(
           ack({ ok: false, error: 'invalid_payload' })
           return
         }
+        if (!controlLimiter.allow(socket.id)) {
+          ack({ ok: false, error: 'rate_limited' })
+          return
+        }
         const room = rooms.get(data.roomCode)
         if (room === null) {
           ack({ ok: false, error: 'room_not_found' })
@@ -377,6 +387,10 @@ export function registerSocketHandlers(
         }
         const presence = seated(ack)
         if (presence === null) return
+        if (!controlLimiter.allow(socket.id)) {
+          ack({ ok: false, error: 'rate_limited' })
+          return
+        }
         const applied = presence.room.configure(presence.seat, data)
         if (!applied.okay) {
           ack({ ok: false, error: applied.error })
@@ -395,6 +409,10 @@ export function registerSocketHandlers(
         }
         const presence = seated(ack)
         if (presence === null) return
+        if (!controlLimiter.allow(socket.id)) {
+          ack({ ok: false, error: 'rate_limited' })
+          return
+        }
         const started = presence.room.start(presence.seat)
         if (!started.okay) {
           ack({ ok: false, error: started.error })
@@ -415,6 +433,10 @@ export function registerSocketHandlers(
         }
         const presence = seated(ack)
         if (presence === null) return
+        if (!controlLimiter.allow(socket.id)) {
+          ack({ ok: false, error: 'rate_limited' })
+          return
+        }
         const dealt = presence.room.nextRound(presence.seat, rooms.nextSeed())
         if (!dealt.okay) {
           ack({ ok: false, error: dealt.error })
@@ -435,6 +457,10 @@ export function registerSocketHandlers(
         }
         const presence = seated(ack)
         if (presence === null) return
+        if (!controlLimiter.allow(socket.id)) {
+          ack({ ok: false, error: 'rate_limited' })
+          return
+        }
         const restarted = presence.room.restart(presence.seat, rooms.nextSeed())
         if (!restarted.okay) {
           ack({ ok: false, error: restarted.error })
@@ -505,8 +531,10 @@ export function registerSocketHandlers(
         /* Only here, and deliberately not in `release`: the socket is genuinely gone, so
            its bucket is dead weight. `release` runs on every create - it is how a socket
            gives up its old table - so forgetting there would refill the create bucket on
-           each create and cancel the limit it exists to impose. */
+           each create and cancel the limit it exists to impose. The control bucket
+           follows the same rule, since leaving and rejoining would refill it. */
         createLimiter.forget(socket.id)
+        controlLimiter.forget(socket.id)
         const presence = presences.get(socket.id)
         presences.delete(socket.id)
         if (presence === undefined) return

@@ -40,6 +40,15 @@ describe('loadConfig', () => {
   it('accepts a zero grace period, for tests that want no waiting', () => {
     expect(loadConfig({ GRACE_PERIOD_MS: '0' }).gracePeriodMs).toBe(0)
   })
+
+  it('reads the control-event rate limit, with defaults', () => {
+    expect(loadConfig({})).toMatchObject({ controlBurst: 20, controlPerSecond: 2 })
+    expect(loadConfig({ CONTROL_BURST: '4', CONTROL_PER_SECOND: '0.5' })).toMatchObject({
+      controlBurst: 4,
+      controlPerSecond: 0.5,
+    })
+    expect(() => loadConfig({ CONTROL_BURST: '0' })).toThrow()
+  })
 })
 
 describe('voice configuration', () => {
