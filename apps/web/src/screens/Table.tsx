@@ -213,7 +213,10 @@ export function Table({
     <main
       className="table-screen"
       data-unlocked={justUnlocked ? '' : undefined}
-      onAnimationEnd={() => {
+      onAnimationEnd={(event) => {
+        /* The flash is `::after` on this element; every other animation on the
+           table (bursts, shake) bubbles the same event and must not reset it. */
+        if (event.target !== event.currentTarget || event.pseudoElement !== '::after') return
         setJustUnlocked(false)
       }}
     >
