@@ -6,7 +6,7 @@ export type SpeakingDetector = {
   destroy(): void
 }
 
-export type SpeakingDetectorOptions = {
+type SpeakingDetectorOptions = {
   onChange: (seat: number, speaking: boolean) => void
   /** Deviation from silence, in the 0-127 range of time-domain byte data. */
   threshold?: number

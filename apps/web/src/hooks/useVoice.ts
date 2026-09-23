@@ -4,7 +4,7 @@ import type { Socket } from 'socket.io-client'
 import { createPeerManager, type PeerManager } from '../lib/voice/peer-manager.js'
 import { createSpeakingDetector, type SpeakingDetector } from '../lib/voice/speaking-detector.js'
 
-export type VoiceStatus = 'idle' | 'joining' | 'joined' | 'denied' | 'unsupported'
+type VoiceStatus = 'idle' | 'joining' | 'joined' | 'denied' | 'unsupported'
 
 type VoiceSocket = Socket<ServerToClient, ClientToServer>
 

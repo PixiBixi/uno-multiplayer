@@ -23,7 +23,7 @@ export const CARD_THEMES = ['poster', 'classic', 'flat', 'letterpress', 'neon'] 
  * render time - it carries a full spec like the rest - so the only thing hiding it
  * is its absence from the list the pickers and the cycler read.
  */
-export const HIDDEN_CARD_THEMES = ['minuit'] as const
+const HIDDEN_CARD_THEMES = ['minuit'] as const
 
 export const ALL_CARD_THEMES = [...CARD_THEMES, ...HIDDEN_CARD_THEMES] as const
 export type CardTheme = (typeof ALL_CARD_THEMES)[number]
