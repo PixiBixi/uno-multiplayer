@@ -185,7 +185,25 @@ export function registerSocketHandlers(
     broadcastViews(room)
   }
 
+  /** Takes a seat's old socket off the table: a second tab rejoined as that seat. */
+  const evict = (socketId: string): void => {
+    const stale = io.sockets.sockets.get(socketId)
+    // Before `presences.delete`: leaveVoice resolves the room through it.
+    if (stale !== undefined) leaveVoice(voiceContext, stale)
+    presences.delete(socketId)
+    moveLimiter.forget(socketId)
+    chatLimiter.forget(socketId)
+    stale?.disconnect(true)
+  }
+
   io.on('connection', (socket: TypedSocket) => {
+    /* Every client event takes (payload, ack), and every handler acks after it has
+       changed state. A missing callback threw there and skipped the broadcast. */
+    socket.use((packet, next) => {
+      if (typeof packet[2] !== 'function') packet[2] = () => {}
+      next()
+    })
+
     const attach = (room: Room, seat: number): void => {
       /*
        * Scoped to a DIFFERENT room on purpose. Re-attaching to the table you are already
@@ -274,6 +292,7 @@ export function registerSocketHandlers(
           ack({ ok: false, error: rejoined.error })
           return
         }
+        if (rejoined.value.supersededSocketId !== null) evict(rejoined.value.supersededSocketId)
         rooms.cancelGrace(room, rejoined.value.seat)
         attach(room, rejoined.value.seat)
         ack({ ok: true, seat: rejoined.value.seat })

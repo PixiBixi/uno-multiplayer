@@ -68,7 +68,7 @@ describe('Room.rejoin', () => {
     room.disconnect('socket-1')
     expect(room.rejoin(tokens[1] ?? '', 'socket-1-new')).toEqual({
       okay: true,
-      value: { seat: 1 },
+      value: { seat: 1, supersededSocketId: null },
     })
     expect(room.memberAt(1)?.status).toBe('active')
     expect(room.viewFor(1)?.you.hand).toEqual(handBefore)
@@ -92,7 +92,10 @@ describe('Room.rejoin', () => {
 
   it('accepts a rejoin while the seat is still connected, replacing the socket', () => {
     const { room, tokens } = started('Ana', 'Ben')
-    expect(room.rejoin(tokens[0] ?? '', 'socket-0-second-tab').okay).toBe(true)
+    expect(room.rejoin(tokens[0] ?? '', 'socket-0-second-tab')).toEqual({
+      okay: true,
+      value: { seat: 0, supersededSocketId: 'socket-0' },
+    })
     expect(room.memberAt(0)?.socketId).toBe('socket-0-second-tab')
   })
 })

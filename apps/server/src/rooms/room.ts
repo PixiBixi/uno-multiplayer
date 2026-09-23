@@ -546,16 +546,25 @@ export class Room {
     }
   }
 
-  rejoin(sessionToken: string, socketId: string): Result<{ seat: number }, ErrorCode> {
+  /**
+   * `supersededSocketId` is the socket this rejoin took the seat from, when it was
+   * still attached: a second tab. The caller must evict it, or it keeps acting as the seat.
+   */
+  rejoin(
+    sessionToken: string,
+    socketId: string,
+  ): Result<{ seat: number; supersededSocketId: string | null }, ErrorCode> {
     const member = this.members.find((m) => m.sessionToken === sessionToken)
     if (member === undefined || member.status === 'left') return err('invalid_session')
 
+    const previous = member.socketId
     member.socketId = socketId
     member.status = 'active'
     if (this.game !== null) {
       this.game = setSeatStatus(this.game, member.seat, 'active')
     }
-    return ok({ seat: member.seat })
+    const supersededSocketId = previous !== null && previous !== socketId ? previous : null
+    return ok({ seat: member.seat, supersededSocketId })
   }
 
   /** Called by RoomManager when the grace period elapses. */

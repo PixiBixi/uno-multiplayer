@@ -195,6 +195,20 @@ describe('playing over sockets', () => {
     expect(after[0]?.currentSeat).not.toBe(0)
   })
 
+  it('still pushes the new table when a move arrives without an ack', async () => {
+    const { host, others } = await table(2)
+    const dealt = Promise.all([host, ...others].map(nextView))
+    await emit<PlainAck>(host, 'game:start', {})
+    const first = await dealt
+    const move = first[0]?.you.legalMoves.find((candidate) => candidate.type === 'play')
+    if (move === undefined) throw new Error('expected a playable card in the seeded deal')
+
+    const updated = Promise.all([host, ...others].map(nextView))
+    host.emit('game:move', { move })
+    const after = await updated
+    expect(after[0]?.currentSeat).not.toBe(0)
+  })
+
   it('rejects a malformed move payload', async () => {
     const { host } = await table(2)
     const dealt = nextView(host)
@@ -242,6 +256,27 @@ describe('reconnection over sockets', () => {
     })
     expect(ack.ok).toBe(true)
     expect((await restored).you.hand).toEqual(handBefore)
+  })
+
+  it('evicts the first tab when a second one rejoins the same seat', async () => {
+    const host = newClient()
+    const created = await createRoom(host)
+    const first = newClient()
+    const joined = await emit<JoinAck>(first, 'room:join', {
+      roomCode: created.roomCode,
+      playerName: 'Ben',
+    })
+    if (!joined.ok) throw new Error('join failed')
+
+    const evicted = new Promise<string>((resolve) => first.once('disconnect', resolve))
+    const second = newClient()
+    const ack = await emit<PlainAck>(second, 'room:rejoin', {
+      roomCode: created.roomCode,
+      sessionToken: joined.sessionToken,
+    })
+    expect(ack.ok).toBe(true)
+    expect(await evicted).toBe('io server disconnect')
+    expect(await emit<PlainAck>(second, 'chat:send', { text: 'still here' })).toEqual({ ok: true })
   })
 
   it('refuses a rejoin with an unknown token', async () => {
