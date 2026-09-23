@@ -63,24 +63,24 @@ otherwise.
 allowed to throw: a misconfigured environment must stop the boot rather than
 surface later as confusing runtime behaviour.
 
-| Variable                               | Default                 | Purpose                                                                                                                        |
-| -------------------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| `PORT`                                 | `5050`                  | Not 5000 - macOS Control Center binds that for AirPlay                                                                         |
-| `HOST`                                 | `0.0.0.0`               | Listen address                                                                                                                 |
-| `CORS_ORIGIN`                          | empty                   | Comma-separated allowlist; empty means same-origin only                                                                        |
-| `BEHIND_TLS`                           | `false`                 | See above. Only `'true'` or `'false'` - a security flag that read `TRUE` as false would be worse than one that refuses to boot |
-| `GRACE_PERIOD_MS`                      | `60000`                 | How long a disconnected player keeps their seat                                                                                |
-| `MAX_ROOMS`                            | `500`                   | Cap on concurrent rooms, bounding memory                                                                                       |
-| `STATIC_ROOT`                          | `/app/web` in the image | Built client to serve; empty serves the API alone                                                                              |
-| `MOVE_BURST` / `MOVE_PER_SECOND`       | `20` / `2`              | Move rate limit, sized for a human                                                                                             |
-| `CHAT_BURST` / `CHAT_PER_SECOND`       | `5` / `0.5`             | Chat rate limit, tighter                                                                                                       |
-| `CREATE_BURST` / `CREATE_PER_SECOND`   | `3` / `0.1`             | Room creation, tighter still - a room costs a seat, a deck and up to three timers                                              |
-| `CONTROL_BURST` / `CONTROL_PER_SECOND` | `20` / `2`              | Configure, start, next round, restart and rejoin, one bucket shared by all five                                                |
-| `TURN_URL`                             | empty                   | TURN relay for voice chat, e.g. `turn:turn.example.com:3478`. Empty leaves voice on STUN alone                                 |
-| `TURN_SECRET`                          | empty                   | Must equal coturn's `static-auth-secret`. Empty disables TURN                                                                  |
-| `TURN_TTL_SECONDS`                     | `86400`                 | Lifetime of a minted credential. Refuses anything under 60                                                                     |
-| `STUN_URL`                             | empty                   | STUN server. Worth setting even with TURN, since coturn serves both and a relay that is down takes its STUN with it            |
-| `LOG_LEVEL`                            | `info`                  | pino level                                                                                                                     |
+| Variable                               | Default                 | Purpose                                                                                                                                                                                         |
+| -------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                                 | `5050`                  | Not 5000 - macOS Control Center binds that for AirPlay                                                                                                                                          |
+| `HOST`                                 | `0.0.0.0`               | Listen address                                                                                                                                                                                  |
+| `CORS_ORIGIN`                          | empty                   | Comma-separated allowlist; empty means same-origin only. Also gates the socket handshake, which compares `Origin` with `Host`: a proxy that rewrites `Host` needs the public origin listed here |
+| `BEHIND_TLS`                           | `false`                 | See above. Only `'true'` or `'false'` - a security flag that read `TRUE` as false would be worse than one that refuses to boot                                                                  |
+| `GRACE_PERIOD_MS`                      | `60000`                 | How long a disconnected player keeps their seat                                                                                                                                                 |
+| `MAX_ROOMS`                            | `500`                   | Cap on concurrent rooms, bounding memory                                                                                                                                                        |
+| `STATIC_ROOT`                          | `/app/web` in the image | Built client to serve; empty serves the API alone                                                                                                                                               |
+| `MOVE_BURST` / `MOVE_PER_SECOND`       | `20` / `2`              | Move rate limit, sized for a human                                                                                                                                                              |
+| `CHAT_BURST` / `CHAT_PER_SECOND`       | `5` / `0.5`             | Chat rate limit, tighter                                                                                                                                                                        |
+| `CREATE_BURST` / `CREATE_PER_SECOND`   | `3` / `0.1`             | Room creation, tighter still - a room costs a seat, a deck and up to three timers                                                                                                               |
+| `CONTROL_BURST` / `CONTROL_PER_SECOND` | `20` / `2`              | Configure, start, next round, restart and rejoin, one bucket shared by all five                                                                                                                 |
+| `TURN_URL`                             | empty                   | TURN relay for voice chat, e.g. `turn:turn.example.com:3478`. Empty leaves voice on STUN alone                                                                                                  |
+| `TURN_SECRET`                          | empty                   | Must equal coturn's `static-auth-secret`. Empty disables TURN                                                                                                                                   |
+| `TURN_TTL_SECONDS`                     | `86400`                 | Lifetime of a minted credential. Refuses anything under 60                                                                                                                                      |
+| `STUN_URL`                             | empty                   | STUN server. Worth setting even with TURN, since coturn serves both and a relay that is down takes its STUN with it                                                                             |
+| `LOG_LEVEL`                            | `info`                  | pino level                                                                                                                                                                                      |
 
 ## Voice chat and TURN
 

@@ -14,6 +14,7 @@ import type { Config } from '../config.js'
 import { logger } from '../logger.js'
 import type { RoomManager } from '../rooms/room-manager.js'
 import type { Room } from '../rooms/room.js'
+import { isAllowedOrigin } from '../security/origin.js'
 import { createRateLimiter } from '../security/rate-limit.js'
 import type { AckFailure, Presence, TypedServer, TypedSocket } from './types.js'
 import { createVoiceRooms } from './voice-room.js'
@@ -73,6 +74,12 @@ export function registerSocketHandlers(
      * chat line is smaller than the deflate block that would wrap it.
      */
     perMessageDeflate: { threshold: 1024 },
+    // 64 KiB, down from 1 MB: four times the largest legal SDP (MAX_SDP_LENGTH, 16 KiB),
+    // which dwarfs every other payload. Anything bigger is not a client of ours.
+    maxHttpBufferSize: 64 * 1024,
+    allowRequest: (req, callback) => {
+      callback(null, isAllowedOrigin(req.headers.origin, req.headers.host, config.corsOrigins))
+    },
   })
 
   const presences = new Map<string, Presence>()
