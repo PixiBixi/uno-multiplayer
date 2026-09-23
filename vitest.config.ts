@@ -38,6 +38,8 @@ export default defineConfig({
           name: 'web',
           include: ['apps/web/src/**/*.test.{ts,tsx}'],
           environment: 'jsdom',
+          // One jsdom per worker instead of per file, with per-file isolation kept.
+          pool: 'vmThreads',
           setupFiles: ['./apps/web/src/test-setup.ts'],
         },
       },
