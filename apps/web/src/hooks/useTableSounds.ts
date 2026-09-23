@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { createAudioEngine, type AudioEngine } from '../lib/audio-engine.js'
 import { readMuted, writeMuted } from '../lib/preferences.js'
 import { soundsForEvents, type SoundName } from '../lib/sounds.js'
+import { freshFeedEntries } from './feed-window.js'
 import { highestFeedId, type FeedEntry } from './game-reducer.js'
 
 type UseTableSounds = {
@@ -60,9 +61,8 @@ export function useTableSounds({ feed, isMyTurn, mySeat }: UseTableSounds) {
   }, [])
 
   useEffect(() => {
-    const fresh = feed.filter((entry) => entry.id > lastFeedId.current)
+    const fresh = freshFeedEntries(feed, lastFeedId)
     if (fresh.length === 0) return
-    lastFeedId.current = highestFeedId(fresh)
 
     const events = fresh.flatMap((entry) => (entry.kind === 'event' ? [entry.event] : []))
     for (const name of soundsForEvents(events, mySeat)) play(name)
