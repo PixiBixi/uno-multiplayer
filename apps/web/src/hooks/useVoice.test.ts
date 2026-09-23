@@ -84,6 +84,21 @@ describe('useVoice', () => {
     expect(socket.emit).toHaveBeenCalledWith('voice:mute', { muted: true }, expect.any(Function))
   })
 
+  it('releases the microphone when the server drops its own seat from the roster', async () => {
+    // Leaving the table, or a second tab taking the seat, removes it server-side.
+    const stop = vi.fn()
+    getUserMedia.mockResolvedValue({ getTracks: () => [{ ...fakeTrack, stop }] })
+    const socket = fakeSocket()
+    const { result } = renderHook(() => useVoice({ socketRef: refTo(socket), selfSeat: 0 }))
+    await act(async () => {
+      await result.current.join()
+    })
+    await waitFor(() => expect(result.current.status).toBe('joined'))
+    act(() => socket.deliver('voice:peers', [{ seat: 1, muted: false }] as never))
+    await waitFor(() => expect(result.current.status).toBe('idle'))
+    expect(stop).toHaveBeenCalled()
+  })
+
   it('emits voice:leave and returns to idle', async () => {
     const socket = fakeSocket()
     const { result } = renderHook(() => useVoice({ socketRef: refTo(socket), selfSeat: 0 }))

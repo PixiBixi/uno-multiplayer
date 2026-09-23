@@ -459,6 +459,24 @@ describe('a swap and the UNO window', () => {
     expect(next.drawPile).toHaveLength(pile().length)
   })
 
+  it('shuts a window left open on a seat a rotation moved, on a table without Liar', () => {
+    /* Seat 1 played down to one card uncalled and the three-second clock is running.
+       A rotation hands that card on: the clock must not then charge seat 1 two cards
+       for a hand it no longer holds. */
+    const state = stateOf({
+      rules: SEVEN_ZERO,
+      seats: [
+        seatOf(0, [num('a', 'R', 0), num('b', 'R', 2), num('c', 'R', 3)]),
+        seatOf(1, [num('x', 'B', 5)], { vulnerable: true }),
+        seatOf(2, [num('z', 'Y', 9), num('w', 'Y', 8)]),
+      ],
+      drawPile: pile(),
+    })
+    const next = apply(state, 0, { type: 'play', cardId: cid('a') })
+    expect(ids(next, 1)).toEqual(['b', 'c'])
+    expect(next.seats.map((s) => s.vulnerable)).toEqual([false, false, false])
+  })
+
   it('opens an ordinary forgotten-UNO window, since no hand moved', () => {
     // The 7 is playable but a plain card is played instead: the option changes
     // nothing about the rest of the game.

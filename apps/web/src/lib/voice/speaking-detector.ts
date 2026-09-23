@@ -10,6 +10,8 @@ export type SpeakingDetectorOptions = {
   onChange: (seat: number, speaking: boolean) => void
   /** Deviation from silence, in the 0-127 range of time-domain byte data. */
   threshold?: number
+  /** Quiet samples before speaking turns off: about 250 ms at 60 frames a second. */
+  holdSamples?: number
   context?: AudioContext
   /** False in tests, which drive `sample` directly. */
   autoStart?: boolean
@@ -20,6 +22,7 @@ type Watched = {
   source: MediaStreamAudioSourceNode
   buffer: Uint8Array<ArrayBuffer>
   speaking: boolean
+  quiet: number
 }
 
 /**
@@ -30,6 +33,7 @@ type Watched = {
  */
 export function createSpeakingDetector(options: SpeakingDetectorOptions): SpeakingDetector | null {
   const threshold = options.threshold ?? 12
+  const holdSamples = options.holdSamples ?? 15
   const context =
     options.context ??
     (typeof window !== 'undefined' && 'AudioContext' in window ? new AudioContext() : null)
@@ -44,10 +48,20 @@ export function createSpeakingDetector(options: SpeakingDetectorOptions): Speaki
       let peak = 0
       // 128 is silence in time-domain byte data; deviation from it is amplitude.
       for (const value of entry.buffer) peak = Math.max(peak, Math.abs(value - 128))
-      const speaking = peak >= threshold
-      if (speaking === entry.speaking) continue
-      entry.speaking = speaking
-      options.onChange(seat, speaking)
+      /* Held before turning off: every flip re-renders the table, and the gaps between
+         syllables would otherwise flip it dozens of times a second. */
+      if (peak >= threshold) {
+        entry.quiet = 0
+        if (entry.speaking) continue
+        entry.speaking = true
+        options.onChange(seat, true)
+        continue
+      }
+      if (!entry.speaking) continue
+      entry.quiet += 1
+      if (entry.quiet < holdSamples) continue
+      entry.speaking = false
+      options.onChange(seat, false)
     }
   }
 
@@ -77,6 +91,7 @@ export function createSpeakingDetector(options: SpeakingDetectorOptions): Speaki
         source,
         buffer: new Uint8Array(analyser.frequencyBinCount),
         speaking: false,
+        quiet: 0,
       })
     },
     unwatch: release,

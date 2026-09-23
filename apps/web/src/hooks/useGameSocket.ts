@@ -142,9 +142,15 @@ export function useGameSocket() {
     [fail],
   )
 
+  // Same guard as `creating`, for the same double tap.
+  const joining = useRef(false)
+
   const joinRoom = useCallback(
     (roomCode: string, playerName: string) => {
+      if (joining.current) return
+      joining.current = true
       socketRef.current?.emit('room:join', { roomCode, playerName }, (result) => {
+        joining.current = false
         if (!result.ok) {
           fail(result.error)
           return

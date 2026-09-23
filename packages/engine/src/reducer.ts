@@ -286,19 +286,18 @@ function applyPlay(
          pure and timer-free, so it cannot be the thing that charges on a deadline. */
       next = openWindow(next, seatIndex)
     }
-  } else if (state.rules.liar) {
+  } else {
     /* Hands moved, so who owes the table an UNO is re-decided from what each seat
        now holds: one card uncalled opens a window, anything else shuts one, because
        being accused of holding a card you no longer hold is a bug and not a rule.
-       Recomputed rather than penalised, and only on a Liar table: the automatic
-       penalty punishes an omission, and after a permutation nobody is holding the
-       hand they held when the turn began. A window is the fair instrument here
-       precisely because it is escapable - call UNO on your own next turn. */
+       Only a Liar table opens one: elsewhere the window is shut by a clock, and after
+       a permutation nobody is holding the hand they held when the turn began. Every
+       table shuts them, or a plain table's clock charges a seat for a hand it gave away. */
     for (const index of permuted) {
       const moved = next.seats[index]
       if (moved === undefined) continue
       next =
-        moved.hand.length === 1 && !moved.unoCalled
+        state.rules.liar && moved.hand.length === 1 && !moved.unoCalled
           ? openWindow(next, index)
           : closeWindow(next, index)
     }

@@ -76,3 +76,34 @@ describe('createRoom', () => {
     expect(creates()).toHaveLength(2)
   })
 })
+
+describe('joinRoom', () => {
+  const joins = () => emitted.filter((entry) => entry.event === 'room:join')
+
+  it('emits once when the button is tapped twice before the server answers', () => {
+    const { result } = renderHook(() => useGameSocket())
+
+    act(() => {
+      result.current.actions.joinRoom('ABC234', 'Ben')
+      result.current.actions.joinRoom('ABC234', 'Ben')
+    })
+
+    expect(joins()).toHaveLength(1)
+  })
+
+  it('allows another attempt once the server has refused the first', () => {
+    const { result } = renderHook(() => useGameSocket())
+
+    act(() => {
+      result.current.actions.joinRoom('ABC234', 'Ben')
+    })
+    act(() => {
+      joins()[0]?.ack({ ok: false, error: 'room_full' })
+    })
+    act(() => {
+      result.current.actions.joinRoom('ABC234', 'Ben')
+    })
+
+    expect(joins()).toHaveLength(2)
+  })
+})

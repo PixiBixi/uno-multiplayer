@@ -59,6 +59,26 @@ describe('Room.join', () => {
     expect(room.seatOfSocket('unknown')).toBeNull()
   })
 
+  it('seats a socket once, however many joins it sends', () => {
+    // A double tap sends two joins before the first ack comes back.
+    const room = new Room('ABC234', 7, DEFAULT_MATCH_GOAL)
+    const first = room.join('Ana', 'socket-a')
+    const second = room.join('Ana', 'socket-a')
+    expect(second).toEqual(first)
+    expect(room.memberCount).toBe(1)
+  })
+
+  it('gives a seat left in the lobby to the next player', () => {
+    const room = roomWith('Ana', 'Ben', 'Cleo', 'Dan')
+    room.disconnect('socket-1')
+    room.expireGrace(1)
+    const joined = room.join('Eve', 'socket-4')
+    if (!joined.okay) throw new Error(joined.error)
+    expect(joined.value.seat).toBe(1)
+    expect(room.memberAt(1)).toMatchObject({ name: 'Eve', status: 'active', socketId: 'socket-4' })
+    expect(room.memberCount).toBe(4)
+  })
+
   it('refuses a join once the game has started', () => {
     const room = roomWith('Ana', 'Ben')
     const started = room.start(0)

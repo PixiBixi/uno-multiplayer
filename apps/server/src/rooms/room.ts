@@ -227,16 +227,24 @@ export class Room {
 
   join(name: string, socketId: string): Result<{ seat: number; sessionToken: string }, ErrorCode> {
     if (this.phase !== 'lobby') return err('game_already_started')
-    if (this.members.length >= MAX_SEATS) return err('room_full')
+    // Idempotent per socket: a double tap otherwise seats a ghost that never disconnects.
+    const already = this.members.find((m) => m.socketId === socketId)
+    if (already !== undefined) return ok({ seat: already.seat, sessionToken: already.sessionToken })
+
+    /* A seat left in the lobby is handed on rather than kept: nothing has been dealt or
+       scored, so seat == engine index still holds, and keeping it would make three
+       departures fill the table. */
+    const vacant = this.members.find((m) => m.status === 'left')
+    if (vacant === undefined && this.members.length >= MAX_SEATS) return err('room_full')
 
     const member: Member = {
-      seat: this.members.length,
+      seat: vacant?.seat ?? this.members.length,
       name,
       sessionToken: randomUUID(),
       socketId,
       status: 'active',
     }
-    this.members.push(member)
+    this.members[member.seat] = member
     return ok({ seat: member.seat, sessionToken: member.sessionToken })
   }
 
@@ -538,16 +546,25 @@ export class Room {
     }
   }
 
-  rejoin(sessionToken: string, socketId: string): Result<{ seat: number }, ErrorCode> {
+  /**
+   * `supersededSocketId` is the socket this rejoin took the seat from, when it was
+   * still attached: a second tab. The caller must evict it, or it keeps acting as the seat.
+   */
+  rejoin(
+    sessionToken: string,
+    socketId: string,
+  ): Result<{ seat: number; supersededSocketId: string | null }, ErrorCode> {
     const member = this.members.find((m) => m.sessionToken === sessionToken)
     if (member === undefined || member.status === 'left') return err('invalid_session')
 
+    const previous = member.socketId
     member.socketId = socketId
     member.status = 'active'
     if (this.game !== null) {
       this.game = setSeatStatus(this.game, member.seat, 'active')
     }
-    return ok({ seat: member.seat })
+    const supersededSocketId = previous !== null && previous !== socketId ? previous : null
+    return ok({ seat: member.seat, supersededSocketId })
   }
 
   /** Called by RoomManager when the grace period elapses. */
