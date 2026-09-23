@@ -1,7 +1,42 @@
 import { act, renderHook, waitFor } from '@testing-library/react'
 import type { VoicePeer } from '@uno/protocol'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { createPeerManager } from '../lib/voice/peer-manager.js'
+import type { createSpeakingDetector } from '../lib/voice/speaking-detector.js'
 import { useVoice } from './useVoice.js'
+
+type ManagerOptions = Parameters<typeof createPeerManager>[0]
+type DetectorOptions = Parameters<typeof createSpeakingDetector>[0]
+
+/** The hook's collaborators, replaced so a test can fire their callbacks by hand. */
+const voice = vi.hoisted(() => ({
+  manager: null as ManagerOptions | null,
+  detector: null as DetectorOptions | null,
+  seats: new Set<number>(),
+  connect: null as unknown as ReturnType<typeof vi.fn>,
+  accept: null as unknown as ReturnType<typeof vi.fn>,
+  disconnect: null as unknown as ReturnType<typeof vi.fn>,
+}))
+
+vi.mock('../lib/voice/peer-manager.js', () => ({
+  createPeerManager: (options: ManagerOptions) => {
+    voice.manager = options
+    return {
+      connect: voice.connect,
+      accept: voice.accept,
+      disconnect: voice.disconnect,
+      destroy: () => voice.seats.clear(),
+      seats: () => [...voice.seats].sort((left, right) => left - right),
+    }
+  },
+}))
+
+vi.mock('../lib/voice/speaking-detector.js', () => ({
+  createSpeakingDetector: (options: DetectorOptions) => {
+    voice.detector = options
+    return { watch: () => {}, unwatch: () => {}, sample: () => {}, destroy: () => {} }
+  },
+}))
 
 /** A socket.io stand-in that lets a test deliver server events by hand. */
 const fakeSocket = () => {
@@ -27,6 +62,15 @@ const refTo = (socket: ReturnType<typeof fakeSocket>) =>
 let getUserMedia: ReturnType<typeof vi.fn>
 
 beforeEach(() => {
+  voice.manager = null
+  voice.detector = null
+  voice.seats.clear()
+  voice.connect = vi.fn((seat: number) => {
+    voice.seats.add(seat)
+    return Promise.resolve()
+  })
+  voice.accept = vi.fn(() => Promise.resolve())
+  voice.disconnect = vi.fn((seat: number) => voice.seats.delete(seat))
   getUserMedia = vi.fn(() => Promise.resolve(fakeStream))
   vi.stubGlobal('navigator', { mediaDevices: { getUserMedia } })
 })
@@ -97,6 +141,29 @@ describe('useVoice', () => {
     act(() => socket.deliver('voice:peers', [{ seat: 1, muted: false }] as never))
     await waitFor(() => expect(result.current.status).toBe('idle'))
     expect(stop).toHaveBeenCalled()
+  })
+
+  it('forgets everything about a peer that leaves the roster', async () => {
+    const socket = fakeSocket()
+    const { result } = renderHook(() => useVoice({ socketRef: refTo(socket), selfSeat: 0 }))
+    await act(async () => {
+      await result.current.join()
+    })
+    const both: VoicePeer[] = [
+      { seat: 0, muted: false },
+      { seat: 1, muted: false },
+    ]
+    act(() => socket.deliver('voice:peers', both as never))
+    act(() => {
+      voice.manager?.onRemoteStream(1, fakeStream)
+      voice.manager?.onStateChange(1, 'connected')
+      voice.detector?.onChange(1, true)
+    })
+    await waitFor(() => expect(result.current.speaking[1]).toBe(true))
+    act(() => socket.deliver('voice:peers', [{ seat: 0, muted: false }] as never))
+    await waitFor(() => expect(result.current.streams).not.toHaveProperty('1'))
+    expect(result.current.speaking).not.toHaveProperty('1')
+    expect(result.current.connectionStates).not.toHaveProperty('1')
   })
 
   it('emits voice:leave and returns to idle', async () => {

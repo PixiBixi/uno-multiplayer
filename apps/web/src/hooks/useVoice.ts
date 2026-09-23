@@ -41,6 +41,20 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
     setMuted(false)
   }, [])
 
+  // Every per-seat record goes with the peer, or the table keeps showing a stale badge.
+  const dropSeat = useCallback((manager: PeerManager, seat: number) => {
+    manager.disconnect(seat)
+    detectorRef.current?.unwatch(seat)
+    const without = <T>(current: Record<number, T>): Record<number, T> => {
+      const rest = { ...current }
+      delete rest[seat]
+      return rest
+    }
+    setStreams(without)
+    setSpeaking(without)
+    setConnectionStates(without)
+  }, [])
+
   // Every place that gives up on voice tears it down and drops back to idle together.
   const reset = useCallback(() => {
     teardown()
@@ -127,13 +141,7 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
       // A seat that left the roster takes its peer connection with it.
       for (const seat of manager.seats()) {
         if (present.has(seat)) continue
-        manager.disconnect(seat)
-        detectorRef.current?.unwatch(seat)
-        setStreams((current) => {
-          const rest = { ...current }
-          delete rest[seat]
-          return rest
-        })
+        dropSeat(manager, seat)
       }
       for (const peer of roster) {
         if (peer.seat !== selfSeat) void manager.connect(peer.seat)
@@ -157,7 +165,7 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
       socket.off('voice:signal', onSignal)
       socket.off('disconnect', onDisconnect)
     }
-  }, [selfSeat, socketRef, reset])
+  }, [selfSeat, socketRef, reset, dropSeat])
 
   useEffect(() => teardown, [teardown])
 
