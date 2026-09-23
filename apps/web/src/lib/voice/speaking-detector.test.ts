@@ -114,6 +114,29 @@ describe('speaking detector', () => {
     expect(source.disconnect).toHaveBeenCalled()
   })
 
+  it('reports silence for a seat that stops being watched mid-sentence', () => {
+    // Otherwise the table keeps lighting up a player who has already left voice.
+    const onChange = vi.fn()
+    const { context } = scriptedContext([40])
+    const detector = createSpeakingDetector({ onChange, threshold: 10, context, autoStart: false })
+    if (detector === null) throw new Error('expected a detector')
+    detector.watch(1, fakeStream)
+    detector.sample()
+    detector.unwatch(1)
+    expect(onChange).toHaveBeenLastCalledWith(1, false)
+  })
+
+  it('stays quiet when a silent seat stops being watched', () => {
+    const onChange = vi.fn()
+    const { context } = scriptedContext([0])
+    const detector = createSpeakingDetector({ onChange, threshold: 10, context, autoStart: false })
+    if (detector === null) throw new Error('expected a detector')
+    detector.watch(1, fakeStream)
+    detector.sample()
+    detector.unwatch(1)
+    expect(onChange).not.toHaveBeenCalled()
+  })
+
   it('leaves a context it did not create open', () => {
     const { context, close } = scriptedContext([0])
     const detector = createSpeakingDetector({

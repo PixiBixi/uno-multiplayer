@@ -77,6 +77,8 @@ export function createSpeakingDetector(options: SpeakingDetectorOptions): Speaki
     entry.source.disconnect()
     entry.analyser.disconnect()
     watched.delete(seat)
+    // No sample will ever turn a released seat off, so this is its last chance.
+    if (entry.speaking) options.onChange(seat, false)
   }
 
   return {
