@@ -2,6 +2,7 @@ import { loadConfig } from './config.js'
 import { buildApp } from './http.js'
 import { logger } from './logger.js'
 import { RoomManager } from './rooms/room-manager.js'
+import { createShutdown } from './shutdown.js'
 import { registerSocketHandlers } from './sockets/handlers.js'
 
 const config = loadConfig()
@@ -35,13 +36,11 @@ purgeInterval.unref()
 await app.listen({ host: config.host, port: config.port })
 logger.info({ port: config.port, maxRooms: config.maxRooms }, 'server listening')
 
-const shutdown = async (signal: string): Promise<void> => {
-  logger.info({ signal }, 'shutting down')
-  clearInterval(purgeInterval)
-  await io.close()
-  await app.close()
-  process.exit(0)
-}
+const shutdown = createShutdown({
+  steps: [() => clearInterval(purgeInterval), () => io.close(), () => app.close()],
+  exit: (code) => process.exit(code),
+  log: logger,
+})
 
 process.on('SIGTERM', () => void shutdown('SIGTERM'))
 process.on('SIGINT', () => void shutdown('SIGINT'))

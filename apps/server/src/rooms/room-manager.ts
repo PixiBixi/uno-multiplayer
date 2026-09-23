@@ -38,11 +38,14 @@ const defaultTimers: Timers = {
 export class RoomManager {
   private readonly rooms = new Map<string, Room>()
   private readonly graceTimers = new Map<string, unknown>()
-  private readonly turnTimers = new Map<string, unknown>()
+  /** The seat a clock was armed for, so a presence change can tell it is still that turn. */
+  private readonly turnTimers = new Map<string, { handle: unknown; seat: number | null }>()
   private readonly roundTimers = new Map<string, unknown>()
   private readonly unoTimers = new Map<string, unknown>()
   /** When a room last became empty, so purge can tell "gone" from "gone for good". */
   private readonly emptySince = new Map<string, number>()
+  /** Told the code of each purged room, so the socket layer can drop what it keeps per room. */
+  private readonly purgeListeners: ((code: string) => void)[] = []
   private readonly maxRooms: number
   private readonly gracePeriodMs: number
   private readonly timers: Timers
@@ -89,6 +92,10 @@ export class RoomManager {
     return this.rooms.get(code.toUpperCase()) ?? null
   }
 
+  onPurge(listener: (code: string) => void): void {
+    this.purgeListeners.push(listener)
+  }
+
   scheduleGrace(room: Room, seat: number, onExpire: (events: GameEvent[]) => void): void {
     this.cancelGrace(room, seat)
     const key = graceKey(room.code, seat)
@@ -112,8 +119,8 @@ export class RoomManager {
    * room so every view agrees on it.
    *
    * Called after anything that can change whose turn it is. Idempotent by design:
-   * arming twice for the same turn simply restarts it, which is what a re-deal or
-   * a reconnection wants anyway.
+   * arming twice for the same turn simply restarts it, which is what a re-deal
+   * wants. A reconnection does not, and goes through keepTurn instead.
    */
   armTurn(room: Room, onExpire: (events: GameEvent[]) => void): void {
     /* One exception to the idempotence above: a voluntary draw on a table that plays the
@@ -147,13 +154,25 @@ export class RoomManager {
          deadline in the views being sent already belongs to the next seat. */
       onExpire(room.forceTurnMove())
     }, seconds * 1000)
-    this.turnTimers.set(room.code, handle)
+    this.turnTimers.set(room.code, { handle, seat: room.currentSeat })
+  }
+
+  /**
+   * armTurn for a presence change - a rejoin, a disconnect, a grace expiring - where
+   * no move was made. Keeps the running clock while the seat on turn is the one it was
+   * armed for: re-arming there let that seat stall the table by re-emitting a rejoin.
+   */
+  keepTurn(room: Room, onExpire: (events: GameEvent[]) => void): void {
+    const armed = this.turnTimers.get(room.code)
+    const sameTurn = armed !== undefined && armed.seat === room.currentSeat
+    if (sameTurn && room.awaitingMove && room.activeMemberCount() > 0) return
+    this.armTurn(room, onExpire)
   }
 
   cancelTurn(room: Room): void {
-    const handle = this.turnTimers.get(room.code)
-    if (handle !== undefined) {
-      this.timers.clearTimeout(handle)
+    const armed = this.turnTimers.get(room.code)
+    if (armed !== undefined) {
+      this.timers.clearTimeout(armed.handle)
       this.turnTimers.delete(room.code)
     }
     room.setTurnDeadline(null)
@@ -229,7 +248,6 @@ export class RoomManager {
     room.setNextRoundDeadline(null)
   }
 
-  /** Drops rooms nobody is connected to. Returns how many went away. */
   /**
    * Drops rooms nobody is connected to. Returns how many went away.
    *
@@ -259,8 +277,10 @@ export class RoomManager {
       for (let seat = 0; seat < room.memberCount; seat++) this.cancelGrace(room, seat)
       this.cancelTurn(room)
       this.cancelNextRound(room)
+      this.cancelUnoGrace(room)
       this.rooms.delete(code)
       this.emptySince.delete(code)
+      for (const listener of this.purgeListeners) listener(code)
       removed++
     }
     return removed

@@ -1,4 +1,5 @@
 import type { Server as HttpServer } from 'node:http'
+import type { Result } from '@uno/engine'
 import {
   chatSendSchema,
   gameMoveSchema,
@@ -6,6 +7,7 @@ import {
   roomCreateSchema,
   roomJoinSchema,
   roomRejoinSchema,
+  type ErrorCode,
   type GameEvent,
 } from '@uno/protocol'
 import { Server } from 'socket.io'
@@ -14,10 +16,11 @@ import type { Config } from '../config.js'
 import { logger } from '../logger.js'
 import type { RoomManager } from '../rooms/room-manager.js'
 import type { Room } from '../rooms/room.js'
-import { createRateLimiter } from '../security/rate-limit.js'
+import { isAllowedOrigin } from '../security/origin.js'
+import { createRateLimiter, type RateLimiter } from '../security/rate-limit.js'
 import type { AckFailure, Presence, TypedServer, TypedSocket } from './types.js'
 import { createVoiceRooms } from './voice-room.js'
-import { leaveVoice, registerVoiceHandlers, type VoiceContext } from './voice.js'
+import { forgetVoiceSocket, leaveVoice, registerVoiceHandlers, type VoiceContext } from './voice.js'
 
 /** socket.io may deliver `undefined` when the client sends no payload object. */
 const emptyPayloadSchema = z.union([z.object({}), z.undefined(), z.null()]).transform(() => ({}))
@@ -26,6 +29,18 @@ const emptyPayloadSchema = z.union([z.object({}), z.undefined(), z.null()]).tran
 function parsePayload<T>(schema: ZodType<T>, payload: unknown): T | null {
   const parsed = schema.safeParse(payload)
   return parsed.success ? parsed.data : null
+}
+
+type Ack = (result: AckFailure) => void
+
+/** True after reporting a refused result, so an early return narrows it to the success. */
+function refused<T>(
+  result: Result<T, ErrorCode>,
+  ack: Ack,
+): result is { okay: false; error: ErrorCode } {
+  if (result.okay) return false
+  ack({ ok: false, error: result.error })
+  return true
 }
 
 /**
@@ -73,6 +88,12 @@ export function registerSocketHandlers(
      * chat line is smaller than the deflate block that would wrap it.
      */
     perMessageDeflate: { threshold: 1024 },
+    // 64 KiB, down from 1 MB: four times the largest legal SDP (MAX_SDP_LENGTH, 16 KiB),
+    // which dwarfs every other payload. Anything bigger is not a client of ours.
+    maxHttpBufferSize: 64 * 1024,
+    allowRequest: (req, callback) => {
+      callback(null, isAllowedOrigin(req.headers.origin, req.headers.host, config.corsOrigins))
+    },
   })
 
   const presences = new Map<string, Presence>()
@@ -90,7 +111,15 @@ export function registerSocketHandlers(
     capacity: config.createBurst,
     refillPerSecond: config.createPerSecond,
   })
+  /* Configure, start, next round, restart and rejoin each re-broadcast the table and some
+     re-deal it. One shared bucket, so alternating between them buys no extra allowance. */
+  const controlLimiter = createRateLimiter({
+    capacity: config.controlBurst,
+    refillPerSecond: config.controlPerSecond,
+  })
   const voiceRooms = createVoiceRooms()
+  // A purged room's code can be handed out again; its voice session must not survive it.
+  rooms.onPurge((code) => voiceRooms.drop(code))
   /* One join in a four-player mesh emits an offer, an answer and a dozen or so
      candidates per pair. Generous for that burst, hostile to a signal flood. */
   const voiceLimiter = createRateLimiter({ capacity: 120, refillPerSecond: 10 })
@@ -127,8 +156,11 @@ export function registerSocketHandlers(
    * Called after anything that can change whose turn it is. Both arms are safe to
    * call unconditionally: each clears itself when the room is not in its state, so
    * a table with no pace simply ends up with no timers and null deadlines.
+   *
+   * `presence` is for a seat arriving or going without a move being made: the turn
+   * clock keeps running unless the turn itself moved.
    */
-  const retime = (room: Room): void => {
+  const retime = (room: Room, cause: 'move' | 'presence' = 'move'): void => {
     const afterExpiry = (events: GameEvent[]): void => {
       if (events.length > 0) broadcastEvents(room, events)
       // Re-timed before broadcasting, so the deadline every player receives is
@@ -136,7 +168,8 @@ export function registerSocketHandlers(
       retime(room)
       broadcastViews(room)
     }
-    rooms.armTurn(room, afterExpiry)
+    if (cause === 'presence') rooms.keepTurn(room, afterExpiry)
+    else rooms.armTurn(room, afterExpiry)
     rooms.armNextRound(room, afterExpiry)
     /* Third clock, same shape: the seconds a seat has to say UNO after playing down to
        one card, on a table where nobody is watching for it. Armed here rather than at
@@ -178,7 +211,7 @@ export function registerSocketHandlers(
     if (result === null) return
     room.expireGrace(result.seat)
     broadcastEvents(room, [...result.events, { type: 'seatLeft', seat: result.seat }])
-    retime(room)
+    retime(room, 'presence')
     broadcastLobby(room)
     // The people still playing need a fresh view too, not just a fresh lobby: a seat
     // going away can change whose turn it is.
@@ -217,30 +250,66 @@ export function registerSocketHandlers(
       void socket.join(room.code)
     }
 
+    /** The payload, or null after telling the caller it does not match the contract. */
+    const parsed = <T>(schema: ZodType<T>, payload: unknown, ack: Ack): T | null => {
+      const data = parsePayload(schema, payload)
+      if (data === null) ack({ ok: false, error: 'invalid_payload' })
+      return data
+    }
+
+    /** False after telling the caller it is over this budget. */
+    const within = (limiter: RateLimiter, ack: Ack): boolean => {
+      if (limiter.allow(socket.id)) return true
+      ack({ ok: false, error: 'rate_limited' })
+      return false
+    }
+
+    /**
+     * The seat this socket is sitting in, or null after telling the caller there
+     * is none. Six handlers began with the same six lines; a change to what "not
+     * at a table" means had to be remembered in all of them.
+     */
+    const seated = (ack: Ack): Presence | null => {
+      const presence = presences.get(socket.id)
+      if (presence === undefined) {
+        ack({ ok: false, error: 'room_not_found' })
+        return null
+      }
+      return presence
+    }
+
+    /**
+     * The opening every seated handler shares, in the order they all used: the payload,
+     * then the seat, then the budget when there is one. Null once the caller is told.
+     */
+    const admit = <T>(
+      schema: ZodType<T>,
+      payload: unknown,
+      ack: Ack,
+      limiter?: RateLimiter,
+    ): { data: T; presence: Presence } | null => {
+      const data = parsed(schema, payload, ack)
+      if (data === null) return null
+      const presence = seated(ack)
+      if (presence === null) return null
+      if (limiter !== undefined && !within(limiter, ack)) return null
+      return { data, presence }
+    }
+
+    registerVoiceHandlers(voiceContext, socket, { attempt, emptyPayloadSchema, parsed, admit })
+
     socket.on('room:create', (payload, ack) => {
       attempt(ack, () => {
-        const data = parsePayload(roomCreateSchema, payload)
-        if (data === null) {
-          ack({ ok: false, error: 'invalid_payload' })
-          return
-        }
+        const data = parsed(roomCreateSchema, payload, ack)
+        if (data === null) return
         /* Checked after the payload and before the room exists, so a refused burst costs
            nothing and cannot leave a half-created table behind. */
-        if (!createLimiter.allow(socket.id)) {
-          ack({ ok: false, error: 'rate_limited' })
-          return
-        }
+        if (!within(createLimiter, ack)) return
         const created = rooms.create(data.goal, data.pace, data.rules)
-        if (!created.okay) {
-          ack({ ok: false, error: created.error })
-          return
-        }
+        if (refused(created, ack)) return
         const room = created.value
         const joined = room.join(data.playerName, socket.id)
-        if (!joined.okay) {
-          ack({ ok: false, error: joined.error })
-          return
-        }
+        if (refused(joined, ack)) return
         attach(room, joined.value.seat)
         ack({
           ok: true,
@@ -254,21 +323,15 @@ export function registerSocketHandlers(
 
     socket.on('room:join', (payload, ack) => {
       attempt(ack, () => {
-        const data = parsePayload(roomJoinSchema, payload)
-        if (data === null) {
-          ack({ ok: false, error: 'invalid_payload' })
-          return
-        }
+        const data = parsed(roomJoinSchema, payload, ack)
+        if (data === null) return
         const room = rooms.get(data.roomCode)
         if (room === null) {
           ack({ ok: false, error: 'room_not_found' })
           return
         }
         const joined = room.join(data.playerName, socket.id)
-        if (!joined.okay) {
-          ack({ ok: false, error: joined.error })
-          return
-        }
+        if (refused(joined, ack)) return
         attach(room, joined.value.seat)
         ack({ ok: true, sessionToken: joined.value.sessionToken, seat: joined.value.seat })
         broadcastLobby(room)
@@ -277,28 +340,23 @@ export function registerSocketHandlers(
 
     socket.on('room:rejoin', (payload, ack) => {
       attempt(ack, () => {
-        const data = parsePayload(roomRejoinSchema, payload)
-        if (data === null) {
-          ack({ ok: false, error: 'invalid_payload' })
-          return
-        }
+        const data = parsed(roomRejoinSchema, payload, ack)
+        if (data === null) return
+        if (!within(controlLimiter, ack)) return
         const room = rooms.get(data.roomCode)
         if (room === null) {
           ack({ ok: false, error: 'room_not_found' })
           return
         }
         const rejoined = room.rejoin(data.sessionToken, socket.id)
-        if (!rejoined.okay) {
-          ack({ ok: false, error: rejoined.error })
-          return
-        }
+        if (refused(rejoined, ack)) return
         if (rejoined.value.supersededSocketId !== null) evict(rejoined.value.supersededSocketId)
         rooms.cancelGrace(room, rejoined.value.seat)
         attach(room, rejoined.value.seat)
         ack({ ok: true, seat: rejoined.value.seat })
         broadcastLobby(room)
         broadcastEvents(room, [{ type: 'seatReconnected', seat: rejoined.value.seat }])
-        retime(room)
+        retime(room, 'presence')
         broadcastViews(room)
       })
     })
@@ -312,33 +370,9 @@ export function registerSocketHandlers(
      * Deliberately the same path as an unexpected disconnect, minus the grace
      * period: somebody who pressed Leave is not coming back to that seat.
      */
-    /**
-     * The seat this socket is sitting in, or null after telling the caller there
-     * is none. Six handlers began with the same six lines; a change to what "not
-     * at a table" means had to be remembered in all of them.
-     */
-    const seated = (ack: (result: AckFailure) => void): Presence | null => {
-      const presence = presences.get(socket.id)
-      if (presence === undefined) {
-        ack({ ok: false, error: 'room_not_found' })
-        return null
-      }
-      return presence
-    }
-
-    registerVoiceHandlers(voiceContext, socket, {
-      attempt,
-      parsePayload,
-      emptyPayloadSchema,
-      seated,
-    })
-
     socket.on('room:leave', (payload, ack) => {
       attempt(ack, () => {
-        if (parsePayload(emptyPayloadSchema, payload) === null) {
-          ack({ ok: false, error: 'invalid_payload' })
-          return
-        }
+        if (parsed(emptyPayloadSchema, payload, ack) === null) return
         // Leaving twice, or from a stale tab, is not an error worth reporting - `release`
         // is silent when there is no seat to give up.
         release(socket)
@@ -364,18 +398,10 @@ export function registerSocketHandlers(
      */
     socket.on('room:configure', (payload, ack) => {
       attempt(ack, () => {
-        const data = parsePayload(roomConfigureSchema, payload)
-        if (data === null) {
-          ack({ ok: false, error: 'invalid_payload' })
-          return
-        }
-        const presence = seated(ack)
-        if (presence === null) return
-        const applied = presence.room.configure(presence.seat, data)
-        if (!applied.okay) {
-          ack({ ok: false, error: applied.error })
-          return
-        }
+        const admitted = admit(roomConfigureSchema, payload, ack, controlLimiter)
+        if (admitted === null) return
+        const { data, presence } = admitted
+        if (refused(presence.room.configure(presence.seat, data), ack)) return
         ack({ ok: true })
         broadcastLobby(presence.room)
       })
@@ -383,17 +409,10 @@ export function registerSocketHandlers(
 
     socket.on('game:start', (payload, ack) => {
       attempt(ack, () => {
-        if (parsePayload(emptyPayloadSchema, payload) === null) {
-          ack({ ok: false, error: 'invalid_payload' })
-          return
-        }
-        const presence = seated(ack)
-        if (presence === null) return
-        const started = presence.room.start(presence.seat)
-        if (!started.okay) {
-          ack({ ok: false, error: started.error })
-          return
-        }
+        const admitted = admit(emptyPayloadSchema, payload, ack, controlLimiter)
+        if (admitted === null) return
+        const { presence } = admitted
+        if (refused(presence.room.start(presence.seat), ack)) return
         ack({ ok: true })
         retime(presence.room)
         broadcastLobby(presence.room)
@@ -403,17 +422,11 @@ export function registerSocketHandlers(
 
     socket.on('game:nextRound', (payload, ack) => {
       attempt(ack, () => {
-        if (parsePayload(emptyPayloadSchema, payload) === null) {
-          ack({ ok: false, error: 'invalid_payload' })
-          return
-        }
-        const presence = seated(ack)
-        if (presence === null) return
+        const admitted = admit(emptyPayloadSchema, payload, ack, controlLimiter)
+        if (admitted === null) return
+        const { presence } = admitted
         const dealt = presence.room.nextRound(presence.seat, rooms.nextSeed())
-        if (!dealt.okay) {
-          ack({ ok: false, error: dealt.error })
-          return
-        }
+        if (refused(dealt, ack)) return
         ack({ ok: true })
         broadcastEvents(presence.room, dealt.value)
         retime(presence.room)
@@ -423,17 +436,11 @@ export function registerSocketHandlers(
 
     socket.on('game:restart', (payload, ack) => {
       attempt(ack, () => {
-        if (parsePayload(emptyPayloadSchema, payload) === null) {
-          ack({ ok: false, error: 'invalid_payload' })
-          return
-        }
-        const presence = seated(ack)
-        if (presence === null) return
+        const admitted = admit(emptyPayloadSchema, payload, ack, controlLimiter)
+        if (admitted === null) return
+        const { presence } = admitted
         const restarted = presence.room.restart(presence.seat, rooms.nextSeed())
-        if (!restarted.okay) {
-          ack({ ok: false, error: restarted.error })
-          return
-        }
+        if (refused(restarted, ack)) return
         ack({ ok: true })
         broadcastEvents(presence.room, restarted.value)
         retime(presence.room)
@@ -444,22 +451,11 @@ export function registerSocketHandlers(
 
     socket.on('game:move', (payload, ack) => {
       attempt(ack, () => {
-        const data = parsePayload(gameMoveSchema, payload)
-        if (data === null) {
-          ack({ ok: false, error: 'invalid_payload' })
-          return
-        }
-        const presence = seated(ack)
-        if (presence === null) return
-        if (!moveLimiter.allow(socket.id)) {
-          ack({ ok: false, error: 'rate_limited' })
-          return
-        }
+        const admitted = admit(gameMoveSchema, payload, ack, moveLimiter)
+        if (admitted === null) return
+        const { data, presence } = admitted
         const applied = presence.room.move(presence.seat, data.move)
-        if (!applied.okay) {
-          ack({ ok: false, error: applied.error })
-          return
-        }
+        if (refused(applied, ack)) return
         ack({ ok: true })
         broadcastEvents(presence.room, applied.value)
         retime(presence.room)
@@ -469,17 +465,9 @@ export function registerSocketHandlers(
 
     socket.on('chat:send', (payload, ack) => {
       attempt(ack, () => {
-        const data = parsePayload(chatSendSchema, payload)
-        if (data === null) {
-          ack({ ok: false, error: 'invalid_payload' })
-          return
-        }
-        const presence = seated(ack)
-        if (presence === null) return
-        if (!chatLimiter.allow(socket.id)) {
-          ack({ ok: false, error: 'rate_limited' })
-          return
-        }
+        const admitted = admit(chatSendSchema, payload, ack, chatLimiter)
+        if (admitted === null) return
+        const { data, presence } = admitted
         const name = presence.room.memberAt(presence.seat)?.name ?? 'unknown'
         ack({ ok: true })
         io.to(presence.room.code).emit('chat:message', {
@@ -493,14 +481,16 @@ export function registerSocketHandlers(
     socket.on('disconnect', () => {
       attempt(undefined, () => {
         // Before `presences.delete` below: leaveVoice resolves the room through it.
-        leaveVoice(voiceContext, socket)
+        forgetVoiceSocket(voiceContext, socket)
         moveLimiter.forget(socket.id)
         chatLimiter.forget(socket.id)
         /* Only here, and deliberately not in `release`: the socket is genuinely gone, so
            its bucket is dead weight. `release` runs on every create - it is how a socket
            gives up its old table - so forgetting there would refill the create bucket on
-           each create and cancel the limit it exists to impose. */
+           each create and cancel the limit it exists to impose. The control bucket
+           follows the same rule, since leaving and rejoining would refill it. */
         createLimiter.forget(socket.id)
+        controlLimiter.forget(socket.id)
         const presence = presences.get(socket.id)
         presences.delete(socket.id)
         if (presence === undefined) return
@@ -512,13 +502,13 @@ export function registerSocketHandlers(
         broadcastEvents(room, result.events)
         // A disconnection moves the turn past the seat that left, so the clock
         // now belongs to somebody else.
-        retime(room)
+        retime(room, 'presence')
         broadcastLobby(room)
         broadcastViews(room)
 
         rooms.scheduleGrace(room, result.seat, (events) => {
           broadcastEvents(room, events)
-          retime(room)
+          retime(room, 'presence')
           broadcastLobby(room)
           broadcastViews(room)
         })

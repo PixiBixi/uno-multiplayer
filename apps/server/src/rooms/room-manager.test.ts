@@ -84,6 +84,17 @@ describe('RoomManager.purge', () => {
     expect(manager.purge()).toBe(0)
     expect(manager.size).toBe(1)
   })
+
+  it('tells its listeners which rooms went away, and only those', () => {
+    const { manager } = managerWith()
+    const gone = createdRoom(manager)
+    createdRoom(manager).join('Ana', 'socket-0')
+
+    const purged: string[] = []
+    manager.onPurge((code) => purged.push(code))
+    manager.purge()
+    expect(purged).toEqual([gone.code])
+  })
 })
 
 describe('RoomManager grace periods', () => {

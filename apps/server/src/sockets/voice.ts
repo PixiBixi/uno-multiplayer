@@ -14,18 +14,25 @@ export type VoiceContext = {
   presenceOf: (socketId: string) => Presence | undefined
 }
 
+type Ack = (result: AckFailure) => void
+
 type VoiceHelpers = {
   attempt: (ack: unknown, run: () => void) => void
-  parsePayload: <T>(schema: ZodType<T>, payload: unknown) => T | null
   emptyPayloadSchema: ZodType<Record<string, never>>
-  seated: (ack: (result: AckFailure) => void) => Presence | null
+  parsed: <T>(schema: ZodType<T>, payload: unknown, ack: Ack) => T | null
+  admit: <T>(
+    schema: ZodType<T>,
+    payload: unknown,
+    ack: Ack,
+    limiter?: RateLimiter,
+  ) => { data: T; presence: Presence } | null
 }
 
 /** Pushes the current roster to every socket in the room, sender included. */
 function broadcastPeers(context: VoiceContext, presence: Presence): void {
-  context.io
-    .to(presence.room.code)
-    .emit('voice:peers', context.voiceRooms.in(presence.room.code).peers())
+  // `get`, not `in`: after the last seat leaves, a lookup here recreated the dropped entry.
+  const peers = context.voiceRooms.get(presence.room.code)?.peers() ?? []
+  context.io.to(presence.room.code).emit('voice:peers', peers)
 }
 
 /**
@@ -38,8 +45,8 @@ function broadcastPeers(context: VoiceContext, presence: Presence): void {
 export function leaveVoice(context: VoiceContext, socket: TypedSocket): void {
   const presence = context.presenceOf(socket.id)
   if (presence === undefined) return
-  const room = context.voiceRooms.in(presence.room.code)
-  if (!room.has(presence.seat)) return
+  const room = context.voiceRooms.get(presence.room.code)
+  if (room === undefined || !room.has(presence.seat)) return
 
   room.leave(presence.seat)
   context.limiter.forget(socket.id)
@@ -47,21 +54,28 @@ export function leaveVoice(context: VoiceContext, socket: TypedSocket): void {
   broadcastPeers(context, presence)
 }
 
+/**
+ * Everything voice holds for a socket that is gone for good. The bucket is forgotten
+ * unconditionally: a seat can signal without ever joining, and `leaveVoice` only
+ * forgets the bucket of a seat that was in voice.
+ */
+export function forgetVoiceSocket(context: VoiceContext, socket: TypedSocket): void {
+  leaveVoice(context, socket)
+  context.limiter.forget(socket.id)
+}
+
 export function registerVoiceHandlers(
   context: VoiceContext,
   socket: TypedSocket,
   helpers: VoiceHelpers,
 ): void {
-  const { attempt, parsePayload, emptyPayloadSchema, seated } = helpers
+  const { attempt, emptyPayloadSchema, parsed, admit } = helpers
 
   socket.on('voice:join', (payload, ack) => {
     attempt(ack, () => {
-      if (parsePayload(emptyPayloadSchema, payload) === null) {
-        ack({ ok: false, error: 'invalid_payload' })
-        return
-      }
-      const presence = seated(ack)
-      if (presence === null) return
+      const admitted = admit(emptyPayloadSchema, payload, ack)
+      if (admitted === null) return
+      const { presence } = admitted
 
       const room = context.voiceRooms.in(presence.room.code)
       // Read the peers before joining: a joiner must not be told about itself.
@@ -74,10 +88,7 @@ export function registerVoiceHandlers(
 
   socket.on('voice:leave', (payload, ack) => {
     attempt(ack, () => {
-      if (parsePayload(emptyPayloadSchema, payload) === null) {
-        ack({ ok: false, error: 'invalid_payload' })
-        return
-      }
+      if (parsed(emptyPayloadSchema, payload, ack) === null) return
       // Leaving twice is not worth reporting: there is simply nothing to remove.
       leaveVoice(context, socket)
       ack({ ok: true })
@@ -86,20 +97,12 @@ export function registerVoiceHandlers(
 
   socket.on('voice:signal', (payload, ack) => {
     attempt(ack, () => {
-      const data = parsePayload(voiceSignalSendSchema, payload)
-      if (data === null) {
-        ack({ ok: false, error: 'invalid_payload' })
-        return
-      }
-      const presence = seated(ack)
-      if (presence === null) return
-      if (!context.limiter.allow(socket.id)) {
-        ack({ ok: false, error: 'rate_limited' })
-        return
-      }
+      const admitted = admit(voiceSignalSendSchema, payload, ack, context.limiter)
+      if (admitted === null) return
+      const { data, presence } = admitted
 
-      const room = context.voiceRooms.in(presence.room.code)
-      if (!room.has(presence.seat)) {
+      const room = context.voiceRooms.get(presence.room.code)
+      if (room === undefined || !room.has(presence.seat)) {
         ack({ ok: false, error: 'voice_not_joined' })
         return
       }
@@ -125,16 +128,12 @@ export function registerVoiceHandlers(
 
   socket.on('voice:mute', (payload, ack) => {
     attempt(ack, () => {
-      const data = parsePayload(voiceMuteSchema, payload)
-      if (data === null) {
-        ack({ ok: false, error: 'invalid_payload' })
-        return
-      }
-      const presence = seated(ack)
-      if (presence === null) return
+      const admitted = admit(voiceMuteSchema, payload, ack)
+      if (admitted === null) return
+      const { data, presence } = admitted
 
-      const room = context.voiceRooms.in(presence.room.code)
-      if (!room.has(presence.seat)) {
+      const room = context.voiceRooms.get(presence.room.code)
+      if (room === undefined || !room.has(presence.seat)) {
         ack({ ok: false, error: 'voice_not_joined' })
         return
       }

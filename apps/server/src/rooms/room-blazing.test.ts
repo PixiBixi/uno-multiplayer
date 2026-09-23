@@ -184,6 +184,67 @@ describe('the turn clock', () => {
   })
 })
 
+describe('the turn clock across presence changes', () => {
+  it('keeps the running clock while the same seat is on turn', () => {
+    const { room, rooms, clock, push } = blazingTable(10)
+    const deadline = room.viewFor(0)?.turnDeadline
+    clock.advance(4000)
+
+    rooms.keepTurn(room, push)
+
+    expect(room.viewFor(0)?.turnDeadline).toBe(deadline)
+    expect(clock.pendingCount()).toBe(1)
+    const seat = room.currentSeat
+    clock.advance(6000)
+    // Timed out on the original schedule, not four seconds later.
+    expect(room.currentSeat).not.toBe(seat)
+  })
+
+  it('keeps it when a seat that is not on turn drops out', () => {
+    const { room, rooms, clock, push } = blazingTable(10)
+    const deadline = room.viewFor(0)?.turnDeadline
+    const other = room.currentSeat === 0 ? 1 : 0
+    clock.advance(4000)
+
+    room.disconnect(`socket-${other}`)
+    rooms.keepTurn(room, push)
+
+    expect(room.viewFor(0)?.turnDeadline).toBe(deadline)
+  })
+
+  it('arms a fresh clock when the presence change moved the turn', () => {
+    const { room, rooms, clock, push } = blazingTable(10)
+    const seat = room.currentSeat
+    clock.advance(4000)
+
+    room.disconnect(`socket-${seat}`)
+    rooms.keepTurn(room, push)
+
+    expect(room.currentSeat).not.toBe(seat)
+    expect(room.viewFor(0)?.turnDeadline).toBe(clock.now() + 10_000)
+    expect(clock.pendingCount()).toBe(1)
+  })
+
+  it('stops the clock once nobody is left at the table', () => {
+    const { room, rooms, clock, push } = blazingTable(10)
+    room.disconnect('socket-0')
+    room.disconnect('socket-1')
+    rooms.keepTurn(room, push)
+
+    expect(room.viewFor(0)?.turnDeadline).toBeNull()
+    expect(clock.pendingCount()).toBe(0)
+  })
+
+  /* A move that ends a turn and hands it back to the same seat - a skip or a reverse
+     between two players - is a new turn, and armTurn must still treat it as one. */
+  it('leaves armTurn restarting the clock for the same seat after a move', () => {
+    const { room, rooms, clock, push } = blazingTable(10)
+    clock.advance(4000)
+    rooms.armTurn(room, push)
+    expect(room.viewFor(0)?.turnDeadline).toBe(clock.now() + 10_000)
+  })
+})
+
 describe('the pause between rounds', () => {
   /**
    * Three seats, because a round has to end while at least two players remain for
