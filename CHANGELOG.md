@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.15](https://github.com/PixiBixi/uno-multiplayer/compare/f9c5df46fba5ca5b8ccf4e9876cf6e87d413e1d5..v1.12.15) - 2026-09-23
+#### Bug Fixes
+- (**web**) three small client fixes from the code review (#48) - ([f9c5df4](https://github.com/PixiBixi/uno-multiplayer/commit/f9c5df46fba5ca5b8ccf4e9876cf6e87d413e1d5)) - Jérémy
+
+- - -
+
 ## [v1.12.14](https://github.com/PixiBixi/uno-multiplayer/compare/b2b98389a3d012d8391f1b4954dfdffb43b9feda..v1.12.14) - 2026-09-23
 #### Miscellaneous Chores
 - (**test**) run the web project on the vmThreads pool (#46) - ([b2b9838](https://github.com/PixiBixi/uno-multiplayer/commit/b2b98389a3d012d8391f1b4954dfdffb43b9feda)) - Jérémy
