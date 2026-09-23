@@ -310,6 +310,20 @@ describe('the pause between rounds', () => {
     expect(room.viewFor(0)?.match.round).toBe(2)
   })
 
+  it('keeps the pause running across a presence change', () => {
+    // Re-arming it on every rejoin let a looping client hold the next deal back.
+    const { room, rooms, clock, push } = threeSeatTable()
+    playOutRound(room, push)
+    const deadline = room.viewFor(0)?.nextRoundDeadline
+    clock.advance(3000)
+
+    rooms.keepNextRound(room, push)
+
+    expect(room.viewFor(0)?.nextRoundDeadline).toBe(deadline)
+    clock.advance(2000)
+    expect(room.viewFor(0)?.phase).toBe('playing')
+  })
+
   it('has no deadline while a round is still being played', () => {
     const { room, rooms, push } = threeSeatTable()
     rooms.armNextRound(room, push)

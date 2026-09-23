@@ -26,6 +26,7 @@ const manualTimers = () => {
       for (const callback of callbacks) callback()
     },
     pendingCount: () => pending.size,
+    pendingHandles: () => [...pending.keys()],
   }
 }
 
@@ -100,6 +101,27 @@ describe('the three-second window on a plain table', () => {
     const armed = clock.pendingCount()
     manager.armUnoGrace(room, () => undefined)
     expect(clock.pendingCount()).toBe(armed)
+  })
+})
+
+describe('a presence change while a window is open', () => {
+  /* A rejoin used to re-arm the three seconds from scratch, so a looping rejoin kept
+     an exposed seat out of reach of the penalty for as long as it liked. */
+  it('keeps the clock that is already running', () => {
+    const { manager, room, clock } = exposedTable({ liar: false })
+    expect(room.exposedSeat()).not.toBeNull()
+    manager.armUnoGrace(room, () => undefined)
+    const armed = clock.pendingHandles()
+
+    manager.keepUnoGrace(room, () => undefined)
+
+    expect(clock.pendingHandles()).toEqual(armed)
+  })
+
+  it('arms one when none is running yet', () => {
+    const { manager, room, clock } = exposedTable({ liar: false })
+    manager.keepUnoGrace(room, () => undefined)
+    expect(clock.pendingCount()).toBe(1)
   })
 })
 

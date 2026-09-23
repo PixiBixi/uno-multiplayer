@@ -41,7 +41,8 @@ export class RoomManager {
   /** The seat a clock was armed for, so a presence change can tell it is still that turn. */
   private readonly turnTimers = new Map<string, { handle: unknown; seat: number | null }>()
   private readonly roundTimers = new Map<string, unknown>()
-  private readonly unoTimers = new Map<string, unknown>()
+  /** With the seat it was armed for, so a presence change can tell it is the same window. */
+  private readonly unoTimers = new Map<string, { handle: unknown; seat: number | null }>()
   /** When a room last became empty, so purge can tell "gone" from "gone for good". */
   private readonly emptySince = new Map<string, number>()
   /** Told the code of each purged room, so the socket layer can drop what it keeps per room. */
@@ -169,6 +170,22 @@ export class RoomManager {
     this.armTurn(room, onExpire)
   }
 
+  /** armNextRound for a presence change: a rejoin loop must not hold the next deal back. */
+  keepNextRound(room: Room, onExpire: (events: GameEvent[]) => void): void {
+    const running = this.roundTimers.has(room.code)
+    const due =
+      room.turnSeconds !== null && room.betweenRounds && room.activeMemberCount() >= MIN_SEATS
+    if (running && due) return
+    this.armNextRound(room, onExpire)
+  }
+
+  /** armUnoGrace for a presence change: a rejoin loop must not keep an exposed seat safe. */
+  keepUnoGrace(room: Room, onExpire: (events: GameEvent[]) => void): void {
+    const armed = this.unoTimers.get(room.code)
+    if (armed !== undefined && !room.callOutsAllowed && armed.seat === room.exposedSeat()) return
+    this.armUnoGrace(room, onExpire)
+  }
+
   cancelTurn(room: Room): void {
     const armed = this.turnTimers.get(room.code)
     if (armed !== undefined) {
@@ -228,13 +245,13 @@ export class RoomManager {
          safe against a timer already on its way. */
       onExpire(room.chargeForgottenUno())
     }, UNO_GRACE_SECONDS * 1000)
-    this.unoTimers.set(room.code, handle)
+    this.unoTimers.set(room.code, { handle, seat: room.exposedSeat() })
   }
 
   cancelUnoGrace(room: Room): void {
-    const handle = this.unoTimers.get(room.code)
-    if (handle !== undefined) {
-      this.timers.clearTimeout(handle)
+    const armed = this.unoTimers.get(room.code)
+    if (armed !== undefined) {
+      this.timers.clearTimeout(armed.handle)
       this.unoTimers.delete(room.code)
     }
   }

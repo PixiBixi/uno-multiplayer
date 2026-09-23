@@ -157,8 +157,8 @@ export function registerSocketHandlers(
    * call unconditionally: each clears itself when the room is not in its state, so
    * a table with no pace simply ends up with no timers and null deadlines.
    *
-   * `presence` is for a seat arriving or going without a move being made: the turn
-   * clock keeps running unless the turn itself moved.
+   * `presence` is for a seat arriving or going without a move being made: all three
+   * clocks keep running unless what they time has itself changed.
    */
   const retime = (room: Room, cause: 'move' | 'presence' = 'move'): void => {
     const afterExpiry = (events: GameEvent[]): void => {
@@ -168,8 +168,13 @@ export function registerSocketHandlers(
       retime(room)
       broadcastViews(room)
     }
-    if (cause === 'presence') rooms.keepTurn(room, afterExpiry)
-    else rooms.armTurn(room, afterExpiry)
+    if (cause === 'presence') {
+      rooms.keepTurn(room, afterExpiry)
+      rooms.keepNextRound(room, afterExpiry)
+      rooms.keepUnoGrace(room, afterExpiry)
+      return
+    }
+    rooms.armTurn(room, afterExpiry)
     rooms.armNextRound(room, afterExpiry)
     /* Third clock, same shape: the seconds a seat has to say UNO after playing down to
        one card, on a table where nobody is watching for it. Armed here rather than at
