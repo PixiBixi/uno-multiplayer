@@ -1,5 +1,5 @@
 import type { Move } from '@uno/engine'
-import { useCallback, useState } from 'react'
+import { useCallback, useState, type ReactNode } from 'react'
 import type { LobbyView, PlayerView } from '@uno/protocol'
 import { CentreStack, ColourBand } from '../components/CentreStack.js'
 import { useCardTheme, useSetCardTheme } from '../components/CardThemeProvider.js'
@@ -36,6 +36,47 @@ import { useLocale, useMessages } from '../i18n/index.js'
    hundred milliseconds and the shout arrives with the window. Wider than callUno on
    purpose: that is offered at two cards, or at one while vulnerable. */
 const SHOUT_PREWARM_CARDS = 3
+
+/**
+ * A table-bar icon button that cycles a setting: the mode and theme toggles share
+ * everything but their icon and their label. The mute button keeps its own markup -
+ * `aria-pressed` and a two-state icon do not fit this shape.
+ */
+function IconCyclerButton({
+  className,
+  onClick,
+  label,
+  children,
+}: {
+  className: string
+  onClick: () => void
+  label: string
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      className={`icon-btn icon-btn-framed ${className}`}
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+    >
+      <svg
+        width={20}
+        height={20}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        {children}
+      </svg>
+    </button>
+  )
+}
 
 type TableProps = {
   view: PlayerView
@@ -241,58 +282,30 @@ export function Table({
             </button>
             {/* The palette, reachable mid-match: the machine's own setting flips at
                 sunset on a schedule that has nothing to do with a game in progress. */}
-            <button
-              type="button"
-              className="icon-btn icon-btn-framed mode-cycler"
+            <IconCyclerButton
+              className="mode-cycler"
               onClick={() => {
                 setColourMode(nextColourMode(colourMode))
               }}
-              aria-label={`${t.home.colourMode}: ${t.home.colourModeName[colourMode]}`}
-              title={`${t.home.colourMode}: ${t.home.colourModeName[colourMode]}`}
+              label={`${t.home.colourMode}: ${t.home.colourModeName[colourMode]}`}
             >
-              <svg
-                width={20}
-                height={20}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <circle cx={12} cy={12} r={8} />
-                <path d="M12 4a8 8 0 0 0 0 16Z" fill="currentColor" stroke="none" />
-              </svg>
-            </button>
+              <circle cx={12} cy={12} r={8} />
+              <path d="M12 4a8 8 0 0 0 0 16Z" fill="currentColor" stroke="none" />
+            </IconCyclerButton>
 
             {/* Beside the mute toggle for the same reason it is: a card face is a
                 setting, not a move, and it must not sit among the buttons a player
                 reaches for with a clock running. */}
-            <button
-              type="button"
-              className="icon-btn icon-btn-framed theme-cycler"
+            <IconCyclerButton
+              className="theme-cycler"
               onClick={() => {
                 setCardTheme(nextCardTheme(cardTheme, konamiUnlocked))
               }}
-              aria-label={t.cardTheme.named(t.cardTheme.name[cardTheme])}
-              title={t.cardTheme.named(t.cardTheme.name[cardTheme])}
+              label={t.cardTheme.named(t.cardTheme.name[cardTheme])}
             >
-              <svg
-                width={20}
-                height={20}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <rect x={3} y={6} width={11} height={15} rx={2} />
-                <path d="M8 3h9a2 2 0 0 1 2 2v12" />
-              </svg>
-            </button>
+              <rect x={3} y={6} width={11} height={15} rx={2} />
+              <path d="M8 3h9a2 2 0 0 1 2 2v12" />
+            </IconCyclerButton>
           </div>
         </header>
 
