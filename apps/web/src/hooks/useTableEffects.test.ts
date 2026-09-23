@@ -188,4 +188,22 @@ describe('several flourishes at once', () => {
       })
     }).not.toThrow()
   })
+
+  it('forgets a timer once it fires, so a long game does not accumulate one id per burst', () => {
+    const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout')
+    const { rerender, unmount } = setup(num('a'))
+    rerender({ discardTop: num('a'), feed: [unoCalled(1)] })
+    act(() => {
+      vi.advanceTimersByTime(EFFECT_DURATION_MS.uno + 10)
+    })
+    rerender({ discardTop: num('a'), feed: [unoCalled(1), unoCalled(2)] })
+    act(() => {
+      vi.advanceTimersByTime(EFFECT_DURATION_MS.uno + 10)
+    })
+    // Both bursts above already fired and self-removed; nothing should be left
+    // for the unmount cleanup to clear.
+    clearTimeoutSpy.mockClear()
+    unmount()
+    expect(clearTimeoutSpy).not.toHaveBeenCalled()
+  })
 })
