@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.10](https://github.com/PixiBixi/uno-multiplayer/compare/b7576b1c3e53403a3da6430f724a211f118c5c66..v1.12.10) - 2026-09-23
+#### Bug Fixes
+- six bugs from the code review (#41) - ([b7576b1](https://github.com/PixiBixi/uno-multiplayer/commit/b7576b1c3e53403a3da6430f724a211f118c5c66)) - Jérémy
+
+- - -
+
 ## [v1.12.9](https://github.com/PixiBixi/uno-multiplayer/compare/bce74f9416a2ff13a034be3edbcd4ad8fe96d739..v1.12.9) - 2026-09-23
 #### Miscellaneous Chores
 - (**deps**) update dependency prettier to v3.9.8 (#40) - ([bce74f9](https://github.com/PixiBixi/uno-multiplayer/commit/bce74f9416a2ff13a034be3edbcd4ad8fe96d739)) - renovate[bot], renovate[bot]
