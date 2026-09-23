@@ -229,7 +229,6 @@ export class RoomManager {
     room.setNextRoundDeadline(null)
   }
 
-  /** Drops rooms nobody is connected to. Returns how many went away. */
   /**
    * Drops rooms nobody is connected to. Returns how many went away.
    *
@@ -259,6 +258,7 @@ export class RoomManager {
       for (let seat = 0; seat < room.memberCount; seat++) this.cancelGrace(room, seat)
       this.cancelTurn(room)
       this.cancelNextRound(room)
+      this.cancelUnoGrace(room)
       this.rooms.delete(code)
       this.emptySince.delete(code)
       removed++

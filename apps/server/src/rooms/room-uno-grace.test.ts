@@ -102,3 +102,21 @@ describe('the three-second window on a plain table', () => {
     expect(clock.pendingCount()).toBe(armed)
   })
 })
+
+describe('purging a room with a window open', () => {
+  /* A purged room is unreachable, so a UNO clock left behind would fire into a room
+     nobody can see and hold it in memory until it did. */
+  it('cancels the UNO clock along with the room', () => {
+    const { manager, room, clock } = exposedTable({ liar: false })
+    expect(room.exposedSeat()).not.toBeNull()
+    manager.armUnoGrace(room, () => undefined)
+    expect(clock.pendingCount()).toBe(1)
+
+    for (const socketId of ['a', 'b']) {
+      const left = room.disconnect(socketId)
+      if (left !== null) room.expireGrace(left.seat)
+    }
+    expect(manager.purge()).toBe(1)
+    expect(clock.pendingCount()).toBe(0)
+  })
+})
