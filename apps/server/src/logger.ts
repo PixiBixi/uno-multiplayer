@@ -9,5 +9,3 @@ export const logger = pino({
     censor: '[redacted]',
   },
 })
-
-export type Logger = typeof logger

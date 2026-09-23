@@ -1,6 +1,6 @@
 import type { IceServer, VoiceSignal } from '@uno/protocol'
 
-export type PeerManagerOptions = {
+type PeerManagerOptions = {
   selfSeat: number
   iceServers: IceServer[]
   localStream: MediaStream

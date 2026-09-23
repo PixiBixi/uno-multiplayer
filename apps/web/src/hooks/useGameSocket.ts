@@ -81,6 +81,21 @@ export function useGameSocket() {
     dispatch({ type: 'error', message: messagesRef.current.error[code] })
   }, [])
 
+  /* Every emit whose ack does nothing on success and dispatches `fail` on a
+     refusal goes through here, so that pattern lives once instead of in every
+     action below. `createRoom` and `joinRoom` keep their own emit: their ack
+     also has to clear an in-flight guard. */
+  const emitOrFail = useCallback(
+    <Ev extends keyof ClientToServer>(event: Ev, payload: Parameters<ClientToServer[Ev]>[0]) => {
+      const ack = (result: { ok: true } | { ok: false; error: ErrorCode }) => {
+        if (!result.ok) fail(result.error)
+      }
+      const args = [payload, ack] as Parameters<ClientToServer[Ev]>
+      socketRef.current?.emit(event, ...args)
+    },
+    [fail],
+  )
+
   /**
    * Creates a table on the defaults, which is all the home screen collects now.
    *
@@ -135,11 +150,9 @@ export function useGameSocket() {
    */
   const configureRoom = useCallback(
     (changes: TableConfiguration) => {
-      socketRef.current?.emit('room:configure', changes, (result) => {
-        if (!result.ok) fail(result.error)
-      })
+      emitOrFail('room:configure', changes)
     },
-    [fail],
+    [emitOrFail],
   )
 
   // Same guard as `creating`, for the same double tap.
@@ -164,39 +177,29 @@ export function useGameSocket() {
   )
 
   const startGame = useCallback(() => {
-    socketRef.current?.emit('game:start', {}, (result) => {
-      if (!result.ok) fail(result.error)
-    })
-  }, [fail])
+    emitOrFail('game:start', {})
+  }, [emitOrFail])
 
   const nextRound = useCallback(() => {
-    socketRef.current?.emit('game:nextRound', {}, (result) => {
-      if (!result.ok) fail(result.error)
-    })
-  }, [fail])
+    emitOrFail('game:nextRound', {})
+  }, [emitOrFail])
 
   const restartGame = useCallback(() => {
-    socketRef.current?.emit('game:restart', {}, (result) => {
-      if (!result.ok) fail(result.error)
-    })
-  }, [fail])
+    emitOrFail('game:restart', {})
+  }, [emitOrFail])
 
   const playMove = useCallback(
     (move: Move) => {
-      socketRef.current?.emit('game:move', { move }, (result) => {
-        if (!result.ok) fail(result.error)
-      })
+      emitOrFail('game:move', { move })
     },
-    [fail],
+    [emitOrFail],
   )
 
   const sendChat = useCallback(
     (text: string) => {
-      socketRef.current?.emit('chat:send', { text }, (result) => {
-        if (!result.ok) fail(result.error)
-      })
+      emitOrFail('chat:send', { text })
     },
-    [fail],
+    [emitOrFail],
   )
 
   const roomCode = state.roomCode

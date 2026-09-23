@@ -17,7 +17,7 @@ export type Timers = {
   clearTimeout(handle: unknown): void
 }
 
-export type RoomManagerOptions = {
+type RoomManagerOptions = {
   maxRooms: number
   gracePeriodMs: number
   timers?: Timers

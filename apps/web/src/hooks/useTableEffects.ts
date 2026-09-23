@@ -7,6 +7,7 @@ import {
   type ActiveEffect,
   type EffectKind,
 } from '../lib/play-effects.js'
+import { freshFeedEntries } from './feed-window.js'
 import { highestFeedId, type FeedEntry } from './game-reducer.js'
 
 type UseTableEffects = {
@@ -68,9 +69,8 @@ export function useTableEffects({ discardTop, currentColor, feed }: UseTableEffe
 
   // UNO calls and draws: driven by the feed, which is the only place they exist.
   useEffect(() => {
-    const fresh = feed.filter((entry) => entry.id > lastFeedId.current)
+    const fresh = freshFeedEntries(feed, lastFeedId)
     if (fresh.length === 0) return
-    lastFeedId.current = highestFeedId(fresh)
 
     for (const entry of fresh) {
       if (entry.kind !== 'event') continue

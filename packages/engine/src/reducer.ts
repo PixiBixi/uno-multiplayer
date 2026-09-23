@@ -34,26 +34,28 @@ function sameMove(a: Move, b: Move): boolean {
  * available rather than producing `undefined` holes.
  */
 function drawInto(state: GameState, seatIndex: number, count: number): GameState {
-  let drawPile = state.drawPile
   let discardPile = state.discardPile
   let rngState = state.rngState
-  const drawn: Card[] = []
 
-  for (let i = 0; i < count; i++) {
-    if (drawPile.length === 0) {
-      const top = discardPile[discardPile.length - 1]
-      const recyclable = discardPile.slice(0, -1)
-      if (top === undefined || recyclable.length === 0) break
+  const first = takeFromTop(state.drawPile, count)
+  let drawPile = first.rest
+  const drawn: Card[] = first.taken
+
+  // Short by this many: try the discard pile once, for the rest.
+  const short = count - drawn.length
+  if (short > 0) {
+    const top = discardPile[discardPile.length - 1]
+    const recyclable = discardPile.slice(0, -1)
+    if (top !== undefined && recyclable.length > 0) {
       const reshuffled = shuffle(recyclable, rngState)
       drawPile = reshuffled.items
       rngState = reshuffled.state
       discardPile = [top]
+
+      const second = takeFromTop(drawPile, short)
+      drawPile = second.rest
+      drawn.push(...second.taken)
     }
-    const { taken, rest } = takeFromTop(drawPile, 1)
-    const card = taken[0]
-    if (card === undefined) break
-    drawPile = rest
-    drawn.push(card)
   }
 
   if (drawn.length === 0) return { ...state, drawPile, discardPile, rngState }

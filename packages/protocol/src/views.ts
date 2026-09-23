@@ -1,4 +1,13 @@
-import type { Card, Color, GamePhase, MatchGoal, Move, SeatStatus, TableRules } from '@uno/engine'
+import type {
+  Card,
+  Color,
+  GamePhase,
+  MatchGoal,
+  Move,
+  PendingDraw,
+  SeatStatus,
+  TableRules,
+} from '@uno/engine'
 
 export const ROOM_CODE_LENGTH = 6
 export const MAX_SEATS = 4
@@ -90,7 +99,7 @@ export type PlayerView = {
   rules: TableRules
   discardTop: Card
   currentColor: Color
-  pendingDraw: { amount: number; kind: 'draw2' | 'wild4' } | null
+  pendingDraw: PendingDraw | null
   currentSeat: number
   direction: 1 | -1
   /**

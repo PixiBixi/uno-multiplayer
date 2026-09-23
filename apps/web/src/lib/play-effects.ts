@@ -9,7 +9,7 @@ export type CardEffectKind = 'wild4' | 'wild' | 'draw2' | 'skip' | 'reverse'
  *  it pulses the draw pile instead, and CSS owns that timing. */
 export type EffectKind = CardEffectKind | 'uno'
 
-export type PlayEffect = { kind: CardEffectKind; color: Color }
+type PlayEffect = { kind: CardEffectKind; color: Color }
 
 /** A burst waiting on the overlay, tagged with a key so it can be cleared. */
 export type ActiveEffect = { key: string; kind: EffectKind; color?: Color }
@@ -53,7 +53,7 @@ export function effectForCard(card: Card, currentColor: Color): PlayEffect | nul
 }
 
 /** What a feed event should trigger, if anything. */
-export type FeedEffect = { overlay: 'uno' } | { pulse: 'draw' } | null
+type FeedEffect = { overlay: 'uno' } | { pulse: 'draw' } | null
 
 /**
  * Calling UNO and drawing are read from the `game:event` feed, not from the

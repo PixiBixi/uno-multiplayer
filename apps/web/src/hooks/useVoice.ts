@@ -4,7 +4,7 @@ import type { Socket } from 'socket.io-client'
 import { createPeerManager, type PeerManager } from '../lib/voice/peer-manager.js'
 import { createSpeakingDetector, type SpeakingDetector } from '../lib/voice/speaking-detector.js'
 
-export type VoiceStatus = 'idle' | 'joining' | 'joined' | 'denied' | 'unsupported'
+type VoiceStatus = 'idle' | 'joining' | 'joined' | 'denied' | 'unsupported'
 
 type VoiceSocket = Socket<ServerToClient, ClientToServer>
 
@@ -41,6 +41,12 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
     setMuted(false)
   }, [])
 
+  // Every place that gives up on voice tears it down and drops back to idle together.
+  const reset = useCallback(() => {
+    teardown()
+    setStatus('idle')
+  }, [teardown])
+
   const join = useCallback(async () => {
     if (typeof navigator === 'undefined' || navigator.mediaDevices === undefined) {
       setStatus('unsupported')
@@ -60,8 +66,7 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
 
     socketRef.current?.emit('voice:join', {}, (result) => {
       if (!result.ok) {
-        teardown()
-        setStatus('idle')
+        reset()
         return
       }
       const manager = createPeerManager({
@@ -90,13 +95,12 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
       setStatus('joined')
       for (const peer of result.peers) void manager.connect(peer.seat)
     })
-  }, [selfSeat, socketRef, teardown])
+  }, [selfSeat, socketRef, reset])
 
   const leave = useCallback(() => {
     socketRef.current?.emit('voice:leave', {}, () => {})
-    teardown()
-    setStatus('idle')
-  }, [socketRef, teardown])
+    reset()
+  }, [socketRef, reset])
 
   const toggleMute = useCallback(() => {
     const next = !muted
@@ -117,8 +121,7 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
       /* Our own seat gone means the server took us out (the table was left, or another
          tab took the seat): nothing will call `leave`, so release the microphone here. */
       if (!present.has(selfSeat)) {
-        teardown()
-        setStatus('idle')
+        reset()
         return
       }
       // A seat that left the roster takes its peer connection with it.
@@ -143,8 +146,7 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
 
     // A dropped socket takes the peers with it; the client rejoins explicitly.
     const onDisconnect = (): void => {
-      teardown()
-      setStatus('idle')
+      reset()
     }
 
     socket.on('voice:peers', onPeers)
@@ -155,7 +157,7 @@ export function useVoice(options: { socketRef: RefObject<VoiceSocket | null>; se
       socket.off('voice:signal', onSignal)
       socket.off('disconnect', onDisconnect)
     }
-  }, [selfSeat, socketRef, teardown])
+  }, [selfSeat, socketRef, reset])
 
   useEffect(() => teardown, [teardown])
 
