@@ -3,6 +3,38 @@
 Online UNO for two to four players. TypeScript monorepo, server-authoritative,
 self-hosted for a small group.
 
+## Architecture
+
+One dependency direction, five pieces: `packages/engine` (pure rules, no I/O) ->
+`packages/protocol` (wire contract: views, events, Zod schemas) -> `apps/server`
+(Fastify + Socket.IO, rooms, timers, the only place holding state) -> `apps/web`
+(Vite + React client, renders what it is given and emits intents) -> `e2e/`
+(Playwright against a real server). Engine knows nothing of protocol, protocol
+knows nothing of the server, and the client knows no rules; breaking that
+direction is worth a second look. The reasoning behind each boundary is in
+[OpenWiki](openwiki/quickstart.md), not repeated here.
+
+## Commands
+
+```bash
+npm run verify              # lint + typecheck + unit tests, before every commit
+npm run build                # once, so the server has dist/ to run
+npm start -w @uno/server     # API and WebSockets on http://localhost:5050
+npm run dev -w @uno/web      # client with hot reload on http://localhost:5173
+npm run watch                # tsc --build --watch, keep running while editing server code
+npx vitest run <path>        # a single test file
+npx vitest run -t <name>     # a single test by name
+npm run e2e                  # Playwright against a real build
+npm run e2e -- <spec>        # a single e2e spec
+```
+
+Deploying: `docker compose up --build` runs the image CI publishes on every green
+push to `main`. `compose.traefik.yaml` is the reverse-proxy variant and carries
+the optional `coturn` service. One replica, always: state lives in memory, so a
+second process would hold half the rooms and never know about the other. See
+[Deploying](openwiki/operations/deploying.md) for environment variables and
+rollback.
+
 ## Ground rules for working here
 
 - **Code, comments and commit messages in English.** Conversation may be in French.
