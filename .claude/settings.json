@@ -16,7 +16,7 @@
       "Bash(npx prettier:*)",
       "Bash(rm -f openwiki/_plan.md)",
       "Edit(openwiki/**)",
-      "Edit(CLAUDE.md)"
+      "Edit(AGENTS.md)"
     ]
   }
 }
