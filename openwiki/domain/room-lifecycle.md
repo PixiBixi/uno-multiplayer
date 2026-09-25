@@ -78,6 +78,12 @@ The deal now goes to **every** member seat, then reconciles the absent ones:
 
 Scores and statistics are indexed by seat, so this is not cosmetic.
 
+A seat vacated in the **lobby** is handed to the next joiner rather than kept: nothing is
+dealt or scored there, so seat numbers still match engine indices, and three departures
+no longer leave a table reporting `room_full` with only the host seated. A socket is
+seated at most once, so a double-tapped `room:join` cannot leave a second seat whose
+socket id never disconnects.
+
 ## Presence, and the three ways a room ends
 
 | State          | Meaning                                      |
@@ -111,6 +117,11 @@ walked away kept receiving that table's chat and events.
 It takes the same path as an unexpected disconnect, minus the grace period:
 somebody who pressed Leave is not coming back to that seat.
 
+A **second tab** rejoining a seat takes it over. `rejoin` reports the socket it replaced
+(`supersededSocketId`), and the handler evicts that one from voice, presence and the
+limiters, then disconnects it; otherwise the old tab kept moving and chatting as the seat
+and pulled it out of voice when closed.
+
 ## Timers
 
 Three clocks, all armed from one place in `handlers.ts` (`retime`), called after
@@ -130,6 +141,15 @@ anything that can change whose turn it is:
 All three arms are safe to call unconditionally: each clears itself when the room is not
 in its state, so a table with no pace ends up with no turn timer and null deadlines, and
 one with call-outs never arms a grace clock at all.
+
+**A presence change never restarts a clock.** `retime(room, 'presence')`, used by rejoin,
+disconnect and grace expiry, goes through `keepTurn`, `keepNextRound` and `keepUnoGrace`
+in `room-manager.ts`, which leave a running clock alone while what it times is unchanged.
+Through `armTurn`, a seat on turn could re-emit `room:rejoin` to stall a paced table
+forever, hold back the next deal, or dodge the forgotten-UNO penalty. A move still goes
+through the `arm*` path, so a skip handing the turn back to the same seat gets a fresh
+clock. `purge()` cancels all of them, the UNO grace clock included, and fires `onPurge`
+so the socket layer drops the room's voice session.
 
 [Voice chat](../architecture/voice-chat.md) has no clock of its own and deliberately no
 grace period. A disconnected socket leaves the voice session at once while its seat is
@@ -151,6 +171,19 @@ away from the server about when time is up.
 Keyed on the Socket.IO connection, **not** on the client IP. That is what keeps it
 correct behind a reverse proxy where every request arrives from the same address.
 Buckets are forgotten on disconnect, so the map does not grow.
+
+Moves, chat, creation and voice signals each have a bucket. `room:configure`,
+`game:start`, `game:nextRound`, `game:restart` and `room:rejoin` share **one** control
+bucket, since each re-broadcasts the table and alternating event names must not buy extra
+allowance. Every handler opens the same way through the helpers in `handlers.ts`: parse
+the payload, find the seat, charge the bucket (`admit`, built on `parsed` and `within`),
+in that order. A middleware fills in a no-op ack, so an event sent without a callback still
+broadcasts.
+
+The handshake is checked too, because a WebSocket upgrade is exempt from CORS.
+`allowRequest` in `handlers.ts`, through `isAllowedOrigin` in `apps/server/src/security/origin.ts`, accepts no `Origin` (a non-browser
+client), an `Origin` matching `Host`, or one listed in `CORS_ORIGIN`. Frames are capped at
+64 KiB (`maxHttpBufferSize`), four times the largest legal SDP.
 
 `trustProxy` follows `BEHIND_TLS`, and trusts the header by the peer's **address**
 when it is set: `loopback,uniquelocal`. Behind a proxy every request arrives from the

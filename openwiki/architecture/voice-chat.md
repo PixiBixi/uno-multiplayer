@@ -183,7 +183,7 @@ costs the server nothing.
 | --------------------------- | ---------------------------------------------------------------------------------------------- |
 | Microphone denied or absent | That player hears the others and does not speak                                                |
 | Browser without WebRTC      | The panel renders nothing at all                                                               |
-| ICE fails for one pair      | Only that pair is silent; the row says so                                                      |
+| ICE fails for one pair      | The lower seat calls `restartIce()` and re-offers; that pair is silent until it reconnects     |
 | Socket disconnect           | Peers are torn down and rebuilt when the client rejoins                                        |
 | coturn unreachable          | It serves STUN too, so ICE is left with host candidates unless `STUN_URL` names another server |
 | `TURN_SECRET` unset         | STUN only; players behind a symmetric NAT lose voice, nobody else does                         |

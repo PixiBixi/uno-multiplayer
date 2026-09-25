@@ -22,7 +22,9 @@ suite on Node 22/24/26, coverage, e2e, and a Docker build-and-probe.
 
 Two projects are configured in `vitest.config.ts` - `node` and `web` (jsdom) -
 because the server and the client resolve modules differently and need different
-globals.
+globals. `web` runs on the `vmThreads` pool: one jsdom per worker instead of one per
+file, each file still isolated in its own VM context, which cut that project from about
+15 s to under 5 s.
 
 The engine is pure functions over immutable state, so each rule is a short unit test
 with no network and no React, and the property tests sit on top of that suite rather
