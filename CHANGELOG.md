@@ -1,6 +1,15 @@
 # Changelog
 
 - - -
+## [v1.12.17](https://github.com/PixiBixi/uno-multiplayer/compare/7625277d2edf9cf2b2eb8f3a7087e38d1ab09a0c..v1.12.17) - 2026-09-25
+#### Documentation
+- (**agents**) refresh AGENTS.md against the code - ([5459d6f](https://github.com/PixiBixi/uno-multiplayer/commit/5459d6f279cf9a1e2ef1408b2924aa49c842e6ea)) - Jeremy Delgado
+- (**agents**) rename CLAUDE.md to AGENTS.md - ([7625277](https://github.com/PixiBixi/uno-multiplayer/commit/7625277d2edf9cf2b2eb8f3a7087e38d1ab09a0c)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**deps**) update dev-dependencies (#49) - ([8b13b1f](https://github.com/PixiBixi/uno-multiplayer/commit/8b13b1f4e2187a7d4aea3e96d543bec4482294fc)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.16](https://github.com/PixiBixi/uno-multiplayer/compare/92363443fd463104bcf8f19b8709b78b3b741b9e..v1.12.16) - 2026-09-23
 #### Bug Fixes
 - (**web**) voice peer lifecycle from the code review (#47) - ([9236344](https://github.com/PixiBixi/uno-multiplayer/commit/92363443fd463104bcf8f19b8709b78b3b741b9e)) - Jérémy
