@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.12.18](https://github.com/PixiBixi/uno-multiplayer/compare/c7302f4df629b32ef76758b35c281f2910a124ff..v1.12.18) - 2026-09-26
+#### Documentation
+- (**wiki**) refresh voice-chat, room-lifecycle and testing wiki pages - ([c7302f4](https://github.com/PixiBixi/uno-multiplayer/commit/c7302f4df629b32ef76758b35c281f2910a124ff)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**deps**) update dependency typescript-eslint to v8.70.1 (#50) - ([c688a97](https://github.com/PixiBixi/uno-multiplayer/commit/c688a97ab43fc3eb8f53002c51f10fdd95eb10db)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.17](https://github.com/PixiBixi/uno-multiplayer/compare/7625277d2edf9cf2b2eb8f3a7087e38d1ab09a0c..v1.12.17) - 2026-09-25
 #### Documentation
 - (**agents**) refresh AGENTS.md against the code - ([5459d6f](https://github.com/PixiBixi/uno-multiplayer/commit/5459d6f279cf9a1e2ef1408b2924aa49c842e6ea)) - Jeremy Delgado
