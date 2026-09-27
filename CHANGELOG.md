@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.19](https://github.com/PixiBixi/uno-multiplayer/compare/cd6fdc92e32201f669671b9469298623bd6f0986..v1.12.19) - 2026-09-27
+#### Miscellaneous Chores
+- (**deps**) update dependency jsdom to v30.1.1 (#51) - ([cd6fdc9](https://github.com/PixiBixi/uno-multiplayer/commit/cd6fdc92e32201f669671b9469298623bd6f0986)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.18](https://github.com/PixiBixi/uno-multiplayer/compare/c7302f4df629b32ef76758b35c281f2910a124ff..v1.12.18) - 2026-09-26
 #### Documentation
 - (**wiki**) refresh voice-chat, room-lifecycle and testing wiki pages - ([c7302f4](https://github.com/PixiBixi/uno-multiplayer/commit/c7302f4df629b32ef76758b35c281f2910a124ff)) - Jeremy Delgado
