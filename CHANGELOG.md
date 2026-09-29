@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.20](https://github.com/PixiBixi/uno-multiplayer/compare/38a6fc9b2c7c651a891703b55cdd29b17c35868f..v1.12.20) - 2026-09-29
+#### Miscellaneous Chores
+- (**deps**) update dependency prettier to v3.9.9 (#53) - ([38a6fc9](https://github.com/PixiBixi/uno-multiplayer/commit/38a6fc9b2c7c651a891703b55cdd29b17c35868f)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.19](https://github.com/PixiBixi/uno-multiplayer/compare/cd6fdc92e32201f669671b9469298623bd6f0986..v1.12.19) - 2026-09-27
 #### Miscellaneous Chores
 - (**deps**) update dependency jsdom to v30.1.1 (#51) - ([cd6fdc9](https://github.com/PixiBixi/uno-multiplayer/commit/cd6fdc92e32201f669671b9469298623bd6f0986)) - renovate[bot], renovate[bot]
