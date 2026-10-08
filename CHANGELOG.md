@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.25](https://github.com/PixiBixi/uno-multiplayer/compare/90ec0362b07b46a0d193b34f344e4b098de013da..v1.12.25) - 2026-10-08
+#### Miscellaneous Chores
+- (**deps**) update dependency eslint to v10.12.0 (#59) - ([90ec036](https://github.com/PixiBixi/uno-multiplayer/commit/90ec0362b07b46a0d193b34f344e4b098de013da)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.24](https://github.com/PixiBixi/uno-multiplayer/compare/80640d0f091c169b8df8296cafa8a9f7ac15818a..v1.12.24) - 2026-10-07
 #### Miscellaneous Chores
 - (**deps**) update dependency @types/node to v26.6.4 (#58) - ([80640d0](https://github.com/PixiBixi/uno-multiplayer/commit/80640d0f091c169b8df8296cafa8a9f7ac15818a)) - renovate[bot], renovate[bot]
