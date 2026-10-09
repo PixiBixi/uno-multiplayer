@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.26](https://github.com/PixiBixi/uno-multiplayer/compare/218e200d909d44070e5fef060e745aa6a252036e..v1.12.26) - 2026-10-09
+#### Miscellaneous Chores
+- (**deps**) update dependency jsdom to v30.1.2 (#60) - ([218e200](https://github.com/PixiBixi/uno-multiplayer/commit/218e200d909d44070e5fef060e745aa6a252036e)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.25](https://github.com/PixiBixi/uno-multiplayer/compare/90ec0362b07b46a0d193b34f344e4b098de013da..v1.12.25) - 2026-10-08
 #### Miscellaneous Chores
 - (**deps**) update dependency eslint to v10.12.0 (#59) - ([90ec036](https://github.com/PixiBixi/uno-multiplayer/commit/90ec0362b07b46a0d193b34f344e4b098de013da)) - renovate[bot], renovate[bot]
