@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.27](https://github.com/PixiBixi/uno-multiplayer/compare/b528d60c21314f0061ad4f3ce5ca88d7f72747c1..v1.12.27) - 2026-10-10
+#### Miscellaneous Chores
+- (**deps**) update dependency @vitejs/plugin-react to v6.1.2 (#61) - ([b528d60](https://github.com/PixiBixi/uno-multiplayer/commit/b528d60c21314f0061ad4f3ce5ca88d7f72747c1)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.26](https://github.com/PixiBixi/uno-multiplayer/compare/218e200d909d44070e5fef060e745aa6a252036e..v1.12.26) - 2026-10-09
 #### Miscellaneous Chores
 - (**deps**) update dependency jsdom to v30.1.2 (#60) - ([218e200](https://github.com/PixiBixi/uno-multiplayer/commit/218e200d909d44070e5fef060e745aa6a252036e)) - renovate[bot], renovate[bot]
