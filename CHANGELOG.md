@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.29](https://github.com/PixiBixi/uno-multiplayer/compare/570952759780e33ca0c2d66693009d82922f205f..v1.12.29) - 2026-10-11
+#### Miscellaneous Chores
+- (**deps**) update step-security/harden-runner action to v2.22.0 (#63) - ([5709527](https://github.com/PixiBixi/uno-multiplayer/commit/570952759780e33ca0c2d66693009d82922f205f)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.28](https://github.com/PixiBixi/uno-multiplayer/compare/0a7e7b41aff3f49d62ebc5902afe01eff4c6fd21..v1.12.28) - 2026-10-11
 #### Miscellaneous Chores
 - (**deps**) update dependency typescript-eslint to v8.71.1 (#62) - ([0a7e7b4](https://github.com/PixiBixi/uno-multiplayer/commit/0a7e7b41aff3f49d62ebc5902afe01eff4c6fd21)) - renovate[bot], renovate[bot]
