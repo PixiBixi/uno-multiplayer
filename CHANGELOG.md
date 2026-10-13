@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.31](https://github.com/PixiBixi/uno-multiplayer/compare/189f7b184c5aac593b7a4255b61f37577d118085..v1.12.31) - 2026-10-13
+#### Miscellaneous Chores
+- (**deps**) update dependency @playwright/test to v1.64.0 (#65) - ([189f7b1](https://github.com/PixiBixi/uno-multiplayer/commit/189f7b184c5aac593b7a4255b61f37577d118085)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.30](https://github.com/PixiBixi/uno-multiplayer/compare/a124186046f959c345781207dd3a54cefe2bad65..v1.12.30) - 2026-10-13
 #### Miscellaneous Chores
 - (**deps**) update actions/upload-artifact action to v7.0.2 (#64) - ([a124186](https://github.com/PixiBixi/uno-multiplayer/commit/a124186046f959c345781207dd3a54cefe2bad65)) - renovate[bot], renovate[bot]
