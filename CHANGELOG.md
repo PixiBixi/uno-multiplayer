@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.30](https://github.com/PixiBixi/uno-multiplayer/compare/a124186046f959c345781207dd3a54cefe2bad65..v1.12.30) - 2026-10-13
+#### Miscellaneous Chores
+- (**deps**) update actions/upload-artifact action to v7.0.2 (#64) - ([a124186](https://github.com/PixiBixi/uno-multiplayer/commit/a124186046f959c345781207dd3a54cefe2bad65)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.29](https://github.com/PixiBixi/uno-multiplayer/compare/570952759780e33ca0c2d66693009d82922f205f..v1.12.29) - 2026-10-11
 #### Miscellaneous Chores
 - (**deps**) update step-security/harden-runner action to v2.22.0 (#63) - ([5709527](https://github.com/PixiBixi/uno-multiplayer/commit/570952759780e33ca0c2d66693009d82922f205f)) - renovate[bot], renovate[bot]
