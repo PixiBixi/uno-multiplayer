@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.36](https://github.com/PixiBixi/uno-multiplayer/compare/8a472ceb3ae53aa61ac2e85e4111cedd787a6528..v1.12.36) - 2026-10-18
+#### Miscellaneous Chores
+- (**deps**) update dependency typescript-eslint to v8.71.2 (#70) - ([8a472ce](https://github.com/PixiBixi/uno-multiplayer/commit/8a472ceb3ae53aa61ac2e85e4111cedd787a6528)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.35](https://github.com/PixiBixi/uno-multiplayer/compare/f80bb645286f6b949963e1805d3d917816070255..v1.12.35) - 2026-10-17
 #### Miscellaneous Chores
 - (**deps**) update dev-dependencies to v5.0.4 (#69) - ([f80bb64](https://github.com/PixiBixi/uno-multiplayer/commit/f80bb645286f6b949963e1805d3d917816070255)) - renovate[bot], renovate[bot]
