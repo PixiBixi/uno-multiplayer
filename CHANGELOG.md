@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.37](https://github.com/PixiBixi/uno-multiplayer/compare/52c9fa4cba3d5fc475c1dd02754e729537184157..v1.12.37) - 2026-10-20
+#### Miscellaneous Chores
+- (**deps**) update zizmorcore/zizmor-action action to v0.7.0 (#72) - ([52c9fa4](https://github.com/PixiBixi/uno-multiplayer/commit/52c9fa4cba3d5fc475c1dd02754e729537184157)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.36](https://github.com/PixiBixi/uno-multiplayer/compare/8a472ceb3ae53aa61ac2e85e4111cedd787a6528..v1.12.36) - 2026-10-18
 #### Miscellaneous Chores
 - (**deps**) update dependency typescript-eslint to v8.71.2 (#70) - ([8a472ce](https://github.com/PixiBixi/uno-multiplayer/commit/8a472ceb3ae53aa61ac2e85e4111cedd787a6528)) - renovate[bot], renovate[bot]
