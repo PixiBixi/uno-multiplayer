@@ -24,7 +24,7 @@ env:
 jobs:
   release:
     if: github.event_name == 'push'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: write # cog pushes the bump commit and its tag, gh cuts the release
     outputs:
@@ -99,7 +99,7 @@ jobs:
         needs.release.outputs.bumped == 'true' ||
         inputs.tag != ''
       )
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
       packages: write
