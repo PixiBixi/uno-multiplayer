@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.12.41](https://github.com/PixiBixi/uno-multiplayer/compare/105314503b789fcdfc02776b445cd7607441b3c1..v1.12.41) - 2026-10-21
+#### Bug Fixes
+- (**deps**) refresh lockfile for transitive security fixes - ([1053145](https://github.com/PixiBixi/uno-multiplayer/commit/105314503b789fcdfc02776b445cd7607441b3c1)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**renovate**) automerge lock file maintenance, release digests without timestamp - ([34df6b2](https://github.com/PixiBixi/uno-multiplayer/commit/34df6b29ed259e1d2dd24ca0fe45ac6cc1c34b0d)) - Jeremy Delgado
+
+- - -
+
 ## [v1.12.40](https://github.com/PixiBixi/uno-multiplayer/compare/ea0eaf5d4f00c5b866705fc5e76483763a73220e..v1.12.40) - 2026-10-21
 #### Miscellaneous Chores
 - (**renovate**) raise security PRs from OSV advisories - ([ea0eaf5](https://github.com/PixiBixi/uno-multiplayer/commit/ea0eaf5d4f00c5b866705fc5e76483763a73220e)) - Jeremy Delgado
