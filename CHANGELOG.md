@@ -1,6 +1,13 @@
 # Changelog
 
 - - -
+## [v1.12.43](https://github.com/PixiBixi/uno-multiplayer/compare/9d7c4717ae3b304354162903b232d1d5e94dcfb1..v1.12.43) - 2026-10-21
+#### Miscellaneous Chores
+- (**deps**) update node.js to 6f08a52 (#52) - ([629afa9](https://github.com/PixiBixi/uno-multiplayer/commit/629afa908b08abfba8ff44ce5d938f9212ced0af)) - renovate[bot], renovate[bot]
+- (**deps**) update docker/dockerfile:1 docker digest to 4edf897 (#57) - ([9d7c471](https://github.com/PixiBixi/uno-multiplayer/commit/9d7c4717ae3b304354162903b232d1d5e94dcfb1)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.42](https://github.com/PixiBixi/uno-multiplayer/compare/327faa7d19dd172306dc33d9838f0df3f4050007..v1.12.42) - 2026-10-21
 #### Miscellaneous Chores
 - (**deps**) update dependency ubuntu to v26 (#73) - ([327faa7](https://github.com/PixiBixi/uno-multiplayer/commit/327faa7d19dd172306dc33d9838f0df3f4050007)) - renovate[bot], renovate[bot]
