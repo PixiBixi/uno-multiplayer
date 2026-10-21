@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.40](https://github.com/PixiBixi/uno-multiplayer/compare/ea0eaf5d4f00c5b866705fc5e76483763a73220e..v1.12.40) - 2026-10-21
+#### Miscellaneous Chores
+- (**renovate**) raise security PRs from OSV advisories - ([ea0eaf5](https://github.com/PixiBixi/uno-multiplayer/commit/ea0eaf5d4f00c5b866705fc5e76483763a73220e)) - Jeremy Delgado
+
+- - -
+
 ## [v1.12.39](https://github.com/PixiBixi/uno-multiplayer/compare/57464e8a363d8f5fefc8c8f138292baedba23ce8..v1.12.39) - 2026-10-21
 #### Miscellaneous Chores
 - (**deps**) update zizmorcore/zizmor-action action to v0.7.1 (#74) - ([57464e8](https://github.com/PixiBixi/uno-multiplayer/commit/57464e8a363d8f5fefc8c8f138292baedba23ce8)) - renovate[bot], renovate[bot]
