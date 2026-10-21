@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.42](https://github.com/PixiBixi/uno-multiplayer/compare/327faa7d19dd172306dc33d9838f0df3f4050007..v1.12.42) - 2026-10-21
+#### Miscellaneous Chores
+- (**deps**) update dependency ubuntu to v26 (#73) - ([327faa7](https://github.com/PixiBixi/uno-multiplayer/commit/327faa7d19dd172306dc33d9838f0df3f4050007)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.41](https://github.com/PixiBixi/uno-multiplayer/compare/105314503b789fcdfc02776b445cd7607441b3c1..v1.12.41) - 2026-10-21
 #### Bug Fixes
 - (**deps**) refresh lockfile for transitive security fixes - ([1053145](https://github.com/PixiBixi/uno-multiplayer/commit/105314503b789fcdfc02776b445cd7607441b3c1)) - Jeremy Delgado
