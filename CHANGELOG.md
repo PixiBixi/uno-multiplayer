@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.12.44](https://github.com/PixiBixi/uno-multiplayer/compare/81f458129bc4126644670e8a0296a2b51dac1fab..v1.12.44) - 2026-10-24
+#### Continuous Integration
+- (**release**) serialize release runs - ([81f4581](https://github.com/PixiBixi/uno-multiplayer/commit/81f458129bc4126644670e8a0296a2b51dac1fab)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**deps**) update step-security/harden-runner action to v2.22.2 (#75) - ([c24697b](https://github.com/PixiBixi/uno-multiplayer/commit/c24697b72fdca074cb5abd4894a16ee867d86388)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.43](https://github.com/PixiBixi/uno-multiplayer/compare/9d7c4717ae3b304354162903b232d1d5e94dcfb1..v1.12.43) - 2026-10-21
 #### Miscellaneous Chores
 - (**deps**) update node.js to 6f08a52 (#52) - ([629afa9](https://github.com/PixiBixi/uno-multiplayer/commit/629afa908b08abfba8ff44ce5d938f9212ced0af)) - renovate[bot], renovate[bot]
