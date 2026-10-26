@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.45](https://github.com/PixiBixi/uno-multiplayer/compare/a26142b701b31b2622b9bb99d0a780af1fe46e98..v1.12.45) - 2026-10-26
+#### Miscellaneous Chores
+- (**deps**) lock file maintenance (#76) - ([a26142b](https://github.com/PixiBixi/uno-multiplayer/commit/a26142b701b31b2622b9bb99d0a780af1fe46e98)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.44](https://github.com/PixiBixi/uno-multiplayer/compare/81f458129bc4126644670e8a0296a2b51dac1fab..v1.12.44) - 2026-10-24
 #### Continuous Integration
 - (**release**) serialize release runs - ([81f4581](https://github.com/PixiBixi/uno-multiplayer/commit/81f458129bc4126644670e8a0296a2b51dac1fab)) - Jeremy Delgado
