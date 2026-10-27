@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.46](https://github.com/PixiBixi/uno-multiplayer/compare/b3afaadd4023e56e5ee4229259133265e753242a..v1.12.46) - 2026-10-27
+#### Miscellaneous Chores
+- (**deps**) update node.js to 40cd011 (#77) - ([b3afaad](https://github.com/PixiBixi/uno-multiplayer/commit/b3afaadd4023e56e5ee4229259133265e753242a)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.12.45](https://github.com/PixiBixi/uno-multiplayer/compare/a26142b701b31b2622b9bb99d0a780af1fe46e98..v1.12.45) - 2026-10-26
 #### Miscellaneous Chores
 - (**deps**) lock file maintenance (#76) - ([a26142b](https://github.com/PixiBixi/uno-multiplayer/commit/a26142b701b31b2622b9bb99d0a780af1fe46e98)) - renovate[bot], renovate[bot]
