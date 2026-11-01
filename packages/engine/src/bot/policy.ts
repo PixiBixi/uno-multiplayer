@@ -203,8 +203,7 @@ function keepLackedColour(view: BotView, cards: Card[]): Card[] {
   return matching.length > 0 ? matching : cards
 }
 
-/* Leaves current a colour the hand holds many of and opponents few: weights tuned by
-   the tournament, where it lifted Hard by about one point over the most-held colour. */
+/** Leaves current a colour the hand holds many of and opponents few; a held card outweighs four unseen. */
 function keepStrongColour(view: BotView, cards: Card[]): Card[] {
   const held = colourCounts(view.hand)
   const unseen = unseenColourCounts(view)
