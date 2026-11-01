@@ -1,10 +1,11 @@
-// Plays one bot of level L against three of level L-1 on each rule set and prints the
-// win rate of the stronger seat. The engine does the playing; this only loops and prints.
+// Plays one bot of level L against three of level L-1 on each rule set, over several
+// independent seeds, and prints the stronger seat's win rate and average points as mean
+// and standard deviation across seeds. The engine does the playing; this loops and prints.
 import { DEFAULT_TABLE_RULES, runTournament } from '../packages/engine/dist/index.js'
 
 const ROUNDS = 10_000
+const SEEDS = Array.from({ length: 10 }, (_, i) => 20261101 + i)
 const UNO_GRACE_MS = 3000
-const SEED = 20261101
 
 const PAIRS = [
   ['normal', 'easy'],
@@ -19,25 +20,41 @@ const RULE_SETS = [
   ['playDrawnCard off', { ...DEFAULT_TABLE_RULES, playDrawnCard: false }],
 ]
 
-const pct = (n, d) => `${((100 * n) / d).toFixed(1)}%`
+function meanSd(values) {
+  const mean = values.reduce((a, b) => a + b, 0) / values.length
+  const variance = values.reduce((a, v) => a + (v - mean) ** 2, 0) / (values.length - 1)
+  return { mean, sd: Math.sqrt(variance) }
+}
 
-console.log('| Pair | Rule set | Win rate | Avg points | Rounds | Unfinished |')
+console.log(
+  `| Pair | Rule set | Win rate (mean, sd) | Avg points (mean, sd) | Seeds x rounds | Unfinished |`,
+)
 console.log('| --- | --- | --- | --- | --- | --- |')
 for (const [strong, weak] of PAIRS) {
   for (const [name, rules] of RULE_SETS) {
     const started = performance.now()
-    const result = runTournament({
-      seats: [strong, weak, weak, weak],
-      rounds: ROUNDS,
-      rules,
-      seed: SEED,
-      unoGraceMs: UNO_GRACE_MS,
-    })
-    const finished = ROUNDS - result.unfinished
-    const avg = (result.points[0] / ROUNDS).toFixed(1)
+    const rates = []
+    const averages = []
+    let unfinished = 0
+    for (const seed of SEEDS) {
+      const result = runTournament({
+        seats: [strong, weak, weak, weak],
+        rounds: ROUNDS,
+        rules,
+        seed,
+        unoGraceMs: UNO_GRACE_MS,
+      })
+      // Both figures over finished rounds, so they describe the same games.
+      const finished = ROUNDS - result.unfinished
+      rates.push((100 * result.wins[0]) / finished)
+      averages.push(result.points[0] / finished)
+      unfinished += result.unfinished
+    }
+    const rate = meanSd(rates)
+    const avg = meanSd(averages)
     const seconds = ((performance.now() - started) / 1000).toFixed(1)
     console.log(
-      `| ${strong} vs 3 ${weak} | ${name} | ${pct(result.wins[0], finished)} | ${avg} | ${ROUNDS} | ${result.unfinished} |`,
+      `| ${strong} vs 3 ${weak} | ${name} | ${rate.mean.toFixed(1)}% (${rate.sd.toFixed(1)}) | ${avg.mean.toFixed(1)} (${avg.sd.toFixed(1)}) | ${SEEDS.length} x ${ROUNDS} | ${unfinished} |`,
     )
     console.error(`  ${strong} vs 3 ${weak}, ${name}: ${seconds} s`)
   }

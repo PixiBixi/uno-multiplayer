@@ -25,6 +25,11 @@ const SPREADS: Record<BotLevel, Record<DelayKind, Spread | null>> = {
   },
 }
 
+/** Whether this level ever jumps in: the timing table is the one place that says so. */
+export function jumpsIn(level: BotLevel): boolean {
+  return SPREADS[level].jumpIn !== null
+}
+
 /** A human-paced delay: Gaussian around the level's mean, clamped to the kind's range. */
 export function sampleDelayMs(
   level: BotLevel,
