@@ -1,5 +1,6 @@
 import {
   DEFAULT_TABLE_RULES,
+  type BotLevel,
   type CardId,
   type MatchGoal,
   type Move,
@@ -162,6 +163,10 @@ export const roomConfigureSchema = z.object({
   pace: matchPaceSchema.optional(),
   rules: tableRulesSchema.optional(),
 })
+export const botLevelSchema: z.ZodType<BotLevel> = z.enum(['easy', 'normal', 'hard'])
+export const roomAddBotSchema = z.object({ level: botLevelSchema })
+export const roomSetBotLevelSchema = z.object({ seat: seatNumber, level: botLevelSchema })
+export const roomRemoveBotSchema = z.object({ seat: seatNumber })
 export const roomJoinSchema = z.object({ roomCode, playerName })
 export const roomRejoinSchema = z.object({ roomCode, sessionToken: z.uuid() })
 export const roomLeaveSchema = z.object({})

@@ -47,8 +47,8 @@ describe('redactFor', () => {
 
   it('exposes opponents as a count only', () => {
     expect(redactFor(game(), 0, progress)?.opponents).toEqual([
-      { seat: 1, name: 'Ben', handCount: 7, status: 'active' },
-      { seat: 2, name: 'Cleo', handCount: 7, status: 'active' },
+      { seat: 1, name: 'Ben', handCount: 7, status: 'active', bot: null, standIn: false },
+      { seat: 2, name: 'Cleo', handCount: 7, status: 'active', bot: null, standIn: false },
     ])
   })
 

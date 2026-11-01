@@ -34,6 +34,8 @@ export function redactFor(
         name: s.name,
         handCount: s.hand.length,
         status: s.status,
+        bot: null,
+        standIn: false,
       })),
     /* Read straight off the state the reducer is playing by, not passed in beside the
        deadlines: a `rules` argument threaded from `Room` could disagree with the game it

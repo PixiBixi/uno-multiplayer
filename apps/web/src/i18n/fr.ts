@@ -129,6 +129,7 @@ export const fr: Messages = {
     seatDisconnected: (name) => `${name} a perdu la connexion`,
     seatReconnected: (name, isYou) => (isYou ? 'Te revoilà' : `${name} est de retour`),
     seatLeft: (name) => `${name} a quitté la partie`,
+    botTookOver: (name) => `Un bot joue à la place de ${name}`,
     turnTimedOut: (name, isYou) => (isYou ? 'Tu n’as plus de temps' : `${name} n’a plus de temps`),
     roundWon: (name, isYou, pts) =>
       `${isYou ? 'Tu gagnes' : `${name} gagne`} la manche, +${points(pts)}`,

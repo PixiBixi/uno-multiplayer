@@ -123,6 +123,7 @@ export type Messages = {
     seatDisconnected: (name: string) => string
     seatReconnected: (name: string, isYou: boolean) => string
     seatLeft: (name: string) => string
+    botTookOver: (name: string) => string
     turnTimedOut: (name: string, isYou: boolean) => string
     roundWon: (name: string, isYou: boolean, points: number) => string
     roundAbandoned: () => string

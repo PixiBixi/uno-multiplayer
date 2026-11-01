@@ -9,7 +9,7 @@ import { Lobby } from './Lobby.js'
 const lobbyWith = (names: string[], canStart = names.length >= 2): LobbyView => ({
   roomCode: 'K7QM2X',
   hostSeat: 0,
-  seats: names.map((name, seat) => ({ seat, name, status: 'active' as const })),
+  seats: names.map((name, seat) => ({ seat, name, status: 'active' as const, bot: null })),
   canStart,
   goal: DEFAULT_MATCH_GOAL,
   pace: null,
@@ -76,7 +76,7 @@ describe('Lobby', () => {
   it('greys out a seat that dropped and says so in words', () => {
     const lobby = lobbyWith(['Ana', 'Ben'])
     const seats = [...lobby.seats]
-    seats[1] = { seat: 1, name: 'Ben', status: 'disconnected' }
+    seats[1] = { seat: 1, name: 'Ben', status: 'disconnected', bot: null }
     setup({ ...lobby, seats }, 0)
     expect(screen.getByText(/reconnecting/i)).toBeTruthy()
   })

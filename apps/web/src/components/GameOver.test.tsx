@@ -33,8 +33,8 @@ export const statsWith = (overrides: Partial<SeatStats>[]): SeatStats[] =>
 const finished = (winner: number | null, match: MatchBits = {}): PlayerView => ({
   you: { seat: 0, hand: [top, top], legalMoves: [] },
   opponents: [
-    { seat: 1, name: 'Ben', handCount: 5, status: 'active' },
-    { seat: 2, name: 'Cleo', handCount: 0, status: 'active' },
+    { seat: 1, name: 'Ben', handCount: 5, status: 'active', bot: null, standIn: false },
+    { seat: 2, name: 'Cleo', handCount: 0, status: 'active', bot: null, standIn: false },
   ],
   rules: DEFAULT_TABLE_RULES,
   discardTop: top,

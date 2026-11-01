@@ -1,4 +1,5 @@
 import type {
+  BotLevel,
   Card,
   Color,
   GamePhase,
@@ -8,6 +9,8 @@ import type {
   SeatStatus,
   TableRules,
 } from '@uno/engine'
+
+export type { BotLevel }
 
 export const ROOM_CODE_LENGTH = 6
 export const MAX_SEATS = 4
@@ -58,6 +61,12 @@ export const BETWEEN_ROUNDS_SECONDS = 5
  */
 export const UNO_GRACE_SECONDS = 3
 
+/** How long a seat on turn may sit disconnected before a bot plays it. */
+export const ABSENT_TURN_GRACE_MS = 15_000
+
+/** Who plays a seat besides its human: a bot level, or a bot standing in for an absent player. */
+export type SeatOccupant = { bot: BotLevel | null; standIn: boolean }
+
 /**
  * How fast a table is played. Independent of MatchGoal, which says how a match
  * ENDS rather than how quickly it runs - hence a separate field and not a third
@@ -90,7 +99,14 @@ export const ROOM_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
  */
 export type PlayerView = {
   you: { seat: number; hand: Card[]; legalMoves: Move[] }
-  opponents: { seat: number; name: string; handCount: number; status: SeatStatus }[]
+  opponents: {
+    seat: number
+    name: string
+    handCount: number
+    status: SeatStatus
+    bot: BotLevel | null
+    standIn: boolean
+  }[]
   /**
    * What this table plays by, so the game can say so rather than leaving everyone to
    * remember the lobby. Four booleans against a view of roughly 1.4 KB, and a field that
@@ -179,8 +195,8 @@ export type MatchProgress = {
 export type LobbyView = {
   roomCode: string
   hostSeat: number
-  seats: { seat: number; name: string; status: SeatStatus }[]
-  /** Whether enough seats are filled to deal. NOT whether the table may be configured. */
+  seats: { seat: number; name: string; status: SeatStatus; bot: BotLevel | null }[]
+  /** Whether a human is present and at least two seats are filled. NOT whether the table may be configured. */
   canStart: boolean
   goal: MatchGoal
   pace: MatchPace

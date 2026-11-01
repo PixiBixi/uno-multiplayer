@@ -315,7 +315,7 @@ export class Room {
     return {
       roomCode: this.code,
       hostSeat: this.host,
-      seats: this.members.map((m) => ({ seat: m.seat, name: m.name, status: m.status })),
+      seats: this.members.map((m) => ({ seat: m.seat, name: m.name, status: m.status, bot: null })),
       canStart: this.activeMemberCount() >= MIN_SEATS,
       goal: this.goal,
       pace: this.pace,

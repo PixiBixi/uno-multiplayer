@@ -175,7 +175,7 @@ describe('the lobby, in French', () => {
     roomCode: 'K7QM2X',
     hostSeat: 9,
     canStart: false,
-    seats: [{ seat: 0, name: 'Ana', status: 'active' }],
+    seats: [{ seat: 0, name: 'Ana', status: 'active', bot: null }],
     goal: DEFAULT_MATCH_GOAL,
     pace: null,
     rules: DEFAULT_TABLE_RULES,

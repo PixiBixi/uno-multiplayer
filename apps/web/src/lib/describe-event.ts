@@ -33,6 +33,7 @@ export function seatOfEvent(event: GameEvent): number | null {
     case 'seatDisconnected':
     case 'seatReconnected':
     case 'seatLeft':
+    case 'botTookOver':
     case 'turnTimedOut':
       return event.seat
     /* The accuser, not the accused: it is their line, and the penalty arrives as its own
@@ -95,6 +96,8 @@ export function describeEvent(
       return m.seatReconnected(nameOf(event.seat), event.seat === mySeat)
     case 'seatLeft':
       return m.seatLeft(nameOf(event.seat))
+    case 'botTookOver':
+      return m.botTookOver(nameOf(event.seat))
     case 'turnTimedOut':
       return m.turnTimedOut(nameOf(event.seat), event.seat === mySeat)
     case 'roundEnded': {
