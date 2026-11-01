@@ -265,9 +265,13 @@ describe('jump-in on the wire', () => {
       const already = players.map((p) => p.events.length)
 
       expect(await emit<PlainAck>(player, 'game:move', { move })).toEqual({ ok: true })
+      // The last event of the pair, not the first: each one is its own packet.
       await waitFor(
-        () => players.every((p) => p.events.some((event) => event.type === 'jumpedIn')),
-        'the jumpedIn event at every seat',
+        () =>
+          players.every((p, index) =>
+            p.events.slice(already[index] ?? 0).some((event) => event.type === 'cardPlayed'),
+          ),
+        'the cardPlayed event at every seat',
       )
 
       for (const [index, each] of players.entries()) {
