@@ -530,3 +530,9 @@ removes the pulse but not the number, because the number carries information.
   viewport. The chat field was 12px, and iOS Safari zooms the page on focus into any
   field under 16px; it now has a 1rem floor, and **no text input may go below 1rem**. `e2e/layout.spec.ts` covers
   the first and third at 320px; the end screen needs a full game and is not covered.
+- **Installed to the home screen, the table runs without browser bars.**
+  `apps/web/public/manifest.webmanifest` (`display: standalone`) and the Apple meta tags
+  in `apps/web/index.html` make it installable. The iOS status bar style is `default`, not
+  `black-translucent`: the layout has no `safe-area-inset` padding, so a translucent bar
+  would draw over the masthead. Switching it needs those insets first. iOS ignores the
+  SVG and 32px favicons and uses the full-bleed 180px `apple-touch-icon.png`.
