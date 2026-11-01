@@ -39,3 +39,4 @@ export {
   type DrawnOn,
   type RoundHistory,
 } from './bot/view.js'
+export { availableReactions, botMove, botReaction, type ReactionKind } from './bot/policy.js'
