@@ -84,14 +84,15 @@ CORS_ORIGIN=http://localhost:5050,http://$LAN_IP:5050 \
 npm start -w @uno/server      # then open http://192.168.1.12:5050 on the phone
 ```
 
-| Variable      | Default | Purpose                                          |
-| ------------- | ------- | ------------------------------------------------ |
-| `PORT`        | `5050`  | HTTP and WebSocket port                          |
-| `STATIC_ROOT` | unset   | Serve the built client from this directory       |
-| `CORS_ORIGIN` | unset   | Comma-separated origins allowed to open a socket |
-| `BEHIND_TLS`  | `false` | Set to `true` behind an HTTPS reverse proxy      |
-| `TURN_URL`    | unset   | TURN relay for voice chat behind a symmetric NAT |
-| `TURN_SECRET` | unset   | Shared secret with coturn, for relay credentials |
+| Variable           | Default | Purpose                                          |
+| ------------------ | ------- | ------------------------------------------------ |
+| `PORT`             | `5050`  | HTTP and WebSocket port                          |
+| `STATIC_ROOT`      | unset   | Serve the built client from this directory       |
+| `CORS_ORIGIN`      | unset   | Comma-separated origins allowed to open a socket |
+| `BEHIND_TLS`       | `false` | Set to `true` behind an HTTPS reverse proxy      |
+| `TURN_URL`         | unset   | TURN relay for voice chat behind a symmetric NAT |
+| `TURN_SECRET`      | unset   | Shared secret with coturn, for relay credentials |
+| `BOT_DELAY_FACTOR` | `1`     | Multiplies bot delays (0.01 to 1), for e2e runs  |
 
 Rate limits, room cap and grace period are read in `apps/server/src/config.ts`. Restart the server after every `npm run build`: a stale `dist/` means a new client talking to an old server.
 

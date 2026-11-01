@@ -22,6 +22,7 @@ const app = await buildApp(config)
 const rooms = new RoomManager({
   maxRooms: config.maxRooms,
   gracePeriodMs: config.gracePeriodMs,
+  botDelayFactor: config.botDelayFactor,
 })
 
 const io = registerSocketHandlers(app.server, rooms, config)
