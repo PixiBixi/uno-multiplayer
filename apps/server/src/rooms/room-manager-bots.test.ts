@@ -127,6 +127,30 @@ const humansUntil = (room: Room, seat: number, push: (e: GameEvent[]) => void) =
   if (room.currentSeat !== seat) throw new Error(`seat ${seat} never came on turn`)
 }
 
+/** A Room double for the paths no public Room sequence reaches cleanly. */
+const stubRoom = (overrides: Partial<Record<keyof Room, unknown>>): Room =>
+  ({
+    code: 'STUB01',
+    currentSeat: 1,
+    turnSeconds: null,
+    connectedHumanCount: () => 1,
+    turnController: () => 'bot',
+    levelFor: () => 'normal',
+    pendingReactions: () => [],
+    exposedSeat: () => 0,
+    viewFor: () => null,
+    ...overrides,
+  }) as unknown as Room
+
+const managerOf = (clock: Clock) =>
+  new RoomManager({
+    maxRooms: 10,
+    gracePeriodMs: 60_000,
+    timers: clock.timers,
+    now: clock.now,
+    delaySeed: 7,
+  })
+
 afterEach(() => {
   vi.restoreAllMocks()
 })
@@ -354,29 +378,6 @@ describe('bot reactions', () => {
 })
 
 describe('a timer never throws', () => {
-  const stubRoom = (overrides: Partial<Record<keyof Room, unknown>>): Room =>
-    ({
-      code: 'STUB01',
-      currentSeat: 1,
-      turnSeconds: null,
-      connectedHumanCount: () => 1,
-      turnController: () => 'bot',
-      levelFor: () => 'normal',
-      pendingReactions: () => [],
-      exposedSeat: () => 0,
-      viewFor: () => null,
-      ...overrides,
-    }) as unknown as Room
-
-  const managerOf = (clock: Clock) =>
-    new RoomManager({
-      maxRooms: 10,
-      gracePeriodMs: 60_000,
-      timers: clock.timers,
-      now: clock.now,
-      delaySeed: 7,
-    })
-
   it('a bot step that throws is logged and the turn is forced instead', () => {
     const errors = vi.spyOn(logger, 'error').mockImplementation(() => undefined)
     const forced: GameEvent[] = [{ type: 'turnTimedOut', seat: 1 }]
@@ -538,5 +539,95 @@ describe('fix round 1', () => {
       expect(ms).toBeGreaterThanOrEqual(1000)
       expect(ms).toBeLessThanOrEqual(3000)
     }
+  })
+})
+
+describe('the bot timer guards', () => {
+  it('arms no next round while a deal would fail, even with a human connected', () => {
+    const clock = fakeClock()
+    const manager = managerOf(clock)
+    const setNextRoundDeadline = vi.fn()
+    const room = stubRoom({
+      turnSeconds: 5,
+      betweenRounds: true,
+      seatedCount: () => 1,
+      setNextRoundDeadline,
+    })
+    manager.armNextRound(room, () => undefined)
+    manager.keepNextRound(room, () => undefined)
+    expect(clock.pendingCount()).toBe(0)
+    expect(setNextRoundDeadline).not.toHaveBeenCalledWith(expect.any(Number))
+  })
+
+  it('arms no UNO grace with no human connected, and drops a running one', () => {
+    const clock = fakeClock()
+    const manager = managerOf(clock)
+    let humans = 1
+    const room = stubRoom({
+      callOutsAllowed: false,
+      connectedHumanCount: () => humans,
+      chargeForgottenUno: () => [],
+    })
+    manager.armUnoGrace(room, () => undefined)
+    expect(clock.pendingCount()).toBe(1)
+
+    humans = 0
+    manager.keepUnoGrace(room, () => undefined)
+    expect(clock.pendingCount()).toBe(0)
+    manager.armUnoGrace(room, () => undefined)
+    expect(clock.pendingCount()).toBe(0)
+  })
+
+  it('a declined call-out on one seat does not suppress one on the next exposed seat', () => {
+    const clock = fakeClock()
+    const manager = managerOf(clock)
+    let exposed = 0
+    const declined = vi.fn((): GameEvent[] => [])
+    const room = stubRoom({
+      pendingReactions: () => [{ seat: 2, kind: 'callOut' }],
+      exposedSeat: () => exposed,
+      botReact: declined,
+    })
+    manager.armReactions(room, () => undefined)
+    clock.advance(10_000)
+    expect(declined).toHaveBeenCalledOnce()
+
+    // Same target still exposed: the spent window is not offered again.
+    manager.armReactions(room, () => undefined)
+    expect(clock.pendingCount()).toBe(0)
+
+    exposed = 1
+    manager.armReactions(room, () => undefined)
+    expect(clock.pendingCount()).toBe(1)
+  })
+
+  it('a bot step that changes nothing emits nothing and leaves the turn clock alone', () => {
+    const clock = fakeClock()
+    const manager = managerOf(clock)
+    const setTurnDeadline = vi.fn()
+    const room = stubRoom({
+      turnSeconds: 30,
+      awaitingMove: true,
+      decidingOnDrawnCard: false,
+      setTurnDeadline,
+      forceTurnMove: () => [],
+      botStep: () => [],
+    })
+    const received: GameEvent[][] = []
+    const retime = (events: GameEvent[]): void => {
+      received.push(events)
+      manager.armTurn(room, retime)
+      manager.armBot(room, retime)
+    }
+    manager.armTurn(room, retime)
+    const [turnClock] = clock.handles()
+    manager.armBot(room, retime)
+    expect(clock.pendingCount()).toBe(2)
+    const deadlineWrites = setTurnDeadline.mock.calls.length
+
+    clock.advance(3000)
+    expect(received).toEqual([])
+    expect(clock.handles()).toEqual([turnClock])
+    expect(setTurnDeadline).toHaveBeenCalledTimes(deadlineWrites)
   })
 })
