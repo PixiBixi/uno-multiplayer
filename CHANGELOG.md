@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.12.50](https://github.com/PixiBixi/uno-multiplayer/compare/a54536e86e4d27c91fc497a3caf4b06d040601f2..v1.12.50) - 2026-11-01
+#### Bug Fixes
+- (**web**) keep UNO, the end screen and the chat usable on a phone (#81) - ([a54536e](https://github.com/PixiBixi/uno-multiplayer/commit/a54536e86e4d27c91fc497a3caf4b06d040601f2)) - Jérémy
+
+- - -
+
 ## [v1.12.49](https://github.com/PixiBixi/uno-multiplayer/compare/30b3180fe35c5e73caf03bd830644fb5033c90de..v1.12.49) - 2026-11-01
 #### Miscellaneous Chores
 - (**deps**) update dependency typescript-eslint to v8.72.1 (#80) - ([30b3180](https://github.com/PixiBixi/uno-multiplayer/commit/30b3180fe35c5e73caf03bd830644fb5033c90de)) - renovate[bot], renovate[bot]
