@@ -174,6 +174,10 @@ continuously from Renovate - waiting for an unrelated `fix:` to carry them out i
 shipped change goes untagged. `cog check` runs in CI, so a malformed commit message fails
 before it can reach a changelog.
 
+`release.yml` runs in a `release-<ref>` concurrency group with `cancel-in-progress: false`:
+two pushes landing together used to compute the same next tag and publish out of order.
+Queued runs wait instead of being cancelled, so no bump is lost.
+
 So a deployment is a pull rather than a build on the server:
 
 ```bash
@@ -228,9 +232,14 @@ properties of that config decide what reaches `latest`:
   surfaces as a `digest` PR instead of silently changing a build.
 - **A five-day cooldown** on majors, minors, patches and digests, because a hijacked
   package is usually spotted and yanked within days. `vulnerabilityAlerts` overrides it,
-  so CVE fixes still land at once.
+  so CVE fixes still land at once; `osvVulnerabilityAlerts` adds OSV as a second advisory
+  source. Docker digests carry no release timestamp, so digest updates use
+  `minimumReleaseAgeBehaviour: timestamp-optional`: under the default the cooldown could
+  never elapse and the base image was held forever.
 - **Minor, patch and digest updates automerge** once CI is green, so the gate on what
-  ships is the suite in `ci.yml`, not a human review. Majors stay manual.
+  ships is the suite in `ci.yml`, not a human review. Majors stay manual. Lockfile
+  maintenance is on and automerges too, so transitive dependencies are refreshed even
+  when no direct dependency moves.
 - **TypeScript majors are held**, matching the `typescript-eslint` peer range explained
   in the [quickstart](../quickstart.md).
 
