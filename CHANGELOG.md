@@ -1,6 +1,17 @@
 # Changelog
 
 - - -
+## [v1.13.0](https://github.com/PixiBixi/uno-multiplayer/compare/5686fa1218335551d53993a7fc2fade04b53fd50..v1.13.0) - 2026-11-01
+#### Features
+- (**web**) make the game installable to the home screen - ([7103cb0](https://github.com/PixiBixi/uno-multiplayer/commit/7103cb05bc975a914cca18e4768303063f25e3e0)) - Jeremy Delgado
+- (**web**) new favicon, two fanned cards on a dark table - ([e8291d6](https://github.com/PixiBixi/uno-multiplayer/commit/e8291d69df4150492994fe40e00c8020699283a2)) - Jeremy Delgado
+#### Documentation
+- (**wiki**) document three phone-only layout breaks in client notes - ([29beacc](https://github.com/PixiBixi/uno-multiplayer/commit/29beacccf94a028756967b53a056be68bb93a24c)) - Jeremy Delgado
+- (**wiki**) document release concurrency and Renovate cooldown rules - ([5686fa1](https://github.com/PixiBixi/uno-multiplayer/commit/5686fa1218335551d53993a7fc2fade04b53fd50)) - Jeremy Delgado
+- README with screenshots and the current defaults - ([7c0bd8a](https://github.com/PixiBixi/uno-multiplayer/commit/7c0bd8a44d3e08978d71a5a38cf48e7bf363bd84)) - Jeremy Delgado
+
+- - -
+
 ## [v1.12.50](https://github.com/PixiBixi/uno-multiplayer/compare/a54536e86e4d27c91fc497a3caf4b06d040601f2..v1.12.50) - 2026-11-01
 #### Bug Fixes
 - (**web**) keep UNO, the end screen and the chat usable on a phone (#81) - ([a54536e](https://github.com/PixiBixi/uno-multiplayer/commit/a54536e86e4d27c91fc497a3caf4b06d040601f2)) - Jérémy
