@@ -1,6 +1,6 @@
 import { cardPoints } from '../match.js'
 import { nextInt, nextRandom } from '../rng.js'
-import { COLORS, isWild, type Card, type Color, type Move } from '../types.js'
+import { COLORS, isWild, type Card, type Color, type ColouredCard, type Move } from '../types.js'
 import type { BotLevel } from './timing.js'
 import { unseenCards, type BotView } from './view.js'
 
@@ -168,12 +168,18 @@ function lackedByNext(view: BotView): Set<Color> {
   return new Set(view.history.drawnOn.filter((d) => d.seat === next).map((d) => d.color))
 }
 
+/** Coloured cards of each colour this seat has not seen, wilds left out. */
+function unseenColourCounts(view: BotView): Record<Color, number> {
+  const unseen: Record<Color, number> = { R: 0, G: 0, B: 0, Y: 0 }
+  for (const c of unseenCards(view)) if (!isWild(c)) unseen[c.color]++
+  return unseen
+}
+
 /* Names the most-held colour, skipping one with 2 or fewer unseen cards while another
    held colour has more, and preferring a colour the next seat drew on. */
 function hardColour(view: BotView): Color {
   const held = colourCounts(view.hand)
-  const unseen: Record<Color, number> = { R: 0, G: 0, B: 0, Y: 0 }
-  for (const c of unseenCards(view)) if (!isWild(c)) unseen[c.color]++
+  const unseen = unseenColourCounts(view)
   const heldColours = COLORS.filter((c) => held[c] > 0)
   const viable = heldColours.filter(
     (c) => unseen[c] > 2 || !heldColours.some((o) => unseen[o] > unseen[c]),
@@ -197,19 +203,40 @@ function keepLackedColour(view: BotView, cards: Card[]): Card[] {
   return matching.length > 0 ? matching : cards
 }
 
+/* Leaves current a colour the hand holds many of and opponents few: weights tuned by
+   the tournament, where it lifted Hard by about one point over the most-held colour. */
+function keepStrongColour(view: BotView, cards: Card[]): Card[] {
+  const held = colourCounts(view.hand)
+  const unseen = unseenColourCounts(view)
+  const coloured = cards.filter((c): c is ColouredCard => !isWild(c))
+  const score = (c: ColouredCard): number => held[c.color] * 4 - unseen[c.color]
+  const top = Math.max(...coloured.map(score))
+  const strong = coloured.filter((c) => score(c) === top)
+  return strong.length > 0 ? strong : cards
+}
+
+/** A 7 always swaps: worth it only when some hand is smaller than ours will be. */
+function swapGains(view: BotView): boolean {
+  return view.seats.some(
+    (s) => s.index !== view.seat && s.status === 'active' && s.handCount < view.hand.length - 1,
+  )
+}
+
 function hardNarrow(view: BotView, cards: Card[]): Card[] {
   const opponentNearOut = view.seats.some(
     (s) => s.index !== view.seat && s.status === 'active' && s.handCount <= 3,
   )
-  const plain = cards.filter((c) => c.kind === 'number' || c.kind === 'wild')
-  // Hold +2, +4, skip and reverse for when an opponent is close to going out.
-  const pool = !opponentNearOut && plain.some((c) => c.kind === 'number') ? plain : cards
+  const plain = cards.filter((c) => c.kind !== 'draw2' && c.kind !== 'wild4')
+  // Hold +2 and +4 for when an opponent is close to going out, or to stack on one.
+  let pool = !opponentNearOut && plain.some((c) => c.kind === 'number') ? plain : cards
   if (view.rules.sevenZero) {
     const zeros = pool.filter((c) => c.kind === 'number' && c.value === 0)
     const from = previousSeat(view)
     if (zeros.length > 0 && from !== null && handCount(view, from) < view.hand.length) return zeros
+    const others = pool.filter((c) => !(c.kind === 'number' && c.value === 7))
+    if (others.length < pool.length && others.length > 0 && !swapGains(view)) pool = others
   }
-  return keepLackedColour(view, pool)
+  return keepStrongColour(view, keepLackedColour(view, pool))
 }
 
 const HARD: Style = { colour: hardColour, narrow: hardNarrow }

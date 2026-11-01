@@ -462,6 +462,25 @@ describe('hard', () => {
     })
   })
 
+  it('hard moves play into the colour it holds most', () => {
+    const hand = [num('r9', 'R', 9), num('g7', 'G', 7), num('g1', 'G', 1), num('g2', 'G', 2)]
+    const state = stateOf({ seats: [seatOf(0, hand), ...opponents(4)] })
+    const view = botViewFor(state, 0, EMPTY_HISTORY)
+    expect(botMove(view, 'normal', 1).move).toEqual({ type: 'play', cardId: cid('r9') })
+    expect(botMove(view, 'hard', 1).move).toEqual({ type: 'play', cardId: cid('g7') })
+  })
+
+  it('hard keeps a 7 that would swap its hand for a larger one', () => {
+    const hand = [num('r7', 'R', 7), num('r3', 'R', 3), num('g1', 'G', 1)]
+    const state = stateOf({
+      rules: { ...DEFAULT_TABLE_RULES, sevenZero: true },
+      seats: [seatOf(0, hand), ...opponents(4)],
+    })
+    const view = botViewFor(state, 0, EMPTY_HISTORY)
+    expect(botMove(view, 'normal', 1).move).toMatchObject({ type: 'play', cardId: cid('r7') })
+    expect(botMove(view, 'hard', 1).move).toEqual({ type: 'play', cardId: cid('r3') })
+  })
+
   it('hard plays a 0 when the hand it would receive is smaller', () => {
     const hand = [
       num('r0', 'R', 0),
