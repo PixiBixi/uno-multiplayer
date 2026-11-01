@@ -215,7 +215,7 @@ test('the hand can be sorted, and the choice survives a reload', async ({ browse
   )
 })
 
-test('reloading while on turn costs a drawn card', async ({ browser }) => {
+test('reloading while on turn keeps the hand and the turn', async ({ browser }) => {
   const host = await openPlayer(browser)
   const guest = await openPlayer(browser)
 
@@ -225,11 +225,11 @@ test('reloading while on turn costs a drawn card', async ({ browser }) => {
   await expect(host.locator('.hand-card')).toHaveCount(7)
   await expect(host.getByText(/your turn/)).toBeVisible()
 
-  /* Locking in a real consequence of the grace period rather than leaving it to
-     be rediscovered: a disconnect on your own turn makes the server take the
-     neutral action for you, so the table never stalls. */
+  /* docs/superpowers/specs/2026-11-01-bots-design.md: a disconnected turn is no longer
+     skipped, a stand-in plays it only after the grace, so a quick reload costs nothing. */
   await host.reload()
-  await expect(host.locator('.hand-card')).toHaveCount(8)
+  await expect(host.locator('.hand-card')).toHaveCount(7)
+  await expect(host.getByText(/your turn/)).toBeVisible()
 })
 
 test('the play-effects layer is wired into the table', async ({ browser }) => {
