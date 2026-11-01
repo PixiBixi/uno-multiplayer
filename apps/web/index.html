@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
+    <!-- Added to the home screen, the table opens full screen without the browser bars.
+         Status bar "default", not "black-translucent": the layout has no safe-area insets. -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="UNO" />
     <!-- SVG for the tab, a 32px PNG for browsers without SVG icons; iOS ignores both
          and wants the 180px touch icon, drawn full bleed because iOS masks the corners. -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
