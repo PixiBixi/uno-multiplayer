@@ -68,10 +68,16 @@ describe('a table that can no longer deal', () => {
       rooms.armNextRound(room, retime)
     }
 
-    // Ben goes for good, leaving one active seat: the round ends with no winner
-    // and, on a points goal, the match is not over.
+    // The round played out, then Ben drops, leaving one active seat on a points goal.
+    // A departure no longer ends the round itself (docs/superpowers/specs/2026-11-01-bots-design.md).
+    for (let turn = 0; turn < 800 && room.phase === 'playing'; turn += 1) {
+      const seat = room.currentSeat ?? 0
+      const moves = room.viewFor(seat)?.you.legalMoves ?? []
+      const move =
+        moves.find((m) => m.type === 'callUno') ?? moves.find((m) => m.type === 'play') ?? moves[0]
+      if (move === undefined || !room.move(seat, move).okay) throw new Error('stuck')
+    }
     room.disconnect('socket-1')
-    room.expireGrace(1)
     retime([])
 
     expect(room.betweenRounds).toBe(true)

@@ -173,8 +173,8 @@ describe('the turn clock', () => {
 
   it('stops once the round is over', () => {
     const { room, rooms, clock } = blazingTable(10)
-    room.disconnect('socket-1')
-    room.expireGrace(1)
+    // Played out: a departure no longer ends a round (docs/superpowers/specs/2026-11-01-bots-design.md).
+    playOutRound(room, () => undefined)
     rooms.armTurn(room, () => undefined)
 
     expect(room.viewFor(0)?.phase).toBe('finished')
@@ -212,16 +212,18 @@ describe('the turn clock across presence changes', () => {
     expect(room.viewFor(0)?.turnDeadline).toBe(deadline)
   })
 
-  it('arms a fresh clock when the presence change moved the turn', () => {
+  it('keeps it when the seat on turn drops out, the turn staying with its stand-in', () => {
+    // A disconnect no longer moves the turn (docs/superpowers/specs/2026-11-01-bots-design.md).
     const { room, rooms, clock, push } = blazingTable(10)
     const seat = room.currentSeat
+    const deadline = room.viewFor(0)?.turnDeadline
     clock.advance(4000)
 
     room.disconnect(`socket-${seat}`)
     rooms.keepTurn(room, push)
 
-    expect(room.currentSeat).not.toBe(seat)
-    expect(room.viewFor(0)?.turnDeadline).toBe(clock.now() + 10_000)
+    expect(room.currentSeat).toBe(seat)
+    expect(room.viewFor(0)?.turnDeadline).toBe(deadline)
     expect(clock.pendingCount()).toBe(1)
   })
 
@@ -538,8 +540,8 @@ describe('Room.forceTurnMove', () => {
 
   it('reports nothing once the round has finished', () => {
     const room = bare()
-    room.disconnect('s1')
-    room.expireGrace(1)
+    // Played out: a departure no longer ends a round (docs/superpowers/specs/2026-11-01-bots-design.md).
+    playOutRound(room, () => undefined)
     expect(room.forceTurnMove()).toEqual([])
   })
 

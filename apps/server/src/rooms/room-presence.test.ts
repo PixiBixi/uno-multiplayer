@@ -38,11 +38,13 @@ describe('Room.disconnect', () => {
     expect(room.memberAt(0)?.socketId).toBeNull()
   })
 
-  it('hands the turn on when the absent player held it', () => {
+  it('keeps the turn on the absent player, for a bot to stand in', () => {
+    // No longer skipped (docs/superpowers/specs/2026-11-01-bots-design.md).
     const { room } = started('Ana', 'Ben', 'Cleo')
     expect(room.viewFor(1)?.currentSeat).toBe(0)
     room.disconnect('socket-0')
-    expect(room.viewFor(1)?.currentSeat).not.toBe(0)
+    expect(room.viewFor(1)?.currentSeat).toBe(0)
+    expect(room.turnController()).toBe('absent')
   })
 
   it('transfers the host in the lobby', () => {
@@ -82,8 +84,8 @@ describe('Room.rejoin', () => {
 
   it('refuses a token whose seat already left for good', () => {
     const { room, tokens } = started('Ana', 'Ben', 'Cleo')
-    room.disconnect('socket-2')
-    room.expireGrace(2)
+    // Only Leave gives a seat up mid-match now (docs/superpowers/specs/2026-11-01-bots-design.md).
+    room.leave('socket-2')
     expect(room.rejoin(tokens[2] ?? '', 'sock')).toEqual({
       okay: false,
       error: 'invalid_session',
@@ -101,27 +103,22 @@ describe('Room.rejoin', () => {
 })
 
 describe('Room.expireGrace', () => {
-  it('returns the hand to the pile and marks the seat left', () => {
-    const { room } = started('Ana', 'Ben', 'Cleo')
-    const pileBefore = room.viewFor(0)?.drawPileCount ?? 0
+  it('marks a lobby seat left, freeing it for the next joiner', () => {
+    const { room } = seated('Ana', 'Ben', 'Cleo')
     room.disconnect('socket-2')
     const events = room.expireGrace(2)
     expect(room.memberAt(2)?.status).toBe('left')
-    expect(room.viewFor(0)?.drawPileCount).toBeGreaterThan(pileBefore)
     expect(events).toContainEqual({ type: 'seatLeft', seat: 2 })
   })
 
-  it('aborts the game below two active players', () => {
-    const { room } = started('Ana', 'Ben')
+  it('leaves a match running and the seat reclaimable', () => {
+    // Mid-match the hand stays and a bot plays it (docs/superpowers/specs/2026-11-01-bots-design.md).
+    const { room, tokens } = started('Ana', 'Ben')
     room.disconnect('socket-1')
-    const events = room.expireGrace(1)
-    expect(room.phase).toBe('finished')
-    expect(events).toContainEqual({
-      type: 'roundEnded',
-      winner: null,
-      awarded: [0, 0],
-      scores: [0, 0],
-    })
+    expect(room.expireGrace(1)).toEqual([])
+    expect(room.phase).toBe('playing')
+    expect(room.memberAt(1)?.status).toBe('disconnected')
+    expect(room.rejoin(tokens[1] ?? '', 'socket-1b').okay).toBe(true)
   })
 
   it('does nothing for a seat that came back in time', () => {
@@ -133,7 +130,7 @@ describe('Room.expireGrace', () => {
   })
 
   it('is idempotent', () => {
-    const { room } = started('Ana', 'Ben', 'Cleo')
+    const { room } = seated('Ana', 'Ben', 'Cleo')
     room.disconnect('socket-2')
     room.expireGrace(2)
     expect(room.expireGrace(2)).toEqual([])
