@@ -295,7 +295,7 @@ describe('bots at the table', () => {
   })
 
   it('restart turns a departed human into a normal bot', () => {
-    const { room } = table(DEFAULT_TABLE_RULES, 'Ana', 'Ben', 'Cleo')
+    const { room, tokens } = table(DEFAULT_TABLE_RULES, 'Ana', 'Ben', 'Cleo')
     begin(room)
     room.leave('socket-2')
     playOut(room)
@@ -305,6 +305,14 @@ describe('bots at the table', () => {
     expect(member).toMatchObject({ kind: 'bot', level: 'normal', standIn: false, status: 'active' })
     expect(BOT_NAMES).toContain(member?.name)
     expect(room.viewFor(2)?.you.hand).toHaveLength(7)
+    expect(room.viewFor(0)?.opponents.find((o) => o.seat === 2)?.name).toBe(member?.name)
+    // The leaver cannot come back to the seat the bot now owns.
+    expect(room.rejoin(tokens[2] ?? '', 'socket-2b')).toEqual({
+      okay: false,
+      error: 'invalid_session',
+    })
+    expect(member?.sessionToken).not.toBe(tokens[2])
+    expect(member?.socketId).toBeNull()
   })
 
   it('a stand-in seat stays reclaimable across a restart', () => {

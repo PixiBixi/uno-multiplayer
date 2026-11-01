@@ -470,9 +470,7 @@ export class Room {
    * humans included: a bot stands in for them on their turn.
    */
   private dealRound(seed: number): Result<GameState, ErrorCode> {
-    if (this.members.filter((m) => !isVacant(m)).length < MIN_SEATS) {
-      return err('too_few_players')
-    }
+    if (this.seatedCount() < MIN_SEATS) return err('too_few_players')
 
     const init = initGame({
       names: this.members.map((m) => m.name),
@@ -490,6 +488,11 @@ export class Room {
     this.history = EMPTY_HISTORY
     // The opening seat may be a vacancy, exactly as seat 0 could be.
     return ok(skipDisconnectedTurn(game))
+  }
+
+  /** Seats a deal would hand cards to: everyone but lobby vacancies. */
+  private seatedCount(): number {
+    return this.members.filter((m) => !isVacant(m)).length
   }
 
   /**
@@ -562,16 +565,21 @@ export class Room {
     if (this.game === null) return err('game_not_started')
     if (this.game.phase !== 'finished') return err('round_in_progress')
     if (bySeat !== this.host) return err('not_host')
+    // Checked before anything below changes the table, so a refusal leaves no trace.
+    if (this.seatedCount() < MIN_SEATS) return err('too_few_players')
 
     // A new match opens on the host, like the first one did. Carrying the last winner over
     // would let a result the table has just abandoned decide a match that has not started.
     this.opensNextDeal = this.host
-    // Whoever pressed Leave gave the seat up for good; it is an ordinary bot from here on.
+    /* Whoever pressed Leave gave the seat up for good; it is an ordinary bot from here on.
+       Before the deal, which takes the names; a new token so the old one can never rejoin. */
     for (const member of this.members) {
       if (member.kind !== 'human' || member.status !== 'left' || !member.standIn) continue
       member.name = this.freshBotName()
       member.kind = 'bot'
       member.level = 'normal'
+      member.sessionToken = randomUUID()
+      member.socketId = null
       member.status = 'active'
       member.standIn = false
     }
@@ -749,7 +757,10 @@ export class Room {
     socketId: string,
   ): Result<{ seat: number; supersededSocketId: string | null }, ErrorCode> {
     const member = this.members.find((m) => m.sessionToken === sessionToken)
-    if (member === undefined || member.status === 'left') return err('invalid_session')
+    // A bot seat has no human to hand back to, whatever token reaches it.
+    if (member === undefined || member.status === 'left' || member.kind === 'bot') {
+      return err('invalid_session')
+    }
 
     const previous = member.socketId
     member.socketId = socketId
