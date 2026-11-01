@@ -522,3 +522,11 @@ removes the pulse but not the number, because the number carries information.
   masthead for the same reason: the headline says it far louder, but the columns stack
   below 1040px and put it a scroll away, and the opponents rail says nothing at all when
   the seat on turn is the reader, who is not in it.
+- **Three phone-only breaks, found by playing a full game on six emulated phones.** At
+  320px the sort row kept its full width beside the action bar and squeezed the bar to
+  about 20px, so a tap on UNO landed on "As dealt"; below 30rem the sort row now takes
+  its own line. The end-of-game veil was `position: absolute` over a table several
+  screens tall, so its buttons sat mid-page and off screen; it is `fixed` to the
+  viewport. The chat field was 12px, and iOS Safari zooms the page on focus into any
+  field under 16px; it now has a 1rem floor, and **no text input may go below 1rem**. `e2e/layout.spec.ts` covers
+  the first and third at 320px; the end screen needs a full game and is not covered.
