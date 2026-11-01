@@ -68,8 +68,8 @@ describe('a table that can no longer deal', () => {
       rooms.armNextRound(room, retime)
     }
 
-    // The round played out, then Ben drops, leaving one active seat on a points goal.
-    // A departure no longer ends the round itself (docs/superpowers/specs/2026-11-01-bots-design.md).
+    // The round played out, then both drop: a stand-in would deal Ben in, but with no
+    // human connected the table stops (docs/superpowers/specs/2026-11-01-bots-design.md).
     for (let turn = 0; turn < 800 && room.phase === 'playing'; turn += 1) {
       const seat = room.currentSeat ?? 0
       const moves = room.viewFor(seat)?.you.legalMoves ?? []
@@ -78,10 +78,11 @@ describe('a table that can no longer deal', () => {
       if (move === undefined || !room.move(seat, move).okay) throw new Error('stuck')
     }
     room.disconnect('socket-1')
+    room.disconnect('socket-0')
     retime([])
 
     expect(room.betweenRounds).toBe(true)
-    expect(room.activeMemberCount()).toBe(1)
+    expect(room.connectedHumanCount()).toBe(0)
 
     const armsBefore = arms
     for (let tick = 0; tick < 25; tick += 1) clock.advance(5000)

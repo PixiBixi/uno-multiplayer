@@ -363,6 +363,7 @@ describe('a timer never throws', () => {
       turnController: () => 'bot',
       levelFor: () => 'normal',
       pendingReactions: () => [],
+      exposedSeat: () => 0,
       viewFor: () => null,
       ...overrides,
     }) as unknown as Room
@@ -424,5 +425,118 @@ describe('a timer never throws', () => {
     room.leave('socket-0')
     expect(rooms.purge()).toBe(1)
     expect(clock.pendingCount()).toBe(0)
+  })
+})
+
+describe('fix round 1', () => {
+  it('a declined reaction leaves the turn clock alone', () => {
+    const { clock, rooms, room } = tableOf({
+      humans: ['Ana', 'Ben'],
+      bots: ['normal'],
+      pace: { turnSeconds: 60 },
+      rules: { ...DEFAULT_TABLE_RULES, liar: true },
+    })
+    vi.spyOn(room, 'pendingReactions').mockReturnValue([{ seat: 2, kind: 'callOut' }])
+    const declined = vi.spyOn(room, 'botReact').mockReturnValue([])
+    const { events, retime } = wire(rooms, room, clock)
+    retime()
+    expect(room.turnController()).toBeNull()
+    const [turnClock, reaction] = clock.handles()
+    expect(reaction).toBeDefined()
+    const deadline = room.viewFor(0)?.turnDeadline
+
+    clock.advance(10_000)
+    expect(declined).toHaveBeenCalledOnce()
+    expect(events).toEqual([])
+    expect(clock.handles()).toEqual([turnClock])
+    expect(room.viewFor(0)?.turnDeadline).toBe(deadline)
+  })
+
+  it('Blazing deals the next round with one human and a stand-in', () => {
+    const { clock, rooms, room } = tableOf({ humans: ['Ana', 'Ben'], pace: { turnSeconds: 5 } })
+    room.leave('socket-1')
+    for (let i = 0; i < 2000 && room.phase === 'playing'; i++) {
+      if (room.turnController() !== null) {
+        room.botStep()
+        continue
+      }
+      const moves = room.viewFor(0)?.you.legalMoves ?? []
+      const move =
+        moves.find((m) => m.type === 'callUno') ??
+        moves.find((m) => m.type === 'play') ??
+        humanMove(room, 0)
+      play(room, 0, move, () => undefined)
+    }
+    expect(room.betweenRounds).toBe(true)
+    expect(room.activeMemberCount()).toBe(1)
+
+    rooms.armNextRound(room, () => undefined)
+    expect(room.viewFor(0)?.nextRoundDeadline).not.toBeNull()
+    expect(clock.pendingCount()).toBe(1)
+  })
+
+  it('a failed first stand-in move still reports botTookOver', () => {
+    vi.spyOn(logger, 'error').mockImplementation(() => undefined)
+    const { clock, rooms, room } = tableOf({ humans: ['Ana', 'Ben'] })
+    room.disconnect('socket-1')
+    humansUntil(room, 1, () => undefined)
+    // Fails the way the real one would: after the takeover, while choosing the move.
+    vi.spyOn(room, 'botStep').mockImplementation(() => {
+      const member = room.memberAt(1)
+      if (member !== null) member.standIn = true
+      throw new Error('illegal bot move')
+    })
+    const received: GameEvent[][] = []
+    rooms.armBot(room, (events) => received.push(events))
+    clock.advance(15_000)
+
+    expect(received).toHaveLength(1)
+    expect(received[0]?.slice(0, 2)).toEqual([
+      { type: 'botTookOver', seat: 1 },
+      { type: 'turnTimedOut', seat: 1 },
+    ])
+  })
+
+  it("a Hard bot's jump-in arms within 1000-3000 ms and a Normal stand-in arms none", () => {
+    const { clock, rooms, room } = tableOf({
+      humans: ['Ana', 'Ben'],
+      bots: ['hard'],
+      rules: { ...DEFAULT_TABLE_RULES, jumpIn: true },
+    })
+    room.leave('socket-1')
+    const hardDelays: number[] = []
+    let standInChecked = false
+    for (let i = 0; i < 5000 && (hardDelays.length === 0 || !standInChecked); i++) {
+      const pending = room.pendingReactions()
+      if (pending.length === 1 && pending[0]?.seat === 2 && pending[0].kind === 'jumpIn') {
+        rooms.cancelBots(room)
+        rooms.armReactions(room, () => undefined)
+        hardDelays.push(...clock.delays())
+      }
+      const offeredToStandIn =
+        room.currentSeat !== 1 &&
+        (room.viewFor(1)?.you.legalMoves ?? []).some((m) => m.type === 'play')
+      if (offeredToStandIn && !pending.some((r) => r.seat === 2)) {
+        rooms.cancelBots(room)
+        rooms.armReactions(room, () => undefined)
+        expect(clock.pendingCount()).toBe(0)
+        standInChecked = true
+      }
+      if (room.betweenRounds) {
+        room.nextRound(room.hostSeat, 1000 + i)
+        continue
+      }
+      if (room.phase !== 'playing') break
+      if (room.turnController() !== null) room.botStep()
+      else play(room, 0, humanMove(room, 0), () => undefined)
+    }
+    rooms.cancelBots(room)
+
+    expect(standInChecked).toBe(true)
+    expect(hardDelays.length).toBeGreaterThan(0)
+    for (const ms of hardDelays) {
+      expect(ms).toBeGreaterThanOrEqual(1000)
+      expect(ms).toBeLessThanOrEqual(3000)
+    }
   })
 })

@@ -127,6 +127,19 @@ describe('lobby bots over the wire', () => {
   })
 })
 
+describe('room:leave in the lobby', () => {
+  it('tells the table the seat is free', async () => {
+    const { host, guest } = await lobby()
+    expect(await emit<PlainAck>(guest, 'room:leave', {})).toEqual({ ok: true })
+    await waitFor(() => host.events.some((e) => e.type === 'seatLeft'), 'seatLeft')
+    expect(host.events).toEqual([{ type: 'seatLeft', seat: 1 }])
+    await waitFor(
+      () => !(host.lobby()?.seats ?? []).some((s) => s.seat === 1 && s.status === 'active'),
+      'the lobby without the guest',
+    )
+  })
+})
+
 describe('room:leave mid-match', () => {
   it('hands the seat to a bot for good, and the old token cannot rejoin', async () => {
     const { host, guest, roomCode, guestToken } = await lobby()

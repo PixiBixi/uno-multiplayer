@@ -394,9 +394,9 @@ export function registerSocketHandlers(
     })
 
     /**
-     * The host changing the table from the lobby.
+     * A host change to the lobby: the table configuration, or its bots.
      *
-     * The guard lives in `Room.configure`, which is checked here - when the event is
+     * The guard lives in Room (`configure`, `addBot`...), checked here - when the event is
      * handled - and never at render: a host can press Start and toggle a rule in the
      * same breath, and whichever arrives second must lose.
      *
@@ -409,19 +409,7 @@ export function registerSocketHandlers(
      * in the lobby is a number the deal will read, not a clock. RoomManager arms it at
      * the deal, as it always has.
      */
-    socket.on('room:configure', (payload, ack) => {
-      attempt(ack, () => {
-        const admitted = admit(roomConfigureSchema, payload, ack, controlLimiter)
-        if (admitted === null) return
-        const { data, presence } = admitted
-        if (refused(presence.room.configure(presence.seat, data), ack)) return
-        ack({ ok: true })
-        broadcastLobby(presence.room)
-      })
-    })
-
-    /** Lobby bots, guarded in Room like configure, and shown to every guest the same way. */
-    const lobbyBotHandler =
+    const lobbyControl =
       <T>(
         schema: ZodType<T>,
         apply: (room: Room, bySeat: number, data: T) => Result<GameEvent[], ErrorCode>,
@@ -438,20 +426,22 @@ export function registerSocketHandlers(
       }
 
     socket.on(
+      'room:configure',
+      lobbyControl(roomConfigureSchema, (room, bySeat, data) => room.configure(bySeat, data)),
+    )
+    socket.on(
       'room:addBot',
-      lobbyBotHandler(roomAddBotSchema, (room, bySeat, data) => room.addBot(bySeat, data.level)),
+      lobbyControl(roomAddBotSchema, (room, bySeat, data) => room.addBot(bySeat, data.level)),
     )
     socket.on(
       'room:setBotLevel',
-      lobbyBotHandler(roomSetBotLevelSchema, (room, bySeat, data) =>
+      lobbyControl(roomSetBotLevelSchema, (room, bySeat, data) =>
         room.setBotLevel(bySeat, data.seat, data.level),
       ),
     )
     socket.on(
       'room:removeBot',
-      lobbyBotHandler(roomRemoveBotSchema, (room, bySeat, data) =>
-        room.removeBot(bySeat, data.seat),
-      ),
+      lobbyControl(roomRemoveBotSchema, (room, bySeat, data) => room.removeBot(bySeat, data.seat)),
     )
 
     socket.on('game:start', (payload, ack) => {

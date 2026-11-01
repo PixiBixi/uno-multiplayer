@@ -490,8 +490,8 @@ export class Room {
     return ok(skipDisconnectedTurn(game))
   }
 
-  /** Seats a deal would hand cards to: everyone but lobby vacancies. */
-  private seatedCount(): number {
+  /** Seats a deal would hand cards to: everyone but lobby vacancies, bot-played seats included. */
+  seatedCount(): number {
     return this.members.filter((m) => !isVacant(m)).length
   }
 

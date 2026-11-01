@@ -199,7 +199,7 @@ export class RoomManager {
     const due =
       room.turnSeconds !== null &&
       room.betweenRounds &&
-      room.activeMemberCount() >= MIN_SEATS &&
+      room.seatedCount() >= MIN_SEATS &&
       room.connectedHumanCount() > 0
     if (running && due) return
     this.armNextRound(room, onExpire)
@@ -208,7 +208,14 @@ export class RoomManager {
   /** armUnoGrace for a presence change: a rejoin loop must not keep an exposed seat safe. */
   keepUnoGrace(room: Room, onExpire: (events: GameEvent[]) => void): void {
     const armed = this.unoTimers.get(room.code)
-    if (armed !== undefined && !room.callOutsAllowed && armed.seat === room.exposedSeat()) return
+    if (
+      armed !== undefined &&
+      !room.callOutsAllowed &&
+      armed.seat === room.exposedSeat() &&
+      room.connectedHumanCount() > 0
+    ) {
+      return
+    }
     this.armUnoGrace(room, onExpire)
   }
 
@@ -247,9 +254,15 @@ export class RoomManager {
           } catch (error) {
             // A policy bug must not stall the seat: the clock's own fallback plays it instead.
             logger.error({ err: error, room: room.code, seat }, 'bot step threw, forcing the turn')
-            events = room.forceTurnMove()
+            // botStep sets standIn before choosing a move, so the takeover happened anyway.
+            const tookOver: GameEvent[] =
+              controller === 'absent' && room.isBotControlled(seat)
+                ? [{ type: 'botTookOver', seat }]
+                : []
+            events = [...tookOver, ...room.forceTurnMove()]
           }
-          onEvents(events)
+          // Nothing happened, so nothing is retimed: a retime restarts the human's clock.
+          if (events.length > 0) onEvents(events)
         })
       },
       this.belowClock(room, scaled),
@@ -305,7 +318,8 @@ export class RoomManager {
             logger.error({ err: error, room: room.code, seat, kind }, 'bot reaction threw, dropped')
             return
           }
-          onEvents(events)
+          // A declined or stale reaction changes nothing and must not restart any clock.
+          if (events.length > 0) onEvents(events)
         })
       }, Math.round(ms))
       armed.set(key, handle)
@@ -367,7 +381,7 @@ export class RoomManager {
     if (
       room.turnSeconds === null ||
       !room.betweenRounds ||
-      room.activeMemberCount() < MIN_SEATS ||
+      room.seatedCount() < MIN_SEATS ||
       room.connectedHumanCount() === 0
     ) {
       room.setNextRoundDeadline(null)
@@ -399,7 +413,10 @@ export class RoomManager {
    */
   armUnoGrace(room: Room, onExpire: (events: GameEvent[]) => void): void {
     this.cancelUnoGrace(room)
-    if (room.callOutsAllowed || room.exposedSeat() === null) return
+    // Like every clock, stopped while no human is connected.
+    if (room.callOutsAllowed || room.exposedSeat() === null || room.connectedHumanCount() === 0) {
+      return
+    }
 
     const handle = this.timers.setTimeout(() => {
       this.unoTimers.delete(room.code)
@@ -470,9 +487,10 @@ export class RoomManager {
 
 const graceKey = (code: string, seat: number): string => `${code}#${seat}`
 
-/* A jump-in window belongs to the card on top: once another lands, it is a new window
-   with a fresh delay, as the tournament models it. Other kinds stay open across moves. */
-const reactionKey = (room: Room, seat: number, kind: ReactionKind): string =>
-  kind === 'jumpIn'
-    ? `${seat}:jumpIn:${room.viewFor(seat)?.discardTop.id ?? 'none'}`
-    : `${seat}:${kind}`
+/* A jump-in window belongs to the card on top and a call-out to its target: either
+   changing opens a new window with a fresh delay, as the tournament models it. */
+const reactionKey = (room: Room, seat: number, kind: ReactionKind): string => {
+  if (kind === 'jumpIn') return `${seat}:jumpIn:${room.viewFor(seat)?.discardTop.id ?? 'none'}`
+  if (kind === 'callOut') return `${seat}:callOut:${room.exposedSeat() ?? 'none'}`
+  return `${seat}:${kind}`
+}
