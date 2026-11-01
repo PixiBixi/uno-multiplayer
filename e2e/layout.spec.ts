@@ -492,3 +492,26 @@ test('the turn slab hugs its words in French too, on the longer phrase', async (
   const slabLine = await widestLine(onTurn, '.turn-headline-mine .turn-headline-ink')
   expect(slabLine, 'the French slab hugs its words').toBeLessThan(block.width - 8)
 })
+
+test('on a 320px phone the sort row clears the action bar, and the chat field cannot zoom iOS', async ({
+  page,
+  browser,
+}) => {
+  /* Beside the action bar the sort row kept its full width and squeezed the bar's column to
+     ~20px: the UNO button spilled under "As dealt" and a tap on it sorted the hand. A chat
+     field under 16px makes iOS Safari zoom the page on focus. */
+  await page.setViewportSize({ width: 320, height: 568 })
+  await openLobby(page, browser)
+  await page.getByRole('button', { name: 'Start game' }).click()
+  await expect(page.locator('.hand-card')).toHaveCount(7)
+  await settle(page)
+
+  const bar = await boxOf(page, '.south-bar')
+  const sort = await boxOf(page, '.sort-control')
+  expect(sort.top, 'the sort row starts below the action bar').toBeGreaterThanOrEqual(bar.bottom)
+
+  const chatFont = await page.evaluate(() =>
+    parseFloat(getComputedStyle(document.querySelector('#chat-input')!).fontSize),
+  )
+  expect(chatFont).toBeGreaterThanOrEqual(16)
+})
