@@ -195,6 +195,25 @@ unless measurement shows the cap cannot be met. (Design call.)
 A smaller version runs as a property test in `verify`: four bots always finish a match,
 card conservation holds, no bot move is ever rejected.
 
+Results of `npm run tournament` (seed 20261101, UNO grace 3 s, after two rounds of Hard
+tuning), win rate of the single stronger seat:
+
+| Pair | Rule set | Win rate | Rounds |
+| --- | --- | --- | --- |
+| Normal vs 3 Easy | defaults | 52.3% | 10 000 |
+| Normal vs 3 Easy | liar | 48.8% | 10 000 |
+| Normal vs 3 Easy | sevenZero | 44.8% | 10 000 |
+| Normal vs 3 Easy | jumpIn | 52.3% | 10 000 |
+| Normal vs 3 Easy | playDrawnCard off | 50.5% | 10 000 |
+| Hard vs 3 Normal | defaults | 27.8% | 10 000 |
+| Hard vs 3 Normal | liar | 27.8% | 10 000 |
+| Hard vs 3 Normal | sevenZero | 27.9% | 10 000 |
+| Hard vs 3 Normal | jumpIn | 30.1% | 10 000 |
+| Hard vs 3 Normal | playDrawnCard off | 27.9% | 10 000 |
+
+Hard misses the 30% bar on four rule sets out of five; whether it merges into Normal is
+pending a decision.
+
 ## Testing
 
 - Property: `botMove` never returns a move outside `legalMoves`, at every level, under
