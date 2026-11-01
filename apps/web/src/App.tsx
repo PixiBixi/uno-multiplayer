@@ -58,6 +58,9 @@ export function App() {
           onStart={actions.startGame}
           onLeave={actions.leave}
           onConfigure={actions.configureRoom}
+          onAddBot={actions.addBot}
+          onSetBotLevel={actions.setBotLevel}
+          onRemoveBot={actions.removeBot}
         />
         <Toaster toasts={state.toasts} onDismiss={actions.dismissToast} />
       </>

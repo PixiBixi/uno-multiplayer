@@ -8,6 +8,8 @@ const base = {
   handCount: 3,
   status: 'active' as const,
   isTurn: false,
+  bot: null,
+  standIn: false,
   seat: 1,
   onCallOut: null,
 }
@@ -77,5 +79,16 @@ describe('Seat', () => {
     const { container } = render(<Seat {...base} seat={2} />)
     const style = container.querySelector('.seat')?.getAttribute('style') ?? ''
     expect(style).toContain('--yellow')
+  })
+
+  it('badges a bot with its level', () => {
+    render(<Seat {...base} bot="hard" />)
+    expect(screen.getByText('Bot Hard')).toBeTruthy()
+  })
+
+  it('marks a human a bot is standing in for, keeping their name', () => {
+    render(<Seat {...base} standIn />)
+    expect(screen.getByText('Ben')).toBeTruthy()
+    expect(screen.getByText('Bot playing')).toBeTruthy()
   })
 })

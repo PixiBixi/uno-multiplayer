@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import type { TableRules } from '@uno/engine'
-import { MAX_SEATS, type LobbyView, type TableConfiguration } from '@uno/protocol'
+import { MAX_SEATS, type BotLevel, type LobbyView, type TableConfiguration } from '@uno/protocol'
 import { CardValues } from '../components/CardValues.js'
 import { CopyButton } from '../components/CopyButton.js'
 import { MatchSettings } from '../components/MatchSettings.js'
@@ -7,6 +8,8 @@ import { TableRulesPanel } from '../components/TableRulesPanel.js'
 import { roomLink } from '../lib/room-url.js'
 import { pigmentForSeat } from '../lib/palette.js'
 import { useMessages } from '../i18n/index.js'
+
+const BOT_LEVELS: readonly BotLevel[] = ['easy', 'normal', 'hard']
 
 /**
  * The waiting room, and now the place the table is configured.
@@ -29,10 +32,51 @@ type LobbyProps = {
   onStart: () => void
   onLeave: () => void
   onConfigure: (changes: TableConfiguration) => void
+  onAddBot: (level: BotLevel) => void
+  onSetBotLevel: (seat: number, level: BotLevel) => void
+  onRemoveBot: (seat: number) => void
 }
 
-export function Lobby({ lobby, mySeat, onStart, onLeave, onConfigure }: LobbyProps) {
+function LevelSelect({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: BotLevel
+  onChange: (level: BotLevel) => void
+}) {
   const t = useMessages()
+  return (
+    <select
+      className="bot-level"
+      aria-label={label}
+      value={value}
+      onChange={(event) => {
+        onChange(event.target.value as BotLevel)
+      }}
+    >
+      {BOT_LEVELS.map((level) => (
+        <option key={level} value={level}>
+          {t.bots.level[level]}
+        </option>
+      ))}
+    </select>
+  )
+}
+
+export function Lobby({
+  lobby,
+  mySeat,
+  onStart,
+  onLeave,
+  onConfigure,
+  onAddBot,
+  onSetBotLevel,
+  onRemoveBot,
+}: LobbyProps) {
+  const t = useMessages()
+  const [newBotLevel, setNewBotLevel] = useState<BotLevel>('normal')
   const isHost = mySeat === lobby.hostSeat
   /* The fallback is only reachable if the roster arrives without the host in it, which
      the server does not do - but it is still a noun dropped into a sentence, and it has
@@ -46,6 +90,8 @@ export function Lobby({ lobby, mySeat, onStart, onLeave, onConfigure }: LobbyPro
   const configureRules = (rules: TableRules) => {
     onConfigure({ rules })
   }
+  /* Same gate as the rules: the server refuses a bot change once the deal has begun. */
+  const mayManageBots = mayConfigure
   const note = mayConfigure
     ? undefined
     : lobby.configurable
@@ -93,6 +139,31 @@ export function Lobby({ lobby, mySeat, onStart, onLeave, onConfigure }: LobbyPro
                   <span className="slot-seat">{t.lobby.seatNumber(seat.seat + 1)}</span>
                 </span>
                 {status !== null && <span className="slot-status">{status}</span>}
+                {seat.bot !== null && <span className="bot-tag">{t.bots.badge}</span>}
+                {seat.bot !== null &&
+                  (mayManageBots ? (
+                    <span className="bot-controls">
+                      <LevelSelect
+                        label={t.bots.levelOf(seat.name)}
+                        value={seat.bot}
+                        onChange={(level) => {
+                          onSetBotLevel(seat.seat, level)
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-small"
+                        aria-label={t.bots.removeNamed(seat.name)}
+                        onClick={() => {
+                          onRemoveBot(seat.seat)
+                        }}
+                      >
+                        {t.bots.remove}
+                      </button>
+                    </span>
+                  ) : (
+                    <span className="slot-status">{t.bots.level[seat.bot]}</span>
+                  ))}
                 {seat.seat === lobby.hostSeat && <span className="host-tag">{t.lobby.host}</span>}
               </li>
             )
@@ -104,6 +175,24 @@ export function Lobby({ lobby, mySeat, onStart, onLeave, onConfigure }: LobbyPro
                 <span className="slot-name">{t.lobby.waitingForPlayer}</span>
                 <span className="slot-seat">{t.lobby.freeSeat}</span>
               </span>
+              {mayManageBots && (
+                <span className="bot-controls">
+                  <LevelSelect
+                    label={t.bots.newBotLevel}
+                    value={newBotLevel}
+                    onChange={setNewBotLevel}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-small"
+                    onClick={() => {
+                      onAddBot(newBotLevel)
+                    }}
+                  >
+                    {t.bots.addBot}
+                  </button>
+                </span>
+              )}
             </li>
           ))}
         </ul>

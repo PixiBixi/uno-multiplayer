@@ -1,4 +1,5 @@
 import type { SeatStatus } from '@uno/engine'
+import type { BotLevel } from '@uno/protocol'
 import { useMessages, type Messages } from '../i18n/index.js'
 import { pigmentForSeat } from '../lib/palette.js'
 
@@ -33,6 +34,10 @@ type SeatProps = {
   handCount: number
   status: SeatStatus
   isTurn: boolean
+  /** The level when a bot owns this seat. */
+  bot: BotLevel | null
+  /** A bot is playing this human's seat while they are away. */
+  standIn: boolean
   /** Which pigment marks this seat. Indexed by seat, never by position in the rail. */
   seat: number
   /**
@@ -52,7 +57,16 @@ type SeatProps = {
  * distances from the eye for no reason a player could name. What is left is what a
  * player actually reads off an opponent: who, how many, and whether they are catchable.
  */
-export function Seat({ name, handCount, status, isTurn, seat, onCallOut }: SeatProps) {
+export function Seat({
+  name,
+  handCount,
+  status,
+  isTurn,
+  bot,
+  standIn,
+  seat,
+  onCallOut,
+}: SeatProps) {
   const t = useMessages()
   const shown = Math.min(handCount, MAX_FANNED)
   const statusText = statusNote(status, t)
@@ -89,6 +103,12 @@ export function Seat({ name, handCount, status, isTurn, seat, onCallOut }: SeatP
       {/* Turn state, presence and exposure are never colour-only. */}
       <p className="seat-notes">
         <span className={`presence presence-${status}`} aria-hidden="true" />
+        {bot !== null && (
+          <span className="seat-note seat-bot">
+            {t.bots.badge} {t.bots.level[bot]}
+          </span>
+        )}
+        {standIn && <span className="seat-note seat-bot">{t.bots.standIn}</span>}
         {isTurn && <span className="seat-note">{t.table.theirTurn}</span>}
         {statusText !== null && <span className="seat-note">{statusText}</span>}
         {onCallOut !== null && <span className="seat-note">{t.table.openToCallOut}</span>}

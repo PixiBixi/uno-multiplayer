@@ -129,7 +129,7 @@ export const fr: Messages = {
     seatDisconnected: (name) => `${name} a perdu la connexion`,
     seatReconnected: (name, isYou) => (isYou ? 'Te revoilà' : `${name} est de retour`),
     seatLeft: (name) => `${name} a quitté la partie`,
-    botTookOver: (name) => `Un bot joue à la place de ${name}`,
+    botTookOver: (name) => `Un bot joue pour ${name}`,
     turnTimedOut: (name, isYou) => (isYou ? 'Tu n’as plus de temps' : `${name} n’a plus de temps`),
     roundWon: (name, isYou, pts) =>
       `${isYou ? 'Tu gagnes' : `${name} gagne`} la manche, +${points(pts)}`,
@@ -230,6 +230,17 @@ export const fr: Messages = {
     needTwo: 'Il faut au moins deux joueurs.',
     waitingForHost: (hostName) => `En attente que ${hostName} lance la partie.`,
     leaveTable: 'Quitter la table',
+  },
+
+  bots: {
+    level: { easy: 'Facile', normal: 'Normal', hard: 'Difficile' },
+    addBot: 'Ajouter un bot',
+    remove: 'Retirer',
+    standIn: 'Bot en jeu',
+    badge: 'Bot',
+    removeNamed: (name) => `Retirer ${name}`,
+    levelOf: (name) => `Niveau de ${name}`,
+    newBotLevel: 'Niveau du nouveau bot',
   },
 
   table: {

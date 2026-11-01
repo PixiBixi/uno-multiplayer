@@ -143,6 +143,8 @@ describe('a seat and a burst, in French', () => {
       name: 'Ben',
       handCount: 3,
       isTurn: false,
+      bot: null,
+      standIn: false,
       seat: 1,
       onCallOut: null,
     }
@@ -185,9 +187,44 @@ describe('the lobby, in French', () => {
   it('falls back to a French noun when the host is not in the roster', () => {
     // `hostSeat` 9 is nobody, which is the branch that used to read "the host".
     inFrench(
-      <Lobby lobby={lobby} mySeat={0} onStart={vi.fn()} onLeave={vi.fn()} onConfigure={vi.fn()} />,
+      <Lobby
+        lobby={lobby}
+        mySeat={0}
+        onStart={vi.fn()}
+        onLeave={vi.fn()}
+        onConfigure={vi.fn()}
+        onAddBot={vi.fn()}
+        onSetBotLevel={vi.fn()}
+        onRemoveBot={vi.fn()}
+      />,
     )
     expect(screen.getByText('En attente que l’hôte lance la partie.')).toBeTruthy()
+  })
+
+  it('shows a bot level and the bot controls in French', () => {
+    const withBot: LobbyView = {
+      ...lobby,
+      hostSeat: 0,
+      seats: [
+        { seat: 0, name: 'Ana', status: 'active', bot: null },
+        { seat: 1, name: 'Robo', status: 'active', bot: 'hard' },
+      ],
+    }
+    inFrench(
+      <Lobby
+        lobby={withBot}
+        mySeat={0}
+        onStart={vi.fn()}
+        onLeave={vi.fn()}
+        onConfigure={vi.fn()}
+        onAddBot={vi.fn()}
+        onSetBotLevel={vi.fn()}
+        onRemoveBot={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole('combobox', { name: 'Niveau de Robo' })).toHaveProperty('value', 'hard')
+    expect(screen.getAllByRole('option', { name: 'Difficile' })[0]).toBeTruthy()
+    expect(screen.getAllByRole('button', { name: 'Ajouter un bot' })).toHaveLength(2)
   })
 })
 
@@ -202,7 +239,16 @@ describe('the whole rendered tree', () => {
         <Card card={num(7)} />
         <CardBack />
         <CentreStack view={viewWith({ pendingDraw: { amount: 6, kind: 'draw2' } })} />
-        <Seat name="Ben" handCount={2} status="left" isTurn={false} seat={1} onCallOut={null} />
+        <Seat
+          name="Ben"
+          handCount={2}
+          status="left"
+          isTurn={false}
+          bot={null}
+          standIn={false}
+          seat={1}
+          onCallOut={null}
+        />
         <ChatPanel feed={[]} mySeat={0} nameOf={() => 'Ana'} onSend={vi.fn()} />
       </>,
     )

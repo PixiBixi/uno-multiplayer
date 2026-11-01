@@ -1,4 +1,10 @@
-import type { ClientToServer, ErrorCode, ServerToClient, TableConfiguration } from '@uno/protocol'
+import type {
+  BotLevel,
+  ClientToServer,
+  ErrorCode,
+  ServerToClient,
+  TableConfiguration,
+} from '@uno/protocol'
 import { DEFAULT_MATCH_GOAL } from '@uno/protocol'
 import { DEFAULT_TABLE_RULES, type Move } from '@uno/engine'
 import { useCallback, useEffect, useReducer, useRef } from 'react'
@@ -155,6 +161,27 @@ export function useGameSocket() {
     [emitOrFail],
   )
 
+  /* Host, lobby only. Like `configureRoom`, nothing is dispatched: the roster comes back
+     in the `room:state` broadcast. */
+  const addBot = useCallback(
+    (level: BotLevel) => {
+      emitOrFail('room:addBot', { level })
+    },
+    [emitOrFail],
+  )
+  const setBotLevel = useCallback(
+    (seat: number, level: BotLevel) => {
+      emitOrFail('room:setBotLevel', { seat, level })
+    },
+    [emitOrFail],
+  )
+  const removeBot = useCallback(
+    (seat: number) => {
+      emitOrFail('room:removeBot', { seat })
+    },
+    [emitOrFail],
+  )
+
   // Same guard as `creating`, for the same double tap.
   const joining = useRef(false)
 
@@ -224,6 +251,9 @@ export function useGameSocket() {
     actions: {
       createRoom,
       configureRoom,
+      addBot,
+      setBotLevel,
+      removeBot,
       joinRoom,
       startGame,
       nextRound,

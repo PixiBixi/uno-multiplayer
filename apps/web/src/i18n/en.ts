@@ -216,6 +216,17 @@ export const en: Messages = {
     leaveTable: 'Leave table',
   },
 
+  bots: {
+    level: { easy: 'Easy', normal: 'Normal', hard: 'Hard' },
+    addBot: 'Add a bot',
+    remove: 'Remove',
+    standIn: 'Bot playing',
+    badge: 'Bot',
+    removeNamed: (name) => `Remove ${name}`,
+    levelOf: (name) => `Level of ${name}`,
+    newBotLevel: 'Level of the new bot',
+  },
+
   table: {
     opponents: 'Opponents',
     discardPile: 'Discard',
