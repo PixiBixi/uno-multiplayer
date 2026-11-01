@@ -40,3 +40,4 @@ export {
   type RoundHistory,
 } from './bot/view.js'
 export { availableReactions, botMove, botReaction, type ReactionKind } from './bot/policy.js'
+export { runTournament, type TournamentConfig, type TournamentResult } from './bot/tournament.js'

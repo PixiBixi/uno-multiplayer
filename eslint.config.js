@@ -61,4 +61,10 @@ export default tseslint.config(
     files: ['**/*.config.ts', '**/*.config.js'],
     extends: [tseslint.configs.disableTypeChecked],
   },
+  {
+    // Node scripts run against the built engine and sit outside every TS project.
+    files: ['scripts/**/*.mjs'],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: { globals: { console: 'readonly', performance: 'readonly' } },
+  },
 )
