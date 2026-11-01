@@ -180,12 +180,15 @@ levels on official rules and on each house rule, and prints win rate and average
 points per level. It is how levels are tuned and how God Level earns its place.
 
 Strength is measured as the win rate of one bot of level L against three bots of level
-L-1, over at least 10 000 rounds per rule set: a level earns its place at **30% or more**
-(25% is parity). The same criterion applies to Hard as to God Level. If Hard misses it,
-Hard is tuned until it passes; if it still cannot, Hard and Normal merge and only the
-stronger ships. Late UNO is only the Easy bot's concern (Normal and above always call
-in time), so an Easy bot usually paying the penalty on a table without call-outs is
-accepted. (Design calls.)
+L-1, on each rule set, across at least 10 independent seeds of 10 000 rounds each,
+reported as mean and standard deviation across seeds: a level earns its place when it
+beats three bots of the level below by a **statistically significant margin over parity
+(25%)**. The same criterion applies to God Level against Hard. Late UNO is only the Easy
+bot's concern (Normal and above always call in time), so an Easy bot sometimes paying
+the penalty on a table without call-outs is accepted. (Design calls.)
+
+The tournament measures card policy and jump-in, not reaction speed: Normal and above
+never forget UNO, so their faster off-turn delays only matter for call-outs and jump-ins.
 
 God Level runs on the main thread with a **fixed sample count**, not a time box (time
 boxes make tests nondeterministic), calibrated so a move takes under 150 ms at p90 on
@@ -195,24 +198,25 @@ unless measurement shows the cap cannot be met. (Design call.)
 A smaller version runs as a property test in `verify`: four bots always finish a match,
 card conservation holds, no bot move is ever rejected.
 
-Results of `npm run tournament` (seed 20261101, UNO grace 3 s, after two rounds of Hard
-tuning), win rate of the single stronger seat:
+Results of `npm run tournament` (10 seeds from 20261101, 10 000 rounds per seed, UNO
+grace 3 s), win rate of the single stronger seat, mean and standard deviation across
+seeds:
 
-| Pair | Rule set | Win rate | Rounds |
+| Pair | Rule set | Win rate (mean, sd) | Rounds |
 | --- | --- | --- | --- |
-| Normal vs 3 Easy | defaults | 52.3% | 10 000 |
-| Normal vs 3 Easy | liar | 48.8% | 10 000 |
-| Normal vs 3 Easy | sevenZero | 44.8% | 10 000 |
-| Normal vs 3 Easy | jumpIn | 52.3% | 10 000 |
-| Normal vs 3 Easy | playDrawnCard off | 50.5% | 10 000 |
-| Hard vs 3 Normal | defaults | 27.8% | 10 000 |
-| Hard vs 3 Normal | liar | 27.8% | 10 000 |
-| Hard vs 3 Normal | sevenZero | 27.9% | 10 000 |
-| Hard vs 3 Normal | jumpIn | 30.1% | 10 000 |
-| Hard vs 3 Normal | playDrawnCard off | 27.9% | 10 000 |
+| Normal vs 3 Easy | defaults | 36.6% (0.6) | 10 x 10 000 |
+| Normal vs 3 Easy | liar | 48.1% (0.5) | 10 x 10 000 |
+| Normal vs 3 Easy | sevenZero | 34.2% (0.4) | 10 x 10 000 |
+| Normal vs 3 Easy | jumpIn | 36.6% (0.6) | 10 x 10 000 |
+| Normal vs 3 Easy | playDrawnCard off | 35.5% (0.6) | 10 x 10 000 |
+| Hard vs 3 Normal | defaults | 27.6% (0.6) | 10 x 10 000 |
+| Hard vs 3 Normal | liar | 27.6% (0.6) | 10 x 10 000 |
+| Hard vs 3 Normal | sevenZero | 27.4% (0.5) | 10 x 10 000 |
+| Hard vs 3 Normal | jumpIn | 29.8% (0.7) | 10 x 10 000 |
+| Hard vs 3 Normal | playDrawnCard off | 27.5% (0.5) | 10 x 10 000 |
 
-Hard misses the 30% bar on four rule sets out of five; whether it merges into Normal is
-pending a decision.
+Every pair clears parity by far more than its spread. The user chose to keep Hard at
+about 28% against Normal rather than merge the two levels. (Decided with the user.)
 
 ## Testing
 
