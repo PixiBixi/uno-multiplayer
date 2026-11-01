@@ -1,5 +1,5 @@
-import { legalMoves, turnOrder, type GameState } from '@uno/engine'
-import type { MatchProgress, PlayerView } from '@uno/protocol'
+import { legalMoves, turnOrder, type GameState, type SeatStatus } from '@uno/engine'
+import type { MatchProgress, PlayerView, SeatOccupant } from '@uno/protocol'
 
 /**
  * Builds the view for ONE seat. Opponents are reduced to a card count, and the
@@ -15,6 +15,7 @@ export function redactFor(
   state: GameState,
   seatIndex: number,
   match: MatchProgress,
+  occupants: (SeatOccupant & { status: SeatStatus })[],
   deadlines: Deadlines = { turnDeadline: null, nextRoundDeadline: null },
 ): PlayerView | null {
   const seat = state.seats[seatIndex]
@@ -29,14 +30,19 @@ export function redactFor(
     },
     opponents: state.seats
       .filter((s) => s.index !== seatIndex)
-      .map((s) => ({
-        seat: s.index,
-        name: s.name,
-        handCount: s.hand.length,
-        status: s.status,
-        bot: null,
-        standIn: false,
-      })),
+      .map((s) => {
+        /* Presence and occupant come from the member, not the engine: a bot seat is
+           'active' in the reducer whatever the humans around it are doing. */
+        const occupant = occupants[s.index]
+        return {
+          seat: s.index,
+          name: s.name,
+          handCount: s.hand.length,
+          status: occupant?.status ?? s.status,
+          bot: occupant?.bot ?? null,
+          standIn: occupant?.standIn ?? false,
+        }
+      }),
     /* Read straight off the state the reducer is playing by, not passed in beside the
        deadlines: a `rules` argument threaded from `Room` could disagree with the game it
        describes, and a view that misreports the rules is worse than one that omits them. */

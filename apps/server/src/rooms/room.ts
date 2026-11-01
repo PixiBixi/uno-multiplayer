@@ -16,6 +16,7 @@ import {
   setSeatStatus,
   skipDisconnectedTurn,
   startMatch,
+  type BotLevel,
   type Card,
   type GameState,
   type MatchGoal,
@@ -39,13 +40,23 @@ import {
 import { redactFor } from '../views.js'
 import { emptyStatsFor, tally } from './stats.js'
 
+/** Fixed so a table of bots reads the same everywhere; the first unused one is taken. */
+export const BOT_NAMES = ['Ada', 'Bip', 'Nova', 'Pixel', 'Turing', 'Zed']
+
 type Member = {
   seat: number
   name: string
+  kind: 'human' | 'bot'
+  /** A bot's own level; null for a human. */
+  level: BotLevel | null
   /** The player's identity across reconnections. Never the socket id. */
   sessionToken: string
   socketId: string | null
   status: SeatStatus
+  /** A bot is playing this human's seat while they are absent on their turn. */
+  standIn: boolean
+  /** Order of arrival at the table: a counter, never a clock. */
+  addedAt: number
 }
 
 type RoomPhase = 'lobby' | 'playing' | 'finished'
@@ -61,6 +72,7 @@ export class Room {
   private readonly seed: number
   private readonly members: Member[] = []
   private host = 0
+  private nextAddedAt = 0
   private game: GameState | null = null
   /* Settable from the lobby by the host and frozen by the first deal of the match -
      see configure(). Not readonly any more, and not mutable for long: changing any of
@@ -235,14 +247,31 @@ export class Room {
        scored, so seat == engine index still holds, and keeping it would make three
        departures fill the table. */
     const vacant = this.members.find((m) => m.status === 'left')
-    if (vacant === undefined && this.members.length >= MAX_SEATS) return err('room_full')
+    /* On a full table the most recently added bot gives up its seat: a human asking to
+       sit down outranks a bot, and the newest one is the least settled. */
+    const replaced =
+      vacant === undefined && this.members.length >= MAX_SEATS
+        ? this.members
+            .filter((m) => m.kind === 'bot')
+            .reduce<Member | null>(
+              (best, m) => (best === null || m.addedAt > best.addedAt ? m : best),
+              null,
+            )
+        : null
+    if (vacant === undefined && replaced === null && this.members.length >= MAX_SEATS) {
+      return err('room_full')
+    }
 
     const member: Member = {
-      seat: vacant?.seat ?? this.members.length,
+      seat: vacant?.seat ?? replaced?.seat ?? this.members.length,
       name,
+      kind: 'human',
+      level: null,
       sessionToken: randomUUID(),
       socketId,
       status: 'active',
+      standIn: false,
+      addedAt: this.nextAddedAt++,
     }
     this.members[member.seat] = member
     return ok({ seat: member.seat, sessionToken: member.sessionToken })
@@ -267,8 +296,76 @@ export class Room {
    */
   get abandoned(): boolean {
     // `every` on no members is true, which is the right answer for a room created
-    // and never joined.
-    return this.members.every((member) => member.status === 'left')
+    // and never joined. Bots never come back, so only humans keep a table alive.
+    return this.members.every((member) => member.kind === 'bot' || member.status === 'left')
+  }
+
+  /** Humans currently attached, the ones a table of bots needs at least one of. */
+  connectedHumanCount(): number {
+    return this.members.filter((m) => m.kind === 'human' && m.status === 'active').length
+  }
+
+  /** Whether a bot plays this seat, as its own occupant or standing in for an absentee. */
+  isBotControlled(seat: number): boolean {
+    const member = this.members[seat]
+    return member !== undefined && (member.kind === 'bot' || member.standIn)
+  }
+
+  /** Own level, 'normal' for a stand-in, null for a human playing. */
+  levelFor(seat: number): BotLevel | null {
+    const member = this.members[seat]
+    if (member === undefined) return null
+    if (member.kind === 'bot') return member.level
+    return member.standIn ? 'normal' : null
+  }
+
+  /** Lobby only and host only; the bot takes the first vacancy, else the next free seat. */
+  addBot(bySeat: number, level: BotLevel): Result<GameEvent[], ErrorCode> {
+    if (this.game !== null) return err('game_already_started')
+    if (bySeat !== this.host) return err('not_host')
+
+    const vacant = this.members.find((m) => m.status === 'left')
+    if (vacant === undefined && this.members.length >= MAX_SEATS) return err('room_full')
+
+    const taken = new Set(this.members.filter((m) => m.status !== 'left').map((m) => m.name))
+    const name = BOT_NAMES.find((n) => !taken.has(n)) ?? `Bot ${this.nextAddedAt + 1}`
+    const seat = vacant?.seat ?? this.members.length
+    this.members[seat] = {
+      seat,
+      name,
+      kind: 'bot',
+      level,
+      sessionToken: randomUUID(),
+      socketId: null,
+      status: 'active',
+      standIn: false,
+      addedAt: this.nextAddedAt++,
+    }
+    return ok([])
+  }
+
+  setBotLevel(bySeat: number, seat: number, level: BotLevel): Result<GameEvent[], ErrorCode> {
+    if (this.game !== null) return err('game_already_started')
+    if (bySeat !== this.host) return err('not_host')
+    const member = this.members[seat]
+    if (member === undefined || member.kind !== 'bot' || member.status === 'left') {
+      return err('invalid_payload')
+    }
+    member.level = level
+    return ok([])
+  }
+
+  removeBot(bySeat: number, seat: number): Result<GameEvent[], ErrorCode> {
+    if (this.game !== null) return err('game_already_started')
+    if (bySeat !== this.host) return err('not_host')
+    const member = this.members[seat]
+    if (member === undefined || member.kind !== 'bot' || member.status === 'left') {
+      return err('invalid_payload')
+    }
+    // A vacancy `join` reuses; trailing ones are dropped so they are never dealt a hand.
+    member.status = 'left'
+    while (this.members[this.members.length - 1]?.status === 'left') this.members.pop()
+    return ok([])
   }
 
   activeMemberCount(): number {
@@ -315,8 +412,11 @@ export class Room {
     return {
       roomCode: this.code,
       hostSeat: this.host,
-      seats: this.members.map((m) => ({ seat: m.seat, name: m.name, status: m.status, bot: null })),
-      canStart: this.activeMemberCount() >= MIN_SEATS,
+      seats: this.members
+        // A removed bot is a vacancy, not a player who left; a human who left stays visible.
+        .filter((m) => m.kind === 'human' || m.status !== 'left')
+        .map((m) => ({ seat: m.seat, name: m.name, status: m.status, bot: m.level })),
+      canStart: this.connectedHumanCount() >= 1 && this.activeMemberCount() >= MIN_SEATS,
       goal: this.goal,
       pace: this.pace,
       rules: this.rules,
@@ -462,7 +562,12 @@ export class Room {
 
   viewFor(seat: number): PlayerView | null {
     if (this.game === null) return null
-    return redactFor(this.game, seat, this.matchProgress(), {
+    const occupants = this.members.map((m) => ({
+      bot: m.level,
+      standIn: m.standIn,
+      status: m.status,
+    }))
+    return redactFor(this.game, seat, this.matchProgress(), occupants, {
       turnDeadline: this.turnDeadline,
       nextRoundDeadline: this.nextRoundDeadline,
     })
@@ -591,7 +696,7 @@ export class Room {
   private transferHostIfNeeded(): void {
     const currentHost = this.members[this.host]
     if (currentHost !== undefined && currentHost.status === 'active') return
-    const candidate = this.members.find((m) => m.status === 'active')
+    const candidate = this.members.find((m) => m.kind === 'human' && m.status === 'active')
     if (candidate !== undefined) this.host = candidate.seat
   }
 }
