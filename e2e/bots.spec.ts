@@ -98,5 +98,6 @@ test('a dropped player is stood in for and takes the seat back', async ({ browse
 
   const back = await guestContext.newPage()
   await back.goto(roomLink)
+  expect(Number.isInteger(shown), 'the seat count was not a number').toBe(true)
   await expect(back.locator('.hand-card')).toHaveCount(shown)
 })
