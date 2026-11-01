@@ -2,12 +2,18 @@ import { cardPoints } from '../match.js'
 import { nextInt, nextRandom } from '../rng.js'
 import { COLORS, isWild, type Card, type Color, type Move } from '../types.js'
 import type { BotLevel } from './timing.js'
-import type { BotView } from './view.js'
+import { unseenCards, type BotView } from './view.js'
 
 export type ReactionKind = 'callOut' | 'lateUno' | 'jumpIn'
 
 type Choice = { move: Move | null; rng: number }
 type PlayMove = Extract<Move, { type: 'play' }>
+
+/** What a level adds on top of Normal: the colour it names, and which playable cards it considers. */
+type Style = {
+  colour: (view: BotView) => Color
+  narrow: (view: BotView, cards: Card[]) => Card[]
+}
 
 const isPlay = (m: Move): m is PlayMove => m.type === 'play'
 
@@ -49,12 +55,12 @@ function nextHoldsFewest(view: BotView): boolean {
   return handCount(view, next) <= fewest
 }
 
-/** Settles a card's second decision: the most-held colour, or the smallest hand to swap. */
-function settle(view: BotView, plays: PlayMove[]): PlayMove | undefined {
+/** Settles a card's second decision: the style's colour, or the smallest hand to swap. */
+function settle(view: BotView, style: Style, plays: PlayMove[]): PlayMove | undefined {
   const first = plays[0]
   if (first === undefined) return undefined
   if (first.chosenColor !== undefined) {
-    const colour = mostHeldColour(view.hand)
+    const colour = style.colour(view)
     return plays.find((m) => m.chosenColor === colour) ?? first
   }
   if (first.swapWith === undefined) return first
@@ -95,7 +101,7 @@ function easyMove(view: BotView, rng: number): Choice {
 }
 
 /** The drawn-card sub-state: lay it, unless it is a wild the hand can do without. */
-function normalDrawnCard(view: BotView, moves: Move[]): Move | null {
+function normalDrawnCard(view: BotView, style: Style, moves: Move[]): Move | null {
   const plays = moves.filter(isPlay)
   const pass = moves.find((m) => m.type === 'pass') ?? null
   const first = plays[0]
@@ -105,7 +111,7 @@ function normalDrawnCard(view: BotView, moves: Move[]): Move | null {
     (c) => c.id !== drawn.id && !isWild(c) && c.color === view.currentColor,
   )
   if (isWild(drawn) && holdsColour) return pass
-  return settle(view, plays) ?? pass
+  return settle(view, style, plays) ?? pass
 }
 
 /** Highest points first, then the colour held most, so the colour in play stays ours. */
@@ -120,10 +126,11 @@ function bestColouredCard(view: BotView, cards: Card[]): Card | undefined {
   }, undefined)
 }
 
-function normalPlay(view: BotView, plays: PlayMove[]): Move | null {
-  const cards = [...new Set(plays.map((m) => m.cardId))]
+function normalPlay(view: BotView, style: Style, plays: PlayMove[]): Move | null {
+  const playable = [...new Set(plays.map((m) => m.cardId))]
     .map((id) => view.hand.find((c) => c.id === id))
     .filter((c): c is Card => c !== undefined)
+  const cards = style.narrow(view, playable)
   const coloured = cards.filter((c) => !isWild(c))
   const actions = coloured.filter((c) => c.kind !== 'number')
   const pool = nextHoldsFewest(view) && actions.length > 0 ? actions : coloured
@@ -132,33 +139,108 @@ function normalPlay(view: BotView, plays: PlayMove[]): Move | null {
   return (
     settle(
       view,
+      style,
       plays.filter((m) => m.cardId === card.id),
     ) ?? null
   )
 }
 
-function normalMove(view: BotView, rng: number): Choice {
+function normalMove(view: BotView, style: Style, rng: number): Choice {
   const moves = onTurnMoves(view)
   if (moves.length === 0) return { move: null, rng }
   const uno = moves.find((m) => m.type === 'callUno')
   if (uno !== undefined) return { move: uno, rng }
-  if (view.drawnCard !== null) return { move: normalDrawnCard(view, moves), rng }
-  const played = normalPlay(view, moves.filter(isPlay))
+  if (view.drawnCard !== null) return { move: normalDrawnCard(view, style, moves), rng }
+  const played = normalPlay(view, style, moves.filter(isPlay))
   if (played !== null) return { move: played, rng }
   const draw = moves.find((m) => m.type === 'draw' || m.type === 'acceptDraw') ?? null
   return { move: draw, rng }
 }
+
+const NORMAL: Style = {
+  colour: (view) => mostHeldColour(view.hand),
+  narrow: (_view, cards) => cards,
+}
+
+/** Colours the next seat drew on rather than play: it likely holds none of them. */
+function lackedByNext(view: BotView): Set<Color> {
+  const next = nextSeat(view)
+  return new Set(view.history.drawnOn.filter((d) => d.seat === next).map((d) => d.color))
+}
+
+/* Names the most-held colour, skipping one with 2 or fewer unseen cards while another
+   held colour has more, and preferring a colour the next seat drew on. */
+function hardColour(view: BotView): Color {
+  const held = colourCounts(view.hand)
+  const unseen: Record<Color, number> = { R: 0, G: 0, B: 0, Y: 0 }
+  for (const c of unseenCards(view)) if (!isWild(c)) unseen[c.color]++
+  const heldColours = COLORS.filter((c) => held[c] > 0)
+  const viable = heldColours.filter(
+    (c) => unseen[c] > 2 || !heldColours.some((o) => unseen[o] > unseen[c]),
+  )
+  const lacked = lackedByNext(view)
+  const preferred = viable.filter((c) => lacked.has(c))
+  const pool = preferred.length > 0 ? preferred : viable
+  if (pool.length === 0) return mostHeldColour(view.hand)
+  return pool.reduce((best, c) => (held[c] > held[best] ? c : best))
+}
+
+/** The seat a 0 takes its new hand from: the one before it in the direction of play. */
+function previousSeat(view: BotView): number | null {
+  return nextSeat({ ...view, direction: view.direction === 1 ? -1 : 1 })
+}
+
+/** Plays a card whose colour the next seat lacks, when it holds one. */
+function keepLackedColour(view: BotView, cards: Card[]): Card[] {
+  const lacked = lackedByNext(view)
+  const matching = cards.filter((c) => !isWild(c) && lacked.has(c.color))
+  return matching.length > 0 ? matching : cards
+}
+
+function hardNarrow(view: BotView, cards: Card[]): Card[] {
+  const opponentNearOut = view.seats.some(
+    (s) => s.index !== view.seat && s.status === 'active' && s.handCount <= 3,
+  )
+  const plain = cards.filter((c) => c.kind === 'number' || c.kind === 'wild')
+  // Hold +2, +4, skip and reverse for when an opponent is close to going out.
+  const pool = !opponentNearOut && plain.some((c) => c.kind === 'number') ? plain : cards
+  if (view.rules.sevenZero) {
+    const zeros = pool.filter((c) => c.kind === 'number' && c.value === 0)
+    const from = previousSeat(view)
+    if (zeros.length > 0 && from !== null && handCount(view, from) < view.hand.length) return zeros
+  }
+  return keepLackedColour(view, pool)
+}
+
+const HARD: Style = { colour: hardColour, narrow: hardNarrow }
 
 /** The seat's own turn. Never null when legalMoves holds an on-turn move. */
 export function botMove(view: BotView, level: BotLevel, rng: number): Choice {
   switch (level) {
     case 'easy':
       return easyMove(view, rng)
-    // Hard plays as Normal until its own heuristics layer on top.
     case 'normal':
+      return normalMove(view, NORMAL, rng)
     case 'hard':
-      return normalMove(view, rng)
+      return normalMove(view, HARD, rng)
   }
+}
+
+/* Jumping in clears a declaration, so a two-card hand would land on one it cannot call
+   in time on a plain table. A Liar table only charges it if somebody notices. */
+function hardJumpIn(view: BotView): Move | null {
+  if (view.currentSeat === view.seat) return null
+  const plays = view.legalMoves.filter(isPlay)
+  if (plays.length === 0) return null
+  if (view.hand.length === 2 && !view.rules.liar) return null
+  const first = plays[0]
+  return (
+    settle(
+      view,
+      HARD,
+      plays.filter((m) => m.cardId === first?.cardId),
+    ) ?? null
+  )
 }
 
 /** A seat still exposed after its turn may close its own window off turn. */
@@ -193,8 +275,7 @@ export function botReaction(
     }
     case 'lateUno':
       return { move: lateUnoOffered(view) ? { type: 'callUno' } : null, rng }
-    // No level jumps in yet: Hard's jump-in lands with its own heuristics.
     case 'jumpIn':
-      return { move: null, rng }
+      return { move: level === 'hard' ? hardJumpIn(view) : null, rng }
   }
 }
