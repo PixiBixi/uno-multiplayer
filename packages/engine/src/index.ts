@@ -29,3 +29,13 @@ export {
   type TableRules,
   type WildCard,
 } from './types.js'
+export { sampleDelayMs, type BotLevel, type DelayKind } from './bot/timing.js'
+export {
+  EMPTY_HISTORY,
+  botViewFor,
+  recordMove,
+  unseenCards,
+  type BotView,
+  type DrawnOn,
+  type RoundHistory,
+} from './bot/view.js'
