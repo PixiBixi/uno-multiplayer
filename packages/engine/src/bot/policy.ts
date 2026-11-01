@@ -87,8 +87,7 @@ function easyMove(view: BotView, rng: number): Choice {
     r = coin.state
     if (coin.value < 0.5 || plays.length === 0) return { move: pass, rng: r }
   }
-  /* Drawing at will made Easy rounds a random walk thousands of turns long, so Easy
-     draws only when it has no play, like every other level. */
+  // Easy draws only when it has no play: drawing at will makes rounds unbounded.
   const pool = plays.length > 0 ? plays : moves.filter((m) => m.type !== 'callUno')
   if (pool.length === 0) return { move: null, rng: r }
   const pick = nextInt(r, pool.length)
@@ -162,12 +161,17 @@ export function botMove(view: BotView, level: BotLevel, rng: number): Choice {
   }
 }
 
+/** A seat still exposed after its turn may close its own window off turn. */
+function lateUnoOffered(view: BotView): boolean {
+  return view.currentSeat !== view.seat && view.legalMoves.some((m) => m.type === 'callUno')
+}
+
 /** Which off-turn reactions are legal for this seat right now. */
 export function availableReactions(view: BotView): ReactionKind[] {
   const offTurn = view.currentSeat !== view.seat
   const kinds: ReactionKind[] = []
   if (view.legalMoves.some((m) => m.type === 'callOut')) kinds.push('callOut')
-  if (offTurn && view.legalMoves.some((m) => m.type === 'callUno')) kinds.push('lateUno')
+  if (lateUnoOffered(view)) kinds.push('lateUno')
   if (offTurn && view.legalMoves.some(isPlay)) kinds.push('jumpIn')
   return kinds
 }
@@ -187,11 +191,8 @@ export function botReaction(
       const coin = nextRandom(rng)
       return { move: coin.value < 0.5 ? callOut : null, rng: coin.state }
     }
-    case 'lateUno': {
-      const offered =
-        view.currentSeat !== view.seat && view.legalMoves.some((m) => m.type === 'callUno')
-      return { move: offered ? { type: 'callUno' } : null, rng }
-    }
+    case 'lateUno':
+      return { move: lateUnoOffered(view) ? { type: 'callUno' } : null, rng }
     // No level jumps in yet: Hard's jump-in lands with its own heuristics.
     case 'jumpIn':
       return { move: null, rng }
