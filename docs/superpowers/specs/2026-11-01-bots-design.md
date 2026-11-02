@@ -51,8 +51,7 @@ These would make the feature a failure even if it works:
 
 ## Levels
 
-Names in the interface: Easy / Normal / Hard, and **God Level**. French: Facile /
-Normal / Difficile / God Level (the name is kept as is in French).
+Names in the interface: Easy / Normal / Hard. French: Facile / Normal / Difficile.
 
 - **Easy** - a uniformly random legal move. Calls UNO only sometimes. Calls out
   sometimes, slowly.
@@ -81,9 +80,9 @@ They are server-side, behind the existing injectable `Timers`, so tests never wa
 
 | Delay | Range | Mean by level |
 | --- | --- | --- |
-| Own turn: think before playing | 0.8 s to 3 s | Easy 2.2 s, Normal 1.8 s, Hard and God 1.4 s |
-| Off turn: call-out, late UNO | 2 s to 10 s | Easy 7 s, Normal 5 s, Hard and God 3 s |
-| Off turn: jump-in | 1 s to 3 s | Hard and God 1.8 s; Easy and Normal never jump in |
+| Own turn: think before playing | 0.8 s to 3 s | Easy 2.2 s, Normal 1.8 s, Hard 1.4 s |
+| Off turn: call-out, late UNO | 2 s to 10 s | Easy 7 s, Normal 5 s, Hard 3 s |
+| Off turn: jump-in | 1 s to 3 s | Hard 1.8 s; Easy and Normal never jump in |
 
 Jump-in has its own, faster range because its window closes as soon as the next seat
 plays, which a bot does within 0.8 s to 3 s: on the 2 s to 10 s range no bot would ever
