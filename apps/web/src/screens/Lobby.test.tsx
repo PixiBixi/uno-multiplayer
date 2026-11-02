@@ -283,6 +283,21 @@ describe('Lobby', () => {
       expect(screen.queryByRole('button', { name: 'Add a bot' })).toBeNull()
     })
 
+    it('offers the host a bot on the seat a human left, even with four members listed', async () => {
+      const lobby = lobbyWith(['Ana', 'Ben', 'Cleo', 'Dan'])
+      lobby.seats[3] = { seat: 3, name: 'Dan', status: 'left', bot: null }
+      const { onAddBot } = setup(lobby, 0)
+      await userEvent.click(screen.getByRole('button', { name: 'Add a bot' }))
+      expect(onAddBot).toHaveBeenCalledWith('normal')
+    })
+
+    it('offers a guest no bot on a seat a human left', () => {
+      const lobby = lobbyWith(['Ana', 'Ben', 'Cleo', 'Dan'])
+      lobby.seats[3] = { seat: 3, name: 'Dan', status: 'left', bot: null }
+      setup(lobby, 1)
+      expect(screen.queryByRole('button', { name: 'Add a bot' })).toBeNull()
+    })
+
     it('adds a Normal bot by default', async () => {
       const { onAddBot } = setup(lobbyWith(['Ana']), 0)
       await userEvent.click(screen.getAllByRole('button', { name: 'Add a bot' })[0] as HTMLElement)

@@ -92,6 +92,20 @@ export function Lobby({
   }
   /* Same gate as the rules: the server refuses a bot change once the deal has begun. */
   const mayManageBots = mayConfigure
+  const addBotControls = (
+    <span className="bot-controls">
+      <LevelSelect label={t.bots.newBotLevel} value={newBotLevel} onChange={setNewBotLevel} />
+      <button
+        type="button"
+        className="btn btn-small"
+        onClick={() => {
+          onAddBot(newBotLevel)
+        }}
+      >
+        {t.bots.addBot}
+      </button>
+    </span>
+  )
   const note = mayConfigure
     ? undefined
     : lobby.configurable
@@ -164,6 +178,8 @@ export function Lobby({
                   ) : (
                     <span className="slot-status">{t.bots.level[seat.bot]}</span>
                   ))}
+                {/* The server hands a left human's seat to the next bot, so offer it here too. */}
+                {seat.bot === null && seat.status === 'left' && mayManageBots && addBotControls}
                 {seat.seat === lobby.hostSeat && <span className="host-tag">{t.lobby.host}</span>}
               </li>
             )
@@ -175,24 +191,7 @@ export function Lobby({
                 <span className="slot-name">{t.lobby.waitingForPlayer}</span>
                 <span className="slot-seat">{t.lobby.freeSeat}</span>
               </span>
-              {mayManageBots && (
-                <span className="bot-controls">
-                  <LevelSelect
-                    label={t.bots.newBotLevel}
-                    value={newBotLevel}
-                    onChange={setNewBotLevel}
-                  />
-                  <button
-                    type="button"
-                    className="btn btn-small"
-                    onClick={() => {
-                      onAddBot(newBotLevel)
-                    }}
-                  >
-                    {t.bots.addBot}
-                  </button>
-                </span>
-              )}
+              {mayManageBots && addBotControls}
             </li>
           ))}
         </ul>
