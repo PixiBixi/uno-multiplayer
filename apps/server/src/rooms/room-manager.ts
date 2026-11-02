@@ -270,7 +270,7 @@ export class RoomManager {
     this.botTimers.set(room.code, { handle, seat, controller })
   }
 
-  /** armBot for a presence change: the pending move survives while it still times the same seat. */
+  /** armBot, except the pending move survives while it still times the same seat and controller. */
   keepBot(room: Room, onEvents: (events: GameEvent[]) => void): void {
     const armed = this.botTimers.get(room.code)
     if (

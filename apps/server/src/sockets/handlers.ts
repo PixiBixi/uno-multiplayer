@@ -189,7 +189,8 @@ export function registerSocketHandlers(
        somebody else made - a call-out, or the exposed seat's own next turn - and the
        clock has to go away with it. */
     rooms.armUnoGrace(room, afterExpiry)
-    rooms.armBot(room, afterExpiry)
+    // keepBot, not armBot: a call-out leaves the same seat on turn and must not redraw its delay.
+    rooms.keepBot(room, afterExpiry)
     rooms.armReactions(room, afterExpiry)
   }
 
@@ -537,8 +538,7 @@ export function registerSocketHandlers(
         if (result === null) return
 
         broadcastEvents(room, result.events)
-        // A disconnection moves the turn past the seat that left, so the clock
-        // now belongs to somebody else.
+        // The seat that left may now be played by a stand-in, so its timers change.
         retime(room, 'presence')
         broadcastLobby(room)
         broadcastViews(room)

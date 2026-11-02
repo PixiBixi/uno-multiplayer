@@ -85,7 +85,7 @@ const wire = (rooms: RoomManager, room: Room, clock: Clock) => {
     rooms.armNextRound(room, afterExpiry)
     rooms.armUnoGrace(room, afterExpiry)
     const before = new Set(clock.handles())
-    rooms.armBot(room, afterExpiry)
+    rooms.keepBot(room, afterExpiry)
     const fresh = clock.handles().filter((h) => !before.has(h))
     const all = clock.delays()
     const handles = clock.handles()
@@ -429,7 +429,7 @@ describe('a timer never throws', () => {
   })
 })
 
-describe('fix round 1', () => {
+describe('turn clock and bot timers across retimes', () => {
   it('a declined reaction leaves the turn clock alone', () => {
     const { clock, rooms, room } = tableOf({
       humans: ['Ana', 'Ben'],
@@ -451,6 +451,24 @@ describe('fix round 1', () => {
     expect(events).toEqual([])
     expect(clock.handles()).toEqual([turnClock])
     expect(room.viewFor(0)?.turnDeadline).toBe(deadline)
+  })
+
+  it('a move that leaves the same bot on turn keeps its timer and delay', () => {
+    const { clock, rooms, room } = tableOf({ humans: ['Ana'], bots: ['normal'] })
+    const { retime, botDelays } = wire(rooms, room, clock)
+    for (let i = 0; i < 50 && room.turnController() === null; i++) {
+      play(room, 0, humanMove(room, 0), () => undefined)
+    }
+    expect(room.turnController()).toBe('bot')
+    retime()
+    const armed = clock.handles()
+    expect(armed).toHaveLength(1)
+    expect(botDelays).toHaveLength(1)
+
+    // A call-out or late UNO call retimes as a move without changing whose turn it is.
+    retime()
+    expect(clock.handles()).toEqual(armed)
+    expect(botDelays).toHaveLength(1)
   })
 
   it('Blazing deals the next round with one human and a stand-in', () => {
