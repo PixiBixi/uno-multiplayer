@@ -69,7 +69,8 @@ Normal / Difficile / God Level (the name is kept as is in French).
   shown it lacks by drawing), play each legal move to the end of the round with Normal
   bots, keep the move with the best average score margin. **Only shipped if the
   tournament shows it beats Hard by a clear margin**; if it does not, it is dropped and
-  the result is recorded in this spec.
+  the result is recorded in this spec. **Measured and dropped**: see "God Level, measured
+  and dropped" under The tournament.
 
 A bot standing in for a disconnected human plays at **Normal**.
 
@@ -217,6 +218,68 @@ seeds:
 
 Every pair clears parity by far more than its spread. The user chose to keep Hard at
 about 28% against Normal rather than merge the two levels. (Decided with the user.)
+
+### God Level, measured and dropped
+
+Criterion (decided with the user): God ships only if it beats three Hard bots by a
+statistically significant margin over 25% parity on every rule set above, read as the
+lower bound of a 95% confidence interval (Student's t across seeds) above 25%.
+
+What was measured: the Monte Carlo bot described under Levels. Each own-turn decision
+samples deals of the unseen cards into the other hands and the draw pile at their public
+sizes (a seat that drew on a colour gets none of it when the pool allows), plays every
+candidate to the end of the round with Normal bots, and keeps the best mean score
+margin. One candidate per playable card, its colour or swap target settled as Hard
+would; a voluntary draw is tried only when nothing is playable. UNO is called first;
+reactions and timing are Hard's.
+
+Calibration, on the developer's Mac (10 cores, Node, main thread): 1000 own-turn
+decisions of God taken from God vs 3 Hard rounds across the five rule sets, timed per
+sample count after a JIT warm-up. Budget: p90 under 75 ms, half the 150 ms production
+target as a margin for a slower host. About 55% of decisions need no sampling (UNO to
+call, a single candidate), so the p90 is read over the decisions that sample.
+
+| Samples | p90, all decisions | p90, sampling decisions | p99, all | max |
+| --- | --- | --- | --- | --- |
+| 288 | 33.5 ms | 42.4 ms | 54.8 ms | 74.5 ms |
+| 416 | 47.8 ms | 60.1 ms | 93.2 ms | 199.6 ms |
+| 480 | 55.2 ms | 69.8 ms | 100.5 ms | 123.7 ms |
+| 512 | 57.9 ms | 75.1 ms | 101.8 ms | 172.1 ms |
+
+`GOD_SAMPLES` = 480. The production check (p90 under 150 ms on perso-ovh) was not run,
+since the level did not ship.
+
+Tournament: God vs 3 Hard at 480 samples, 10 seeds from 20261101, 1 400 rounds per seed
+(Monte Carlo makes 10 000 rounds per seed infeasible: about 0.4 s per round per core),
+seeds spread over 8 worker threads, 78 minutes of wall time. Win rate of the God seat:
+
+| Pair | Rule set | Win rate (mean, sd) | 95% CI | Rounds |
+| --- | --- | --- | --- | --- |
+| God vs 3 Hard | defaults | 25.5% (0.9) | 24.9% to 26.1% | 10 x 1 400 |
+| God vs 3 Hard | liar | 25.5% (0.9) | 24.9% to 26.1% | 10 x 1 400 |
+| God vs 3 Hard | sevenZero | 27.1% (1.5) | 26.1% to 28.2% | 10 x 1 400 |
+| God vs 3 Hard | jumpIn | 25.6% (1.2) | 24.7% to 26.4% | 10 x 1 400 |
+| God vs 3 Hard | playDrawnCard off | 25.3% (0.8) | 24.7% to 25.9% | 10 x 1 400 |
+
+Only Seven-Zero clears parity; the other four rule sets include 25% in their interval,
+so God Level is dropped. Defaults and liar are identical because every bot from Normal
+up calls UNO in time, so nothing on a liar table ever differs.
+
+Pilot runs on defaults (one seed, 4 000 rounds each, standard error about 0.7 points)
+showed the win rate rising with the sample count and no variant clearly above Hard:
+
+| Variant | Samples | Win rate |
+| --- | --- | --- |
+| every legal move, score margin | 16 / 64 / 128 | 19.0% / 22.9% / 24.3% |
+| every legal move, win or lose instead of margin | 64 | 23.3% |
+| every legal move, Hard bots in the rollouts | 64 | 22.5% |
+| colour and swap settled as Hard (the version measured) | 64 / 128 / 256 / 288 | 24.6% / 25.4% / 26.4% / 26.9% |
+| settled, Hard's move kept unless another beats it by one standard error | 288 | 26.5% |
+| same, win or lose instead of margin | 288 | 28.1% |
+
+The last row is the one lead left: it changes the objective from score margin to
+winning, which is what the criterion measures, but it rests on one seed and was not run
+as a full tournament.
 
 ## Testing
 
