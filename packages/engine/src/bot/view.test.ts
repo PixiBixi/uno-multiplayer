@@ -21,6 +21,16 @@ describe('botViewFor', () => {
     for (const card of state.seats[0]?.hand ?? []) expect(json).toContain(`"${card.id}"`)
   })
 
+  it('keeps the drawn card to the seat on turn', () => {
+    const state = dealt()
+    const drawn = state.drawPile[0]
+    if (!drawn) throw new Error('empty draw pile')
+    const drawing: GameState = { ...state, currentSeat: 0, drawnCard: drawn.id }
+    expect(botViewFor(drawing, 0, EMPTY_HISTORY).drawnCard).toBe(drawn.id)
+    expect(botViewFor(drawing, 1, EMPTY_HISTORY).drawnCard).toBeNull()
+    expect(JSON.stringify(botViewFor(drawing, 1, EMPTY_HISTORY))).not.toContain(`"${drawn.id}"`)
+  })
+
   it('carries the public state and the seat counts', () => {
     const state = dealt()
     const view = botViewFor(state, 2, EMPTY_HISTORY)

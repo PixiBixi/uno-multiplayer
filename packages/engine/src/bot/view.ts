@@ -62,7 +62,7 @@ export function botViewFor(state: GameState, seat: number, history: RoundHistory
     discardPile: state.discardPile,
     currentColor: state.currentColor,
     pendingDraw: state.pendingDraw,
-    drawnCard: state.drawnCard,
+    drawnCard: state.currentSeat === seat ? state.drawnCard : null,
     currentSeat: state.currentSeat,
     direction: state.direction,
     rules: state.rules,
