@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.1](https://github.com/PixiBixi/uno-multiplayer/compare/c3f12b42cd95d13e590fb420c5d149341e4682da..v1.14.1) - 2026-11-02
+#### Bug Fixes
+- (**deps**) override glob and minimatch to patched majors (#86) - ([c3f12b4](https://github.com/PixiBixi/uno-multiplayer/commit/c3f12b42cd95d13e590fb420c5d149341e4682da)) - Jérémy
+
+- - -
+
 ## [v1.14.0](https://github.com/PixiBixi/uno-multiplayer/compare/85baa8a73543ae455de9c0f37ca25d6e4e6b7a54..v1.14.0) - 2026-11-02
 #### Features
 - bots, solo play and stand-ins (#85) - ([85baa8a](https://github.com/PixiBixi/uno-multiplayer/commit/85baa8a73543ae455de9c0f37ca25d6e4e6b7a54)) - Jérémy
