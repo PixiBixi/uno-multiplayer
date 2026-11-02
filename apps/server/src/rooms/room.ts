@@ -1,7 +1,14 @@
 import { randomUUID } from 'node:crypto'
 import {
   DEFAULT_TABLE_RULES,
+  EMPTY_HISTORY,
   activeCount,
+  availableReactions,
+  botMove,
+  botReaction,
+  botViewFor,
+  jumpsIn,
+  recordMove,
   UNO_PENALTY,
   applyMove,
   penaliseForgottenUno,
@@ -13,15 +20,17 @@ import {
   matchWinners,
   ok,
   roundPoints,
-  setSeatStatus,
   skipDisconnectedTurn,
   startMatch,
+  type BotLevel,
   type Card,
   type GameState,
   type MatchGoal,
   type MatchState,
   type Move,
+  type ReactionKind,
   type Result,
+  type RoundHistory,
   type SeatStatus,
   type TableRules,
 } from '@uno/engine'
@@ -39,13 +48,23 @@ import {
 import { redactFor } from '../views.js'
 import { emptyStatsFor, tally } from './stats.js'
 
+/** Fixed so a table of bots reads the same everywhere; the first unused one is taken. */
+export const BOT_NAMES = ['Ada', 'Bip', 'Nova', 'Pixel', 'Turing', 'Zed']
+
 type Member = {
   seat: number
   name: string
+  kind: 'human' | 'bot'
+  /** A bot's own level; null for a human. */
+  level: BotLevel | null
   /** The player's identity across reconnections. Never the socket id. */
   sessionToken: string
   socketId: string | null
   status: SeatStatus
+  /** A bot is playing this human's seat while they are absent on their turn. */
+  standIn: boolean
+  /** Order of arrival at the table: a counter, never a clock. */
+  addedAt: number
 }
 
 type RoomPhase = 'lobby' | 'playing' | 'finished'
@@ -61,6 +80,7 @@ export class Room {
   private readonly seed: number
   private readonly members: Member[] = []
   private host = 0
+  private nextAddedAt = 0
   private game: GameState | null = null
   /* Settable from the lobby by the host and frozen by the first deal of the match -
      see configure(). Not readonly any more, and not mutable for long: changing any of
@@ -89,6 +109,10 @@ export class Room {
   private stats = emptyStatsFor(0)
   /** Null until the first round is dealt; the goal is known from creation. */
   private match: MatchState | null = null
+  /** What the bots remember of the round in play; reset by every deal. */
+  private history: RoundHistory = EMPTY_HISTORY
+  /* A stream of its own, so a bot's choices never shift the deal drawn from `seed`. */
+  private botRng: number
 
   constructor(
     code: string,
@@ -102,6 +126,7 @@ export class Room {
     this.goal = goal
     this.pace = pace
     this.rules = rules
+    this.botRng = Math.imul(seed ^ BOT_STREAM_SALT, 0x85ebca6b) >>> 0
   }
 
   /**
@@ -235,14 +260,31 @@ export class Room {
        scored, so seat == engine index still holds, and keeping it would make three
        departures fill the table. */
     const vacant = this.members.find((m) => m.status === 'left')
-    if (vacant === undefined && this.members.length >= MAX_SEATS) return err('room_full')
+    /* On a full table the most recently added bot gives up its seat: a human asking to
+       sit down outranks a bot, and the newest one is the least settled. */
+    const replaced =
+      vacant === undefined && this.members.length >= MAX_SEATS
+        ? this.members
+            .filter((m) => m.kind === 'bot')
+            .reduce<Member | null>(
+              (best, m) => (best === null || m.addedAt > best.addedAt ? m : best),
+              null,
+            )
+        : null
+    if (vacant === undefined && replaced === null && this.members.length >= MAX_SEATS) {
+      return err('room_full')
+    }
 
     const member: Member = {
-      seat: vacant?.seat ?? this.members.length,
+      seat: vacant?.seat ?? replaced?.seat ?? this.members.length,
       name,
+      kind: 'human',
+      level: null,
       sessionToken: randomUUID(),
       socketId,
       status: 'active',
+      standIn: false,
+      addedAt: this.nextAddedAt++,
     }
     this.members[member.seat] = member
     return ok({ seat: member.seat, sessionToken: member.sessionToken })
@@ -267,8 +309,79 @@ export class Room {
    */
   get abandoned(): boolean {
     // `every` on no members is true, which is the right answer for a room created
-    // and never joined.
-    return this.members.every((member) => member.status === 'left')
+    // and never joined. Bots never come back, so only humans keep a table alive.
+    return this.members.every((member) => member.kind === 'bot' || member.status === 'left')
+  }
+
+  /** Humans currently attached, the ones a table of bots needs at least one of. */
+  connectedHumanCount(): number {
+    return this.members.filter((m) => m.kind === 'human' && m.status === 'active').length
+  }
+
+  /** Whether a bot plays this seat, as its own occupant or standing in for an absentee. */
+  isBotControlled(seat: number): boolean {
+    const member = this.members[seat]
+    return member !== undefined && (member.kind === 'bot' || member.standIn)
+  }
+
+  /** Own level, 'normal' for a stand-in, null for a human playing. */
+  levelFor(seat: number): BotLevel | null {
+    const member = this.members[seat]
+    if (member === undefined) return null
+    if (member.kind === 'bot') return member.level
+    return member.standIn ? 'normal' : null
+  }
+
+  /** Lobby only and host only; the bot takes the first vacancy, else the next free seat. */
+  addBot(bySeat: number, level: BotLevel): Result<GameEvent[], ErrorCode> {
+    if (this.game !== null) return err('game_already_started')
+    if (bySeat !== this.host) return err('not_host')
+
+    const vacant = this.members.find((m) => m.status === 'left')
+    if (vacant === undefined && this.members.length >= MAX_SEATS) return err('room_full')
+
+    const seat = vacant?.seat ?? this.members.length
+    this.members[seat] = {
+      seat,
+      name: this.freshBotName(),
+      kind: 'bot',
+      level,
+      sessionToken: randomUUID(),
+      socketId: null,
+      status: 'active',
+      standIn: false,
+      addedAt: this.nextAddedAt++,
+    }
+    return ok([])
+  }
+
+  private freshBotName(): string {
+    const taken = new Set(this.members.filter((m) => m.status !== 'left').map((m) => m.name))
+    return BOT_NAMES.find((n) => !taken.has(n)) ?? `Bot ${this.nextAddedAt + 1}`
+  }
+
+  setBotLevel(bySeat: number, seat: number, level: BotLevel): Result<GameEvent[], ErrorCode> {
+    if (this.game !== null) return err('game_already_started')
+    if (bySeat !== this.host) return err('not_host')
+    const member = this.members[seat]
+    if (member === undefined || member.kind !== 'bot' || member.status === 'left') {
+      return err('invalid_payload')
+    }
+    member.level = level
+    return ok([])
+  }
+
+  removeBot(bySeat: number, seat: number): Result<GameEvent[], ErrorCode> {
+    if (this.game !== null) return err('game_already_started')
+    if (bySeat !== this.host) return err('not_host')
+    const member = this.members[seat]
+    if (member === undefined || member.kind !== 'bot' || member.status === 'left') {
+      return err('invalid_payload')
+    }
+    // A vacancy `join` reuses; trailing ones are dropped so they are never dealt a hand.
+    member.status = 'left'
+    while (this.members[this.members.length - 1]?.status === 'left') this.members.pop()
+    return ok([])
   }
 
   activeMemberCount(): number {
@@ -315,8 +428,11 @@ export class Room {
     return {
       roomCode: this.code,
       hostSeat: this.host,
-      seats: this.members.map((m) => ({ seat: m.seat, name: m.name, status: m.status })),
-      canStart: this.activeMemberCount() >= MIN_SEATS,
+      seats: this.members
+        // A removed bot is a vacancy, not a player who left; a human who left stays visible.
+        .filter((m) => m.kind === 'human' || m.status !== 'left')
+        .map((m) => ({ seat: m.seat, name: m.name, status: m.status, bot: m.level })),
+      canStart: this.connectedHumanCount() >= 1 && this.activeMemberCount() >= MIN_SEATS,
       goal: this.goal,
       pace: this.pace,
       rules: this.rules,
@@ -349,14 +465,12 @@ export class Room {
    * so the highest-numbered player fell off the end of the seat array and received
    * no view of the game at all - present, holding cards, looking at nothing.
    *
-   * Absent seats are then reconciled: a player gone for good has their hand
-   * returned to the pile, which both keeps the 108-card invariant and means they
-   * score nothing for the round. Someone merely disconnected keeps their hand,
-   * because the grace period may still bring them back to it.
+   * A vacancy, a seat given up in the lobby, then has its hand returned to the pile,
+   * which keeps the 108-card invariant. Every other seat is dealt as active, absent
+   * humans included: a bot stands in for them on their turn.
    */
   private dealRound(seed: number): Result<GameState, ErrorCode> {
-    const active = this.members.filter((m) => m.status === 'active')
-    if (active.length < MIN_SEATS) return err('too_few_players')
+    if (this.seatedCount() < MIN_SEATS) return err('too_few_players')
 
     const init = initGame({
       names: this.members.map((m) => m.name),
@@ -368,14 +482,17 @@ export class Room {
 
     let game = init.value
     for (const member of this.members) {
-      if (member.status === 'active') continue
-      game =
-        member.status === 'left'
-          ? markSeatLeft(game, member.seat)
-          : setSeatStatus(game, member.seat, 'disconnected')
+      if (isVacant(member)) game = markSeatLeft(game, member.seat)
     }
-    // The opening seat may be one of the absent ones, exactly as seat 0 could be.
+    // Every successful deal is assigned by the caller, so the old round's memory goes here.
+    this.history = EMPTY_HISTORY
+    // The opening seat may be a vacancy, exactly as seat 0 could be.
     return ok(skipDisconnectedTurn(game))
+  }
+
+  /** Seats a deal would hand cards to: everyone but lobby vacancies, bot-played seats included. */
+  seatedCount(): number {
+    return this.members.filter((m) => !isVacant(m)).length
   }
 
   /**
@@ -408,6 +525,8 @@ export class Room {
   start(bySeat: number): Result<GameEvent[], ErrorCode> {
     if (this.game !== null) return err('game_already_started')
     if (bySeat !== this.host) return err('not_host')
+    // The lobby still counts only who is present: a stand-in is a mid-match idea.
+    if (this.activeMemberCount() < MIN_SEATS) return err('too_few_players')
 
     this.opensNextDeal = this.host
     const dealt = this.dealRound(this.seed)
@@ -446,10 +565,24 @@ export class Room {
     if (this.game === null) return err('game_not_started')
     if (this.game.phase !== 'finished') return err('round_in_progress')
     if (bySeat !== this.host) return err('not_host')
+    // Checked before anything below changes the table, so a refusal leaves no trace.
+    if (this.seatedCount() < MIN_SEATS) return err('too_few_players')
 
     // A new match opens on the host, like the first one did. Carrying the last winner over
     // would let a result the table has just abandoned decide a match that has not started.
     this.opensNextDeal = this.host
+    /* Whoever pressed Leave gave the seat up for good; it is an ordinary bot from here on.
+       Before the deal, which takes the names; a new token so the old one can never rejoin. */
+    for (const member of this.members) {
+      if (member.kind !== 'human' || member.status !== 'left' || !member.standIn) continue
+      member.name = this.freshBotName()
+      member.kind = 'bot'
+      member.level = 'normal'
+      member.sessionToken = randomUUID()
+      member.socketId = null
+      member.status = 'active'
+      member.standIn = false
+    }
     const dealt = this.dealRound(nextSeed)
     if (!dealt.okay) return err(dealt.error)
 
@@ -462,7 +595,12 @@ export class Room {
 
   viewFor(seat: number): PlayerView | null {
     if (this.game === null) return null
-    return redactFor(this.game, seat, this.matchProgress(), {
+    const occupants = this.members.map((m) => ({
+      bot: m.level,
+      standIn: m.standIn,
+      status: m.status,
+    }))
+    return redactFor(this.game, seat, this.matchProgress(), occupants, {
       turnDeadline: this.turnDeadline,
       nextRoundDeadline: this.nextRoundDeadline,
     })
@@ -476,14 +614,83 @@ export class Room {
     if (!result.okay) {
       return err(result.error === 'not_your_turn' ? 'not_your_turn' : 'illegal_move')
     }
+    return ok(this.record(this.commit(before, result.value, seat, move)))
+  }
 
-    this.game = result.value
-    return ok(
-      this.record([
-        ...diffEvents(before, result.value, seat, move),
-        ...this.settleRound(before, result.value),
-      ]),
+  /** Installs an applied move and describes it; every path that moves a card comes here. */
+  private commit(before: GameState, after: GameState, seat: number, move: Move): GameEvent[] {
+    this.history = recordMove(this.history, before, seat, move)
+    this.game = after
+    return [...diffEvents(before, after, seat, move), ...this.settleRound(before, after)]
+  }
+
+  /** A bot's move, which the engine must accept: a refusal is a policy bug, surfaced loudly. */
+  private commitBotMove(seat: number, move: Move): GameEvent[] {
+    const before = this.game
+    if (before === null) throw new Error('bot move without a game')
+    const result = applyMove(before, seat, move)
+    if (!result.okay) {
+      throw new Error(`bot move ${JSON.stringify(move)} refused for seat ${seat}: ${result.error}`)
+    }
+    return this.commit(before, result.value, seat, move)
+  }
+
+  /** Bots act only while the round is live and a human is there to watch it. */
+  private get botsMayAct(): boolean {
+    return this.game !== null && this.game.phase === 'playing' && this.connectedHumanCount() > 0
+  }
+
+  /** Who must act on the seat on turn: a bot, an absent human not yet stood in for, or nobody automatic. */
+  turnController(): 'bot' | 'absent' | null {
+    if (this.game === null || !this.botsMayAct) return null
+    const seat = this.game.currentSeat
+    if (this.isBotControlled(seat)) return 'bot'
+    return this.members[seat]?.status === 'disconnected' ? 'absent' : null
+  }
+
+  /** Plays the seat on turn for a bot or stand-in; on 'absent' it first sets standIn and reports botTookOver. */
+  botStep(): GameEvent[] {
+    const controller = this.turnController()
+    if (this.game === null || controller === null) return []
+    const seat = this.game.currentSeat
+    const events: GameEvent[] = []
+    const member = this.members[seat]
+    if (controller === 'absent' && member !== undefined) {
+      member.standIn = true
+      events.push({ type: 'botTookOver', seat })
+    }
+
+    const level = this.levelFor(seat) ?? 'normal'
+    const chosen = botMove(botViewFor(this.game, seat, this.history), level, this.botRng)
+    this.botRng = chosen.rng
+    if (chosen.move === null) throw new Error(`bot found no move on its own turn at seat ${seat}`)
+    return this.record([...events, ...this.commitBotMove(seat, chosen.move)])
+  }
+
+  /** The reactions a bot seat may make now; jump-in only for a level that ever jumps in. */
+  private reactionsFor(seat: number): ReactionKind[] {
+    if (this.game === null || !this.botsMayAct || !this.isBotControlled(seat)) return []
+    const level = this.levelFor(seat)
+    return availableReactions(botViewFor(this.game, seat, this.history)).filter(
+      (kind) => kind !== 'jumpIn' || (level !== null && jumpsIn(level)),
     )
+  }
+
+  /** Off-turn reactions bot-controlled seats could make right now. */
+  pendingReactions(): { seat: number; kind: ReactionKind }[] {
+    return this.members.flatMap((m) =>
+      this.reactionsFor(m.seat).map((kind) => ({ seat: m.seat, kind })),
+    )
+  }
+
+  /** Silent when the window has closed since it was scheduled, which is the normal race. */
+  botReact(seat: number, kind: ReactionKind): GameEvent[] {
+    if (this.game === null || !this.reactionsFor(seat).includes(kind)) return []
+    const level = this.levelFor(seat) ?? 'normal'
+    const chosen = botReaction(botViewFor(this.game, seat, this.history), level, kind, this.botRng)
+    this.botRng = chosen.rng
+    if (chosen.move === null) return []
+    return this.record(this.commitBotMove(seat, chosen.move))
   }
 
   /**
@@ -518,12 +725,10 @@ export class Room {
 
     const result = applyMove(before, seat, forced)
     if (!result.okay) return []
-    this.game = result.value
 
     return this.record([
       { type: 'turnTimedOut', seat },
-      ...diffEvents(before, result.value, seat, forced),
-      ...this.settleRound(before, result.value),
+      ...this.commit(before, result.value, seat, forced),
     ])
   }
 
@@ -535,11 +740,8 @@ export class Room {
     member.status = 'disconnected'
     this.transferHostIfNeeded()
 
-    if (this.game !== null && this.game.phase === 'playing') {
-      // Mirror presence into the game state, then move the turn past them so the
-      // table never stalls on someone who is gone.
-      this.game = skipDisconnectedTurn(setSeatStatus(this.game, member.seat, 'disconnected'))
-    }
+    /* The engine seat stays active: a bot stands in on their turn rather than the turn
+       being skipped (docs/superpowers/specs/2026-11-01-bots-design.md). */
     return {
       seat: member.seat,
       events: this.record([{ type: 'seatDisconnected', seat: member.seat }]),
@@ -555,45 +757,74 @@ export class Room {
     socketId: string,
   ): Result<{ seat: number; supersededSocketId: string | null }, ErrorCode> {
     const member = this.members.find((m) => m.sessionToken === sessionToken)
-    if (member === undefined || member.status === 'left') return err('invalid_session')
+    // A bot seat has no human to hand back to, whatever token reaches it.
+    if (member === undefined || member.status === 'left' || member.kind === 'bot') {
+      return err('invalid_session')
+    }
 
     const previous = member.socketId
     member.socketId = socketId
     member.status = 'active'
-    if (this.game !== null) {
-      this.game = setSeatStatus(this.game, member.seat, 'active')
-    }
+    // Takes the seat back at once, whatever the stand-in did meanwhile.
+    member.standIn = false
     const supersededSocketId = previous !== null && previous !== socketId ? previous : null
     return ok({ seat: member.seat, supersededSocketId })
   }
 
-  /** Called by RoomManager when the grace period elapses. */
+  /**
+   * Called by RoomManager when the grace period elapses. Only the lobby frees the seat:
+   * once dealt, a seat stays bot-played and reclaimable for the whole match.
+   */
   expireGrace(seat: number): GameEvent[] {
     const member = this.members[seat]
-    if (member === undefined) return []
+    if (member === undefined || this.game !== null) return []
     // Came back in time, or already gone for good: nothing to do.
     if (member.status !== 'disconnected') return []
+    return this.record(this.vacate(member))
+  }
+
+  /** The Leave button: a lobby vacancy, or mid-match a seat handed to a bot for good. */
+  leave(socketId: string): { seat: number; events: GameEvent[] } | null {
+    const member = this.members.find((m) => m.socketId === socketId)
+    if (member === undefined) return null
+    if (this.game === null) return { seat: member.seat, events: this.record(this.vacate(member)) }
 
     member.status = 'left'
     member.socketId = null
+    member.standIn = true
     this.transferHostIfNeeded()
-
-    const events: GameEvent[] = [{ type: 'seatLeft', seat }]
-    if (this.game !== null) {
-      const before = this.game
-      this.game = markSeatLeft(before, seat)
-      events.push(...this.settleRound(before, this.game))
+    return {
+      seat: member.seat,
+      events: this.record([
+        { type: 'seatLeft', seat: member.seat },
+        { type: 'botTookOver', seat: member.seat },
+      ]),
     }
-    return this.record(events)
+  }
+
+  /** Lobby only: the seat becomes a vacancy the next joiner takes. */
+  private vacate(member: Member): GameEvent[] {
+    member.status = 'left'
+    member.socketId = null
+    this.transferHostIfNeeded()
+    return [{ type: 'seatLeft', seat: member.seat }]
   }
 
   /** The host role follows the lowest-indexed seat still present. */
   private transferHostIfNeeded(): void {
     const currentHost = this.members[this.host]
     if (currentHost !== undefined && currentHost.status === 'active') return
-    const candidate = this.members.find((m) => m.status === 'active')
+    const candidate = this.members.find((m) => m.kind === 'human' && m.status === 'active')
     if (candidate !== undefined) this.host = candidate.seat
   }
+}
+
+/** Salt for the bots' random stream, distinct from the deal's. */
+const BOT_STREAM_SALT = 0x7f4a7c15
+
+/** A seat given up in the lobby: never dealt in. A leaver mid-match is a stand-in, not this. */
+function isVacant(member: Member): boolean {
+  return member.status === 'left' && !member.standIn
 }
 
 /**

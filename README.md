@@ -28,6 +28,7 @@
 - **Official UNO plus draw stacking**, scored the Mattel way: the round winner takes the value of every card left in the other hands.
 - **House rules per table**: UNO call-out, Seven-Zero, jump-in, playing the card you just drew.
 - **Matches**: first to a score or a set number of rounds, with an optional turn clock.
+- **Bots and solo play**: the host fills empty seats with Easy, Normal or Hard bots, so one person can play alone; a bot also plays for a player who drops until they come back.
 - **Invite by link** or six-character code; a player who reloads or drops keeps their seat and hand.
 - **At the table**: colour in play, direction, who is up next, pending draw stack, a move log and chat.
 - **Hand sorting**: as dealt, by colour or by value, remembered per device.
@@ -84,14 +85,15 @@ CORS_ORIGIN=http://localhost:5050,http://$LAN_IP:5050 \
 npm start -w @uno/server      # then open http://192.168.1.12:5050 on the phone
 ```
 
-| Variable      | Default | Purpose                                          |
-| ------------- | ------- | ------------------------------------------------ |
-| `PORT`        | `5050`  | HTTP and WebSocket port                          |
-| `STATIC_ROOT` | unset   | Serve the built client from this directory       |
-| `CORS_ORIGIN` | unset   | Comma-separated origins allowed to open a socket |
-| `BEHIND_TLS`  | `false` | Set to `true` behind an HTTPS reverse proxy      |
-| `TURN_URL`    | unset   | TURN relay for voice chat behind a symmetric NAT |
-| `TURN_SECRET` | unset   | Shared secret with coturn, for relay credentials |
+| Variable           | Default | Purpose                                          |
+| ------------------ | ------- | ------------------------------------------------ |
+| `PORT`             | `5050`  | HTTP and WebSocket port                          |
+| `STATIC_ROOT`      | unset   | Serve the built client from this directory       |
+| `CORS_ORIGIN`      | unset   | Comma-separated origins allowed to open a socket |
+| `BEHIND_TLS`       | `false` | Set to `true` behind an HTTPS reverse proxy      |
+| `TURN_URL`         | unset   | TURN relay for voice chat behind a symmetric NAT |
+| `TURN_SECRET`      | unset   | Shared secret with coturn, for relay credentials |
+| `BOT_DELAY_FACTOR` | `1`     | Multiplies bot delays (0.01 to 1), for e2e runs  |
 
 Rate limits, room cap and grace period are read in `apps/server/src/config.ts`. Restart the server after every `npm run build`: a stale `dist/` means a new client talking to an old server.
 
@@ -101,6 +103,7 @@ Rate limits, room cap and grace period are read in `apps/server/src/config.ts`. 
 | `npm run format:check` | Prettier check, run in CI                       |
 | `npm run watch`        | `tsc --build --watch` while editing server code |
 | `npm run e2e`          | Playwright against a real build                 |
+| `npm run tournament`   | Self-play win rates of the bot levels           |
 
 ## Deploy it
 

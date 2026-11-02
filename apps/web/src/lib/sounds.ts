@@ -92,6 +92,7 @@ export function soundForEvent(event: GameEvent, mySeat: number): SoundName | nul
     case 'seatDisconnected':
     case 'seatReconnected':
     case 'seatLeft':
+    case 'botTookOver':
     case 'roundStarted':
     case 'gameRestarted':
       return null

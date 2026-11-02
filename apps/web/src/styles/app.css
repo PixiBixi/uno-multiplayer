@@ -3022,3 +3022,46 @@ input.switch:checked::before {
     animation-duration: 1ms;
   }
 }
+
+/* ---------- Bots ---------- */
+/* Wraps under the name on a phone rather than pushing the row wider than the screen. */
+.slot {
+  flex-wrap: wrap;
+}
+
+.bot-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.bot-level {
+  appearance: none;
+  font: inherit;
+  font-weight: 600;
+  min-height: 44px;
+  padding: 0 0.8rem;
+  border: 2px solid var(--text);
+  background: var(--ground);
+  color: var(--text);
+}
+
+.btn-small {
+  min-height: 44px;
+  padding: 0 0.9rem;
+}
+
+.bot-tag {
+  padding: 0.28rem 0.55rem;
+  border: 2px solid var(--text);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.seat-bot {
+  color: var(--text);
+}

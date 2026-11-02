@@ -9,6 +9,19 @@ import { DEFAULT_TABLE_RULES, type GameState, type Move, type TableRules } from 
 const MAX_TURNS = 600
 
 /**
+ * The UNO declaration a seat makes on three picks out of four, when one is on offer
+ * (the drawn-card harness keeps its own policy and never declares).
+ *
+ * Never declaring turns most games into a treadmill: every seat reaching one card is
+ * called out or charged for the forgotten UNO, so hands refill and the game runs to
+ * MAX_TURNS. Declaring on most picks lets games finish; the pick that skips it keeps
+ * the forgotten-UNO and call-out paths exercised. Deterministic per pick sequence.
+ */
+function unoOnPick(moves: readonly Move[], pick: number): Move | undefined {
+  return pick % 4 === 0 ? undefined : moves.find((m) => m.type === 'callUno')
+}
+
+/**
  * Plays a game end to end, picking a legal move each turn, with the `pick`
  * index varying the choice deterministically.
  */
@@ -190,7 +203,7 @@ describe('state validity', () => {
 })
 
 /**
- * A Liar table where nobody ever calls UNO and everybody is watching: before each
+ * A Liar table where UNO is called on only three picks in four and everybody is watching: before each
  * turn, every seat that can call somebody out does.
  *
  * The policy is deliberately not the sensible one. A seat that calls UNO never
@@ -228,9 +241,10 @@ function playOutWatchful(
     const playable = moves.filter((m) => m.type === 'play')
     const pick = picks[turn % picks.length] ?? 0
     const move =
-      playable.length > 0
+      unoOnPick(moves, pick) ??
+      (playable.length > 0
         ? playable[pick % playable.length]
-        : (moves.find((m) => m.type === 'acceptDraw') ?? moves.find((m) => m.type === 'draw'))
+        : (moves.find((m) => m.type === 'acceptDraw') ?? moves.find((m) => m.type === 'draw')))
     if (move === undefined) break
     const result = applyMove(state, state.currentSeat, move)
     if (!result.okay) throw new Error(`legal move rejected: ${result.error}`)
@@ -320,7 +334,7 @@ describe('the Liar call-out keeps every invariant', () => {
  * The policy leans towards swap moves rather than picking uniformly, because that
  * is what makes these properties mean anything: a 7 has to be both held and
  * playable, so a neutral policy permutes hands rarely enough that a broken swap
- * could slip through hundreds of runs untouched. Nobody ever calls UNO, and anyone
+ * could slip through hundreds of runs untouched. UNO is called on three picks in four, and anyone
  * who may call somebody out does - a swap can open a window on a seat whose turn it
  * is not, which is the interesting collision between the two options.
  */
@@ -363,9 +377,10 @@ function playOutSevenZero(
     // and a 0 still gets laid down now and then.
     const preferred = pick % 2 === 0 && swapping.length > 0 ? swapping : playable
     const move =
-      preferred.length > 0
+      unoOnPick(moves, pick) ??
+      (preferred.length > 0
         ? preferred[pick % preferred.length]
-        : (moves.find((m) => m.type === 'acceptDraw') ?? moves.find((m) => m.type === 'draw'))
+        : (moves.find((m) => m.type === 'acceptDraw') ?? moves.find((m) => m.type === 'draw')))
     if (move === undefined) break
 
     if (move.type === 'play' && move.swapWith !== undefined) swaps += 1
@@ -553,9 +568,10 @@ function playOutJumpIn(
     const moves = legalMoves(state, state.currentSeat)
     const playable = moves.filter((m) => m.type === 'play')
     const move =
-      playable.length > 0
+      unoOnPick(moves, pick) ??
+      (playable.length > 0
         ? playable[pick % playable.length]
-        : (moves.find((m) => m.type === 'acceptDraw') ?? moves.find((m) => m.type === 'draw'))
+        : (moves.find((m) => m.type === 'acceptDraw') ?? moves.find((m) => m.type === 'draw')))
     if (move === undefined) break
     const result = applyMove(state, state.currentSeat, move)
     if (!result.okay) throw new Error(`legal move rejected: ${result.error}`)

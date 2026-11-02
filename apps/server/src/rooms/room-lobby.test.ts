@@ -97,8 +97,8 @@ describe('Room.lobbyView', () => {
       roomCode: 'ABC234',
       hostSeat: 0,
       seats: [
-        { seat: 0, name: 'Ana', status: 'active' },
-        { seat: 1, name: 'Ben', status: 'active' },
+        { seat: 0, name: 'Ana', status: 'active', bot: null },
+        { seat: 1, name: 'Ben', status: 'active', bot: null },
       ],
       canStart: true,
       goal: DEFAULT_MATCH_GOAL,

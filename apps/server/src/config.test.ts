@@ -49,6 +49,13 @@ describe('loadConfig', () => {
     })
     expect(() => loadConfig({ CONTROL_BURST: '0' })).toThrow()
   })
+
+  it('reads the bot delay factor within 0.01-1, default 1', () => {
+    expect(loadConfig({}).botDelayFactor).toBe(1)
+    expect(loadConfig({ BOT_DELAY_FACTOR: '0.05' }).botDelayFactor).toBe(0.05)
+    expect(() => loadConfig({ BOT_DELAY_FACTOR: '0' })).toThrow()
+    expect(() => loadConfig({ BOT_DELAY_FACTOR: '2' })).toThrow()
+  })
 })
 
 describe('voice configuration', () => {

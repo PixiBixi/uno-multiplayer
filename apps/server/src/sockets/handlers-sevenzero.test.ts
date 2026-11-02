@@ -271,11 +271,18 @@ describe('Seven-Zero on the wire', () => {
       const held = players.map((p) => (p.view()?.you.hand ?? []).map((card) => card.id))
       // A 0 does not change the direction, so the one in play is where hands go.
       const direction = player.view()?.direction ?? 1
+      const before = players.map((p) => p.version())
 
       expect(await emit<PlainAck>(player, 'game:move', { move })).toEqual({ ok: true })
+      // Events are broadcast before views, and the hands below are read from the views.
       await waitFor(
-        () => players.every((p) => p.events.some((event) => event.type === 'handsRotated')),
-        'the handsRotated event at every seat',
+        () =>
+          players.every(
+            (p, index) =>
+              p.events.some((event) => event.type === 'handsRotated') &&
+              p.version() > (before[index] ?? 0),
+          ),
+        'the handsRotated event and a fresh view at every seat',
       )
       for (const each of players) {
         expect(each.events).toContainEqual({ type: 'handsRotated', direction })

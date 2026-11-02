@@ -56,6 +56,8 @@ const envSchema = z.object({
   /** Lobby and match control (configure, start, next round, restart, rejoin), one shared bucket. */
   CONTROL_BURST: z.coerce.number().int().min(1).default(20),
   CONTROL_PER_SECOND: z.coerce.number().min(0.1).default(2),
+  /** Multiplies every bot delay and the absent-turn grace; lowered only to speed up e2e. */
+  BOT_DELAY_FACTOR: z.coerce.number().min(0.01).max(1).default(1),
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).default('info'),
 })
 
@@ -82,6 +84,7 @@ export type Config = {
   turnSecret: string | null
   turnTtlSeconds: number
   stunUrl: string | null
+  botDelayFactor: number
   logLevel: LogLevel
 }
 
@@ -114,6 +117,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     turnSecret: parsed.TURN_SECRET.length > 0 ? parsed.TURN_SECRET : null,
     turnTtlSeconds: parsed.TURN_TTL_SECONDS,
     stunUrl: parsed.STUN_URL.trim().length > 0 ? parsed.STUN_URL.trim() : null,
+    botDelayFactor: parsed.BOT_DELAY_FACTOR,
     logLevel: parsed.LOG_LEVEL,
   }
 }

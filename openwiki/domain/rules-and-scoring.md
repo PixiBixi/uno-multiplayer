@@ -59,8 +59,9 @@ Two things about the fix worth keeping:
   `game.winner` there would carry the old result into it. An abandoned round leaves it
   alone: nobody won, so nobody earned the first move.
 
-A winner who has left the table by the time the next round deals is skipped by
-`skipDisconnectedTurn`, exactly as seat 0 always was.
+A winner whose seat the engine holds as left is skipped by `skipDisconnectedTurn`, exactly
+as seat 0 always was. On a live table that no longer happens: a human who leaves mid-match
+is replaced by a bot, so the seat stays active.
 
 ## Table rules
 
@@ -172,10 +173,10 @@ Four things about it are worth knowing before touching that code:
   choose. The alternative - swapping the win away - makes a 7 unplayable as a last
   card, which is a trap rather than a rule.
 - **Only active seats take part**, as swap targets and in the rotation alike. A seat
-  that has left holds nothing, so swapping into it would hand somebody a free win; a
-  seat merely disconnected is holding its hand until the grace period ends, and
-  giving it away would bring the player back to a hand chosen by an event they never
-  saw. A 7 with nobody else active falls back to an ordinary card rather than
+  that is not active holds nothing to swap, and swapping into it would hand somebody a
+  free win. In a live match every dealt seat is active, including one played by a bot or
+  a stand-in for a disconnected human, so those are targets and part of the rotation like
+  any other. A 7 with nobody else active falls back to an ordinary card rather than
   becoming unplayable.
 - **The rotation reads `direction`**, which is why a reverse played earlier in the
   round changes where hands go, and why rotating at two players is a swap. `advance`
@@ -374,6 +375,10 @@ the one action that is always legal, always neutral, and never spends a card the
 were saving. A stacked draw against them makes `draw` illegal, so `acceptDraw` is
 the same decision taken on their behalf. Nothing is forced when the seat could only
 have called UNO: that penalty belongs to the player who forgot, not to the clock.
+
+A bot never meets this clock: its delay is capped to the time left on it minus one second,
+and the stand-in's 15 s grace shrinks to `min(15 s, turnSeconds - 1 s)`. See
+[Bots](../architecture/bots.md#timing).
 
 A seat already deciding what to do with a card it drew is **passed** rather than made to
 draw again, and its countdown is not restarted for having drawn. Both are covered under

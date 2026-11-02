@@ -3,10 +3,14 @@ import type { Result } from '@uno/engine'
 import {
   chatSendSchema,
   gameMoveSchema,
+  roomAddBotSchema,
   roomConfigureSchema,
   roomCreateSchema,
   roomJoinSchema,
   roomRejoinSchema,
+  roomRemoveBotSchema,
+  roomSetBotLevelSchema,
+  type Ack as EventAck,
   type ErrorCode,
   type GameEvent,
 } from '@uno/protocol'
@@ -172,6 +176,9 @@ export function registerSocketHandlers(
       rooms.keepTurn(room, afterExpiry)
       rooms.keepNextRound(room, afterExpiry)
       rooms.keepUnoGrace(room, afterExpiry)
+      // After keepTurn: a bot's delay is capped against the clock that is now running.
+      rooms.keepBot(room, afterExpiry)
+      rooms.armReactions(room, afterExpiry)
       return
     }
     rooms.armTurn(room, afterExpiry)
@@ -182,6 +189,9 @@ export function registerSocketHandlers(
        somebody else made - a call-out, or the exposed seat's own next turn - and the
        clock has to go away with it. */
     rooms.armUnoGrace(room, afterExpiry)
+    // keepBot, not armBot: a call-out leaves the same seat on turn and must not redraw its delay.
+    rooms.keepBot(room, afterExpiry)
+    rooms.armReactions(room, afterExpiry)
   }
 
   const broadcastEvents = (room: Room, events: GameEvent[]): void => {
@@ -198,7 +208,7 @@ export function registerSocketHandlers(
    * seven-step teardown would have drifted; there is one.
    *
    * No grace timer, deliberately: the seat is given up rather than lost, and nobody is
-   * coming back to it.
+   * coming back to it. Mid-match a bot takes it for good, so the old token cannot rejoin.
    */
   const release = (socket: TypedSocket): void => {
     const presence = presences.get(socket.id)
@@ -207,15 +217,14 @@ export function registerSocketHandlers(
     leaveVoice(voiceContext, socket)
 
     const { room } = presence
-    const result = room.disconnect(socket.id)
+    const result = room.leave(socket.id)
     presences.delete(socket.id)
     moveLimiter.forget(socket.id)
     chatLimiter.forget(socket.id)
     void socket.leave(room.code)
 
     if (result === null) return
-    room.expireGrace(result.seat)
-    broadcastEvents(room, [...result.events, { type: 'seatLeft', seat: result.seat }])
+    broadcastEvents(room, result.events)
     retime(room, 'presence')
     broadcastLobby(room)
     // The people still playing need a fresh view too, not just a fresh lobby: a seat
@@ -386,9 +395,9 @@ export function registerSocketHandlers(
     })
 
     /**
-     * The host changing the table from the lobby.
+     * A host change to the lobby: the table configuration, or its bots.
      *
-     * The guard lives in `Room.configure`, which is checked here - when the event is
+     * The guard lives in Room (`configure`, `addBot`...), checked here - when the event is
      * handled - and never at render: a host can press Start and toggle a rule in the
      * same breath, and whichever arrives second must lose.
      *
@@ -401,16 +410,40 @@ export function registerSocketHandlers(
      * in the lobby is a number the deal will read, not a clock. RoomManager arms it at
      * the deal, as it always has.
      */
-    socket.on('room:configure', (payload, ack) => {
-      attempt(ack, () => {
-        const admitted = admit(roomConfigureSchema, payload, ack, controlLimiter)
-        if (admitted === null) return
-        const { data, presence } = admitted
-        if (refused(presence.room.configure(presence.seat, data), ack)) return
-        ack({ ok: true })
-        broadcastLobby(presence.room)
-      })
-    })
+    const lobbyControl =
+      <T>(
+        schema: ZodType<T>,
+        apply: (room: Room, bySeat: number, data: T) => Result<GameEvent[], ErrorCode>,
+      ) =>
+      (payload: unknown, ack: EventAck): void => {
+        attempt(ack, () => {
+          const admitted = admit(schema, payload, ack, controlLimiter)
+          if (admitted === null) return
+          const { data, presence } = admitted
+          if (refused(apply(presence.room, presence.seat, data), ack)) return
+          ack({ ok: true })
+          broadcastLobby(presence.room)
+        })
+      }
+
+    socket.on(
+      'room:configure',
+      lobbyControl(roomConfigureSchema, (room, bySeat, data) => room.configure(bySeat, data)),
+    )
+    socket.on(
+      'room:addBot',
+      lobbyControl(roomAddBotSchema, (room, bySeat, data) => room.addBot(bySeat, data.level)),
+    )
+    socket.on(
+      'room:setBotLevel',
+      lobbyControl(roomSetBotLevelSchema, (room, bySeat, data) =>
+        room.setBotLevel(bySeat, data.seat, data.level),
+      ),
+    )
+    socket.on(
+      'room:removeBot',
+      lobbyControl(roomRemoveBotSchema, (room, bySeat, data) => room.removeBot(bySeat, data.seat)),
+    )
 
     socket.on('game:start', (payload, ack) => {
       attempt(ack, () => {
@@ -505,8 +538,7 @@ export function registerSocketHandlers(
         if (result === null) return
 
         broadcastEvents(room, result.events)
-        // A disconnection moves the turn past the seat that left, so the clock
-        // now belongs to somebody else.
+        // The seat that left may now be played by a stand-in, so its timers change.
         retime(room, 'presence')
         broadcastLobby(room)
         broadcastViews(room)

@@ -1,7 +1,8 @@
-import type { MatchGoal, TableRules } from '@uno/engine'
+import type { BotLevel, DelayKind, MatchGoal, ReactionKind, TableRules } from '@uno/engine'
 import { randomInt } from 'node:crypto'
-import { DEFAULT_TABLE_RULES, err, ok, type Result } from '@uno/engine'
+import { DEFAULT_TABLE_RULES, err, ok, sampleDelayMs, type Result } from '@uno/engine'
 import {
+  ABSENT_TURN_GRACE_MS,
   BETWEEN_ROUNDS_SECONDS,
   UNO_GRACE_SECONDS,
   MIN_SEATS,
@@ -9,6 +10,7 @@ import {
   type GameEvent,
   type MatchPace,
 } from '@uno/protocol'
+import { logger } from '../logger.js'
 import { generateRoomCode } from './room-code.js'
 import { Room } from './room.js'
 
@@ -24,7 +26,14 @@ type RoomManagerOptions = {
   seedSource?: () => number
   /** Injectable for the same reason the timers are: tests must not wait. */
   now?: () => number
+  /** Multiplies every bot delay and the absent grace; below 1 only to speed up e2e. */
+  botDelayFactor?: number
+  /** Seed of the delay stream, separate from the rooms' so timing never shifts a bot's choice. */
+  delaySeed?: number
 }
+
+/** A bot never plays closer than this to its turn clock, so it never times out. */
+const CLOCK_MARGIN_MS = 1000
 
 const defaultTimers: Timers = {
   setTimeout: (fn, ms) => setTimeout(fn, ms),
@@ -43,6 +52,15 @@ export class RoomManager {
   private readonly roundTimers = new Map<string, unknown>()
   /** With the seat it was armed for, so a presence change can tell it is the same window. */
   private readonly unoTimers = new Map<string, { handle: unknown; seat: number | null }>()
+  /** The bot or absent-grace timer of the seat on turn; seat and controller tell keepBot it is the same one. */
+  private readonly botTimers = new Map<
+    string,
+    { handle: unknown; seat: number; controller: 'bot' | 'absent' }
+  >()
+  /** Per room, one entry per open reaction window; a null handle is a window already acted on. */
+  private readonly reactionTimers = new Map<string, Map<string, unknown>>()
+  /** When the running turn clock expires, so a bot's delay can be capped below it. */
+  private readonly turnDeadlines = new Map<string, number>()
   /** When a room last became empty, so purge can tell "gone" from "gone for good". */
   private readonly emptySince = new Map<string, number>()
   /** Told the code of each purged room, so the socket layer can drop what it keeps per room. */
@@ -52,6 +70,8 @@ export class RoomManager {
   private readonly timers: Timers
   private readonly seedSource: () => number
   private readonly now: () => number
+  private readonly botDelayFactor: number
+  private delayRng: number
 
   constructor(options: RoomManagerOptions) {
     this.maxRooms = options.maxRooms
@@ -59,6 +79,8 @@ export class RoomManager {
     this.timers = options.timers ?? defaultTimers
     this.seedSource = options.seedSource ?? (() => randomInt(2 ** 31 - 1))
     this.now = options.now ?? (() => Date.now())
+    this.botDelayFactor = options.botDelayFactor ?? 1
+    this.delayRng = options.delaySeed ?? randomInt(2 ** 31 - 1)
   }
 
   get size(): number {
@@ -138,18 +160,19 @@ export class RoomManager {
     this.cancelTurn(room)
 
     const seconds = room.turnSeconds
-    /* activeMemberCount, not just awaitingMove. With every seat gone the clock
-       would expire, find no legal move, change nothing, and be armed again by the
-       caller - forever, against a room nobody is sitting at. */
-    if (seconds === null || !room.awaitingMove || room.activeMemberCount() === 0) {
+    /* Connected humans, not just awaitingMove: with nobody attached the table stops, and
+       bots count as active, so they would otherwise keep the clock forcing draws for ever. */
+    if (seconds === null || !room.awaitingMove || room.connectedHumanCount() === 0) {
       room.setTurnDeadline(null)
       return
     }
 
     const deadline = this.now() + seconds * 1000
     room.setTurnDeadline(deadline)
+    this.turnDeadlines.set(room.code, deadline)
     const handle = this.timers.setTimeout(() => {
       this.turnTimers.delete(room.code)
+      this.turnDeadlines.delete(room.code)
       /* Deliberately does NOT re-arm itself. The caller re-times the room before
          it broadcasts, so exactly one place decides when a clock starts and the
          deadline in the views being sent already belongs to the next seat. */
@@ -166,7 +189,7 @@ export class RoomManager {
   keepTurn(room: Room, onExpire: (events: GameEvent[]) => void): void {
     const armed = this.turnTimers.get(room.code)
     const sameTurn = armed !== undefined && armed.seat === room.currentSeat
-    if (sameTurn && room.awaitingMove && room.activeMemberCount() > 0) return
+    if (sameTurn && room.awaitingMove && room.connectedHumanCount() > 0) return
     this.armTurn(room, onExpire)
   }
 
@@ -174,7 +197,10 @@ export class RoomManager {
   keepNextRound(room: Room, onExpire: (events: GameEvent[]) => void): void {
     const running = this.roundTimers.has(room.code)
     const due =
-      room.turnSeconds !== null && room.betweenRounds && room.activeMemberCount() >= MIN_SEATS
+      room.turnSeconds !== null &&
+      room.betweenRounds &&
+      room.seatedCount() >= MIN_SEATS &&
+      room.connectedHumanCount() > 0
     if (running && due) return
     this.armNextRound(room, onExpire)
   }
@@ -182,7 +208,14 @@ export class RoomManager {
   /** armUnoGrace for a presence change: a rejoin loop must not keep an exposed seat safe. */
   keepUnoGrace(room: Room, onExpire: (events: GameEvent[]) => void): void {
     const armed = this.unoTimers.get(room.code)
-    if (armed !== undefined && !room.callOutsAllowed && armed.seat === room.exposedSeat()) return
+    if (
+      armed !== undefined &&
+      !room.callOutsAllowed &&
+      armed.seat === room.exposedSeat() &&
+      room.connectedHumanCount() > 0
+    ) {
+      return
+    }
     this.armUnoGrace(room, onExpire)
   }
 
@@ -192,7 +225,146 @@ export class RoomManager {
       this.timers.clearTimeout(armed.handle)
       this.turnTimers.delete(room.code)
     }
+    this.turnDeadlines.delete(room.code)
     room.setTurnDeadline(null)
+  }
+
+  /**
+   * Times the seat on turn when a bot plays it: human-paced bot timing, or the absent
+   * grace before a stand-in first takes over. Arms nothing while no human is connected.
+   */
+  armBot(room: Room, onEvents: (events: GameEvent[]) => void): void {
+    this.cancelBot(room)
+    if (room.connectedHumanCount() === 0) return
+    const controller = room.turnController()
+    const seat = room.currentSeat
+    if (controller === null || seat === null) return
+
+    const scaled =
+      controller === 'absent'
+        ? ABSENT_TURN_GRACE_MS * this.botDelayFactor
+        : this.sampleDelay(room.levelFor(seat) ?? 'normal', 'turn')
+    const handle = this.timers.setTimeout(
+      () => {
+        this.botTimers.delete(room.code)
+        this.guarded(room, 'bot turn timer threw', () => {
+          let events: GameEvent[]
+          try {
+            events = room.botStep()
+          } catch (error) {
+            // A policy bug must not stall the seat: the clock's own fallback plays it instead.
+            logger.error({ err: error, room: room.code, seat }, 'bot step threw, forcing the turn')
+            // botStep sets standIn before choosing a move, so the takeover happened anyway.
+            const tookOver: GameEvent[] =
+              controller === 'absent' && room.isBotControlled(seat)
+                ? [{ type: 'botTookOver', seat }]
+                : []
+            events = [...tookOver, ...room.forceTurnMove()]
+          }
+          // Nothing happened, so nothing is retimed: a retime restarts the human's clock.
+          if (events.length > 0) onEvents(events)
+        })
+      },
+      this.belowClock(room, scaled),
+    )
+    this.botTimers.set(room.code, { handle, seat, controller })
+  }
+
+  /** armBot, except the pending move survives while it still times the same seat and controller. */
+  keepBot(room: Room, onEvents: (events: GameEvent[]) => void): void {
+    const armed = this.botTimers.get(room.code)
+    if (
+      armed !== undefined &&
+      room.connectedHumanCount() > 0 &&
+      armed.seat === room.currentSeat &&
+      armed.controller === room.turnController()
+    ) {
+      return
+    }
+    this.armBot(room, onEvents)
+  }
+
+  /**
+   * One timer per open reaction window of a bot-controlled seat. A window keeps the delay
+   * sampled when it opened across later retimes, and its timer goes when it closes.
+   */
+  armReactions(room: Room, onEvents: (events: GameEvent[]) => void): void {
+    const armed = this.reactionTimers.get(room.code) ?? new Map<string, unknown>()
+    this.reactionTimers.set(room.code, armed)
+    const open = new Map<string, { seat: number; kind: ReactionKind }>()
+    if (room.connectedHumanCount() > 0) {
+      for (const reaction of room.pendingReactions()) {
+        open.set(reactionKey(room, reaction.seat, reaction.kind), reaction)
+      }
+    }
+
+    for (const [key, handle] of armed) {
+      if (open.has(key)) continue
+      if (handle !== null) this.timers.clearTimeout(handle)
+      armed.delete(key)
+    }
+    for (const [key, { seat, kind }] of open) {
+      if (armed.has(key)) continue
+      const level = room.levelFor(seat) ?? 'normal'
+      const ms = this.sampleDelay(level, kind === 'jumpIn' ? 'jumpIn' : 'reaction')
+      const handle = this.timers.setTimeout(() => {
+        // Spent, not deleted: a declined window is not offered again while it stays open.
+        armed.set(key, null)
+        this.guarded(room, 'bot reaction timer threw', () => {
+          let events: GameEvent[]
+          try {
+            events = room.botReact(seat, kind)
+          } catch (error) {
+            logger.error({ err: error, room: room.code, seat, kind }, 'bot reaction threw, dropped')
+            return
+          }
+          // A declined or stale reaction changes nothing and must not restart any clock.
+          if (events.length > 0) onEvents(events)
+        })
+      }, Math.round(ms))
+      armed.set(key, handle)
+    }
+  }
+
+  cancelBots(room: Room): void {
+    this.cancelBot(room)
+    const armed = this.reactionTimers.get(room.code)
+    if (armed === undefined) return
+    for (const handle of armed.values()) {
+      if (handle !== null) this.timers.clearTimeout(handle)
+    }
+    this.reactionTimers.delete(room.code)
+  }
+
+  private cancelBot(room: Room): void {
+    const armed = this.botTimers.get(room.code)
+    if (armed === undefined) return
+    this.timers.clearTimeout(armed.handle)
+    this.botTimers.delete(room.code)
+  }
+
+  /** A scaled delay from the manager's own stream, so timing never perturbs a bot's decisions. */
+  private sampleDelay(level: BotLevel, kind: DelayKind): number {
+    const sampled = sampleDelayMs(level, kind, this.delayRng)
+    this.delayRng = sampled.rng
+    return sampled.ms * this.botDelayFactor
+  }
+
+  /* Capped after scaling, against the clock actually running: a drawn card keeps the turn
+     without restarting the clock, so the cap is what is left of it, not turnSeconds. */
+  private belowClock(room: Room, ms: number): number {
+    const deadline = this.turnDeadlines.get(room.code)
+    if (deadline === undefined) return Math.round(ms)
+    return Math.round(Math.max(0, Math.min(ms, deadline - this.now() - CLOCK_MARGIN_MS)))
+  }
+
+  /** Nothing a timer runs may throw out of setTimeout: it would take the process down. */
+  private guarded(room: Room, message: string, run: () => void): void {
+    try {
+      run()
+    } catch (error) {
+      logger.error({ err: error, room: room.code }, message)
+    }
   }
 
   /**
@@ -206,7 +378,12 @@ export class RoomManager {
        to. A round ending with one player left made the deal fail, changed nothing
        about the room, and the caller armed it again - every five seconds for the
        life of the process, pushing a countdown that could never resolve. */
-    if (room.turnSeconds === null || !room.betweenRounds || room.activeMemberCount() < MIN_SEATS) {
+    if (
+      room.turnSeconds === null ||
+      !room.betweenRounds ||
+      room.seatedCount() < MIN_SEATS ||
+      room.connectedHumanCount() === 0
+    ) {
       room.setNextRoundDeadline(null)
       return
     }
@@ -236,7 +413,10 @@ export class RoomManager {
    */
   armUnoGrace(room: Room, onExpire: (events: GameEvent[]) => void): void {
     this.cancelUnoGrace(room)
-    if (room.callOutsAllowed || room.exposedSeat() === null) return
+    // Like every clock, stopped while no human is connected.
+    if (room.callOutsAllowed || room.exposedSeat() === null || room.connectedHumanCount() === 0) {
+      return
+    }
 
     const handle = this.timers.setTimeout(() => {
       this.unoTimers.delete(room.code)
@@ -295,6 +475,7 @@ export class RoomManager {
       this.cancelTurn(room)
       this.cancelNextRound(room)
       this.cancelUnoGrace(room)
+      this.cancelBots(room)
       this.rooms.delete(code)
       this.emptySince.delete(code)
       for (const listener of this.purgeListeners) listener(code)
@@ -305,3 +486,11 @@ export class RoomManager {
 }
 
 const graceKey = (code: string, seat: number): string => `${code}#${seat}`
+
+/* A jump-in window belongs to the card on top and a call-out to its target: either
+   changing opens a new window with a fresh delay, as the tournament models it. */
+const reactionKey = (room: Room, seat: number, kind: ReactionKind): string => {
+  if (kind === 'jumpIn') return `${seat}:jumpIn:${room.viewFor(seat)?.discardTop.id ?? 'none'}`
+  if (kind === 'callOut') return `${seat}:callOut:${room.exposedSeat() ?? 'none'}`
+  return `${seat}:${kind}`
+}

@@ -29,9 +29,9 @@ const viewWith = (overrides: Partial<PlayerView> = {}): PlayerView => ({
     legalMoves: [{ type: 'play', cardId: mine.id }, { type: 'draw' }],
   },
   opponents: [
-    { seat: 1, name: 'Ben', handCount: 4, status: 'active' },
-    { seat: 2, name: 'Cleo', handCount: 2, status: 'active' },
-    { seat: 3, name: 'Dan', handCount: 7, status: 'active' },
+    { seat: 1, name: 'Ben', handCount: 4, status: 'active', bot: null, standIn: false },
+    { seat: 2, name: 'Cleo', handCount: 2, status: 'active', bot: null, standIn: false },
+    { seat: 3, name: 'Dan', handCount: 7, status: 'active', bot: null, standIn: false },
   ],
   rules: DEFAULT_TABLE_RULES,
   discardTop: top,
@@ -179,7 +179,13 @@ describe('Table', () => {
   it('offers no call-out unless the server put one in the view', () => {
     // The client evaluates no rule: a hand of one card next door means nothing to
     // it until the move arrives.
-    setup(viewWith({ opponents: [{ seat: 1, name: 'Ben', handCount: 1, status: 'active' }] }))
+    setup(
+      viewWith({
+        opponents: [
+          { seat: 1, name: 'Ben', handCount: 1, status: 'active', bot: null, standIn: false },
+        ],
+      }),
+    )
     expect(screen.queryByRole('button', { name: /catch/i })).toBeNull()
   })
 
@@ -222,7 +228,13 @@ describe('Table', () => {
   })
 
   it('marks nobody when no call-out is on offer', () => {
-    setup(viewWith({ opponents: [{ seat: 1, name: 'Ben', handCount: 1, status: 'active' }] }))
+    setup(
+      viewWith({
+        opponents: [
+          { seat: 1, name: 'Ben', handCount: 1, status: 'active', bot: null, standIn: false },
+        ],
+      }),
+    )
     expect(document.querySelectorAll('.plate-exposed')).toHaveLength(0)
   })
 

@@ -29,3 +29,15 @@ export {
   type TableRules,
   type WildCard,
 } from './types.js'
+export { jumpsIn, sampleDelayMs, type BotLevel, type DelayKind } from './bot/timing.js'
+export {
+  EMPTY_HISTORY,
+  botViewFor,
+  recordMove,
+  unseenCards,
+  type BotView,
+  type DrawnOn,
+  type RoundHistory,
+} from './bot/view.js'
+export { availableReactions, botMove, botReaction, type ReactionKind } from './bot/policy.js'
+export { runTournament, type TournamentConfig, type TournamentResult } from './bot/tournament.js'

@@ -217,9 +217,15 @@ describe('the Liar call-out on the wire', () => {
       const callerSeat = caller.view()?.you.seat
 
       expect(await emit<PlainAck>(caller, 'game:move', { move })).toEqual({ ok: true })
+      // The last event of the move, not the first: each one is its own packet.
       await waitFor(
-        () => players.every((player) => player.events.some((e) => e.type === 'calledOut')),
-        'the calledOut event at every seat',
+        () =>
+          players.every(
+            (player) =>
+              player.events.some((e) => e.type === 'calledOut') &&
+              player.events.some((e) => e.type === 'unoPenalty' && e.seat === move.target),
+          ),
+        'the calledOut and unoPenalty events at every seat',
       )
 
       for (const player of players) {

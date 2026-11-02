@@ -147,11 +147,14 @@ describe('a room playing the drawn-card rule', () => {
     expect(room.move(seat, { type: 'pass' })).toEqual({ okay: false, error: 'not_your_turn' })
   })
 
-  it('clears the decision when the deciding seat disconnects', () => {
+  it('leaves the decision to the stand-in when the deciding seat disconnects', () => {
+    // The turn is no longer skipped on a disconnect (docs/superpowers/specs/2026-11-01-bots-design.md).
     const room = roomWith(DEFAULT_TABLE_RULES)
     const { seat } = drawUntilDeciding(room)
     room.disconnect(`socket-${String(seat)}`)
+    expect(room.decidingOnDrawnCard).toBe(true)
 
+    room.botStep()
     expect(room.decidingOnDrawnCard).toBe(false)
     expect(room.currentSeat).not.toBe(seat)
     const now = room.currentSeat ?? 0

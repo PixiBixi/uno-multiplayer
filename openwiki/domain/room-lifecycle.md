@@ -69,16 +69,23 @@ renumbered the engine the moment anybody was absent at deal time. With three
 players where one had already left, `viewFor(2)` returned `null` - that player was
 present, holding seven cards, and received no view of the game at all.
 
-The deal now goes to **every** member seat, then reconciles the absent ones:
-
-- A player gone for good has their hand returned to the pile, which both preserves
-  the 108-card invariant and means they score nothing for the round.
-- Someone merely disconnected keeps their hand, because the grace period may still
-  bring them back to it.
+The deal now goes to **every** member seat, and every dealt seat stays active in the
+engine for the whole match, whoever is at the keyboard: a disconnected human's seat is
+played by a stand-in bot (see Presence), a departed one by a bot for good. Nothing is
+returned to the pile and nothing is skipped, so the 108-card invariant holds without a
+reconciliation step.
 
 Scores and statistics are indexed by seat, so this is not cosmetic.
 
-A seat vacated in the **lobby** is handed to the next joiner rather than kept: nothing is
+A seat holds a **human**, a **bot** with a level, or nothing. The host adds, re-levels and
+removes bots in the lobby (`room:addBot`, `room:setBotLevel`, `room:removeBot`); the host
+seat is always human. `canStart` is at least one human and at least two filled seats. A
+human who joins a full lobby replaces the **last-added** bot, and is refused with
+`game_already_started` once the match has begun. See [Bots](../architecture/bots.md) for what a bot
+decides and when it acts.
+
+A seat vacated in the **lobby** is handed to the next joiner rather than kept, and stays
+empty otherwise (a leaving human is not replaced by a bot before the deal): nothing is
 dealt or scored there, so seat numbers still match engine indices, and three departures
 no longer leave a table reporting `room_full` with only the host seated. A socket is
 seated at most once, so a double-tapped `room:join` cannot leave a second seat whose
@@ -86,11 +93,34 @@ socket id never disconnects.
 
 ## Presence, and the three ways a room ends
 
-| State          | Meaning                                      |
-| -------------- | -------------------------------------------- |
-| `active`       | Connected and playing                        |
-| `disconnected` | Socket gone, grace period running, hand kept |
-| `left`         | Gone for good; `rejoin` refuses the seat     |
+| State          | Meaning                                           |
+| -------------- | ------------------------------------------------- |
+| `active`       | Connected and playing                             |
+| `disconnected` | Socket gone; a stand-in plays the seat, hand kept |
+| `left`         | Gone for good; `rejoin` refuses the seat          |
+
+Mid-match, **the engine seat stays active whatever the member's status**: a bot-played
+seat takes turns, is a Seven-Zero target and sits in `turnOrder`, so nothing is skipped.
+The old behaviour skipped a disconnected seat and, when the grace period ran out, returned
+its hand to the pile; both are gone.
+
+### The stand-in
+
+When a disconnected human's turn comes, a Normal bot plays it after a **15 s** grace and
+the table sees one `botTookOver` event. The grace covers the **first** absent turn only;
+once the bot has taken over, later turns use ordinary bot timing until the human returns,
+so a dropped player does not cost the table 15 s a turn. On a Blazing table the grace is
+`min(15 s, turnSeconds - 1 s)`, so the bot plays before the turn clock forces a draw. The
+bot reacts off turn for that seat too, at Normal timing.
+
+Reconnecting with the session token takes the seat back at once, **for the whole match**,
+whatever the bot did meanwhile. The grace period expiring mid-match no longer changes
+anything: the seat simply stays bot-played, and the view shows it as the human's name with
+a "Bot playing" marker.
+
+**With no human connected the table stops**: no bot moves, no turn clock, no next round,
+no UNO grace. Bots alone would play a match nobody watches, so the room waits and is
+purged as before once it has stayed empty for the grace period.
 
 `Room.isEmpty()` means "no sockets attached right now" - which is **also true of a
 table whose players are mid-reload**. `Room.abandoned` means nobody could come back
@@ -115,7 +145,10 @@ game was refused. The socket also stayed in the old Socket.IO room, so whoever
 walked away kept receiving that table's chat and events.
 
 It takes the same path as an unexpected disconnect, minus the grace period:
-somebody who pressed Leave is not coming back to that seat.
+somebody who pressed Leave is not coming back to that seat. Mid-match the seat goes to a
+bot **for good**: the session token is rotated on restart, so the leaver cannot rejoin it.
+Across `game:restart` a stand-in stays a stand-in its human can reclaim, while a seat whose
+human left becomes an ordinary Normal bot.
 
 A **second tab** rejoining a seat takes it over. `rejoin` reports the socket it replaced
 (`supersededSocketId`), and the handler evicts that one from voice, presence and the
@@ -137,6 +170,16 @@ anything that can change whose turn it is:
   it, and only on a table without call-outs - elsewhere an opponent shuts that window.
   See [the three seconds that follow](rules-and-scoring.md#forgetting-uno-and-the-three-seconds-that-follow)
   for who pays what; the clock is here because `Room` may not hold one.
+
+A fourth kind of timer belongs to bots: `RoomManager` holds one per bot-played seat on turn,
+and one per open reaction window (call-out, late UNO, jump-in), with the delays of
+[Bots](../architecture/bots.md#timing). They arm nothing while no human is connected, and
+under Blazing a bot's delay is capped to the time left on the clock minus one second, so a
+bot never times out. A bot move that changes something retimes like any move, so it
+restarts the human's turn clock, as a human call-out does; a declined reaction does not.
+A move that leaves the same bot on turn (a call-out, a late UNO) keeps the bot's pending
+timer, so its delay is not resampled and a stand-in's grace is not restarted. `BOT_DELAY_FACTOR` (0.01 to 1, default 1)
+scales every bot delay and the absent grace; it exists to keep e2e runs short.
 
 All three arms are safe to call unconditionally: each clears itself when the room is not
 in its state, so a table with no pace ends up with no turn timer and null deadlines, and

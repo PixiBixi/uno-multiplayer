@@ -324,6 +324,8 @@ export function Table({
                   name={opponent.name}
                   handCount={opponent.handCount}
                   status={opponent.status}
+                  bot={opponent.bot}
+                  standIn={opponent.standIn}
                   isTurn={view.currentSeat === opponent.seat}
                   onCallOut={
                     callOut === undefined

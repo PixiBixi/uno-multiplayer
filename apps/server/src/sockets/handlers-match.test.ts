@@ -142,22 +142,21 @@ describe('the view on the wire always carries the match', () => {
     expect(host.view()?.match.goal).toEqual({ kind: 'rounds', count: 3 })
   })
 
-  it('does so on the finished view, which is the one GameOver reads', async () => {
-    /* Reached by a player leaving rather than by playing a round out: it ends the
-       round deterministically and in milliseconds, and it lands on exactly the
-       state the crashing component renders. */
-    const { host, guest } = await table({ kind: 'rounds', count: 3 })
-    guest.socket.disconnect()
+  it(
+    'does so on the finished view, which is the one GameOver reads',
+    async () => {
+      // Played out: a departure no longer ends a round (docs/superpowers/specs/2026-11-01-bots-design.md).
+      const { host, guest } = await table({ kind: 'rounds', count: 3 })
+      await playRoundToCompletion(host, guest)
+      await waitFor(() => host.view()?.phase === 'finished', 'the round to end')
 
-    await waitFor(() => host.view()?.phase === 'finished', 'the round to end')
-
-    const view = host.view()
-    expect(view?.match).toBeDefined()
-    expect(view?.match.scores).toHaveLength(2)
-    // An aborted round pays nothing out, and ends the match.
-    expect(view?.match.scores).toEqual([0, 0])
-    expect(view?.match.winners).not.toBeUndefined()
-  })
+      const view = host.view()
+      expect(view?.match).toBeDefined()
+      expect(view?.match.scores).toHaveLength(2)
+      expect(view?.match.winners).not.toBeUndefined()
+    },
+    SOCKET_ROUND_TIMEOUT_MS,
+  )
 })
 
 describe('game:nextRound over sockets', () => {
@@ -227,30 +226,40 @@ describe('game:nextRound over sockets', () => {
     SOCKET_ROUND_TIMEOUT_MS,
   )
 
-  it('refuses once the match itself is over', async () => {
-    const { host, guest } = await table({ kind: 'rounds', count: 1 })
-    guest.socket.disconnect()
-    await waitFor(() => host.view()?.phase === 'finished', 'the round to end')
-    expect(host.view()?.match.winners).not.toBeNull()
+  it(
+    'refuses once the match itself is over',
+    async () => {
+      // Played out: a departure no longer ends a round (docs/superpowers/specs/2026-11-01-bots-design.md).
+      const { host, guest } = await table({ kind: 'rounds', count: 1 })
+      await playRoundToCompletion(host, guest)
+      await waitFor(() => host.view()?.phase === 'finished', 'the round to end')
+      expect(host.view()?.match.winners).not.toBeNull()
 
-    expect(await emit<PlainAck>(host, 'game:nextRound', {})).toEqual({
-      ok: false,
-      error: 'match_over',
-    })
-  })
+      expect(await emit<PlainAck>(host, 'game:nextRound', {})).toEqual({
+        ok: false,
+        error: 'match_over',
+      })
+    },
+    SOCKET_ROUND_TIMEOUT_MS,
+  )
 })
 
 describe('every field GameOver reads is present on the wire', () => {
-  it('never lands on a view whose match is undefined', async () => {
-    const { host, guest } = await table({ kind: 'rounds', count: 2 })
+  it(
+    'never lands on a view whose match is undefined',
+    async () => {
+      const { host, guest } = await table({ kind: 'rounds', count: 2 })
 
-    const seen: (PlayerView['match'] | undefined)[] = []
-    host.socket.on('game:view', (view: PlayerView) => seen.push(view.match))
+      const seen: (PlayerView['match'] | undefined)[] = []
+      host.socket.on('game:view', (view: PlayerView) => seen.push(view.match))
 
-    guest.socket.disconnect()
-    await waitFor(() => host.view()?.phase === 'finished', 'the round to end')
+      // Played out: a departure no longer ends a round (docs/superpowers/specs/2026-11-01-bots-design.md).
+      await playRoundToCompletion(host, guest)
+      await waitFor(() => host.view()?.phase === 'finished', 'the round to end')
 
-    expect(seen.length).toBeGreaterThan(0)
-    expect(seen.every((match) => match !== undefined)).toBe(true)
-  })
+      expect(seen.length).toBeGreaterThan(0)
+      expect(seen.every((match) => match !== undefined)).toBe(true)
+    },
+    SOCKET_ROUND_TIMEOUT_MS,
+  )
 })

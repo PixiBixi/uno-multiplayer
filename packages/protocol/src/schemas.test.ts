@@ -12,13 +12,17 @@ import {
 } from './views.js'
 import { describe, expect, it } from 'vitest'
 import {
+  botLevelSchema,
   chatSendSchema,
   gameMoveSchema,
   moveSchema,
   roomConfigureSchema,
+  roomAddBotSchema,
   roomCreateSchema,
   roomJoinSchema,
   roomRejoinSchema,
+  roomRemoveBotSchema,
+  roomSetBotLevelSchema,
   voiceMuteSchema,
   voiceSignalSendSchema,
 } from './schemas.js'
@@ -423,5 +427,32 @@ describe('voiceMuteSchema', () => {
 
   it('rejects a string that merely looks like one', () => {
     expect(voiceMuteSchema.safeParse({ muted: 'true' }).success).toBe(false)
+  })
+})
+
+describe('bot lobby schemas', () => {
+  it('accepts every bot level and rejects an unknown one', () => {
+    for (const level of ['easy', 'normal', 'hard']) {
+      expect(botLevelSchema.safeParse(level).success).toBe(true)
+    }
+    expect(botLevelSchema.safeParse('godlike').success).toBe(false)
+  })
+
+  it('roomAddBotSchema accepts a level and rejects an unknown one', () => {
+    expect(roomAddBotSchema.safeParse({ level: 'hard' }).success).toBe(true)
+    expect(roomAddBotSchema.safeParse({ level: 'godlike' }).success).toBe(false)
+  })
+
+  it('roomSetBotLevelSchema checks the level and a seat in 0-3', () => {
+    expect(roomSetBotLevelSchema.safeParse({ seat: 3, level: 'easy' }).success).toBe(true)
+    expect(roomSetBotLevelSchema.safeParse({ seat: 1, level: 'godlike' }).success).toBe(false)
+    expect(roomSetBotLevelSchema.safeParse({ seat: 4, level: 'easy' }).success).toBe(false)
+    expect(roomSetBotLevelSchema.safeParse({ seat: -1, level: 'easy' }).success).toBe(false)
+  })
+
+  it('roomRemoveBotSchema checks a seat in 0-3', () => {
+    expect(roomRemoveBotSchema.safeParse({ seat: 0 }).success).toBe(true)
+    expect(roomRemoveBotSchema.safeParse({ seat: 4 }).success).toBe(false)
+    expect(roomRemoveBotSchema.safeParse({ seat: -1 }).success).toBe(false)
   })
 })

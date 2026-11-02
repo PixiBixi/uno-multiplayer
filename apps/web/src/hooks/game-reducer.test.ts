@@ -22,7 +22,7 @@ const gameReducer = (
 const lobby: LobbyView = {
   roomCode: 'ABC234',
   hostSeat: 0,
-  seats: [{ seat: 0, name: 'Ana', status: 'active' }],
+  seats: [{ seat: 0, name: 'Ana', status: 'active', bot: null }],
   canStart: false,
   goal: DEFAULT_MATCH_GOAL,
   pace: null,

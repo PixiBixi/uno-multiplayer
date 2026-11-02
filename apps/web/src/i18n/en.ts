@@ -110,6 +110,7 @@ export const en: Messages = {
     // The only verb in the log that changes person: everything else is past tense.
     seatReconnected: (name, isYou) => (isYou ? 'You are back' : `${name} is back`),
     seatLeft: (name) => `${name} left the game`,
+    botTookOver: (name) => `A bot is playing for ${name}`,
     turnTimedOut: (name, isYou) => (isYou ? 'You ran out of time' : `${name} ran out of time`),
     roundWon: (name, isYou, pts) =>
       `${isYou ? 'You win' : `${name} wins`} the round, +${points(pts)}`,
@@ -213,6 +214,17 @@ export const en: Messages = {
     needTwo: 'A game needs at least two players.',
     waitingForHost: (hostName) => `Waiting for ${hostName} to start the game.`,
     leaveTable: 'Leave table',
+  },
+
+  bots: {
+    level: { easy: 'Easy', normal: 'Normal', hard: 'Hard' },
+    addBot: 'Add a bot',
+    remove: 'Remove',
+    standIn: 'Bot playing',
+    badge: 'Bot',
+    removeNamed: (name) => `Remove ${name}`,
+    levelOf: (name) => `Level of ${name}`,
+    newBotLevel: 'Level of the new bot',
   },
 
   table: {

@@ -9,7 +9,7 @@ import { Lobby } from './Lobby.js'
 const lobbyWith = (names: string[], canStart = names.length >= 2): LobbyView => ({
   roomCode: 'K7QM2X',
   hostSeat: 0,
-  seats: names.map((name, seat) => ({ seat, name, status: 'active' as const })),
+  seats: names.map((name, seat) => ({ seat, name, status: 'active' as const, bot: null })),
   canStart,
   goal: DEFAULT_MATCH_GOAL,
   pace: null,
@@ -18,7 +18,16 @@ const lobbyWith = (names: string[], canStart = names.length >= 2): LobbyView => 
 })
 
 const setup = (lobby: LobbyView, mySeat: number) => {
-  const props = { lobby, mySeat, onStart: vi.fn(), onLeave: vi.fn(), onConfigure: vi.fn() }
+  const props = {
+    lobby,
+    mySeat,
+    onStart: vi.fn(),
+    onLeave: vi.fn(),
+    onConfigure: vi.fn(),
+    onAddBot: vi.fn(),
+    onSetBotLevel: vi.fn(),
+    onRemoveBot: vi.fn(),
+  }
   render(<Lobby {...props} />)
   return props
 }
@@ -76,7 +85,7 @@ describe('Lobby', () => {
   it('greys out a seat that dropped and says so in words', () => {
     const lobby = lobbyWith(['Ana', 'Ben'])
     const seats = [...lobby.seats]
-    seats[1] = { seat: 1, name: 'Ben', status: 'disconnected' }
+    seats[1] = { seat: 1, name: 'Ben', status: 'disconnected', bot: null }
     setup({ ...lobby, seats }, 0)
     expect(screen.getByText(/reconnecting/i)).toBeTruthy()
   })
@@ -249,6 +258,75 @@ describe('Lobby', () => {
       setup(lobbyWith(['Ana', 'Ben']), 1)
       await userEvent.click(screen.getByRole('button', { name: /copy link/i }))
       expect(clipboard).toHaveLength(1)
+    })
+  })
+
+  describe('bots', () => {
+    const withBot = (): LobbyView => {
+      const lobby = lobbyWith(['Ana', 'Robo'])
+      lobby.seats[1] = { seat: 1, name: 'Robo', status: 'active', bot: 'hard' }
+      return lobby
+    }
+
+    it('offers the host an add-bot control on each free seat, and a guest none', () => {
+      setup(lobbyWith(['Ana', 'Ben']), 0)
+      expect(screen.getAllByRole('button', { name: 'Add a bot' })).toHaveLength(2)
+    })
+
+    it('offers a guest no bot controls', () => {
+      setup(lobbyWith(['Ana', 'Ben']), 1)
+      expect(screen.queryByRole('button', { name: 'Add a bot' })).toBeNull()
+    })
+
+    it('offers no add-bot control at four seats', () => {
+      setup(lobbyWith(['Ana', 'Ben', 'Cleo', 'Dan']), 0)
+      expect(screen.queryByRole('button', { name: 'Add a bot' })).toBeNull()
+    })
+
+    it('offers the host a bot on the seat a human left, even with four members listed', async () => {
+      const lobby = lobbyWith(['Ana', 'Ben', 'Cleo', 'Dan'])
+      lobby.seats[3] = { seat: 3, name: 'Dan', status: 'left', bot: null }
+      const { onAddBot } = setup(lobby, 0)
+      await userEvent.click(screen.getByRole('button', { name: 'Add a bot' }))
+      expect(onAddBot).toHaveBeenCalledWith('normal')
+    })
+
+    it('offers a guest no bot on a seat a human left', () => {
+      const lobby = lobbyWith(['Ana', 'Ben', 'Cleo', 'Dan'])
+      lobby.seats[3] = { seat: 3, name: 'Dan', status: 'left', bot: null }
+      setup(lobby, 1)
+      expect(screen.queryByRole('button', { name: 'Add a bot' })).toBeNull()
+    })
+
+    it('adds a Normal bot by default', async () => {
+      const { onAddBot } = setup(lobbyWith(['Ana']), 0)
+      await userEvent.click(screen.getAllByRole('button', { name: 'Add a bot' })[0] as HTMLElement)
+      expect(onAddBot).toHaveBeenCalledWith('normal')
+    })
+
+    it('adds a bot at the level the host picked', async () => {
+      const { onAddBot } = setup(lobbyWith(['Ana']), 0)
+      await userEvent.selectOptions(
+        screen.getAllByRole('combobox', { name: 'Level of the new bot' })[0] as HTMLElement,
+        'hard',
+      )
+      await userEvent.click(screen.getAllByRole('button', { name: 'Add a bot' })[0] as HTMLElement)
+      expect(onAddBot).toHaveBeenCalledWith('hard')
+    })
+
+    it('lets the host change a bot level and remove it', async () => {
+      const { onSetBotLevel, onRemoveBot } = setup(withBot(), 0)
+      await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Level of Robo' }), 'easy')
+      expect(onSetBotLevel).toHaveBeenCalledWith(1, 'easy')
+      await userEvent.click(screen.getByRole('button', { name: 'Remove Robo' }))
+      expect(onRemoveBot).toHaveBeenCalledWith(1)
+    })
+
+    it('shows a guest the level as plain text', () => {
+      setup(withBot(), 1)
+      expect(screen.getByText('Hard')).toBeTruthy()
+      expect(screen.queryByRole('combobox')).toBeNull()
+      expect(screen.queryByRole('button', { name: /remove/i })).toBeNull()
     })
   })
 })

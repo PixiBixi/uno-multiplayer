@@ -76,9 +76,12 @@ describe('Room.restart', () => {
      highest-numbered player with no view at all. Nobody receives this view: their
      socket is gone and rejoin refuses a seat that left. */
   it('keeps a departed seat in the round, empty-handed', () => {
-    const room = finish(started('Ana', 'Ben', 'Cleo'))
-    room.disconnect('socket-2')
-    room.expireGrace(2)
+    // Departed in the lobby: mid-match a leaver becomes a bot instead (docs/superpowers/specs/2026-11-01-bots-design.md).
+    const room = new Room('ABC234', 42, DEFAULT_MATCH_GOAL)
+    for (const [i, name] of ['Ana', 'Ben', 'Cleo'].entries()) room.join(name, `socket-${i}`)
+    room.leave('socket-2')
+    if (!room.start(0).okay) throw new Error('start refused')
+    finish(room)
     expect(room.restart(0, 7).okay).toBe(true)
 
     const view = room.viewFor(2)
@@ -94,10 +97,11 @@ describe('Room.restart', () => {
     expect(room.viewFor(2)?.you.seat).toBe(2)
   })
 
-  it('refuses when fewer than two seats remain active', () => {
+  it('deals an absent seat in for its stand-in rather than refusing', () => {
+    // An absent seat is bot-played, no longer a missing player (docs/superpowers/specs/2026-11-01-bots-design.md).
     const room = finish(started('Ana', 'Ben'))
     room.disconnect('socket-1')
-    room.expireGrace(1)
-    expect(room.restart(0, 7)).toEqual({ okay: false, error: 'too_few_players' })
+    expect(room.restart(0, 7).okay).toBe(true)
+    expect(room.viewFor(1)?.you.hand).toHaveLength(7)
   })
 })

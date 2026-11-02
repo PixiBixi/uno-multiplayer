@@ -1,4 +1,4 @@
-import type { Card, MatchGoal, Move, TableRules } from '@uno/engine'
+import type { BotLevel, Card, MatchGoal, Move, TableRules } from '@uno/engine'
 import type { LobbyView, MatchPace, PlayerView } from './views.js'
 
 export type ErrorCode =
@@ -60,6 +60,7 @@ export type GameEvent =
   /* The clock played for somebody. Distinct from cardsDrawn so the log can say
      why, and so the client can react to a forced turn differently. */
   | { type: 'turnTimedOut'; seat: number }
+  | { type: 'botTookOver'; seat: number }
   | { type: 'gameRestarted' }
 
 /**
@@ -132,6 +133,10 @@ export type ClientToServer = {
    * moved into the lobby is that a guest watches the host toggle Jump-in.
    */
   'room:configure': (payload: TableConfiguration, ack: Ack) => void
+  /** Lobby only, host only: fills the next free seat with a bot. */
+  'room:addBot': (payload: { level: BotLevel }, ack: Ack) => void
+  'room:setBotLevel': (payload: { seat: number; level: BotLevel }, ack: Ack) => void
+  'room:removeBot': (payload: { seat: number }, ack: Ack) => void
   'game:start': (payload: Empty, ack: Ack) => void
   /** Deals the next round of the current match, keeping the scores. */
   'game:nextRound': (payload: Empty, ack: Ack) => void

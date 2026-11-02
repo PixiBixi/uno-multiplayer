@@ -1,5 +1,5 @@
 import type { Card, MatchGoal } from '@uno/engine'
-import type { ErrorCode } from '@uno/protocol'
+import type { BotLevel, ErrorCode } from '@uno/protocol'
 import type { CardTheme } from '../lib/card-themes.js'
 import type { ActiveEffect } from '../lib/play-effects.js'
 
@@ -123,6 +123,7 @@ export type Messages = {
     seatDisconnected: (name: string) => string
     seatReconnected: (name: string, isYou: boolean) => string
     seatLeft: (name: string) => string
+    botTookOver: (name: string) => string
     turnTimedOut: (name: string, isYou: boolean) => string
     roundWon: (name: string, isYou: boolean, points: number) => string
     roundAbandoned: () => string
@@ -236,6 +237,19 @@ export type Messages = {
     needTwo: string
     waitingForHost: (hostName: string) => string
     leaveTable: string
+  }
+
+  bots: {
+    level: Record<BotLevel, string>
+    addBot: string
+    remove: string
+    standIn: string
+    /** The mark beside a bot's name, in the roster and on the table. */
+    badge: string
+    /** Accessible names: a bare "Remove" or "Level" three times over says nothing. */
+    removeNamed: (name: string) => string
+    levelOf: (name: string) => string
+    newBotLevel: string
   }
 
   table: {

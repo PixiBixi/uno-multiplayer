@@ -185,4 +185,10 @@ describe('describeEvent', () => {
       'Seat 9 called UNO',
     )
   })
+
+  it('says which player a bot took over for', () => {
+    expect(describeEvent({ type: 'botTookOver', seat: 1 }, nameOf, NOT_ME, en)).toBe(
+      'A bot is playing for Ben',
+    )
+  })
 })

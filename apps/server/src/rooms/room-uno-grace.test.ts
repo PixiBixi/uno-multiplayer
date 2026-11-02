@@ -134,10 +134,8 @@ describe('purging a room with a window open', () => {
     manager.armUnoGrace(room, () => undefined)
     expect(clock.pendingCount()).toBe(1)
 
-    for (const socketId of ['a', 'b']) {
-      const left = room.disconnect(socketId)
-      if (left !== null) room.expireGrace(left.seat)
-    }
+    // Leave, since grace expiry no longer frees a seat mid-match (docs/superpowers/specs/2026-11-01-bots-design.md).
+    for (const socketId of ['a', 'b']) room.leave(socketId)
     expect(manager.purge()).toBe(1)
     expect(clock.pendingCount()).toBe(0)
   })
