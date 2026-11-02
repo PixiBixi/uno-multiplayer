@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.13.2](https://github.com/PixiBixi/uno-multiplayer/compare/9a330ce166eebe594ec6e91fcc6e204179e8a466..v1.13.2) - 2026-11-02
+#### Miscellaneous Chores
+- (**deps**) lock file maintenance (#84) - ([9a330ce](https://github.com/PixiBixi/uno-multiplayer/commit/9a330ce166eebe594ec6e91fcc6e204179e8a466)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.13.1](https://github.com/PixiBixi/uno-multiplayer/compare/fcdc85ca244976191d0101c81996292c947fb78d..v1.13.1) - 2026-11-02
 #### Documentation
 - (**wiki**) document home screen install behavior in client notes - ([fcdc85c](https://github.com/PixiBixi/uno-multiplayer/commit/fcdc85ca244976191d0101c81996292c947fb78d)) - Jeremy Delgado
