@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.13.1](https://github.com/PixiBixi/uno-multiplayer/compare/fcdc85ca244976191d0101c81996292c947fb78d..v1.13.1) - 2026-11-02
+#### Documentation
+- (**wiki**) document home screen install behavior in client notes - ([fcdc85c](https://github.com/PixiBixi/uno-multiplayer/commit/fcdc85ca244976191d0101c81996292c947fb78d)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**deps**) update step-security/harden-runner action to v2.22.3 (#82) - ([4b88b61](https://github.com/PixiBixi/uno-multiplayer/commit/4b88b61b1877fe1770b018da82fbd024a0cf230d)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.13.0](https://github.com/PixiBixi/uno-multiplayer/compare/5686fa1218335551d53993a7fc2fade04b53fd50..v1.13.0) - 2026-11-01
 #### Features
 - (**web**) make the game installable to the home screen - ([7103cb0](https://github.com/PixiBixi/uno-multiplayer/commit/7103cb05bc975a914cca18e4768303063f25e3e0)) - Jeremy Delgado
