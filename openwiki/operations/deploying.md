@@ -248,6 +248,11 @@ properties of that config decide what reaches `latest`:
 - **TypeScript majors are held**, matching the `typescript-eslint` peer range explained
   in the [quickstart](../quickstart.md).
 
+The root `package.json` carries `overrides` forcing `glob` and `minimatch` onto patched
+majors: `@fastify/static`, `eslint` and `typescript-eslint` still pin the vulnerable
+ones, so neither Renovate nor lockfile maintenance can lift them. Drop the overrides
+once upstream moves.
+
 Actions are grouped into one `chore(deps)` PR because they never ship inside the image,
 so there is nothing to release; npm bumps do ship, which is what the `chore:` profile in
 `cog.toml` is for.
