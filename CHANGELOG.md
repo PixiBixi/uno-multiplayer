@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.0](https://github.com/PixiBixi/uno-multiplayer/compare/85baa8a73543ae455de9c0f37ca25d6e4e6b7a54..v1.14.0) - 2026-11-02
+#### Features
+- bots, solo play and stand-ins (#85) - ([85baa8a](https://github.com/PixiBixi/uno-multiplayer/commit/85baa8a73543ae455de9c0f37ca25d6e4e6b7a54)) - Jérémy
+
+- - -
+
 ## [v1.13.2](https://github.com/PixiBixi/uno-multiplayer/compare/9a330ce166eebe594ec6e91fcc6e204179e8a466..v1.13.2) - 2026-11-02
 #### Miscellaneous Chores
 - (**deps**) lock file maintenance (#84) - ([9a330ce](https://github.com/PixiBixi/uno-multiplayer/commit/9a330ce166eebe594ec6e91fcc6e204179e8a466)) - renovate[bot], renovate[bot]
