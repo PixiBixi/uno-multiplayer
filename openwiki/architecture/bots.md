@@ -114,8 +114,10 @@ Results (win rate of the single stronger seat, mean and standard deviation):
 | Hard vs 3 Normal | playDrawnCard off | 27.5% (0.5) |
 
 Every pair clears parity by far more than its spread. Hard sits at about 28% against
-Normal, a modest edge the user chose to keep rather than merge the two levels. Defaults and liar are identical for Hard against Normal because every bot from Normal up
-calls UNO in time, so nothing on a liar table ever differs.
+Normal, a modest edge the user chose to keep rather than merge the two levels. Defaults
+and liar are identical for Hard against Normal because every bot from Normal up calls UNO
+in time, so nothing on a liar table ever differs. For the same reason Normal against Easy
+on jumpIn equals defaults: neither level jumps in.
 
 ## Where to be careful
 

@@ -81,7 +81,7 @@ A seat holds a **human**, a **bot** with a level, or nothing. The host adds, re-
 removes bots in the lobby (`room:addBot`, `room:setBotLevel`, `room:removeBot`); the host
 seat is always human. `canStart` is at least one human and at least two filled seats. A
 human who joins a full lobby replaces the **last-added** bot, and is refused with
-`room_full` once the match has begun. See [Bots](../architecture/bots.md) for what a bot
+`game_already_started` once the match has begun. See [Bots](../architecture/bots.md) for what a bot
 decides and when it acts.
 
 A seat vacated in the **lobby** is handed to the next joiner rather than kept, and stays
@@ -173,9 +173,12 @@ anything that can change whose turn it is:
 
 A fourth kind of timer belongs to bots: `RoomManager` holds one per bot-played seat on turn,
 and one per open reaction window (call-out, late UNO, jump-in), with the delays of
-[Bots](../architecture/bots.md#timing). They arm nothing while no human is connected, never
-touch the turn clock, and under Blazing a bot's delay is capped to the time left on the
-clock minus one second, so a bot never times out. `BOT_DELAY_FACTOR` (0.01 to 1, default 1)
+[Bots](../architecture/bots.md#timing). They arm nothing while no human is connected, and
+under Blazing a bot's delay is capped to the time left on the clock minus one second, so a
+bot never times out. A bot move that changes something retimes like any move, so it
+restarts the human's turn clock, as a human call-out does; a declined reaction does not.
+A move that leaves the same bot on turn (a call-out, a late UNO) keeps the bot's pending
+timer, so its delay is not resampled and a stand-in's grace is not restarted. `BOT_DELAY_FACTOR` (0.01 to 1, default 1)
 scales every bot delay and the absent grace; it exists to keep e2e runs short.
 
 All three arms are safe to call unconditionally: each clears itself when the room is not

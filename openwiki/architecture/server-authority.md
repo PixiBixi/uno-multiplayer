@@ -17,7 +17,14 @@ The server computes what is legal and ships it inside each player's view
 ```ts
 type PlayerView = {
   you: { seat: number; hand: Card[]; legalMoves: Move[] }
-  opponents: { seat: number; name: string; handCount: number; status: SeatStatus }[]
+  opponents: {
+    seat: number
+    name: string
+    handCount: number
+    status: SeatStatus
+    bot: BotLevel | null // a bot's level, or null for a human
+    standIn: boolean // a bot playing for an absent human
+  }[]
   rules: TableRules
   discardTop: Card
   currentColor: Color
@@ -35,9 +42,9 @@ thing this design does not allow. So `turnOrder(state)` lives in the engine
 (`packages/engine/src/rules.ts`) and the answer travels in the view.
 
 It walks one full lap of the ring rather than taking `activeCount` steps of
-`advance`. A disconnected seat can be on turn for a moment - `skipDisconnectedTurn`
-moves play off it - and such a seat is not in `activeCount`, so counting steps
-dropped the last player off the list.
+`advance`: a seat that is not active is not in `activeCount`, so counting steps
+dropped the last player off the list. A disconnected player's seat stays on turn,
+and a stand-in plays it after the grace.
 
 It is the order **if the seat on turn lays a plain card**. A skip, a reverse, a +2
 or a 7/0 rewrites it the moment it is played, which is why the table renders it
