@@ -215,7 +215,7 @@ test('the hand can be sorted, and the choice survives a reload', async ({ browse
   )
 })
 
-test('reloading while on turn keeps the hand and the turn', async ({ browser }) => {
+test('reloading on turn keeps the game going and accepts a stand-in move', async ({ browser }) => {
   const host = await openPlayer(browser)
   const guest = await openPlayer(browser)
 
