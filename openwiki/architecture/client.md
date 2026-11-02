@@ -95,6 +95,15 @@ one row is worth more than a row saved. State is carried by the word, not the ti
 mark is `aria-hidden` and each chip carries an on/off word in a visually-hidden span, the
 same reason the card faces carry shape tokens.
 
+Bots follow the same rule, **no rules in the client**. On each lobby seat `Lobby.tsx` renders
+what the view says: a "Bot" tag and the level for a bot seat, and for the host a level
+selector and a Remove button on it, plus an "Add a bot" control with its own level selector
+on the empty seats. Each one only emits `room:addBot`, `room:setBotLevel` or `room:removeBot`
+and waits for `room:state`; whether the table is full, or a joiner replaced a bot, is the
+server's call. At the table, `Seat.tsx` shows the "Bot" tag with the level for a bot, and a
+"Bot playing" note on a human's seat while a stand-in plays it. `botTookOver` is an ordinary
+event, described in the feed like any other. See [Bots](bots.md).
+
 Card theme and language stayed on the home screen, because they are not table
 configuration - see below.
 

@@ -28,6 +28,7 @@
 - **Official UNO plus draw stacking**, scored the Mattel way: the round winner takes the value of every card left in the other hands.
 - **House rules per table**: UNO call-out, Seven-Zero, jump-in, playing the card you just drew.
 - **Matches**: first to a score or a set number of rounds, with an optional turn clock.
+- **Bots and solo play**: the host fills empty seats with Easy, Normal or Hard bots, so one person can play alone; a bot also plays for a player who drops until they come back.
 - **Invite by link** or six-character code; a player who reloads or drops keeps their seat and hand.
 - **At the table**: colour in play, direction, who is up next, pending draw stack, a move log and chat.
 - **Hand sorting**: as dealt, by colour or by value, remembered per device.
@@ -102,6 +103,7 @@ Rate limits, room cap and grace period are read in `apps/server/src/config.ts`. 
 | `npm run format:check` | Prettier check, run in CI                       |
 | `npm run watch`        | `tsc --build --watch` while editing server code |
 | `npm run e2e`          | Playwright against a real build                 |
+| `npm run tournament`   | Self-play win rates of the bot levels           |
 
 ## Deploy it
 

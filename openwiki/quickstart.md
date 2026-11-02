@@ -15,6 +15,7 @@ is, not only what it does.
 | Work on the browser client                               | [The client](architecture/client.md)                 |
 | Change a rule, scoring, or a table option                | [Rules and scoring](domain/rules-and-scoring.md)     |
 | Touch rooms, seats, timers or reconnection               | [Room lifecycle](domain/room-lifecycle.md)           |
+| Work on bots, stand-ins or the tournament                | [Bots](architecture/bots.md)                         |
 | Work on the voice chat, WebRTC or TURN                   | [Voice chat](architecture/voice-chat.md)             |
 | Deploy it or change configuration                        | [Deploying](operations/deploying.md)                 |
 | Add or fix tests                                         | [Testing](operations/testing.md)                     |
@@ -83,6 +84,7 @@ blank. See [Testing](operations/testing.md) for what now catches it.
 | -------------------------- | -------------------------------------------------- |
 | `npm run verify`           | Lint, typecheck and test - run this before pushing |
 | `npm run format:check`     | Prettier check - CI runs it, `verify` does not     |
+| `npm run tournament`       | Bot self-play win rates (build first, slow)        |
 | `npm test`                 | Vitest once                                        |
 | `npm run test:watch`       | Vitest in watch mode                               |
 | `npm run test:coverage`    | Coverage report into `coverage/`                   |
@@ -117,6 +119,6 @@ solution and excludes tests.
 ## Where the reasoning lives
 
 `docs/superpowers/specs/` holds one design document per significant feature -
-match scoring, Blazing mode, and an analysis of what a bot and offline play would
-take. They record the decisions and the alternatives that were rejected, which is
+match scoring, Blazing mode, bots, and an analysis of what a bot and offline play
+would take. They record the decisions and the alternatives that were rejected, which is
 usually what you actually want when changing something.

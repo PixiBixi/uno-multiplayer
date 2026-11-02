@@ -25,6 +25,7 @@ order things happened in and what remains, not how they work.
 - [x] An error boundary, so a bad render explains itself instead of blanking
 - [x] The lobby owns the table configuration, so a guest can see the rules first
 - [x] Card themes: four card faces, chosen per player
+- [x] Bots: Easy, Normal and Hard seats, solo play, and a stand-in for a player who drops
 - [x] Deploy it somewhere real - live at <https://uno.jdelgado.fr>
 
 Where the reasoning for each lives:
@@ -33,6 +34,7 @@ Where the reasoning for each lives:
 | ---------------------------------------- | -------------------------------------------------------- |
 | The rules, the four table rules, scoring | `openwiki/domain/rules-and-scoring.md`                   |
 | Blazing, timers, rooms and seats         | `openwiki/domain/room-lifecycle.md`                      |
+| Bots, stand-ins and the tournament       | `openwiki/architecture/bots.md`                          |
 | Sound, card themes, language, layout     | `openwiki/architecture/client.md`                        |
 | Views, events, engine invariants         | `openwiki/architecture/server-authority.md`              |
 | One design document per feature          | `docs/superpowers/specs/`                                |
@@ -41,7 +43,6 @@ Where the reasoning for each lives:
 
 - [ ] **Your own hand falls below the fold on a phone** - see below
 - [ ] Play a full game on the deployed instance with actual people
-- [ ] A bot, so a table can be tried alone or filled to three
 
 ## Known issue: the hand is off-screen on a phone
 
