@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.2](https://github.com/PixiBixi/uno-multiplayer/compare/9778d82ea8b1fb91db1f2853ec6a67cc9b0975e2..v1.14.2) - 2026-11-03
+#### Miscellaneous Chores
+- (**deps**) update node.js to c6ad9e9 (#87) - ([9778d82](https://github.com/PixiBixi/uno-multiplayer/commit/9778d82ea8b1fb91db1f2853ec6a67cc9b0975e2)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.1](https://github.com/PixiBixi/uno-multiplayer/compare/c3f12b42cd95d13e590fb420c5d149341e4682da..v1.14.1) - 2026-11-02
 #### Bug Fixes
 - (**deps**) override glob and minimatch to patched majors (#86) - ([c3f12b4](https://github.com/PixiBixi/uno-multiplayer/commit/c3f12b42cd95d13e590fb420c5d149341e4682da)) - Jérémy
