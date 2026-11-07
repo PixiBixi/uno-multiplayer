@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.4](https://github.com/PixiBixi/uno-multiplayer/compare/4e4e84d36f44ca78f82c6179c07d56f0bff60a50..v1.14.4) - 2026-11-07
+#### Miscellaneous Chores
+- (**deps**) update dev-dependencies to v5.1.0 (#91) - ([4e4e84d](https://github.com/PixiBixi/uno-multiplayer/commit/4e4e84d36f44ca78f82c6179c07d56f0bff60a50)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.3](https://github.com/PixiBixi/uno-multiplayer/compare/20f316cbf24ec25cee93e2b37804b5ff772391ec..v1.14.3) - 2026-11-07
 #### Documentation
 - switch the hook commands to prek (#88) - ([20f316c](https://github.com/PixiBixi/uno-multiplayer/commit/20f316cbf24ec25cee93e2b37804b5ff772391ec)) - Jérémy
