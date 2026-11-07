@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.14.3](https://github.com/PixiBixi/uno-multiplayer/compare/20f316cbf24ec25cee93e2b37804b5ff772391ec..v1.14.3) - 2026-11-07
+#### Documentation
+- switch the hook commands to prek (#88) - ([20f316c](https://github.com/PixiBixi/uno-multiplayer/commit/20f316cbf24ec25cee93e2b37804b5ff772391ec)) - Jérémy
+#### Miscellaneous Chores
+- (**deps**) update dependency @vitejs/plugin-react to v6.2.1 (#90) - ([ddbac6d](https://github.com/PixiBixi/uno-multiplayer/commit/ddbac6d258ed5b542947dc8501ae6ee45bfe2233)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.2](https://github.com/PixiBixi/uno-multiplayer/compare/9778d82ea8b1fb91db1f2853ec6a67cc9b0975e2..v1.14.2) - 2026-11-03
 #### Miscellaneous Chores
 - (**deps**) update node.js to c6ad9e9 (#87) - ([9778d82](https://github.com/PixiBixi/uno-multiplayer/commit/9778d82ea8b1fb91db1f2853ec6a67cc9b0975e2)) - renovate[bot], renovate[bot]
