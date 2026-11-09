@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.6](https://github.com/PixiBixi/uno-multiplayer/compare/4444166b6d9117a0ff0386e50ff9527e7f132e34..v1.14.6) - 2026-11-09
+#### Miscellaneous Chores
+- (**deps**) lock file maintenance (#93) - ([4444166](https://github.com/PixiBixi/uno-multiplayer/commit/4444166b6d9117a0ff0386e50ff9527e7f132e34)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.5](https://github.com/PixiBixi/uno-multiplayer/compare/f9568f6afe1d1a182ca52818aed64b5ed6e9bb26..v1.14.5) - 2026-11-08
 #### Miscellaneous Chores
 - (**deps**) update zizmorcore/zizmor-action action to v0.8.1 (#92) - ([f9568f6](https://github.com/PixiBixi/uno-multiplayer/commit/f9568f6afe1d1a182ca52818aed64b5ed6e9bb26)) - renovate[bot], renovate[bot]
