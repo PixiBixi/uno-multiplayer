@@ -63,25 +63,28 @@ otherwise.
 allowed to throw: a misconfigured environment must stop the boot rather than
 surface later as confusing runtime behaviour.
 
-| Variable                               | Default                 | Purpose                                                                                                                                                                                         |
-| -------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PORT`                                 | `5050`                  | Not 5000 - macOS Control Center binds that for AirPlay                                                                                                                                          |
-| `HOST`                                 | `0.0.0.0`               | Listen address                                                                                                                                                                                  |
-| `CORS_ORIGIN`                          | empty                   | Comma-separated allowlist; empty means same-origin only. Also gates the socket handshake, which compares `Origin` with `Host`: a proxy that rewrites `Host` needs the public origin listed here |
-| `BEHIND_TLS`                           | `false`                 | See above. Only `'true'` or `'false'` - a security flag that read `TRUE` as false would be worse than one that refuses to boot                                                                  |
-| `GRACE_PERIOD_MS`                      | `60000`                 | How long a player who disconnects from the lobby keeps their seat; mid-match the seat is kept for the match                                                                                     |
-| `BOT_DELAY_FACTOR`                     | `1`                     | Multiplies every bot delay and the absent-turn grace, from `0.01` to `1`; lowered only to speed up e2e runs                                                                                     |
-| `MAX_ROOMS`                            | `500`                   | Cap on concurrent rooms, bounding memory                                                                                                                                                        |
-| `STATIC_ROOT`                          | `/app/web` in the image | Built client to serve; empty serves the API alone                                                                                                                                               |
-| `MOVE_BURST` / `MOVE_PER_SECOND`       | `20` / `2`              | Move rate limit, sized for a human                                                                                                                                                              |
-| `CHAT_BURST` / `CHAT_PER_SECOND`       | `5` / `0.5`             | Chat rate limit, tighter                                                                                                                                                                        |
-| `CREATE_BURST` / `CREATE_PER_SECOND`   | `3` / `0.1`             | Room creation, tighter still - a room costs a seat, a deck and up to three timers                                                                                                               |
-| `CONTROL_BURST` / `CONTROL_PER_SECOND` | `20` / `2`              | Configure, start, next round, restart, rejoin and the three bot actions (add, set level, remove), one bucket shared by all eight                                                                |
-| `TURN_URL`                             | empty                   | TURN relay for voice chat, e.g. `turn:turn.example.com:3478`. Empty leaves voice on STUN alone                                                                                                  |
-| `TURN_SECRET`                          | empty                   | Must equal coturn's `static-auth-secret`. Empty disables TURN                                                                                                                                   |
-| `TURN_TTL_SECONDS`                     | `86400`                 | Lifetime of a minted credential. Refuses anything under 60                                                                                                                                      |
-| `STUN_URL`                             | empty                   | STUN server. Worth setting even with TURN, since coturn serves both and a relay that is down takes its STUN with it                                                                             |
-| `LOG_LEVEL`                            | `info`                  | pino level                                                                                                                                                                                      |
+| Variable                                 | Default                 | Purpose                                                                                                                                                                                         |
+| ---------------------------------------- | ----------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PORT`                                   | `5050`                  | Not 5000 - macOS Control Center binds that for AirPlay                                                                                                                                          |
+| `HOST`                                   | `0.0.0.0`               | Listen address                                                                                                                                                                                  |
+| `CORS_ORIGIN`                            | empty                   | Comma-separated allowlist; empty means same-origin only. Also gates the socket handshake, which compares `Origin` with `Host`: a proxy that rewrites `Host` needs the public origin listed here |
+| `BEHIND_TLS`                             | `false`                 | See above. Only `'true'` or `'false'` - a security flag that read `TRUE` as false would be worse than one that refuses to boot                                                                  |
+| `GRACE_PERIOD_MS`                        | `60000`                 | How long a player who disconnects from the lobby keeps their seat; mid-match the seat is kept for the match                                                                                     |
+| `BOT_DELAY_FACTOR`                       | `1`                     | Multiplies every bot delay and the absent-turn grace, from `0.01` to `1`; lowered only to speed up e2e runs                                                                                     |
+| `MAX_ROOMS`                              | `500`                   | Cap on concurrent rooms, bounding memory                                                                                                                                                        |
+| `STATIC_ROOT`                            | `/app/web` in the image | Built client to serve; empty serves the API alone                                                                                                                                               |
+| `MOVE_BURST` / `MOVE_PER_SECOND`         | `20` / `2`              | Move rate limit, sized for a human                                                                                                                                                              |
+| `CHAT_BURST` / `CHAT_PER_SECOND`         | `5` / `0.5`             | Chat rate limit, tighter                                                                                                                                                                        |
+| `CREATE_BURST` / `CREATE_PER_SECOND`     | `3` / `0.1`             | Room creation, tighter still - a room costs a seat, a deck and up to three timers                                                                                                               |
+| `CONTROL_BURST` / `CONTROL_PER_SECOND`   | `20` / `2`              | Configure, start, next round, restart, rejoin and the three bot actions (add, set level, remove), one bucket shared by all eight                                                                |
+| `MAX_ROOMS_PER_IP`                       | `10`                    | Rooms one client IP may hold until they are purged, so one address cannot reach `MAX_ROOMS` alone                                                                                               |
+| `JOIN_BURST` / `JOIN_PER_SECOND`         | `10` / `0.5`            | Joins per client IP: enough for a family behind one NAT, slow for a room code guesser                                                                                                           |
+| `VOICE_CONTROL_BURST` / `..._PER_SECOND` | `20` / `2`              | `voice:join` and `voice:mute` per client IP, since each one fans out to the whole table                                                                                                         |
+| `TURN_URL`                               | empty                   | TURN relay for voice chat, e.g. `turn:turn.example.com:3478`. Empty leaves voice on STUN alone                                                                                                  |
+| `TURN_SECRET`                            | empty                   | Must equal coturn's `static-auth-secret`. Empty disables TURN                                                                                                                                   |
+| `TURN_TTL_SECONDS`                       | `86400`                 | Lifetime of a minted credential. Refuses anything under 60                                                                                                                                      |
+| `STUN_URL`                               | empty                   | STUN server. Worth setting even with TURN, since coturn serves both and a relay that is down takes its STUN with it                                                                             |
+| `LOG_LEVEL`                              | `info`                  | pino level                                                                                                                                                                                      |
 
 ## Voice chat and TURN
 
@@ -109,10 +112,11 @@ turnutils_uclient -W "$TURN_SECRET" -u probe -n 2 -c -y <public-ip>
 An empty `docker logs` is not evidence of health: a `syslog` directive in the config
 sends the log elsewhere, and no config at all is also quiet.
 
-`CREATE_BURST` is keyed by socket id, so it stops a double-tapped Create and a script
-reusing one connection - not one that reconnects, which gets a fresh allowance each time.
-The real bound on rooms is `MAX_ROOMS` together with a purge that can actually reclaim
-them: a socket that moved to another table used to leave its seat holding a dead socket
+`CREATE_BURST` and `MAX_ROOMS_PER_IP` are keyed by client IP, so a script that
+reconnects gets no fresh allowance. Behind Traefik that IP comes from `X-Forwarded-For`,
+which is only safe while the container port is not published on the host: a client
+reaching it directly from a private address could forge the header. The bound on rooms
+still rests on `MAX_ROOMS` together with a purge that can actually reclaim them: a socket that moved to another table used to leave its seat holding a dead socket
 id, which made `isEmpty()` permanently false and the room permanently irreclaimable. That
 is fixed, and it is the reason the ceiling means something.
 

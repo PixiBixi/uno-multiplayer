@@ -16,6 +16,8 @@ const envSchema = z.object({
    * Defaults to false because that is how the project ships and how the README's
    * quickstart runs it: `docker compose up` then open http://localhost:5050.
    *
+   * Also says a proxy sits in front, so X-Forwarded-For from a private peer is believed.
+   *
    * Deliberately strict about spelling. A security flag that read `TRUE` as false
    * would be worse than one that refuses to boot.
    */
@@ -45,14 +47,19 @@ const envSchema = z.object({
    * and up to three timers until somebody leaves it. Three in a burst then one every ten
    * seconds is beyond what anyone opening a table for friends will notice.
    *
-   * Worth being clear about what this does and does not buy. Keyed by socket id, so it
-   * stops a double-tapped Create and a script that reuses one connection - it does not
-   * stop one that reconnects, which gets a fresh bucket every time. The real bound on
-   * rooms is MAX_ROOMS with a purge that can actually reclaim them, which is a property
-   * of the seat-release path rather than of this limit.
+   * Keyed by client IP (see client-ip.ts), so a script that reconnects gets no fresh
+   * bucket. MAX_ROOMS_PER_IP bounds what one address holds whatever the rate.
    */
   CREATE_BURST: z.coerce.number().int().min(1).default(3),
   CREATE_PER_SECOND: z.coerce.number().min(0.01).default(0.1),
+  /** Rooms one client IP may hold at once, so one address cannot reach MAX_ROOMS alone. */
+  MAX_ROOMS_PER_IP: z.coerce.number().int().min(1).default(10),
+  /** Joins per client IP: room for a family behind one NAT, slow for a code guesser. */
+  JOIN_BURST: z.coerce.number().int().min(1).default(10),
+  JOIN_PER_SECOND: z.coerce.number().min(0.01).default(0.5),
+  /** voice:join and voice:mute per client IP; each one fans out to the whole table. */
+  VOICE_CONTROL_BURST: z.coerce.number().int().min(1).default(20),
+  VOICE_CONTROL_PER_SECOND: z.coerce.number().min(0.1).default(2),
   /** Lobby and match control (configure, start, next round, restart, rejoin), one shared bucket. */
   CONTROL_BURST: z.coerce.number().int().min(1).default(20),
   CONTROL_PER_SECOND: z.coerce.number().min(0.1).default(2),
@@ -78,6 +85,11 @@ export type Config = {
   chatPerSecond: number
   createBurst: number
   createPerSecond: number
+  maxRoomsPerIp: number
+  joinBurst: number
+  joinPerSecond: number
+  voiceControlBurst: number
+  voiceControlPerSecond: number
   controlBurst: number
   controlPerSecond: number
   turnUrl: string | null
@@ -111,6 +123,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     chatPerSecond: parsed.CHAT_PER_SECOND,
     createBurst: parsed.CREATE_BURST,
     createPerSecond: parsed.CREATE_PER_SECOND,
+    maxRoomsPerIp: parsed.MAX_ROOMS_PER_IP,
+    joinBurst: parsed.JOIN_BURST,
+    joinPerSecond: parsed.JOIN_PER_SECOND,
+    voiceControlBurst: parsed.VOICE_CONTROL_BURST,
+    voiceControlPerSecond: parsed.VOICE_CONTROL_PER_SECOND,
     controlBurst: parsed.CONTROL_BURST,
     controlPerSecond: parsed.CONTROL_PER_SECOND,
     turnUrl: parsed.TURN_URL.trim().length > 0 ? parsed.TURN_URL.trim() : null,

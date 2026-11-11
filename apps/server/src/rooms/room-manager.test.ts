@@ -68,6 +68,24 @@ describe('RoomManager.create', () => {
     expect(manager.create(DEFAULT_MATCH_GOAL).okay).toBe(true)
     expect(manager.create(DEFAULT_MATCH_GOAL)).toEqual({ okay: false, error: 'server_full' })
   })
+
+  it('caps the rooms one client holds, so one address cannot fill the server', () => {
+    const manager = new RoomManager({ maxRooms: 10, maxRoomsPerOwner: 2, gracePeriodMs: 0 })
+    const create = (owner: string) => manager.create(DEFAULT_MATCH_GOAL, null, undefined, owner)
+    expect(create('203.0.113.7').okay).toBe(true)
+    expect(create('203.0.113.7').okay).toBe(true)
+    expect(create('203.0.113.7')).toEqual({ okay: false, error: 'rate_limited' })
+    expect(create('198.51.100.1').okay).toBe(true)
+  })
+
+  it('gives a client its allowance back when its rooms are purged', () => {
+    const manager = new RoomManager({ maxRooms: 10, maxRoomsPerOwner: 1, gracePeriodMs: 0 })
+    const create = () => manager.create(DEFAULT_MATCH_GOAL, null, undefined, '203.0.113.7')
+    expect(create().okay).toBe(true)
+    expect(create().okay).toBe(false)
+    expect(manager.purge()).toBe(1)
+    expect(create().okay).toBe(true)
+  })
 })
 
 describe('RoomManager.purge', () => {

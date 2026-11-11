@@ -27,6 +27,7 @@ const voiceHarness = () => {
     voiceRooms: createVoiceRooms(),
     config: loadConfig({ NODE_ENV: 'test', LOG_LEVEL: 'silent' }),
     limiter: createRateLimiter({ capacity: 120, refillPerSecond: 10 }),
+    controlLimiter: createRateLimiter({ capacity: 20, refillPerSecond: 2 }),
     presenceOf: (socketId) => (socketId === 'socket-0' ? presence : undefined),
   }
 
@@ -45,11 +46,12 @@ const voiceHarness = () => {
     emptyPayloadSchema: z.object({}),
     parsed,
     // Always seated, and the limiter charged the way the real admit charges it.
-    admit: (schema, payload, _ack, limiter) => {
+    admit: (schema, payload, _ack, limiter, key = socket.id) => {
       const data = parsed(schema, payload)
-      if (data === null || (limiter !== undefined && !limiter.allow(socket.id))) return null
+      if (data === null || (limiter !== undefined && !limiter.allow(key))) return null
       return { data, presence }
     },
+    ip: '203.0.113.7',
   })
 
   const send = (event: string, payload: unknown): unknown => {
