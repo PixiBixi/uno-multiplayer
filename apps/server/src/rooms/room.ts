@@ -782,6 +782,8 @@ export class Room {
     // Takes the seat back at once, whatever the stand-in did meanwhile.
     member.standIn = false
     const supersededSocketId = previous !== null && previous !== socketId ? previous : null
+    // The host may still sit on a seat that dropped while nobody was there to take it over.
+    this.transferHostIfNeeded()
     return ok({ seat: member.seat, supersededSocketId })
   }
 

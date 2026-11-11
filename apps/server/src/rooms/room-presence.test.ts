@@ -155,3 +155,22 @@ describe('one socket, one seat', () => {
     expect(room.rejoin(tokens[1] ?? '', 'socket-1').okay).toBe(true)
   })
 })
+
+describe('host after a rejoin', () => {
+  it('moves the host to the first human back when the host seat is still away', () => {
+    const { room, tokens } = started('Ana', 'Ben')
+    room.disconnect('socket-0') // host moves to Ben
+    room.disconnect('socket-1') // nobody left to take it: stays on Ben
+    expect(room.hostSeat).toBe(1)
+
+    expect(room.rejoin(tokens[0] ?? '', 'socket-0b').okay).toBe(true)
+    expect(room.hostSeat).toBe(0)
+  })
+
+  it('leaves a present host alone when someone else comes back', () => {
+    const { room, tokens } = started('Ana', 'Ben')
+    room.disconnect('socket-1')
+    room.rejoin(tokens[1] ?? '', 'socket-1b')
+    expect(room.hostSeat).toBe(0)
+  })
+})
