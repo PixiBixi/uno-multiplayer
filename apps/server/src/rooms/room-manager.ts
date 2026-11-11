@@ -1,6 +1,13 @@
 import type { BotLevel, DelayKind, MatchGoal, ReactionKind, TableRules } from '@uno/engine'
 import { randomInt } from 'node:crypto'
-import { DEFAULT_TABLE_RULES, err, ok, sampleDelayMs, type Result } from '@uno/engine'
+import {
+  DEFAULT_TABLE_RULES,
+  err,
+  ok,
+  sampleDelayMs,
+  type DeckSeed,
+  type Result,
+} from '@uno/engine'
 import {
   ABSENT_TURN_GRACE_MS,
   BETWEEN_ROUNDS_SECONDS,
@@ -11,6 +18,7 @@ import {
   type MatchPace,
 } from '@uno/protocol'
 import { logger } from '../logger.js'
+import { randomDealSeed } from './deal-seed.js'
 import { generateRoomCode } from './room-code.js'
 import { Room } from './room.js'
 
@@ -23,7 +31,7 @@ type RoomManagerOptions = {
   maxRooms: number
   gracePeriodMs: number
   timers?: Timers
-  seedSource?: () => number
+  seedSource?: () => DeckSeed
   /** Injectable for the same reason the timers are: tests must not wait. */
   now?: () => number
   /** Multiplies every bot delay and the absent grace; below 1 only to speed up e2e. */
@@ -68,7 +76,7 @@ export class RoomManager {
   private readonly maxRooms: number
   private readonly gracePeriodMs: number
   private readonly timers: Timers
-  private readonly seedSource: () => number
+  private readonly seedSource: () => DeckSeed
   private readonly now: () => number
   private readonly botDelayFactor: number
   private delayRng: number
@@ -77,7 +85,7 @@ export class RoomManager {
     this.maxRooms = options.maxRooms
     this.gracePeriodMs = options.gracePeriodMs
     this.timers = options.timers ?? defaultTimers
-    this.seedSource = options.seedSource ?? (() => randomInt(2 ** 31 - 1))
+    this.seedSource = options.seedSource ?? randomDealSeed
     this.now = options.now ?? (() => Date.now())
     this.botDelayFactor = options.botDelayFactor ?? 1
     this.delayRng = options.delaySeed ?? randomInt(2 ** 31 - 1)
@@ -107,7 +115,7 @@ export class RoomManager {
   }
 
   /** The seed source, so a restart can draw one without owning randomness. */
-  nextSeed(): number {
+  nextSeed(): DeckSeed {
     return this.seedSource()
   }
 
