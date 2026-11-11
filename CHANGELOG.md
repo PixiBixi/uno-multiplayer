@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.7](https://github.com/PixiBixi/uno-multiplayer/compare/51653e7b172b9e14bd825fc91753e8b6ad5dd9d1..v1.14.7) - 2026-11-11
+#### Miscellaneous Chores
+- (**deps**) update docker/login-action action to v4.8.0 (#94) - ([51653e7](https://github.com/PixiBixi/uno-multiplayer/commit/51653e7b172b9e14bd825fc91753e8b6ad5dd9d1)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.6](https://github.com/PixiBixi/uno-multiplayer/compare/4444166b6d9117a0ff0386e50ff9527e7f132e34..v1.14.6) - 2026-11-09
 #### Miscellaneous Chores
 - (**deps**) lock file maintenance (#93) - ([4444166](https://github.com/PixiBixi/uno-multiplayer/commit/4444166b6d9117a0ff0386e50ff9527e7f132e34)) - renovate[bot], renovate[bot]
