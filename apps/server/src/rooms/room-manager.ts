@@ -523,7 +523,7 @@ const graceKey = (code: string, seat: number): string => `${code}#${seat}`
 /* A jump-in window belongs to the card on top and a call-out to its target: either
    changing opens a new window with a fresh delay, as the tournament models it. */
 const reactionKey = (room: Room, seat: number, kind: ReactionKind): string => {
-  if (kind === 'jumpIn') return `${seat}:jumpIn:${room.viewFor(seat)?.discardTop.id ?? 'none'}`
+  if (kind === 'jumpIn') return `${seat}:jumpIn:${room.discardTopId ?? 'none'}`
   if (kind === 'callOut') return `${seat}:callOut:${room.exposedSeat() ?? 'none'}`
   return `${seat}:${kind}`
 }

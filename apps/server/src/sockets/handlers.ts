@@ -149,8 +149,10 @@ export function registerSocketHandlers(
   const broadcastViews = (room: Room): void => {
     for (let seat = 0; seat < room.memberCount; seat++) {
       const socketId = room.memberAt(seat)?.socketId
+      // Checked first: a bot or absent seat would have its view built and thrown away.
+      if (socketId == null) continue
       const view = room.viewFor(seat)
-      if (socketId == null || view === null) continue
+      if (view === null) continue
       io.to(socketId).emit('game:view', view)
     }
   }

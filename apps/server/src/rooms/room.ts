@@ -24,6 +24,7 @@ import {
   startMatch,
   type BotLevel,
   type Card,
+  type CardId,
   type DeckSeed,
   type GameState,
   type MatchGoal,
@@ -249,6 +250,11 @@ export class Room {
 
   get dealSeed(): DeckSeed | null {
     return this.currentDealSeed
+  }
+
+  /** The card on top of the discard pile, read straight off the game rather than a view. */
+  get discardTopId(): CardId | null {
+    return this.game?.discardPile[this.game.discardPile.length - 1]?.id ?? null
   }
 
   get hostSeat(): number {
