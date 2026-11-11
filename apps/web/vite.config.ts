@@ -3,7 +3,8 @@ import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [react()],
-  build: { outDir: 'dist', sourcemap: true },
+  // Maps are written for local debugging but not referenced from the bundle; the image drops them.
+  build: { outDir: 'dist', sourcemap: 'hidden' },
   server: {
     port: 5173,
     // In development the client runs on its own port, so the socket handshake is

@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
 
-# Both stages track .nvmrc, not the `engines` floor in package.json. The floor is what
+# Every stage tracks .nvmrc, not the `engines` floor in package.json. The floor is what
 # this code still runs on; .nvmrc is the version CI actually lints, covers and runs the
 # browser suite against, so it is the one thing production should match. They
 # drifted apart once - the image shipped 22 while everything else validated 24 - and a CI
@@ -27,10 +27,20 @@ COPY apps apps
 # leaving their dist/ missing. The image must not depend on a clean working tree.
 RUN find . -name '*.tsbuildinfo' -not -path './node_modules/*' -delete \
  && rm -rf packages/*/dist apps/*/dist apps/*/dist-types \
- && npm run build
+ && npm run build \
+ && find apps/web/dist -name '*.map' -delete
 
-# Drop dev dependencies so only what runs gets copied forward.
-RUN npm prune --omit=dev
+# ---- server dependencies ----
+# The server workspace alone: react-dom and socket.io-client are bundled into web/dist,
+# and a plain `npm prune --omit=dev` kept them because @uno/web lists them as dependencies.
+FROM node:26-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216 AS deps
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY packages/engine/package.json packages/engine/
+COPY packages/protocol/package.json packages/protocol/
+COPY apps/server/package.json apps/server/
+COPY apps/web/package.json apps/web/
+RUN npm ci --omit=dev --workspace @uno/server
 
 # ---- runtime ----
 FROM node:26-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216 AS runtime
@@ -43,7 +53,7 @@ ENV NODE_ENV=production \
 
 # node:alpine already ships an unprivileged `node` user; use it rather than
 # inventing another.
-COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=deps --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/packages/engine/dist ./packages/engine/dist
 COPY --from=build --chown=node:node /app/packages/engine/package.json ./packages/engine/
 COPY --from=build --chown=node:node /app/packages/protocol/dist ./packages/protocol/dist
