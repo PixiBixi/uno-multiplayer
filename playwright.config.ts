@@ -62,6 +62,14 @@ export default defineConfig({
             // budget sized for a person would rightly throttle.
             CHAT_BURST: '5000',
             CHAT_PER_SECOND: '5000',
+            // Every browser shares 127.0.0.1, and those limits are per client IP.
+            CREATE_BURST: '5000',
+            CREATE_PER_SECOND: '5000',
+            JOIN_BURST: '5000',
+            JOIN_PER_SECOND: '5000',
+            VOICE_CONTROL_BURST: '5000',
+            VOICE_CONTROL_PER_SECOND: '5000',
+            MAX_ROOMS_PER_IP: '5000',
             // Bot delays and the absent grace shrink 20x so a bot table finishes in seconds.
             BOT_DELAY_FACTOR: '0.05',
           },
