@@ -51,7 +51,7 @@ const tableOf = (opts: {
     gracePeriodMs: 60_000,
     timers: clock.timers,
     now: clock.now,
-    seedSource: () => 42,
+    seedSource: () => 2,
     delaySeed: 7,
   })
   const created = rooms.create(DEFAULT_MATCH_GOAL, opts.pace ?? null, opts.rules)
@@ -241,7 +241,7 @@ describe('the absent grace', () => {
       gracePeriodMs: 60_000,
       timers: clock.timers,
       now: clock.now,
-      seedSource: () => 42,
+      seedSource: () => 2,
       delaySeed: 7,
       botDelayFactor: 0.01,
     })
@@ -514,6 +514,33 @@ describe('turn clock and bot timers across retimes', () => {
       { type: 'botTookOver', seat: 1 },
       { type: 'turnTimedOut', seat: 1 },
     ])
+  })
+
+  it('keys a jump-in window on the top card without building a view', () => {
+    const { rooms, room } = tableOf({
+      humans: ['Ana'],
+      bots: ['hard', 'hard'],
+      rules: { ...DEFAULT_TABLE_RULES, jumpIn: true },
+    })
+    let checked = false
+    for (let i = 0; i < 5000 && !checked; i++) {
+      if (room.pendingReactions().some((r) => r.kind === 'jumpIn')) {
+        const views = vi.spyOn(room, 'viewFor')
+        rooms.armReactions(room, () => undefined)
+        expect(views).not.toHaveBeenCalled()
+        rooms.cancelBots(room)
+        checked = true
+        continue
+      }
+      if (room.betweenRounds) {
+        room.nextRound(room.hostSeat, 1000 + i)
+        continue
+      }
+      if (room.phase !== 'playing') break
+      if (room.turnController() !== null) room.botStep()
+      else play(room, 0, humanMove(room, 0), () => undefined)
+    }
+    expect(checked).toBe(true)
   })
 
   it("a Hard bot's jump-in arms within 1000-3000 ms and a Normal stand-in arms none", () => {

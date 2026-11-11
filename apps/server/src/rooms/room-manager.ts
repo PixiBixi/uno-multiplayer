@@ -1,6 +1,13 @@
 import type { BotLevel, DelayKind, MatchGoal, ReactionKind, TableRules } from '@uno/engine'
 import { randomInt } from 'node:crypto'
-import { DEFAULT_TABLE_RULES, err, ok, sampleDelayMs, type Result } from '@uno/engine'
+import {
+  DEFAULT_TABLE_RULES,
+  err,
+  ok,
+  sampleDelayMs,
+  type DeckSeed,
+  type Result,
+} from '@uno/engine'
 import {
   ABSENT_TURN_GRACE_MS,
   BETWEEN_ROUNDS_SECONDS,
@@ -11,6 +18,7 @@ import {
   type MatchPace,
 } from '@uno/protocol'
 import { logger } from '../logger.js'
+import { randomDealSeed } from './deal-seed.js'
 import { generateRoomCode } from './room-code.js'
 import { Room } from './room.js'
 
@@ -21,9 +29,11 @@ export type Timers = {
 
 type RoomManagerOptions = {
   maxRooms: number
+  /** Rooms one owner (a client IP) may hold at once. Unlimited when omitted. */
+  maxRoomsPerOwner?: number
   gracePeriodMs: number
   timers?: Timers
-  seedSource?: () => number
+  seedSource?: () => DeckSeed
   /** Injectable for the same reason the timers are: tests must not wait. */
   now?: () => number
   /** Multiplies every bot delay and the absent grace; below 1 only to speed up e2e. */
@@ -66,18 +76,23 @@ export class RoomManager {
   /** Told the code of each purged room, so the socket layer can drop what it keeps per room. */
   private readonly purgeListeners: ((code: string) => void)[] = []
   private readonly maxRooms: number
+  private readonly maxRoomsPerOwner: number
+  /** Who created each room, and how many each owner holds, until the room is purged. */
+  private readonly ownerOf = new Map<string, string>()
+  private readonly ownedCount = new Map<string, number>()
   private readonly gracePeriodMs: number
   private readonly timers: Timers
-  private readonly seedSource: () => number
+  private readonly seedSource: () => DeckSeed
   private readonly now: () => number
   private readonly botDelayFactor: number
   private delayRng: number
 
   constructor(options: RoomManagerOptions) {
     this.maxRooms = options.maxRooms
+    this.maxRoomsPerOwner = options.maxRoomsPerOwner ?? Number.POSITIVE_INFINITY
     this.gracePeriodMs = options.gracePeriodMs
     this.timers = options.timers ?? defaultTimers
-    this.seedSource = options.seedSource ?? (() => randomInt(2 ** 31 - 1))
+    this.seedSource = options.seedSource ?? randomDealSeed
     this.now = options.now ?? (() => Date.now())
     this.botDelayFactor = options.botDelayFactor ?? 1
     this.delayRng = options.delaySeed ?? randomInt(2 ** 31 - 1)
@@ -91,8 +106,11 @@ export class RoomManager {
     goal: MatchGoal,
     pace: MatchPace = null,
     rules: TableRules = DEFAULT_TABLE_RULES,
+    owner: string | null = null,
   ): Result<Room, ErrorCode> {
     if (this.rooms.size >= this.maxRooms) return err('server_full')
+    const owned = owner === null ? 0 : (this.ownedCount.get(owner) ?? 0)
+    if (owned >= this.maxRoomsPerOwner) return err('rate_limited')
 
     // Retry on the astronomically unlikely collision rather than overwrite.
     let code = generateRoomCode()
@@ -103,11 +121,15 @@ export class RoomManager {
 
     const room = new Room(code, this.seedSource(), goal, pace, rules)
     this.rooms.set(code, room)
+    if (owner !== null) {
+      this.ownerOf.set(code, owner)
+      this.ownedCount.set(owner, owned + 1)
+    }
     return ok(room)
   }
 
   /** The seed source, so a restart can draw one without owning randomness. */
-  nextSeed(): number {
+  nextSeed(): DeckSeed {
     return this.seedSource()
   }
 
@@ -445,6 +467,16 @@ export class RoomManager {
     room.setNextRoundDeadline(null)
   }
 
+  /** Gives a purged room back to its owner's allowance; the count is dropped at zero. */
+  private releaseOwner(code: string): void {
+    const owner = this.ownerOf.get(code)
+    if (owner === undefined) return
+    this.ownerOf.delete(code)
+    const left = (this.ownedCount.get(owner) ?? 1) - 1
+    if (left > 0) this.ownedCount.set(owner, left)
+    else this.ownedCount.delete(owner)
+  }
+
   /**
    * Drops rooms nobody is connected to. Returns how many went away.
    *
@@ -478,6 +510,7 @@ export class RoomManager {
       this.cancelBots(room)
       this.rooms.delete(code)
       this.emptySince.delete(code)
+      this.releaseOwner(code)
       for (const listener of this.purgeListeners) listener(code)
       removed++
     }
@@ -490,7 +523,7 @@ const graceKey = (code: string, seat: number): string => `${code}#${seat}`
 /* A jump-in window belongs to the card on top and a call-out to its target: either
    changing opens a new window with a fresh delay, as the tournament models it. */
 const reactionKey = (room: Room, seat: number, kind: ReactionKind): string => {
-  if (kind === 'jumpIn') return `${seat}:jumpIn:${room.viewFor(seat)?.discardTop.id ?? 'none'}`
+  if (kind === 'jumpIn') return `${seat}:jumpIn:${room.discardTopId ?? 'none'}`
   if (kind === 'callOut') return `${seat}:callOut:${room.exposedSeat() ?? 'none'}`
   return `${seat}:${kind}`
 }

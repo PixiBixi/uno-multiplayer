@@ -16,6 +16,10 @@ import { gameReducer, initialState, type Action, type ClientState } from './game
 
 type TypedSocket = Socket<ServerToClient, ClientToServer>
 
+/* socket.io drops a plain ack when the socket disconnects and never calls it; one sent
+   with timeout() is called with an error instead, which frees the create and join guards. */
+const ACK_TIMEOUT_MS = 10_000
+
 export function useGameSocket() {
   const messages = useMessages()
 
@@ -43,8 +47,14 @@ export function useGameSocket() {
       const token = code === null ? null : readSession(code)
       if (code === null || token === null) return
       socket.emit('room:rejoin', { roomCode: code, sessionToken: token }, (result) => {
-        if (result.ok) dispatch({ type: 'joined', roomCode: code, seat: result.seat })
-        else clearSession(code)
+        if (result.ok) {
+          dispatch({ type: 'joined', roomCode: code, seat: result.seat })
+          return
+        }
+        clearSession(code)
+        // A restart lost the room: back to the home screen rather than a frozen table.
+        dispatch({ type: 'left' })
+        dispatch({ type: 'error', message: messagesRef.current.error[result.error] })
       })
     }
     const onDisconnect = () => dispatch({ type: 'connection', connection: 'lost' })
@@ -126,22 +136,27 @@ export function useGameSocket() {
 
   const createRoom = useCallback(
     (playerName: string) => {
-      if (creating.current) return
+      const socket = socketRef.current
+      if (creating.current || socket === null) return
       creating.current = true
-      socketRef.current?.emit(
-        'room:create',
-        { playerName, goal: DEFAULT_MATCH_GOAL, pace: null, rules: DEFAULT_TABLE_RULES },
-        (result) => {
-          creating.current = false
-          if (!result.ok) {
-            fail(result.error)
-            return
-          }
-          writeSession(result.roomCode, result.sessionToken)
-          writeRoomCodeToUrl(result.roomCode)
-          dispatch({ type: 'joined', roomCode: result.roomCode, seat: result.seat })
-        },
-      )
+      socket
+        .timeout(ACK_TIMEOUT_MS)
+        .emit(
+          'room:create',
+          { playerName, goal: DEFAULT_MATCH_GOAL, pace: null, rules: DEFAULT_TABLE_RULES },
+          (error, result) => {
+            creating.current = false
+            // Dropped or unanswered: the connection banner already says so, the button is free.
+            if (error) return
+            if (!result.ok) {
+              fail(result.error)
+              return
+            }
+            writeSession(result.roomCode, result.sessionToken)
+            writeRoomCodeToUrl(result.roomCode)
+            dispatch({ type: 'joined', roomCode: result.roomCode, seat: result.seat })
+          },
+        )
     },
     [fail],
   )
@@ -187,18 +202,22 @@ export function useGameSocket() {
 
   const joinRoom = useCallback(
     (roomCode: string, playerName: string) => {
-      if (joining.current) return
+      const socket = socketRef.current
+      if (joining.current || socket === null) return
       joining.current = true
-      socketRef.current?.emit('room:join', { roomCode, playerName }, (result) => {
-        joining.current = false
-        if (!result.ok) {
-          fail(result.error)
-          return
-        }
-        writeSession(roomCode, result.sessionToken)
-        writeRoomCodeToUrl(roomCode)
-        dispatch({ type: 'joined', roomCode, seat: result.seat })
-      })
+      socket
+        .timeout(ACK_TIMEOUT_MS)
+        .emit('room:join', { roomCode, playerName }, (error, result) => {
+          joining.current = false
+          if (error) return
+          if (!result.ok) {
+            fail(result.error)
+            return
+          }
+          writeSession(roomCode, result.sessionToken)
+          writeRoomCodeToUrl(roomCode)
+          dispatch({ type: 'joined', roomCode, seat: result.seat })
+        })
     },
     [fail],
   )

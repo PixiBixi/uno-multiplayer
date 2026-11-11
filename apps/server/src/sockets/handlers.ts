@@ -20,6 +20,7 @@ import type { Config } from '../config.js'
 import { logger } from '../logger.js'
 import type { RoomManager } from '../rooms/room-manager.js'
 import type { Room } from '../rooms/room.js'
+import { clientIp } from '../security/client-ip.js'
 import { isAllowedOrigin } from '../security/origin.js'
 import { createRateLimiter, type RateLimiter } from '../security/rate-limit.js'
 import type { AckFailure, Presence, TypedServer, TypedSocket } from './types.js'
@@ -110,10 +111,15 @@ export function registerSocketHandlers(
     refillPerSecond: config.chatPerSecond,
   })
   /* A room is the most expensive thing a client can ask for - a seat, a deck and up to
-     three timers, held until somebody gives it up. It was the only unlimited event. */
+     three timers. Keyed by client IP: a reconnecting script must not get a fresh bucket. */
   const createLimiter = createRateLimiter({
     capacity: config.createBurst,
     refillPerSecond: config.createPerSecond,
+  })
+  // Per client IP too: it is what bounds guessing room codes.
+  const joinLimiter = createRateLimiter({
+    capacity: config.joinBurst,
+    refillPerSecond: config.joinPerSecond,
   })
   /* Configure, start, next round, restart and rejoin each re-broadcast the table and some
      re-deal it. One shared bucket, so alternating between them buys no extra allowance. */
@@ -132,6 +138,10 @@ export function registerSocketHandlers(
     voiceRooms,
     config,
     limiter: voiceLimiter,
+    controlLimiter: createRateLimiter({
+      capacity: config.voiceControlBurst,
+      refillPerSecond: config.voiceControlPerSecond,
+    }),
     presenceOf: (socketId: string) => presences.get(socketId),
   }
 
@@ -139,8 +149,10 @@ export function registerSocketHandlers(
   const broadcastViews = (room: Room): void => {
     for (let seat = 0; seat < room.memberCount; seat++) {
       const socketId = room.memberAt(seat)?.socketId
+      // Checked first: a bot or absent seat would have its view built and thrown away.
+      if (socketId == null) continue
       const view = room.viewFor(seat)
-      if (socketId == null || view === null) continue
+      if (view === null) continue
       io.to(socketId).emit('game:view', view)
     }
   }
@@ -244,6 +256,7 @@ export function registerSocketHandlers(
   }
 
   io.on('connection', (socket: TypedSocket) => {
+    const ip = clientIp(socket.handshake, config.behindTls)
     /* Every client event takes (payload, ack), and every handler acks after it has
        changed state. A missing callback threw there and skipped the broadcast. */
     socket.use((packet, next) => {
@@ -272,8 +285,8 @@ export function registerSocketHandlers(
     }
 
     /** False after telling the caller it is over this budget. */
-    const within = (limiter: RateLimiter, ack: Ack): boolean => {
-      if (limiter.allow(socket.id)) return true
+    const within = (limiter: RateLimiter, ack: Ack, key: string = socket.id): boolean => {
+      if (limiter.allow(key)) return true
       ack({ ok: false, error: 'rate_limited' })
       return false
     }
@@ -301,16 +314,23 @@ export function registerSocketHandlers(
       payload: unknown,
       ack: Ack,
       limiter?: RateLimiter,
+      key?: string,
     ): { data: T; presence: Presence } | null => {
       const data = parsed(schema, payload, ack)
       if (data === null) return null
       const presence = seated(ack)
       if (presence === null) return null
-      if (limiter !== undefined && !within(limiter, ack)) return null
+      if (limiter !== undefined && !within(limiter, ack, key)) return null
       return { data, presence }
     }
 
-    registerVoiceHandlers(voiceContext, socket, { attempt, emptyPayloadSchema, parsed, admit })
+    registerVoiceHandlers(voiceContext, socket, {
+      attempt,
+      emptyPayloadSchema,
+      parsed,
+      admit,
+      ip,
+    })
 
     socket.on('room:create', (payload, ack) => {
       attempt(ack, () => {
@@ -318,8 +338,8 @@ export function registerSocketHandlers(
         if (data === null) return
         /* Checked after the payload and before the room exists, so a refused burst costs
            nothing and cannot leave a half-created table behind. */
-        if (!within(createLimiter, ack)) return
-        const created = rooms.create(data.goal, data.pace, data.rules)
+        if (!within(createLimiter, ack, ip)) return
+        const created = rooms.create(data.goal, data.pace, data.rules, ip)
         if (refused(created, ack)) return
         const room = created.value
         const joined = room.join(data.playerName, socket.id)
@@ -339,6 +359,7 @@ export function registerSocketHandlers(
       attempt(ack, () => {
         const data = parsed(roomJoinSchema, payload, ack)
         if (data === null) return
+        if (!within(joinLimiter, ack, ip)) return
         const room = rooms.get(data.roomCode)
         if (room === null) {
           ack({ ok: false, error: 'room_not_found' })
@@ -522,12 +543,9 @@ export function registerSocketHandlers(
         forgetVoiceSocket(voiceContext, socket)
         moveLimiter.forget(socket.id)
         chatLimiter.forget(socket.id)
-        /* Only here, and deliberately not in `release`: the socket is genuinely gone, so
-           its bucket is dead weight. `release` runs on every create - it is how a socket
-           gives up its old table - so forgetting there would refill the create bucket on
-           each create and cancel the limit it exists to impose. The control bucket
-           follows the same rule, since leaving and rejoining would refill it. */
-        createLimiter.forget(socket.id)
+        /* Only here, and deliberately not in `release`: leaving and rejoining would refill
+           the control bucket. The per-IP buckets are never forgotten here, or reconnecting
+           would refill them; the limiter drops them itself once they are full again. */
         controlLimiter.forget(socket.id)
         const presence = presences.get(socket.id)
         presences.delete(socket.id)

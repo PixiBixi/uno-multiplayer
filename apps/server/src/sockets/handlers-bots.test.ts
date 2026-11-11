@@ -2,7 +2,7 @@ import { createServer, type Server as HttpServer } from 'node:http'
 import { DEFAULT_TABLE_RULES } from '@uno/engine'
 import { DEFAULT_MATCH_GOAL, type GameEvent, type LobbyView } from '@uno/protocol'
 import { io as connect, type Socket } from 'socket.io-client'
-import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { loadConfig } from '../config.js'
 import { RoomManager, type Timers } from '../rooms/room-manager.js'
 import { registerSocketHandlers } from './handlers.js'
@@ -159,5 +159,22 @@ describe('room:leave mid-match', () => {
       await emit<PlainAck>(comeback, 'room:rejoin', { roomCode, sessionToken: guestToken }),
     ).toEqual({ ok: false, error: 'invalid_session' })
     expect(room?.isBotControlled(1)).toBe(true)
+  })
+})
+
+describe('views for bot seats', () => {
+  it('builds no view for a seat nobody is connected to', async () => {
+    const { host, roomCode } = await lobby()
+    await emit<PlainAck>(host, 'room:addBot', { level: 'easy' })
+    await emit<PlainAck>(host, 'room:addBot', { level: 'easy' })
+    const room = rooms.get(roomCode)
+    if (room === null) throw new Error('expected the room')
+    const views = vi.spyOn(room, 'viewFor')
+
+    expect(await emit<PlainAck>(host, 'game:start', {})).toEqual({ ok: true })
+    const seats = views.mock.calls.map(([seat]) => seat)
+    expect(seats).toContain(0)
+    expect(seats).not.toContain(2)
+    expect(seats).not.toContain(3)
   })
 })

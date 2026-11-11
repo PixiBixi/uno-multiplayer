@@ -136,3 +136,41 @@ describe('Room.expireGrace', () => {
     expect(room.expireGrace(2)).toEqual([])
   })
 })
+
+describe('one socket, one seat', () => {
+  it('refuses a rejoin that would put a seated socket in a second seat', () => {
+    const { room, tokens } = started('Ana', 'Ben', 'Cleo')
+    room.disconnect('socket-0')
+    // socket-1 holds seat 1 and presents seat 0's token.
+    expect(room.rejoin(tokens[0] ?? '', 'socket-1')).toEqual({
+      okay: false,
+      error: 'invalid_session',
+    })
+    expect(room.memberAt(0)?.socketId).toBeNull()
+    expect(room.memberAt(1)?.socketId).toBe('socket-1')
+  })
+
+  it('still lets a socket rejoin the seat it already holds', () => {
+    const { room, tokens } = started('Ana', 'Ben')
+    expect(room.rejoin(tokens[1] ?? '', 'socket-1').okay).toBe(true)
+  })
+})
+
+describe('host after a rejoin', () => {
+  it('moves the host to the first human back when the host seat is still away', () => {
+    const { room, tokens } = started('Ana', 'Ben')
+    room.disconnect('socket-0') // host moves to Ben
+    room.disconnect('socket-1') // nobody left to take it: stays on Ben
+    expect(room.hostSeat).toBe(1)
+
+    expect(room.rejoin(tokens[0] ?? '', 'socket-0b').okay).toBe(true)
+    expect(room.hostSeat).toBe(0)
+  })
+
+  it('leaves a present host alone when someone else comes back', () => {
+    const { room, tokens } = started('Ana', 'Ben')
+    room.disconnect('socket-1')
+    room.rejoin(tokens[1] ?? '', 'socket-1b')
+    expect(room.hostSeat).toBe(0)
+  })
+})

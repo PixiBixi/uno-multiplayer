@@ -211,9 +211,14 @@ away from the server about when time is up.
 
 ## Rate limiting
 
-Keyed on the Socket.IO connection, **not** on the client IP. That is what keeps it
-correct behind a reverse proxy where every request arrives from the same address.
-Buckets are forgotten on disconnect, so the map does not grow.
+Two keys. Moves, chat, voice signals and the control bucket are keyed on the Socket.IO
+connection and forgotten on disconnect. The abuse limits, `room:create`, `room:join`,
+`voice:join` and `voice:mute`, plus the cap on rooms held (`MAX_ROOMS_PER_IP`), are keyed
+on the **client IP** (`apps/server/src/security/client-ip.ts`), so a script that opens a
+fresh socket per request gets no fresh allowance. With `BEHIND_TLS=true` that IP is the
+leftmost `X-Forwarded-For` entry, read only when the peer is loopback or unique-local (the
+proxy); otherwise it is the socket address. A bucket that has refilled is dropped by the
+limiter itself, so per-IP keys do not grow the map either.
 
 Moves, chat, creation and voice signals each have a bucket. `room:configure`,
 `game:start`, `game:nextRound`, `game:restart` and `room:rejoin` share **one** control

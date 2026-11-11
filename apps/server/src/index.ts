@@ -21,6 +21,7 @@ process.on('unhandledRejection', (reason) => {
 const app = await buildApp(config)
 const rooms = new RoomManager({
   maxRooms: config.maxRooms,
+  maxRoomsPerOwner: config.maxRoomsPerIp,
   gracePeriodMs: config.gracePeriodMs,
   botDelayFactor: config.botDelayFactor,
 })

@@ -53,6 +53,29 @@ describe('createRateLimiter', () => {
     expect(limiter.allow('a')).toBe(true)
   })
 
+  it('drops keys whose bucket has refilled, so keys nobody forgets cannot pile up', () => {
+    const clock = controllableClock()
+    // Full again 2 s after its last use.
+    const limiter = createRateLimiter({ capacity: 2, refillPerSecond: 1, now: clock.now })
+    for (let i = 0; i < 1000; i++) limiter.allow(`ip-${i}`)
+    expect(limiter.size()).toBe(1000)
+    clock.advance(2_000)
+    limiter.allow('late')
+    expect(limiter.size()).toBe(1)
+  })
+
+  it('keeps a key whose bucket is still refilling, so a sweep never resets a limit', () => {
+    const clock = controllableClock()
+    const limiter = createRateLimiter({ capacity: 2, refillPerSecond: 1, now: clock.now })
+    limiter.allow('a')
+    limiter.allow('a')
+    clock.advance(1_999)
+    limiter.allow('b')
+    expect(limiter.size()).toBe(2)
+    expect(limiter.allow('a')).toBe(true)
+    expect(limiter.allow('a')).toBe(false)
+  })
+
   it('tolerates a clock that does not move', () => {
     const limiter = createRateLimiter({ capacity: 1, refillPerSecond: 5, now: () => 42 })
     expect(limiter.allow('a')).toBe(true)

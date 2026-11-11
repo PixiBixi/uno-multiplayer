@@ -24,6 +24,8 @@ import {
   startMatch,
   type BotLevel,
   type Card,
+  type CardId,
+  type DeckSeed,
   type GameState,
   type MatchGoal,
   type MatchState,
@@ -77,7 +79,9 @@ type RoomPhase = 'lobby' | 'playing' | 'finished'
  */
 export class Room {
   readonly code: string
-  private readonly seed: number
+  private readonly seed: DeckSeed
+  /** The seed of the deal in play, kept so a round can be replayed; never sent to a client. */
+  private currentDealSeed: DeckSeed | null = null
   private readonly members: Member[] = []
   private host = 0
   private nextAddedAt = 0
@@ -116,7 +120,7 @@ export class Room {
 
   constructor(
     code: string,
-    seed: number,
+    seed: DeckSeed,
     goal: MatchGoal,
     pace: MatchPace = null,
     rules: TableRules = DEFAULT_TABLE_RULES,
@@ -126,7 +130,9 @@ export class Room {
     this.goal = goal
     this.pace = pace
     this.rules = rules
-    this.botRng = Math.imul(seed ^ BOT_STREAM_SALT, 0x85ebca6b) >>> 0
+    // Folded to one word: the bots' choices then reveal 32 bits of a 128-bit deal seed at most.
+    const word = typeof seed === 'number' ? seed : seed[0] ^ seed[1] ^ seed[2] ^ seed[3]
+    this.botRng = Math.imul(word ^ BOT_STREAM_SALT, 0x85ebca6b) >>> 0
   }
 
   /**
@@ -218,7 +224,7 @@ export class Room {
    * check, and it reports nothing when the table can no longer deal - everybody
    * having left during the pause is an ordinary way for a fast match to end.
    */
-  dealNextRoundAutomatically(nextSeed: number): GameEvent[] {
+  dealNextRoundAutomatically(nextSeed: DeckSeed): GameEvent[] {
     if (this.game === null || this.match === null) return []
     if (this.game.phase !== 'finished' || this.matchOver) return []
 
@@ -240,6 +246,15 @@ export class Room {
   get phase(): RoomPhase {
     if (this.game === null) return 'lobby'
     return this.game.phase === 'finished' ? 'finished' : 'playing'
+  }
+
+  get dealSeed(): DeckSeed | null {
+    return this.currentDealSeed
+  }
+
+  /** The card on top of the discard pile, read straight off the game rather than a view. */
+  get discardTopId(): CardId | null {
+    return this.game?.discardPile[this.game.discardPile.length - 1]?.id ?? null
   }
 
   get hostSeat(): number {
@@ -469,7 +484,7 @@ export class Room {
    * which keeps the 108-card invariant. Every other seat is dealt as active, absent
    * humans included: a bot stands in for them on their turn.
    */
-  private dealRound(seed: number): Result<GameState, ErrorCode> {
+  private dealRound(seed: DeckSeed): Result<GameState, ErrorCode> {
     if (this.seatedCount() < MIN_SEATS) return err('too_few_players')
 
     const init = initGame({
@@ -485,6 +500,7 @@ export class Room {
       if (isVacant(member)) game = markSeatLeft(game, member.seat)
     }
     // Every successful deal is assigned by the caller, so the old round's memory goes here.
+    this.currentDealSeed = seed
     this.history = EMPTY_HISTORY
     // The opening seat may be a vacancy, exactly as seat 0 could be.
     return ok(skipDisconnectedTurn(game))
@@ -543,7 +559,7 @@ export class Room {
    * as a parameter for the same reason restart's does - a Room that draws its own
    * randomness stops being reproducible.
    */
-  nextRound(bySeat: number, nextSeed: number): Result<GameEvent[], ErrorCode> {
+  nextRound(bySeat: number, nextSeed: DeckSeed): Result<GameEvent[], ErrorCode> {
     if (this.game === null || this.match === null) return err('game_not_started')
     if (this.game.phase !== 'finished') return err('round_in_progress')
     if (this.matchOver) return err('match_over')
@@ -561,7 +577,7 @@ export class Room {
    * nextRound on purpose - the host may want either, and letting one action mean
    * both depending on hidden state is how a player loses a scoreboard by accident.
    */
-  restart(bySeat: number, nextSeed: number): Result<GameEvent[], ErrorCode> {
+  restart(bySeat: number, nextSeed: DeckSeed): Result<GameEvent[], ErrorCode> {
     if (this.game === null) return err('game_not_started')
     if (this.game.phase !== 'finished') return err('round_in_progress')
     if (bySeat !== this.host) return err('not_host')
@@ -761,6 +777,10 @@ export class Room {
     if (member === undefined || member.status === 'left' || member.kind === 'bot') {
       return err('invalid_session')
     }
+    /* One seat per socket: a second one would get both hands, and on disconnect only the
+       first would be marked, leaving the other active forever with a dead socket. */
+    const holding = this.seatOfSocket(socketId)
+    if (holding !== null && holding !== member.seat) return err('invalid_session')
 
     const previous = member.socketId
     member.socketId = socketId
@@ -768,6 +788,8 @@ export class Room {
     // Takes the seat back at once, whatever the stand-in did meanwhile.
     member.standIn = false
     const supersededSocketId = previous !== null && previous !== socketId ? previous : null
+    // The host may still sit on a seat that dropped while nobody was there to take it over.
+    this.transferHostIfNeeded()
     return ok({ seat: member.seat, supersededSocketId })
   }
 

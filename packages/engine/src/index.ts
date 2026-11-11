@@ -4,7 +4,15 @@ export { UNO_PENALTY, applyMove, penaliseForgottenUno, skipDisconnectedTurn } fr
 export { activeCount, advance, isPlayable, legalMoves, turnOrder } from './rules.js'
 export { applyRound, cardPoints, matchWinners, roundPoints, startMatch } from './match.js'
 export { markSeatLeft, setSeatStatus } from './seats.js'
-export { nextInt, nextRandom, shuffle } from './rng.js'
+export {
+  deckState,
+  nextDeckRandom,
+  nextInt,
+  nextRandom,
+  shuffle,
+  type DeckSeed,
+  type DeckState,
+} from './rng.js'
 export {
   COLORS,
   DEFAULT_TABLE_RULES,

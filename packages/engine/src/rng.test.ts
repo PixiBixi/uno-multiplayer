@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { nextInt, nextRandom, shuffle } from './rng.js'
+import { deckState, nextDeckRandom, nextInt, nextRandom, shuffle } from './rng.js'
 
 describe('nextRandom', () => {
   it('returns a value in [0, 1)', () => {
@@ -36,23 +36,55 @@ describe('nextInt', () => {
 describe('shuffle', () => {
   it('does not mutate its input', () => {
     const input = Object.freeze([1, 2, 3, 4, 5])
-    expect(() => shuffle(input, 99)).not.toThrow()
+    expect(() => shuffle(input, deckState(99))).not.toThrow()
     expect(input).toEqual([1, 2, 3, 4, 5])
   })
 
   it('preserves every element exactly once', () => {
     const input = [1, 2, 3, 4, 5, 6, 7, 8]
-    const { items } = shuffle(input, 12345)
+    const { items } = shuffle(input, deckState(12345))
     expect([...items].sort((a, b) => a - b)).toEqual(input)
   })
 
   it('produces the same order for the same seed', () => {
-    expect(shuffle([1, 2, 3, 4, 5], 777).items).toEqual(shuffle([1, 2, 3, 4, 5], 777).items)
+    expect(shuffle([1, 2, 3, 4, 5], deckState(777)).items).toEqual(
+      shuffle([1, 2, 3, 4, 5], deckState(777)).items,
+    )
   })
 
   it('produces a different order for a different seed', () => {
-    const a = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 1).items
-    const b = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], 2).items
+    const a = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], deckState(1)).items
+    const b = shuffle([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], deckState(2)).items
     expect(a).not.toEqual(b)
+  })
+})
+
+describe('deck stream', () => {
+  const deck = Array.from({ length: 108 }, (_, i) => i)
+
+  it('reads all 128 bits of a seed, not just one word', () => {
+    // Seeds that share all but one word: a 32-bit state would deal some of them alike.
+    const a = shuffle(deck, deckState([1, 2, 3, 4])).items
+    const b = shuffle(deck, deckState([1, 2, 3, 5])).items
+    const c = shuffle(deck, deckState([9, 2, 3, 4])).items
+    expect(a).not.toEqual(b)
+    expect(a).not.toEqual(c)
+  })
+
+  it('carries four 32-bit words of state between draws', () => {
+    let state = deckState([0xdeadbeef, 0, 0, 0])
+    for (let i = 0; i < 100; i++) {
+      const r = nextDeckRandom(state)
+      expect(r.value).toBeGreaterThanOrEqual(0)
+      expect(r.value).toBeLessThan(1)
+      expect(r.state).toHaveLength(4)
+      for (const word of r.state) expect(Number.isInteger(word)).toBe(true)
+      state = r.state
+    }
+  })
+
+  it('expands a numeric seed deterministically, so tests and replays stay stable', () => {
+    expect(deckState(42)).toEqual(deckState(42))
+    expect(deckState(42)).not.toEqual(deckState(43))
   })
 })

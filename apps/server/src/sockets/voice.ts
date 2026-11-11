@@ -11,6 +11,8 @@ export type VoiceContext = {
   voiceRooms: VoiceRooms
   config: Config
   limiter: RateLimiter
+  /** voice:join and voice:mute, keyed by client IP: each one fans out to the whole table. */
+  controlLimiter: RateLimiter
   presenceOf: (socketId: string) => Presence | undefined
 }
 
@@ -25,7 +27,10 @@ type VoiceHelpers = {
     payload: unknown,
     ack: Ack,
     limiter?: RateLimiter,
+    key?: string,
   ) => { data: T; presence: Presence } | null
+  /** The client IP this socket's abuse limits are keyed on. */
+  ip: string
 }
 
 /** Pushes the current roster to every socket in the room, sender included. */
@@ -69,11 +74,11 @@ export function registerVoiceHandlers(
   socket: TypedSocket,
   helpers: VoiceHelpers,
 ): void {
-  const { attempt, emptyPayloadSchema, parsed, admit } = helpers
+  const { attempt, emptyPayloadSchema, parsed, admit, ip } = helpers
 
   socket.on('voice:join', (payload, ack) => {
     attempt(ack, () => {
-      const admitted = admit(emptyPayloadSchema, payload, ack)
+      const admitted = admit(emptyPayloadSchema, payload, ack, context.controlLimiter, ip)
       if (admitted === null) return
       const { presence } = admitted
 
@@ -128,7 +133,7 @@ export function registerVoiceHandlers(
 
   socket.on('voice:mute', (payload, ack) => {
     attempt(ack, () => {
-      const admitted = admit(voiceMuteSchema, payload, ack)
+      const admitted = admit(voiceMuteSchema, payload, ack, context.controlLimiter, ip)
       if (admitted === null) return
       const { data, presence } = admitted
 
