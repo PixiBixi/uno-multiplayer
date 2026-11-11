@@ -16,15 +16,27 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
  * flag synchronously would pass a test that answered immediately.
  */
 
-type Ack = (result: { ok: boolean; error?: string }) => void
+type Result = { ok: boolean; error?: string; seat?: number }
+/* Create and join go through `timeout()`, whose ack takes an error first; socket.io only
+   calls such an ack when the socket drops, so `timed` is what proves the fix. */
+type Ack = (...args: unknown[]) => void
 
-const emitted: { event: string; ack: Ack }[] = []
+const emitted: { event: string; ack: Ack; timed: boolean }[] = []
+const listeners = new Map<string, (...args: unknown[]) => void>()
 
 const socket = {
   emit: (event: string, _payload: unknown, ack: Ack) => {
-    emitted.push({ event, ack })
+    emitted.push({ event, ack, timed: false })
   },
-  on: () => socket,
+  timeout: () => ({
+    emit: (event: string, _payload: unknown, ack: Ack) => {
+      emitted.push({ event, ack, timed: true })
+    },
+  }),
+  on: (event: string, listener: (...args: unknown[]) => void) => {
+    listeners.set(event, listener)
+    return socket
+  },
   off: () => socket,
   disconnect: () => socket,
   connected: true,
@@ -38,8 +50,12 @@ const { useGameSocket } = await import('./useGameSocket.js')
 
 const creates = () => emitted.filter((entry) => entry.event === 'room:create')
 
+/** Answers a create or join the way a timeout-wrapped ack is answered. */
+const answer = (entry: { ack: Ack } | undefined, result: Result) => entry?.ack(null, result)
+
 beforeEach(() => {
   emitted.length = 0
+  listeners.clear()
 })
 
 afterEach(() => {
@@ -67,7 +83,24 @@ describe('createRoom', () => {
     // A refusal has to clear the flag as surely as a success does, or one rate-limited
     // create locks the button for the rest of the session with no way back.
     act(() => {
-      creates()[0]?.ack({ ok: false, error: 'rate_limited' })
+      answer(creates()[0], { ok: false, error: 'rate_limited' })
+    })
+    act(() => {
+      result.current.actions.createRoom('Ana')
+    })
+
+    expect(creates()).toHaveLength(2)
+  })
+
+  it('allows another attempt when the socket drops before the answer', () => {
+    const { result } = renderHook(() => useGameSocket())
+
+    act(() => {
+      result.current.actions.createRoom('Ana')
+    })
+    expect(creates()[0]?.timed).toBe(true)
+    act(() => {
+      creates()[0]?.ack(new Error('operation has timed out'))
     })
     act(() => {
       result.current.actions.createRoom('Ana')
@@ -98,12 +131,52 @@ describe('joinRoom', () => {
       result.current.actions.joinRoom('ABC234', 'Ben')
     })
     act(() => {
-      joins()[0]?.ack({ ok: false, error: 'room_full' })
+      answer(joins()[0], { ok: false, error: 'room_full' })
     })
     act(() => {
       result.current.actions.joinRoom('ABC234', 'Ben')
     })
 
     expect(joins()).toHaveLength(2)
+  })
+
+  it('allows another attempt when the socket drops before the answer', () => {
+    const { result } = renderHook(() => useGameSocket())
+
+    act(() => {
+      result.current.actions.joinRoom('ABC234', 'Ben')
+    })
+    expect(joins()[0]?.timed).toBe(true)
+    act(() => {
+      joins()[0]?.ack(new Error('operation has timed out'))
+    })
+    act(() => {
+      result.current.actions.joinRoom('ABC234', 'Ben')
+    })
+
+    expect(joins()).toHaveLength(2)
+  })
+})
+
+describe('rejoin after a restart', () => {
+  const rejoins = () => emitted.filter((entry) => entry.event === 'room:rejoin')
+
+  it('returns to the home screen when the room is gone, instead of a frozen table', () => {
+    window.history.replaceState(null, '', '/?room=ABC234')
+    window.localStorage.setItem('uno.session.ABC234', 'token')
+    const { result } = renderHook(() => useGameSocket())
+
+    act(() => listeners.get('connect')?.())
+    act(() => rejoins()[0]?.ack({ ok: true, seat: 0 }))
+    expect(result.current.state.roomCode).toBe('ABC234')
+
+    // The server restarted: the socket reconnects and the room no longer exists.
+    act(() => listeners.get('connect')?.())
+    act(() => rejoins()[1]?.ack({ ok: false, error: 'room_not_found' }))
+
+    expect(result.current.state.screen).toBe('home')
+    expect(result.current.state.roomCode).toBeNull()
+    expect(result.current.state.error).not.toBeNull()
+    expect(window.localStorage.getItem('uno.session.ABC234')).toBeNull()
   })
 })
