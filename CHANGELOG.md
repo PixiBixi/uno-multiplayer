@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.8](https://github.com/PixiBixi/uno-multiplayer/compare/fc8cc8df1a830c6b843682f8c8aaa9d969ff0442..v1.14.8) - 2026-11-11
+#### Miscellaneous Chores
+- (**deps**) update node.js to 8996bb5 (#89) - ([fc8cc8d](https://github.com/PixiBixi/uno-multiplayer/commit/fc8cc8df1a830c6b843682f8c8aaa9d969ff0442)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.7](https://github.com/PixiBixi/uno-multiplayer/compare/51653e7b172b9e14bd825fc91753e8b6ad5dd9d1..v1.14.7) - 2026-11-11
 #### Miscellaneous Chores
 - (**deps**) update docker/login-action action to v4.8.0 (#94) - ([51653e7](https://github.com/PixiBixi/uno-multiplayer/commit/51653e7b172b9e14bd825fc91753e8b6ad5dd9d1)) - renovate[bot], renovate[bot]
