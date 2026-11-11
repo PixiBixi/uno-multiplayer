@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest'
 import { BOT_NAMES, Room } from './room.js'
 
 const humans = (...names: string[]) => {
-  const room = new Room('ABC234', 42, DEFAULT_MATCH_GOAL)
+  const room = new Room('ABC234', 2, DEFAULT_MATCH_GOAL)
   for (const [i, name] of names.entries()) {
     const joined = room.join(name, `socket-${i}`)
     if (!joined.okay) throw new Error(joined.error)
@@ -142,7 +142,7 @@ describe('bots in the lobby', () => {
 type PlayMove = Extract<Move, { type: 'play' }>
 
 const table = (rules: TableRules, ...names: string[]) => {
-  const room = new Room('ABC234', 42, DEFAULT_MATCH_GOAL, null, rules)
+  const room = new Room('ABC234', 2, DEFAULT_MATCH_GOAL, null, rules)
   const tokens = names.map((name, i) => {
     const joined = room.join(name, `socket-${i}`)
     if (!joined.okay) throw new Error(joined.error)

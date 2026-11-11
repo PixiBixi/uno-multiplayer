@@ -1,3 +1,5 @@
+import type { DeckState } from './rng.js'
+
 export type Color = 'R' | 'G' | 'B' | 'Y'
 export const COLORS: readonly Color[] = ['R', 'G', 'B', 'Y'] as const
 
@@ -127,7 +129,7 @@ export type GameState = {
    * cause - a stale value would let a seat play a card it no longer holds.
    */
   drawnCard: CardId | null
-  rngState: number
+  rngState: DeckState
   phase: GamePhase
   winner: number | null
   /** Which optional rules this table plays. Part of the state, so a game stays

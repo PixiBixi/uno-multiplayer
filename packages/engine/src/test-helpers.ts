@@ -1,3 +1,4 @@
+import { deckState } from './rng.js'
 import { DEFAULT_TABLE_RULES } from './types.js'
 import type { Card, CardId, Color, GameState, NumberValue, Seat } from './types.js'
 
@@ -54,7 +55,7 @@ export const stateOf = (over: Partial<GameState> = {}): GameState => ({
   currentColor: 'R',
   pendingDraw: null,
   drawnCard: null,
-  rngState: 1,
+  rngState: deckState(1),
   phase: 'playing',
   winner: null,
   rules: DEFAULT_TABLE_RULES,

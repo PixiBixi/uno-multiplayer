@@ -51,7 +51,7 @@ const tableOf = (opts: {
     gracePeriodMs: 60_000,
     timers: clock.timers,
     now: clock.now,
-    seedSource: () => 42,
+    seedSource: () => 2,
     delaySeed: 7,
   })
   const created = rooms.create(DEFAULT_MATCH_GOAL, opts.pace ?? null, opts.rules)
@@ -241,7 +241,7 @@ describe('the absent grace', () => {
       gracePeriodMs: 60_000,
       timers: clock.timers,
       now: clock.now,
-      seedSource: () => 42,
+      seedSource: () => 2,
       delaySeed: 7,
       botDelayFactor: 0.01,
     })

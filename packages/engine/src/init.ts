@@ -1,5 +1,5 @@
 import { buildDeck, takeFromTop } from './deck.js'
-import { shuffle } from './rng.js'
+import { deckState, shuffle, type DeckSeed } from './rng.js'
 import {
   DEFAULT_TABLE_RULES,
   err,
@@ -19,7 +19,7 @@ export const MAX_PLAYERS = 4
 
 export function initGame(options: {
   names: string[]
-  seed: number
+  seed: DeckSeed
   /** Omitted means plain UNO, which is what every table played before options existed. */
   rules?: TableRules
   /**
@@ -47,7 +47,7 @@ export function initGame(options: {
     return err('no_such_seat')
   }
 
-  const shuffled = shuffle(buildDeck(), seed)
+  const shuffled = shuffle(buildDeck(), deckState(seed))
   let pile: Card[] = shuffled.items
   const seats: Seat[] = []
 

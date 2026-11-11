@@ -20,7 +20,7 @@ beforeEach(async () => {
     /* A fixed seed: nothing here is about the shuffle, and a random one dealt seat 0
        a hand with nothing playable in roughly one run in sixty, which flaked the move
        test. Deals that need a particular shape drive the game to it instead. */
-    new RoomManager({ maxRooms: 10, gracePeriodMs: config.gracePeriodMs, seedSource: () => 42 }),
+    new RoomManager({ maxRooms: 10, gracePeriodMs: config.gracePeriodMs, seedSource: () => 1 }),
     config,
   )
   await new Promise<void>((resolve) => httpServer.listen(0, resolve))
@@ -200,8 +200,14 @@ describe('playing over sockets', () => {
     const dealt = Promise.all([host, ...others].map(nextView))
     await emit<PlainAck>(host, 'game:start', {})
     const first = await dealt
-    const move = first[0]?.you.legalMoves.find((candidate) => candidate.type === 'play')
-    if (move === undefined) throw new Error('expected a playable card in the seeded deal')
+    // A number card, so the turn passes even heads-up, where an action card keeps it.
+    const numbers = new Set(
+      first[0]?.you.hand.filter((card) => card.kind === 'number').map((card) => card.id),
+    )
+    const move = first[0]?.you.legalMoves.find(
+      (candidate) => candidate.type === 'play' && numbers.has(candidate.cardId),
+    )
+    if (move === undefined) throw new Error('expected a playable number card in the seeded deal')
 
     const updated = Promise.all([host, ...others].map(nextView))
     host.emit('game:move', { move })
