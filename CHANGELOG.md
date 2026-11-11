@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.9](https://github.com/PixiBixi/uno-multiplayer/compare/ca80dd654ea77b168eac3e4c79571cea2c7b7a55..v1.14.9) - 2026-11-11
+#### Bug Fixes
+- hardening from the security and reliability review (#96) - ([ca80dd6](https://github.com/PixiBixi/uno-multiplayer/commit/ca80dd654ea77b168eac3e4c79571cea2c7b7a55)) - Jérémy
+
+- - -
+
 ## [v1.14.8](https://github.com/PixiBixi/uno-multiplayer/compare/fc8cc8df1a830c6b843682f8c8aaa9d969ff0442..v1.14.8) - 2026-11-11
 #### Miscellaneous Chores
 - (**deps**) update node.js to 8996bb5 (#89) - ([fc8cc8d](https://github.com/PixiBixi/uno-multiplayer/commit/fc8cc8df1a830c6b843682f8c8aaa9d969ff0442)) - renovate[bot], renovate[bot]
