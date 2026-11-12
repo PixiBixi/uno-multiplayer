@@ -1,6 +1,14 @@
 # Changelog
 
 - - -
+## [v1.14.10](https://github.com/PixiBixi/uno-multiplayer/compare/7f3e403aa1ff652565a30429da5d34d1a74eff21..v1.14.10) - 2026-11-12
+#### Documentation
+- (**wiki**) document glob and minimatch overrides in deploying - ([7f3e403](https://github.com/PixiBixi/uno-multiplayer/commit/7f3e403aa1ff652565a30429da5d34d1a74eff21)) - Jeremy Delgado
+#### Miscellaneous Chores
+- (**deps**) update step-security/harden-runner action to v2.22.4 (#97) - ([3e724fb](https://github.com/PixiBixi/uno-multiplayer/commit/3e724fbc4dc61551464cf66f8319f86f6b65aabd)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.9](https://github.com/PixiBixi/uno-multiplayer/compare/ca80dd654ea77b168eac3e4c79571cea2c7b7a55..v1.14.9) - 2026-11-11
 #### Bug Fixes
 - hardening from the security and reliability review (#96) - ([ca80dd6](https://github.com/PixiBixi/uno-multiplayer/commit/ca80dd654ea77b168eac3e4c79571cea2c7b7a55)) - Jérémy
