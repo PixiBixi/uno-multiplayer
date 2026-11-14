@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.11](https://github.com/PixiBixi/uno-multiplayer/compare/894fe765869d809aea0319c6b8591ccb0e707a02..v1.14.11) - 2026-11-14
+#### Miscellaneous Chores
+- (**deps**) update dependency @vitejs/plugin-react to v6.3.0 (#98) - ([894fe76](https://github.com/PixiBixi/uno-multiplayer/commit/894fe765869d809aea0319c6b8591ccb0e707a02)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.10](https://github.com/PixiBixi/uno-multiplayer/compare/7f3e403aa1ff652565a30429da5d34d1a74eff21..v1.14.10) - 2026-11-12
 #### Documentation
 - (**wiki**) document glob and minimatch overrides in deploying - ([7f3e403](https://github.com/PixiBixi/uno-multiplayer/commit/7f3e403aa1ff652565a30429da5d34d1a74eff21)) - Jeremy Delgado
