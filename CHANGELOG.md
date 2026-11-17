@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.13](https://github.com/PixiBixi/uno-multiplayer/compare/0edbe654ff191bd006198ad5321f2e0a49402ca6..v1.14.13) - 2026-11-17
+#### Miscellaneous Chores
+- (**deps**) update dependency prettier to v3.10.0 (#100) - ([0edbe65](https://github.com/PixiBixi/uno-multiplayer/commit/0edbe654ff191bd006198ad5321f2e0a49402ca6)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.12](https://github.com/PixiBixi/uno-multiplayer/compare/eee931ab2e6592ea04daf3f7ddc49ae9cf557664..v1.14.12) - 2026-11-15
 #### Miscellaneous Chores
 - (**deps**) update dependency typescript-eslint to v8.72.2 (#99) - ([eee931a](https://github.com/PixiBixi/uno-multiplayer/commit/eee931ab2e6592ea04daf3f7ddc49ae9cf557664)) - renovate[bot], renovate[bot]
