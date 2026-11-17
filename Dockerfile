@@ -7,7 +7,7 @@
 # step now fails if these two lines and .nvmrc disagree.
 
 # ---- build ----
-FROM node:26-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216 AS build
+FROM node:26-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS build
 WORKDIR /app
 
 # Manifests first: the dependency layer then survives source-only changes.
@@ -33,7 +33,7 @@ RUN find . -name '*.tsbuildinfo' -not -path './node_modules/*' -delete \
 # ---- server dependencies ----
 # The server workspace alone: react-dom and socket.io-client are bundled into web/dist,
 # and a plain `npm prune --omit=dev` kept them because @uno/web lists them as dependencies.
-FROM node:26-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216 AS deps
+FROM node:26-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/engine/package.json packages/engine/
@@ -43,7 +43,7 @@ COPY apps/web/package.json apps/web/
 RUN npm ci --omit=dev --workspace @uno/server
 
 # ---- runtime ----
-FROM node:26-alpine@sha256:8996bb5821d62a8fd9bb27c1cb07462f3fdce6e47d640c6a881ead0b064ce216 AS runtime
+FROM node:26-alpine@sha256:6bd9ab43c0ec0190ca7b2d193906cb8b7edf6e7f4afa43ddeccd6452710bffb5 AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production \
