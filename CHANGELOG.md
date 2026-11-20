@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.17](https://github.com/PixiBixi/uno-multiplayer/compare/8ffc2f2cbd875749bce012c5e9c165f17d0b6804..v1.14.17) - 2026-11-20
+#### Miscellaneous Chores
+- (**deps**) update dependency jsdom to v31 (#95) - ([8ffc2f2](https://github.com/PixiBixi/uno-multiplayer/commit/8ffc2f2cbd875749bce012c5e9c165f17d0b6804)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.16](https://github.com/PixiBixi/uno-multiplayer/compare/96672a72216504b4e62f27b1daf936dcf88d4c0a..v1.14.16) - 2026-11-19
 #### Miscellaneous Chores
 - (**deps**) update dev-dependencies (#103) - ([96672a7](https://github.com/PixiBixi/uno-multiplayer/commit/96672a72216504b4e62f27b1daf936dcf88d4c0a)) - renovate[bot], renovate[bot]
