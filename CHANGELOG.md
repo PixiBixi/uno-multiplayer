@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.20](https://github.com/PixiBixi/uno-multiplayer/compare/d545ccefecc12ed87ad542c29a48f6447f478a16..v1.14.20) - 2026-11-23
+#### Miscellaneous Chores
+- (**deps**) update step-security/harden-runner action to v2.23.0 (#106) - ([d545cce](https://github.com/PixiBixi/uno-multiplayer/commit/d545ccefecc12ed87ad542c29a48f6447f478a16)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.19](https://github.com/PixiBixi/uno-multiplayer/compare/a13be57870e4619da5a08e8eb8d607734197e3f5..v1.14.19) - 2026-11-23
 #### Miscellaneous Chores
 - (**deps**) lock file maintenance (#105) - ([a13be57](https://github.com/PixiBixi/uno-multiplayer/commit/a13be57870e4619da5a08e8eb8d607734197e3f5)) - renovate[bot], renovate[bot]
