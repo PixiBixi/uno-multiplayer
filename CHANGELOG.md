@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.21](https://github.com/PixiBixi/uno-multiplayer/compare/b10ed9f5e95c50ca7c613f5bc469ced9b71bcda2..v1.14.21) - 2026-11-24
+#### Miscellaneous Chores
+- (**deps**) update coturn/coturn docker tag to v4.19 (#107) - ([b10ed9f](https://github.com/PixiBixi/uno-multiplayer/commit/b10ed9f5e95c50ca7c613f5bc469ced9b71bcda2)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.20](https://github.com/PixiBixi/uno-multiplayer/compare/d545ccefecc12ed87ad542c29a48f6447f478a16..v1.14.20) - 2026-11-23
 #### Miscellaneous Chores
 - (**deps**) update step-security/harden-runner action to v2.23.0 (#106) - ([d545cce](https://github.com/PixiBixi/uno-multiplayer/commit/d545ccefecc12ed87ad542c29a48f6447f478a16)) - renovate[bot], renovate[bot]
