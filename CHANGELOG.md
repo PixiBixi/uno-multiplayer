@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.22](https://github.com/PixiBixi/uno-multiplayer/compare/b2b768503cd371855440db55750073de47f75d73..v1.14.22) - 2026-11-26
+#### Miscellaneous Chores
+- (**deps**) update docker/dockerfile:1 docker digest to 572cebb (#108) - ([b2b7685](https://github.com/PixiBixi/uno-multiplayer/commit/b2b768503cd371855440db55750073de47f75d73)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.21](https://github.com/PixiBixi/uno-multiplayer/compare/b10ed9f5e95c50ca7c613f5bc469ced9b71bcda2..v1.14.21) - 2026-11-24
 #### Miscellaneous Chores
 - (**deps**) update coturn/coturn docker tag to v4.19 (#107) - ([b10ed9f](https://github.com/PixiBixi/uno-multiplayer/commit/b10ed9f5e95c50ca7c613f5bc469ced9b71bcda2)) - renovate[bot], renovate[bot]
