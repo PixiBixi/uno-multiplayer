@@ -1,6 +1,12 @@
 # Changelog
 
 - - -
+## [v1.14.23](https://github.com/PixiBixi/uno-multiplayer/compare/e239a2a7595e139ad25e81f5ef1e9df34469ed07..v1.14.23) - 2026-11-28
+#### Miscellaneous Chores
+- (**deps**) update zizmorcore/zizmor-action action to v0.9.1 (#109) - ([e239a2a](https://github.com/PixiBixi/uno-multiplayer/commit/e239a2a7595e139ad25e81f5ef1e9df34469ed07)) - renovate[bot], renovate[bot]
+
+- - -
+
 ## [v1.14.22](https://github.com/PixiBixi/uno-multiplayer/compare/b2b768503cd371855440db55750073de47f75d73..v1.14.22) - 2026-11-26
 #### Miscellaneous Chores
 - (**deps**) update docker/dockerfile:1 docker digest to 572cebb (#108) - ([b2b7685](https://github.com/PixiBixi/uno-multiplayer/commit/b2b768503cd371855440db55750073de47f75d73)) - renovate[bot], renovate[bot]
